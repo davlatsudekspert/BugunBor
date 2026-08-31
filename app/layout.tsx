@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   description:
     'O‘zbekistondagi yaqin, vaqt bilan cheklangan aksiyalarni toping va ulardan vaqt tugashidan oldin foydalaning.',
   alternates: { canonical: '/' },
+  icons: { icon: '/favicon.svg' },
   openGraph: {
     title: 'Bugun bor — ertaga bo‘lmasligi mumkin',
     description: 'Yaqiningizdagi eng yaxshi takliflarni hozir toping.',
