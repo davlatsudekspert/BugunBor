@@ -1,0 +1,6 @@
+import type { Metadata } from 'next';
+import { ArrowRight } from 'lucide-react';
+import { listCategories } from '@/modules/catalog/repository';
+
+export const metadata: Metadata = { title: 'Kategoriyalar', description: 'BugunBor aksiyalarini kategoriya bo‘yicha toping.', alternates: { canonical: '/categories' } };
+export default async function CategoriesPage() { const categories = await listCategories(); return <main className="min-h-screen bg-[#fffdf9] text-[#152a3b]"><header className="border-b border-slate-200 bg-white"><div className="mx-auto flex h-16 max-w-5xl items-center px-4"><a href="/" className="text-xl font-black">Bugun<span className="text-primary">Bor</span></a></div></header><div className="mx-auto max-w-5xl px-4 py-12"><h1 className="text-4xl font-black tracking-[-.05em]">Kategoriyalar</h1><div className="mt-8 grid gap-4 sm:grid-cols-2">{categories.map((category) => <a key={category.slug} href={`/discover?q=${encodeURIComponent(category.name)}`} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-6"><span><strong className="text-xl">{category.name}</strong><small className="mt-1 block text-slate-500">{category.activeCount} faol taklif</small></span><ArrowRight className="size-5 text-primary" /></a>)}</div></div></main>; }
