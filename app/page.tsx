@@ -157,7 +157,7 @@ export default async function Home() {
                 </div>
                 <div className="mt-5 flex items-center justify-between rounded-2xl bg-white p-3 shadow-sm">
                   <span className="flex items-center gap-2 text-sm font-bold text-[#152a3b]"><Clock3 className="size-4 text-primary" /> 00:48:22</span>
-                  <a href="/deals/lagmon-kombo" className="text-sm font-bold text-primary">Ko‘rish <ArrowRight className="ml-1 inline size-4" /></a>
+                  <a href="/deals/lagmon-salat-kombo" className="text-sm font-bold text-primary">Ko‘rish <ArrowRight className="ml-1 inline size-4" /></a>
                 </div>
               </div>
             </div>
@@ -175,7 +175,7 @@ export default async function Home() {
         </div>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {categories.map(({ label, slug, count, icon: Icon, color }) => (
-            <a key={label} href={`/categories/${slug}`} className="group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-lg">
+            <a key={slug} href={`/discover?q=${encodeURIComponent(label)}`} className="group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-lg">
               <span className={cn('grid size-11 place-items-center rounded-xl', color)}><Icon className="size-5" /></span>
               <span><strong className="block text-[#152a3b]">{label}</strong><small className="text-slate-500">{count} aksiya</small></span>
             </a>
@@ -197,7 +197,7 @@ export default async function Home() {
 
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {deals.map((deal) => (
-            <Card key={deal.title} className="group border-0 py-0 shadow-[0_10px_40px_rgba(25,45,60,.08)] ring-slate-200 transition hover:-translate-y-1 hover:shadow-[0_18px_55px_rgba(25,45,60,.14)]">
+            <Card key={deal.id} className="group border-0 py-0 shadow-[0_10px_40px_rgba(25,45,60,.08)] ring-slate-200 transition hover:-translate-y-1 hover:shadow-[0_18px_55px_rgba(25,45,60,.14)]">
               <div className={cn('relative h-48 overflow-hidden bg-gradient-to-br p-5', deal.palette)}>
                 <div className="absolute -bottom-10 -right-6 text-[9rem] leading-none opacity-95 transition-transform duration-500 group-hover:scale-105 group-hover:-rotate-3">{deal.symbol}</div>
                 <Badge className="h-8 bg-white px-3 text-base font-black text-[#152a3b] shadow-sm">{deal.discount}</Badge>
