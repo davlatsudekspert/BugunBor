@@ -1,4 +1,4 @@
-import { ensurePhase1Database, getD1 } from '@/db/runtime';
+import { ensureDatabase, getDb } from '@/db/runtime';
 
 export type RequestIdentity = {
   id: string;
@@ -31,8 +31,8 @@ export async function getRequestIdentity(
         ? 'BUSINESS_OWNER'
         : 'CUSTOMER';
 
-  await ensurePhase1Database();
-  await getD1()
+  await ensureDatabase();
+  await getDb()
     .prepare(`INSERT INTO users(id, role, email, display_name)
       VALUES (?1, ?2, ?3, ?4)
       ON CONFLICT(id) DO UPDATE SET email = excluded.email, updated_at = CURRENT_TIMESTAMP`)
@@ -44,7 +44,7 @@ export async function getRequestIdentity(
   // A real OAuth-authenticated user's role is never touched here — that stays
   // whatever an admin set it to.
   if (isLocal && demoUser) {
-    await getD1()
+    await getDb()
       .prepare(
         'UPDATE users SET role = ?1, updated_at = CURRENT_TIMESTAMP WHERE id = ?2 AND role != ?1',
       )
@@ -52,7 +52,7 @@ export async function getRequestIdentity(
       .run();
   }
 
-  const stored = await getD1()
+  const stored = await getDb()
     .prepare('SELECT role FROM users WHERE id = ?1')
     .bind(id)
     .first<{ role: RequestIdentity['role'] }>();

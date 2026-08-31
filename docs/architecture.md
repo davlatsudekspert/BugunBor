@@ -12,26 +12,25 @@ flowchart LR
   API --> REDEEM[Redemption service]
   API --> WALLET[Wallet ledger]
   API --> INTEGRATION[NFCStore boundary]
-  AUTH & DEALS & REDEEM & WALLET --> REPO[Repository interfaces]
-  REPO --> DB[(PostgreSQL + Prisma target)]
-  REPO --> D1[(D1 Sites adapter)]
+  AUTH & DEALS & REDEEM & WALLET --> REPO[Query wrapper — db/runtime.ts]
+  REPO --> DB[(Postgres, on Railway)]
   DEALS & REDEEM & WALLET --> JOBS[Redis + BullMQ target]
   INTEGRATION --> EXT[NFCStore OAuth/OIDC + signed webhooks]
   API --> PROVIDERS[SMS · email · maps · payments · storage · push]
 ```
 
-The target production architecture in the supplied brief is PostgreSQL/Prisma, Redis/BullMQ and S3-compatible storage. The runnable Sites checkpoint uses a D1 repository adapter because the hosting runtime does not provide raw TCP connections. Domain rules and API contracts remain storage-agnostic so the PostgreSQL adapter can replace it without moving business logic into UI components. R2 is reserved for uploaded media once the upload phase is enabled.
+Every module talks to Postgres through a small D1-shaped wrapper (`getDb().prepare(sql).bind(...).first()/.all()/.run()`, plus `.batch()` for transactions) in `db/runtime.ts`, over the `pg` driver. Domain rules and API contracts stay storage-agnostic in the sense that they never touch `pg` directly — only that wrapper — but this checkpoint targets Postgres specifically rather than staying engine-agnostic; earlier iterations of this checkpoint ran on Cloudflare D1 and named Prisma as a future target, neither of which reflects what's implemented now. Redis/BullMQ and S3-compatible object storage remain later-phase targets — see `docs/implementation-plan.md`.
 
 ## Module boundaries
 
 - `app/`: public and protected route surfaces only.
 - `modules/auth`: phone normalization, OTP policy, sessions, RBAC.
-- `modules/deals`: lifecycle transitions and public queries.
-- `modules/redemptions`: atomic claim/validation and events.
-- `modules/moderation`: reasoned decisions and audit capture.
+- `modules/deals`: lifecycle edit-lock policy (`modules/deals/policy.ts`).
+- `modules/redemptions`: atomic claim/validation policy and events.
+- `modules/scheduler`: the Auto Scheduler's status-transition logic.
+- `modules/geo`: distance/bounding-box math for location search.
 - `modules/providers`: interfaces and explicit development adapters.
-- `db/`: Sites persistence adapter and migrations.
-- `packages/database/prisma`: target PostgreSQL schema checkpoint.
+- `db/runtime.ts`: the Postgres connection, schema/seed bootstrap, and the query wrapper every module above is written against.
 
 ## Security model
 

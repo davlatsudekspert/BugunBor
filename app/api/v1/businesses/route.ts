@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { ensurePhase1Database, getD1 } from '@/db/runtime';
+import { ensureDatabase, getDb } from '@/db/runtime';
 import { getRequestIdentity, requireSameOrigin } from '@/modules/auth/identity';
 
 const businessSchema = z.object({
@@ -59,8 +59,8 @@ export async function POST(request: Request) {
       { status: 422 },
     );
 
-  await ensurePhase1Database();
-  const db = getD1();
+  await ensureDatabase();
+  const db = getDb();
   const businessId = crypto.randomUUID();
   const branchId = crypto.randomUUID();
   const auditId = crypto.randomUUID();

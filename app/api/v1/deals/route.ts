@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { ensurePhase1Database, getD1 } from '@/db/runtime';
+import { ensureDatabase, getDb } from '@/db/runtime';
 import { getRequestIdentity, requireSameOrigin } from '@/modules/auth/identity';
 import {
   canAccessBusiness,
@@ -175,8 +175,8 @@ export async function POST(request: Request) {
     );
   const input = parsed.data;
 
-  await ensurePhase1Database();
-  const db = getD1();
+  await ensureDatabase();
+  const db = getDb();
 
   const membership = await db
     .prepare(

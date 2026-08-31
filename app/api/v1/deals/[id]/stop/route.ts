@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { ensurePhase1Database, getD1 } from '@/db/runtime';
+import { ensureDatabase, getDb } from '@/db/runtime';
 import {
   canAccessBusiness,
   type BusinessRole,
@@ -28,12 +28,12 @@ export async function POST(
       { status: 401 },
     );
 
-  await ensurePhase1Database();
-  const db = getD1();
+  await ensureDatabase();
+  const db = getDb();
   const { id: dealId } = await context.params;
   const deal = await db
     .prepare(
-      'SELECT business_id AS businessId, status FROM deals WHERE id = ?1 AND deleted_at IS NULL',
+      'SELECT business_id AS "businessId", status FROM deals WHERE id = ?1 AND deleted_at IS NULL',
     )
     .bind(dealId)
     .first<{ businessId: string; status: DealLifecycleStatus }>();

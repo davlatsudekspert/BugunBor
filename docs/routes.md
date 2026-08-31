@@ -36,7 +36,7 @@
 - `DELETE /api/v1/deals/:id` — delete a deal that has not gone ACTIVE yet
 - `POST /api/v1/deals/:id/stop` — end an ACTIVE deal early
 - `POST /api/v1/deals/:id/redemptions` — claim a PRODUCT unit, or reserve a SERVICE `slotId`; `POST /api/v1/redemptions/:id/validate` (planned — see below)
-- `POST /api/v1/admin/scheduler/tick` — drives the Auto Scheduler (SCHEDULED→ACTIVE, ACTIVE→EXPIRED/SOLD_OUT); call from a Cloudflare Cron Trigger or ADMIN session
+- `POST /api/v1/admin/scheduler/tick` — drives the Auto Scheduler (SCHEDULED→ACTIVE, ACTIVE→EXPIRED/SOLD_OUT); call from a Railway Cron Job or ADMIN session
 - `POST /api/v1/auth/otp/request`, `POST /api/v1/auth/otp/verify`, `DELETE /api/v1/sessions/:id` (planned)
 - `POST /api/v1/businesses`, `POST /api/v1/businesses/:id/deals` (superseded by `POST /api/v1/deals` above)
 - `POST /api/v1/moderation/deals/:id/decision`

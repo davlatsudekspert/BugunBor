@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { CalendarClock, PackageCheck, Scissors } from 'lucide-react';
 
 import { DealForm } from '@/components/deal-form';
-import { ensurePhase1Database, getD1 } from '@/db/runtime';
+import { ensureDatabase, getDb } from '@/db/runtime';
 
 export const metadata: Metadata = {
   title: 'Yangi e’lon',
@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 };
 
 export default async function NewDealPage() {
-  await ensurePhase1Database();
-  const db = getD1();
+  await ensureDatabase();
+  const db = getDb();
   const business = await db
     .prepare(
       `SELECT id, name FROM businesses WHERE deleted_at IS NULL ORDER BY CASE verification_status WHEN 'PENDING' THEN 0 ELSE 1 END, created_at DESC LIMIT 1`,

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { ensurePhase1Database, getD1 } from '@/db/runtime';
+import { ensureDatabase, getDb } from '@/db/runtime';
+import { toStoredUtc } from '@/lib/time';
 import { getRequestIdentity, requireSameOrigin } from '@/modules/auth/identity';
 import {
   evaluateClaimPolicy,
@@ -97,12 +98,12 @@ export async function POST(
       { status: 422 },
     );
 
-  await ensurePhase1Database();
-  const db = getD1();
+  await ensureDatabase();
+  const db = getDb();
   const { id: dealId } = await context.params;
   const existing = await db
     .prepare(
-      'SELECT id, status, code_hint AS codeHint, expires_at AS expiresAt, user_id AS userId FROM redemptions WHERE idempotency_key = ?1',
+      'SELECT id, status, code_hint AS "codeHint", expires_at AS "expiresAt", user_id AS "userId" FROM redemptions WHERE idempotency_key = ?1',
     )
     .bind(idempotencyKey)
     .first<{
@@ -136,9 +137,9 @@ export async function POST(
 
   const deal = await db
     .prepare(`
-    SELECT d.deal_type AS dealType, d.status, d.starts_at AS startsAt, d.ends_at AS endsAt,
-      d.remaining_quantity AS remainingQuantity, d.per_customer_limit AS perCustomerLimit,
-      COUNT(r.id) AS existingClaims
+    SELECT d.deal_type AS "dealType", d.status, d.starts_at AS "startsAt", d.ends_at AS "endsAt",
+      d.remaining_quantity AS "remainingQuantity", d.per_customer_limit AS "perCustomerLimit",
+      COUNT(r.id)::int AS "existingClaims"
     FROM deals d LEFT JOIN redemptions r ON r.deal_id = d.id AND r.user_id = ?2 AND r.status IN ('CLAIMED','COMPLETED')
     WHERE d.id = ?1 GROUP BY d.id
   `)
@@ -196,7 +197,7 @@ export async function POST(
       );
     const slot = await db
       .prepare(
-        'SELECT starts_at AS startsAt, remaining_capacity AS remainingCapacity FROM service_slots WHERE id = ?1 AND deal_id = ?2',
+        'SELECT starts_at AS "startsAt", remaining_capacity AS "remainingCapacity" FROM service_slots WHERE id = ?1 AND deal_id = ?2',
       )
       .bind(parsed.data.slotId, dealId)
       .first<{ startsAt: string; remainingCapacity: number }>();
@@ -218,54 +219,54 @@ export async function POST(
     if (!policy.ok)
       return NextResponse.json({ error: policy }, { status: 409 });
 
-    const results = await db.batch([
-      db
-        .prepare(`UPDATE service_slots SET remaining_capacity = remaining_capacity - 1
+    // One atomic statement: reserve the slot, then cascade the redemption/event/audit
+    // inserts through CTEs that only fire if the row before them actually landed.
+    // (Postgres has no `changes()`/`WHERE EXISTS (SELECT 1 FROM redemptions ...)`
+    // trick like D1/SQLite does — a chained CTE is the atomic equivalent.)
+    const result = await db
+      .prepare(`
+      WITH updated AS (
+        UPDATE service_slots SET remaining_capacity = remaining_capacity - 1
         WHERE id = ?1 AND deal_id = ?2 AND remaining_capacity > 0
-          AND (SELECT COUNT(*) FROM redemptions WHERE deal_id = ?2 AND user_id = ?3 AND status IN ('CLAIMED','COMPLETED')) < (SELECT per_customer_limit FROM deals WHERE id = ?2)`)
-        .bind(parsed.data.slotId, dealId, identity.id),
-      db
-        .prepare(`INSERT INTO redemptions(id, deal_id, branch_id, user_id, slot_id, idempotency_key, code_hash, code_hint, expires_at)
-        SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9 WHERE changes() = 1`)
-        .bind(
-          redemptionId,
+          AND (SELECT COUNT(*) FROM redemptions WHERE deal_id = ?2 AND user_id = ?3 AND status IN ('CLAIMED','COMPLETED')) < (SELECT per_customer_limit FROM deals WHERE id = ?2)
+        RETURNING id
+      ), inserted_redemption AS (
+        INSERT INTO redemptions(id, deal_id, branch_id, user_id, slot_id, idempotency_key, code_hash, code_hint, expires_at)
+        SELECT ?4, ?2, ?5, ?3, ?1, ?6, ?7, ?8, ?9 FROM updated
+        RETURNING id
+      ), inserted_event AS (
+        INSERT INTO redemption_events(id, redemption_id, actor_user_id, type, metadata_json)
+        SELECT ?10, id, ?3, 'CLAIMED', ?11 FROM inserted_redemption
+        RETURNING id
+      )
+      INSERT INTO audit_logs(id, actor_user_id, action, target_type, target_id, after_json)
+      SELECT ?12, ?3, 'redemption.claimed', 'Redemption', ?4, ?13 FROM inserted_event
+    `)
+      .bind(
+        parsed.data.slotId,
+        dealId,
+        identity.id,
+        redemptionId,
+        parsed.data.branchId,
+        idempotencyKey,
+        codeHash,
+        codeHint,
+        expiresAt,
+        eventId,
+        JSON.stringify({
+          branchId: parsed.data.branchId,
+          slotId: parsed.data.slotId,
+        }),
+        auditId,
+        JSON.stringify({
           dealId,
-          parsed.data.branchId,
-          identity.id,
-          parsed.data.slotId,
-          idempotencyKey,
-          codeHash,
-          codeHint,
-          expiresAt,
-        ),
-      db
-        .prepare(`INSERT INTO redemption_events(id, redemption_id, actor_user_id, type, metadata_json)
-        SELECT ?1, ?2, ?3, 'CLAIMED', ?4 WHERE EXISTS (SELECT 1 FROM redemptions WHERE id = ?2)`)
-        .bind(
-          eventId,
-          redemptionId,
-          identity.id,
-          JSON.stringify({
-            branchId: parsed.data.branchId,
-            slotId: parsed.data.slotId,
-          }),
-        ),
-      db
-        .prepare(`INSERT INTO audit_logs(id, actor_user_id, action, target_type, target_id, after_json)
-        SELECT ?1, ?2, 'redemption.claimed', 'Redemption', ?3, ?4 WHERE EXISTS (SELECT 1 FROM redemptions WHERE id = ?3)`)
-        .bind(
-          auditId,
-          identity.id,
-          redemptionId,
-          JSON.stringify({
-            dealId,
-            branchId: parsed.data.branchId,
-            slotId: parsed.data.slotId,
-          }),
-        ),
-    ]);
+          branchId: parsed.data.branchId,
+          slotId: parsed.data.slotId,
+        }),
+      )
+      .run();
 
-    if ((results[1].meta.changes ?? 0) !== 1) {
+    if ((result.meta.changes ?? 0) !== 1) {
       return NextResponse.json(
         {
           error: {
@@ -298,51 +299,48 @@ export async function POST(
   });
   if (!policy.ok) return NextResponse.json({ error: policy }, { status: 409 });
 
-  const results = await db.batch([
-    db
-      .prepare(`UPDATE deals SET
-      remaining_quantity = CASE WHEN remaining_quantity IS NULL THEN NULL ELSE remaining_quantity - 1 END,
-      status = CASE WHEN remaining_quantity = 1 THEN 'SOLD_OUT' ELSE status END,
-      updated_at = CURRENT_TIMESTAMP
+  const result = await db
+    .prepare(`
+    WITH updated AS (
+      UPDATE deals SET
+        remaining_quantity = CASE WHEN remaining_quantity IS NULL THEN NULL ELSE remaining_quantity - 1 END,
+        status = CASE WHEN remaining_quantity = 1 THEN 'SOLD_OUT' ELSE status END,
+        updated_at = CURRENT_TIMESTAMP
       WHERE id = ?1 AND status = 'ACTIVE'
-        AND datetime(starts_at) <= datetime('now') AND datetime(ends_at) > datetime('now')
+        AND starts_at <= ?3 AND ends_at > ?3
         AND (remaining_quantity IS NULL OR remaining_quantity > 0)
-        AND (SELECT COUNT(*) FROM redemptions WHERE deal_id = ?1 AND user_id = ?2 AND status IN ('CLAIMED','COMPLETED')) < per_customer_limit`)
-      .bind(dealId, identity.id),
-    db
-      .prepare(`INSERT INTO redemptions(id, deal_id, branch_id, user_id, idempotency_key, code_hash, code_hint, expires_at)
-      SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8 WHERE changes() = 1`)
-      .bind(
-        redemptionId,
-        dealId,
-        parsed.data.branchId,
-        identity.id,
-        idempotencyKey,
-        codeHash,
-        codeHint,
-        expiresAt,
-      ),
-    db
-      .prepare(`INSERT INTO redemption_events(id, redemption_id, actor_user_id, type, metadata_json)
-      SELECT ?1, ?2, ?3, 'CLAIMED', ?4 WHERE EXISTS (SELECT 1 FROM redemptions WHERE id = ?2)`)
-      .bind(
-        eventId,
-        redemptionId,
-        identity.id,
-        JSON.stringify({ branchId: parsed.data.branchId }),
-      ),
-    db
-      .prepare(`INSERT INTO audit_logs(id, actor_user_id, action, target_type, target_id, after_json)
-      SELECT ?1, ?2, 'redemption.claimed', 'Redemption', ?3, ?4 WHERE EXISTS (SELECT 1 FROM redemptions WHERE id = ?3)`)
-      .bind(
-        auditId,
-        identity.id,
-        redemptionId,
-        JSON.stringify({ dealId, branchId: parsed.data.branchId }),
-      ),
-  ]);
+        AND (SELECT COUNT(*) FROM redemptions WHERE deal_id = ?1 AND user_id = ?2 AND status IN ('CLAIMED','COMPLETED')) < per_customer_limit
+      RETURNING id
+    ), inserted_redemption AS (
+      INSERT INTO redemptions(id, deal_id, branch_id, user_id, idempotency_key, code_hash, code_hint, expires_at)
+      SELECT ?4, ?1, ?5, ?2, ?6, ?7, ?8, ?9 FROM updated
+      RETURNING id
+    ), inserted_event AS (
+      INSERT INTO redemption_events(id, redemption_id, actor_user_id, type, metadata_json)
+      SELECT ?10, id, ?2, 'CLAIMED', ?11 FROM inserted_redemption
+      RETURNING id
+    )
+    INSERT INTO audit_logs(id, actor_user_id, action, target_type, target_id, after_json)
+    SELECT ?12, ?2, 'redemption.claimed', 'Redemption', ?4, ?13 FROM inserted_event
+  `)
+    .bind(
+      dealId,
+      identity.id,
+      toStoredUtc(new Date().toISOString()),
+      redemptionId,
+      parsed.data.branchId,
+      idempotencyKey,
+      codeHash,
+      codeHint,
+      expiresAt,
+      eventId,
+      JSON.stringify({ branchId: parsed.data.branchId }),
+      auditId,
+      JSON.stringify({ dealId, branchId: parsed.data.branchId }),
+    )
+    .run();
 
-  if ((results[1].meta.changes ?? 0) !== 1) {
+  if ((result.meta.changes ?? 0) !== 1) {
     return NextResponse.json(
       {
         error: {

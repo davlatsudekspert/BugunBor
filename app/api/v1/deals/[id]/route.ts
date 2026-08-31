@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { getActiveDealBySlug } from '@/modules/catalog/repository';
 import { toStoredUtc } from '@/lib/time';
-import { ensurePhase1Database, getD1 } from '@/db/runtime';
+import { ensureDatabase, getDb } from '@/db/runtime';
 import {
   canAccessBusiness,
   type BusinessRole,
@@ -60,18 +60,18 @@ type DealRow = {
   endsAt: string;
 };
 
-async function loadDealForEdit(db: ReturnType<typeof getD1>, dealId: string) {
+async function loadDealForEdit(db: ReturnType<typeof getDb>, dealId: string) {
   return db
-    .prepare(`SELECT business_id AS businessId, status, discounted_price_uzs AS discountedPriceUzs,
-        total_quantity AS totalQuantity, remaining_quantity AS remainingQuantity,
-        original_price_uzs AS originalPriceUzs, starts_at AS startsAt, ends_at AS endsAt
+    .prepare(`SELECT business_id AS "businessId", status, discounted_price_uzs AS "discountedPriceUzs",
+        total_quantity AS "totalQuantity", remaining_quantity AS "remainingQuantity",
+        original_price_uzs AS "originalPriceUzs", starts_at AS "startsAt", ends_at AS "endsAt"
       FROM deals WHERE id = ?1 AND deleted_at IS NULL`)
     .bind(dealId)
     .first<DealRow>();
 }
 
 async function assertDealWriteAccess(
-  db: ReturnType<typeof getD1>,
+  db: ReturnType<typeof getDb>,
   businessId: string,
   userId: string,
 ) {
@@ -127,8 +127,8 @@ export async function PATCH(
     patch.startsAt = toStoredUtc(patch.startsAt);
   if (patch.endsAt !== undefined) patch.endsAt = toStoredUtc(patch.endsAt);
 
-  await ensurePhase1Database();
-  const db = getD1();
+  await ensureDatabase();
+  const db = getDb();
   const { id: dealId } = await context.params;
   const deal = await loadDealForEdit(db, dealId);
   if (!deal)
@@ -271,8 +271,8 @@ export async function DELETE(
       { status: 401 },
     );
 
-  await ensurePhase1Database();
-  const db = getD1();
+  await ensureDatabase();
+  const db = getDb();
   const { id: dealId } = await context.params;
   const deal = await loadDealForEdit(db, dealId);
   if (!deal)

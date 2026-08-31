@@ -1,4 +1,5 @@
-import type { getD1 } from '@/db/runtime';
+import type { getDb } from '@/db/runtime';
+import { toStoredUtc } from '@/lib/time';
 
 export type SchedulerTickResult = {
   activated: number;
@@ -15,17 +16,22 @@ export type SchedulerTickResult = {
  *   ACTIVE    -> SOLD_OUT once a PRODUCT's remaining_quantity hits 0, or a SERVICE
  *                          deal has no slot left with remaining_capacity > 0
  *
- * This must run on a recurring trigger (a Cloudflare Cron Trigger calling
- * POST /api/v1/admin/scheduler/tick, or an external scheduler) — see docs/operations.md.
+ * This must run on a recurring trigger (a Railway Cron Job calling
+ * POST /api/v1/admin/scheduler/tick, or any external scheduler) — see docs/operations.md.
  */
 export async function runSchedulerTick(
-  db: ReturnType<typeof getD1>,
+  db: ReturnType<typeof getDb>,
 ): Promise<SchedulerTickResult> {
+  const now = toStoredUtc(new Date().toISOString());
   const results = await db.batch([
-    db.prepare(`UPDATE deals SET status = 'ACTIVE', updated_at = CURRENT_TIMESTAMP
-      WHERE status = 'SCHEDULED' AND datetime(starts_at) <= datetime('now')`),
-    db.prepare(`UPDATE deals SET status = 'EXPIRED', updated_at = CURRENT_TIMESTAMP
-      WHERE status = 'ACTIVE' AND datetime(ends_at) <= datetime('now')`),
+    db
+      .prepare(`UPDATE deals SET status = 'ACTIVE', updated_at = CURRENT_TIMESTAMP
+      WHERE status = 'SCHEDULED' AND starts_at <= ?1`)
+      .bind(now),
+    db
+      .prepare(`UPDATE deals SET status = 'EXPIRED', updated_at = CURRENT_TIMESTAMP
+      WHERE status = 'ACTIVE' AND ends_at <= ?1`)
+      .bind(now),
     db.prepare(`UPDATE deals SET status = 'SOLD_OUT', updated_at = CURRENT_TIMESTAMP
       WHERE status = 'ACTIVE' AND deal_type = 'PRODUCT'
         AND remaining_quantity IS NOT NULL AND remaining_quantity <= 0`),

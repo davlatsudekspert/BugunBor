@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 
 import { DealRowActions } from '@/components/deal-row-actions';
-import { ensurePhase1Database, getD1 } from '@/db/runtime';
+import { ensureDatabase, getDb } from '@/db/runtime';
 
 export const metadata: Metadata = {
   title: 'Biznes dashboard',
@@ -46,17 +46,17 @@ type DealRow = {
 };
 
 export default async function BusinessDashboardPage() {
-  await ensurePhase1Database();
-  const db = getD1();
+  await ensureDatabase();
+  const db = getDb();
   const business = await db
     .prepare(
-      `SELECT id, name, verification_status AS verificationStatus FROM businesses WHERE deleted_at IS NULL ORDER BY CASE verification_status WHEN 'PENDING' THEN 0 ELSE 1 END, created_at DESC LIMIT 1`,
+      `SELECT id, name, verification_status AS "verificationStatus" FROM businesses WHERE deleted_at IS NULL ORDER BY CASE verification_status WHEN 'PENDING' THEN 0 ELSE 1 END, created_at DESC LIMIT 1`,
     )
     .first<{ id: string; name: string; verificationStatus: string }>();
   const metrics = business
     ? await db
         .prepare(
-          `SELECT COUNT(DISTINCT d.id) AS deals, SUM(CASE WHEN d.status='ACTIVE' THEN 1 ELSE 0 END) AS activeDeals, COUNT(r.id) AS redemptions FROM deals d LEFT JOIN redemptions r ON r.deal_id=d.id WHERE d.business_id=?1`,
+          `SELECT COUNT(DISTINCT d.id)::int AS deals, SUM(CASE WHEN d.status='ACTIVE' THEN 1 ELSE 0 END)::int AS "activeDeals", COUNT(r.id)::int AS redemptions FROM deals d LEFT JOIN redemptions r ON r.deal_id=d.id WHERE d.business_id=?1`,
         )
         .bind(business.id)
         .first<{ deals: number; activeDeals: number; redemptions: number }>()
@@ -64,7 +64,7 @@ export default async function BusinessDashboardPage() {
   const statusCounts = business
     ? await db
         .prepare(
-          `SELECT status, COUNT(*) AS count FROM deals WHERE business_id = ?1 AND deleted_at IS NULL GROUP BY status`,
+          `SELECT status, COUNT(*)::int AS count FROM deals WHERE business_id = ?1 AND deleted_at IS NULL GROUP BY status`,
         )
         .bind(business.id)
         .all<{ status: string; count: number }>()
@@ -72,7 +72,7 @@ export default async function BusinessDashboardPage() {
   const deals = business
     ? (
         await db
-          .prepare(`SELECT id, title, deal_type AS dealType, status, discounted_price_uzs AS discountedPriceUzs, starts_at AS startsAt, ends_at AS endsAt
+          .prepare(`SELECT id, title, deal_type AS "dealType", status, discounted_price_uzs AS "discountedPriceUzs", starts_at AS "startsAt", ends_at AS "endsAt"
           FROM deals WHERE business_id = ?1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 30`)
           .bind(business.id)
           .all<DealRow>()
