@@ -7,3 +7,5 @@ export interface MapsProvider { geocode(input: { address: string; city: string }
 export interface ObjectStorageProvider { createUpload(input: { key: string; contentType: string; sizeBytes: number }): Promise<{ uploadUrl: string; expiresAt: string }>; }
 export interface PushNotificationProvider { send(input: { userId: string; title: string; body: string; deepLink?: string }): Promise<DeliveryResult>; }
 export interface NfcStoreIntegrationProvider { getAuthorizationUrl(input: { state: string; codeChallenge: string }): string; exchangeCode(input: { code: string; codeVerifier: string }): Promise<{ subject: string; scopes: string[]; expiresAt: string }>; verifyMembership(subject: string): Promise<{ verified: boolean; membership: string | null; cardStatus: string | null }>; }
+/** See modules/providers/telegram.ts — used for admin login codes rather than an SMS gateway. */
+export interface TelegramLoginCodeProvider { sendLoginCode(input: { chatId: string; code: string; expiresInMinutes: number }): Promise<{ ok: true } | { ok: false; error: string }>; }

@@ -35,8 +35,8 @@ export async function POST(request: Request) {
   const longitudeE6 = parsed.data.city === 'Samarqand' ? 66959200 : parsed.data.city === 'Buxoro' ? 64428200 : 69279300;
 
   await db.batch([
-    db.prepare(`INSERT INTO businesses(id, slug, name, description, city, category_id, phone, verification_status)
-      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'PENDING')`)
+    db.prepare(`INSERT INTO businesses(id, slug, name, description, city, category_id, phone, verification_status, plan_id, subscription_status)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'PENDING', 'plan_free', 'FREE')`)
       .bind(businessId, slug, parsed.data.name, parsed.data.description, parsed.data.city, parsed.data.categoryId, parsed.data.phone),
     db.prepare(`INSERT INTO branches(id, business_id, name, city, address, latitude_e6, longitude_e6, phone, working_hours_json)
       VALUES (?1, ?2, 'Asosiy filial', ?3, ?4, ?5, ?6, ?7, '{"mon-sat":"09:00-20:00"}')`)

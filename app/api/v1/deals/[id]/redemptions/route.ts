@@ -2,20 +2,11 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { ensurePhase1Database, getD1 } from '@/db/runtime';
+import { randomToken, sha256Hex } from '@/lib/crypto';
 import { getRequestIdentity, requireSameOrigin } from '@/modules/auth/identity';
 import { evaluateClaimPolicy } from '@/modules/redemptions/policy';
 
 const bodySchema = z.object({ branchId: z.string().min(3).max(100) });
-
-async function sha256(value: string) {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
-}
-
-function randomToken(bytes = 18) {
-  const value = crypto.getRandomValues(new Uint8Array(bytes));
-  return btoa(String.fromCharCode(...value)).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
-}
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -66,8 +57,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const redemptionId = crypto.randomUUID();
   const eventId = crypto.randomUUID();
   const auditId = crypto.randomUUID();
-  const code = randomToken();
-  const codeHash = await sha256(code);
+  const code = randomToken(18);
+  const codeHash = await sha256Hex(code);
   const codeHint = code.slice(-6).toUpperCase();
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 

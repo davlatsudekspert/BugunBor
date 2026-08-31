@@ -8,9 +8,11 @@ export function ModerationCard({ id, title, businessName, description }: { id: s
   const [message, setMessage] = useState('');
   async function decide(decision: 'APPROVE' | 'REJECT') {
     setStatus('loading');
-    const headers: Record<string, string> = { 'content-type': 'application/json' };
-    if (window.location.hostname === 'localhost') headers['x-bugunbor-demo-user'] = 'usr_moderator_browser';
-    const response = await fetch(`/api/v1/moderation/deals/${id}/decision`, { method: 'POST', headers, body: JSON.stringify({ decision, reason }) });
+    const response = await fetch(`/api/v1/admin/deals/${id}/decision`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ decision, reason }),
+    });
     const result = await response.json() as { data?: { status: string }; error?: { message: string } };
     if (!response.ok) { setStatus('error'); setMessage(result.error?.message ?? 'Qaror saqlanmadi.'); return; }
     setStatus('done'); setMessage(`Yangi holat: ${result.data?.status}`);

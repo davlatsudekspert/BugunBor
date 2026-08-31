@@ -80,6 +80,37 @@ const schemaStatements = [
     after_json TEXT, ip_hash TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(actor_user_id) REFERENCES users(id), FOREIGN KEY(business_id) REFERENCES businesses(id)
   )`,
+  `CREATE TABLE IF NOT EXISTS plans (
+    id TEXT PRIMARY KEY, code TEXT NOT NULL UNIQUE, name TEXT NOT NULL,
+    price_uzs INTEGER NOT NULL DEFAULT 0, billing_period TEXT NOT NULL DEFAULT 'MONTHLY',
+    description TEXT NOT NULL DEFAULT '', features_json TEXT NOT NULL DEFAULT '[]',
+    is_active INTEGER NOT NULL DEFAULT 1, updated_by_id TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
+  // Admin/operator accounts are deliberately separate from the marketplace `users` table:
+  // sign-in is a dedicated phone + Telegram OTP flow, independent of the customer/business identity source.
+  `CREATE TABLE IF NOT EXISTS admin_users (
+    id TEXT PRIMARY KEY, phone TEXT NOT NULL UNIQUE, display_name TEXT NOT NULL,
+    role TEXT NOT NULL CHECK(role IN ('SUPER_ADMIN','MANAGER','ACCOUNTANT')),
+    status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK(status IN ('ACTIVE','SUSPENDED')),
+    telegram_chat_id TEXT, created_by_id TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(created_by_id) REFERENCES admin_users(id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS admin_otp_codes (
+    id TEXT PRIMARY KEY, admin_user_id TEXT NOT NULL, code_hash TEXT NOT NULL,
+    expires_at TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, consumed_at TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(admin_user_id) REFERENCES admin_users(id)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_admin_otp_admin_created ON admin_otp_codes(admin_user_id, created_at)`,
+  `CREATE TABLE IF NOT EXISTS admin_sessions (
+    id TEXT PRIMARY KEY, admin_user_id TEXT NOT NULL, token_hash TEXT NOT NULL UNIQUE,
+    expires_at TEXT NOT NULL, revoked_at TEXT, user_agent TEXT, ip_hash TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(admin_user_id) REFERENCES admin_users(id)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_admin_sessions_admin ON admin_sessions(admin_user_id, revoked_at)`,
 ];
 
 const seedStatements = [
@@ -114,6 +145,23 @@ const seedStatements = [
     ('deal_osh', 'br_besh_yunusobod'), ('deal_cake', 'br_safia_chilonzor'),
     ('deal_books', 'br_book_samarkand'), ('deal_lagmon', 'br_anhor_main'),
     ('deal_pending', 'br_besh_yunusobod')`,
+  `INSERT OR IGNORE INTO plans(id, code, name, price_uzs, billing_period, description, features_json, is_active) VALUES
+    ('plan_free', 'FREE', 'Bepul', 0, 'MONTHLY', 'Yangi bizneslar uchun boshlang‘ich reja.',
+      '["1 ta faol filial","Bir vaqtda 2 tagacha faol aksiya","Standart ko‘rinish"]', 1),
+    ('plan_pro', 'PRO', 'Pro', 199000, 'MONTHLY', 'O‘sayotgan bizneslar uchun kengaytirilgan reja.',
+      '["Cheksiz filial va aksiya","Qidiruvda ustuvor (sponsored) joylashuv","Batafsil analitika","Ustuvor qo‘llab-quvvatlash"]', 1)`,
+];
+
+/**
+ * Columns added after the initial schema; applied with ALTER so existing D1
+ * databases upgrade in place. `plan_id` is intentionally nullable here — SQLite
+ * refuses `ALTER TABLE ADD COLUMN` on a REFERENCES column that also carries a
+ * non-NULL default — and backfilled to 'plan_free' below instead. Every write
+ * path (onboarding, admin plan assignment) always supplies a real plan_id.
+ */
+const columnMigrations: Array<{ table: string; column: string; ddl: string }> = [
+  { table: 'businesses', column: 'plan_id', ddl: `TEXT REFERENCES plans(id)` },
+  { table: 'businesses', column: 'subscription_status', ddl: `TEXT NOT NULL DEFAULT 'FREE'` },
 ];
 
 let ready: Promise<void> | undefined;
@@ -127,8 +175,63 @@ export async function ensurePhase1Database() {
   ready ??= (async () => {
     const db = getD1();
     await db.batch(schemaStatements.map((statement) => db.prepare(statement)));
+    for (const { table, column, ddl } of columnMigrations) {
+      try {
+        await db.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`).run();
+      } catch (error) {
+        // SQLite has no "ADD COLUMN IF NOT EXISTS" — a "duplicate column" error just
+        // means a previous boot already applied this migration. Anything else is a
+        // real problem (bad DDL, missing referenced table) and must not be swallowed,
+        // or every query against the missing column would fail later with a much
+        // more confusing error.
+        if (!(error instanceof Error) || !/duplicate column/i.test(error.message)) throw error;
+      }
+    }
     await db.batch(seedStatements.map((statement) => db.prepare(statement)));
+    // Backfill after seeding plans, so 'plan_free' already exists to reference.
+    await db.prepare(`UPDATE businesses SET plan_id = 'plan_free' WHERE plan_id IS NULL`).run();
+    await seedBootstrapAdmin(db);
     await db.prepare('PRAGMA optimize').run();
   })();
   return ready;
+}
+
+/**
+ * Seeds the first SUPER_ADMIN so a fresh deployment always has one working login.
+ * Configure ADMIN_BOOTSTRAP_PHONE / ADMIN_BOOTSTRAP_TELEGRAM_CHAT_ID before going live —
+ * without a real Telegram chat id this account exists but cannot receive login codes.
+ */
+async function seedBootstrapAdmin(db: D1Database) {
+  const phone = env.ADMIN_BOOTSTRAP_PHONE || '+998900000000';
+  const telegramChatId = env.ADMIN_BOOTSTRAP_TELEGRAM_CHAT_ID || null;
+  await db
+    .prepare(`INSERT INTO admin_users(id, phone, display_name, role, status, telegram_chat_id)
+      VALUES ('admin_bootstrap', ?1, 'Bosh admin', 'SUPER_ADMIN', 'ACTIVE', ?2)
+      ON CONFLICT(id) DO UPDATE SET phone = excluded.phone, telegram_chat_id = excluded.telegram_chat_id, updated_at = CURRENT_TIMESTAMP`)
+    .bind(phone, telegramChatId)
+    .run();
+  await mirrorAdminAsPlatformUser(db, { id: 'admin_bootstrap', displayName: 'Bosh admin', role: 'SUPER_ADMIN' });
+}
+
+/**
+ * `moderation_actions` and `audit_logs` record their actor via a foreign key
+ * into the marketplace `users` table, since that's the shared identity used
+ * by every other actor (moderators, business owners) writing those tables.
+ * Admin-panel accounts live in `admin_users` instead (see modules/admin/auth),
+ * so a lightweight mirror row keeps that foreign key satisfied whenever an
+ * admin performs an action worth auditing. The mirror is intentionally
+ * phone-less (NULL) so it can never collide with a real customer/business
+ * account that happens to share the same phone number.
+ */
+export async function mirrorAdminAsPlatformUser(
+  db: D1Database,
+  input: { id: string; displayName: string; role: 'MANAGER' | 'ACCOUNTANT' | 'SUPER_ADMIN' },
+) {
+  const platformRole = input.role === 'SUPER_ADMIN' ? 'SUPER_ADMIN' : input.role === 'MANAGER' ? 'ADMIN' : 'MODERATOR';
+  await db
+    .prepare(`INSERT INTO users(id, role, display_name)
+      VALUES (?1, ?2, ?3)
+      ON CONFLICT(id) DO UPDATE SET role = excluded.role, display_name = excluded.display_name, updated_at = CURRENT_TIMESTAMP`)
+    .bind(input.id, platformRole, input.displayName)
+    .run();
 }

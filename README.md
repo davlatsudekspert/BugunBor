@@ -25,9 +25,42 @@ npm run build
 ## Structure
 
 - `app/` — public pages, protected workflows and `/api/v1`.
+- `app/admin/` — the operator panel (see below).
 - `modules/` — auth, catalog, redemption and provider business boundaries.
 - `db/` + `drizzle/` — Sites D1 adapter and migration.
 - `docs/` — product specification, architecture, entity model, routes, security and rollout plan.
+
+## Admin panel (`/admin`)
+
+A separate operator panel for running the marketplace day to day: moderating
+deals, verifying/suspending businesses, and pricing plans. It is deliberately
+independent of the customer/business identity system above — sign-in is a
+dedicated **phone number + Telegram one-time code** flow, gated by its own
+session cookie (`bb_admin_session`, httpOnly, 12h expiry).
+
+Three roles, least-privilege by default (`modules/admin/authorization.ts`):
+
+| Role | Can do |
+| --- | --- |
+| **Bosh admin** (`SUPER_ADMIN`) | Everything below, plus add/suspend/promote other admin accounts. |
+| **Menejer** (`MANAGER`) | Moderate deals, verify/reject/suspend businesses. |
+| **Hisobchi** (`ACCOUNTANT`) | Edit plan pricing/features, assign businesses to a plan. |
+
+**First-time setup**, so the panel is never left unreachable:
+
+1. Message your bot (from [@BotFather](https://t.me/BotFather)) from the phone
+   number that should be the first `SUPER_ADMIN`, then read that chat's id
+   from `https://api.telegram.org/bot<token>/getUpdates`.
+2. Set `TELEGRAM_BOT_TOKEN`, `ADMIN_BOOTSTRAP_PHONE` and
+   `ADMIN_BOOTSTRAP_TELEGRAM_CHAT_ID` (see `.env.example`) before deploying.
+   A bootstrap `SUPER_ADMIN` is seeded automatically from these on first boot.
+3. Sign in at `/admin/login`. From **Admin jamoa**, add further managers/
+   accountants — each gets their own phone + Telegram chat id.
+
+Without `TELEGRAM_BOT_TOKEN` configured, login codes are only ever logged to
+the server console in local development (never faked as "delivered" — see
+`modules/providers/telegram.ts`), so the panel is fully testable before a
+real bot is wired up, and never silently insecure in production.
 
 ## Important deployment note
 

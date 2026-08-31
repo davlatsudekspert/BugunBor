@@ -84,9 +84,6 @@ export default async function BusinessDashboardPage() {
               <p className="mt-2 text-slate-600">Tasdiqlash holatini kuzating, so‘ng filial va birinchi aksiyani kiriting. Tenant tekshiruvi har bir yozuvda server tomonida ishlaydi.</p>
               <div className="mt-5 flex flex-wrap gap-2">
                 <a href="/business/onboarding" className="rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white">Profilni to‘ldirish</a>
-                {['MODERATOR', 'ADMIN', 'SUPER_ADMIN'].includes(identity.role) ? (
-                  <a href="/admin/deals" className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold">Moderatsiya navbati</a>
-                ) : null}
               </div>
             </div>
           </>

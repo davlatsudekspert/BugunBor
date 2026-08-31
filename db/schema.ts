@@ -10,6 +10,77 @@ import {
 
 const utcNow = sql`CURRENT_TIMESTAMP`;
 
+export const plans = sqliteTable(
+  'plans',
+  {
+    id: text('id').primaryKey(),
+    code: text('code', { enum: ['FREE', 'PRO'] }).notNull(),
+    name: text('name').notNull(),
+    priceUzs: integer('price_uzs').notNull().default(0),
+    billingPeriod: text('billing_period').notNull().default('MONTHLY'),
+    description: text('description').notNull().default(''),
+    featuresJson: text('features_json').notNull().default('[]'),
+    isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+    updatedById: text('updated_by_id'),
+    createdAt: text('created_at').notNull().default(utcNow),
+    updatedAt: text('updated_at').notNull().default(utcNow),
+  },
+  (table) => [uniqueIndex('idx_plans_code').on(table.code)],
+);
+
+/**
+ * Admin/operator accounts. Deliberately separate from the marketplace `users`
+ * table: sign-in is a dedicated phone + Telegram OTP flow (see modules/admin),
+ * independent of the customer/business identity source used elsewhere.
+ */
+export const adminUsers = sqliteTable(
+  'admin_users',
+  {
+    id: text('id').primaryKey(),
+    phone: text('phone').notNull(),
+    displayName: text('display_name').notNull(),
+    role: text('role', { enum: ['SUPER_ADMIN', 'MANAGER', 'ACCOUNTANT'] }).notNull(),
+    status: text('status', { enum: ['ACTIVE', 'SUSPENDED'] }).notNull().default('ACTIVE'),
+    telegramChatId: text('telegram_chat_id'),
+    createdById: text('created_by_id'),
+    createdAt: text('created_at').notNull().default(utcNow),
+    updatedAt: text('updated_at').notNull().default(utcNow),
+  },
+  (table) => [uniqueIndex('idx_admin_users_phone').on(table.phone)],
+);
+
+export const adminOtpCodes = sqliteTable(
+  'admin_otp_codes',
+  {
+    id: text('id').primaryKey(),
+    adminUserId: text('admin_user_id').notNull().references(() => adminUsers.id, { onDelete: 'cascade' }),
+    codeHash: text('code_hash').notNull(),
+    expiresAt: text('expires_at').notNull(),
+    attempts: integer('attempts').notNull().default(0),
+    consumedAt: text('consumed_at'),
+    createdAt: text('created_at').notNull().default(utcNow),
+  },
+  (table) => [index('idx_admin_otp_admin_created').on(table.adminUserId, table.createdAt)],
+);
+
+export const adminSessions = sqliteTable(
+  'admin_sessions',
+  {
+    id: text('id').primaryKey(),
+    adminUserId: text('admin_user_id').notNull().references(() => adminUsers.id, { onDelete: 'cascade' }),
+    tokenHash: text('token_hash').notNull(),
+    expiresAt: text('expires_at').notNull(),
+    revokedAt: text('revoked_at'),
+    userAgent: text('user_agent'),
+    ipHash: text('ip_hash'),
+    createdAt: text('created_at').notNull().default(utcNow),
+  },
+  (table) => [
+    uniqueIndex('idx_admin_sessions_token_hash').on(table.tokenHash),
+    index('idx_admin_sessions_admin').on(table.adminUserId, table.revokedAt),
+  ],
+);
+
 export const users = sqliteTable(
   'users',
   {
@@ -67,6 +138,7 @@ export const businesses = sqliteTable(
     coverUrl: text('cover_url'),
     verificationStatus: text('verification_status', { enum: ['UNVERIFIED', 'PENDING', 'VERIFIED', 'REJECTED'] }).notNull().default('UNVERIFIED'),
     nfcStoreStatus: text('nfcstore_status', { enum: ['DISCONNECTED', 'PENDING', 'CONNECTED', 'ERROR'] }).notNull().default('DISCONNECTED'),
+    planId: text('plan_id').notNull().default('plan_free').references(() => plans.id),
     subscriptionStatus: text('subscription_status', { enum: ['FREE', 'ACTIVE', 'PAST_DUE', 'CANCELED'] }).notNull().default('FREE'),
     ratingBasisPoints: integer('rating_basis_points').notNull().default(0),
     reviewCount: integer('review_count').notNull().default(0),
