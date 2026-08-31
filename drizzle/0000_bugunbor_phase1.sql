@@ -1,3 +1,17 @@
+CREATE TABLE `admin_announcements` (
+	`id` text PRIMARY KEY NOT NULL,
+	`actor_admin_id` text NOT NULL,
+	`deal_id` text,
+	`message` text NOT NULL,
+	`status` text NOT NULL,
+	`error` text,
+	`telegram_message_id` integer,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	FOREIGN KEY (`actor_admin_id`) REFERENCES `admin_users`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`deal_id`) REFERENCES `deals`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE INDEX `idx_admin_announcements_created` ON `admin_announcements` (`created_at`);--> statement-breakpoint
 CREATE TABLE `admin_otp_codes` (
 	`id` text PRIMARY KEY NOT NULL,
 	`admin_user_id` text NOT NULL,

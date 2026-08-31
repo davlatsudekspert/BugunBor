@@ -9,6 +9,19 @@ export const metadata: Metadata = { title: 'Biznes dashboard', robots: { index: 
 
 type OwnedBusiness = { id: string; name: string; verificationStatus: string; role: string };
 type Metrics = { deals: number; activeDeals: number; redemptions: number };
+type DealRow = { id: string; title: string; status: string; discountPercent: number; createdAt: string };
+
+const dealStatusLabels: Record<string, string> = {
+  DRAFT: 'Qoralama',
+  PENDING_REVIEW: 'Tekshiruvda',
+  SCHEDULED: 'Rejalashtirilgan',
+  ACTIVE: 'Faol',
+  PAUSED: 'To‘xtatilgan',
+  SOLD_OUT: 'Tugadi',
+  EXPIRED: 'Muddati o‘tgan',
+  REJECTED: 'Rad etilgan',
+  ARCHIVED: 'Arxivlangan',
+};
 
 export default async function BusinessDashboardPage() {
   const identity = await getServerIdentity();
@@ -39,6 +52,13 @@ export default async function BusinessDashboardPage() {
         .bind(business.id)
         .first<Metrics>()
     : null;
+
+  const recentDeals = business
+    ? (await getD1()
+        .prepare(`SELECT id, title, status, discount_percent AS discountPercent, created_at AS createdAt FROM deals WHERE business_id = ?1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 8`)
+        .bind(business.id)
+        .all<DealRow>()).results
+    : [];
 
   const cards = [
     { label: 'Faol aksiyalar', value: metrics?.activeDeals ?? 0, icon: Activity },
@@ -80,11 +100,29 @@ export default async function BusinessDashboardPage() {
             </div>
 
             <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 className="text-xl font-black">Keyingi qadam</h2>
-              <p className="mt-2 text-slate-600">Tasdiqlash holatini kuzating, so‘ng filial va birinchi aksiyani kiriting. Tenant tekshiruvi har bir yozuvda server tomonida ishlaydi.</p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                <a href="/business/onboarding" className="rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white">Profilni to‘ldirish</a>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-xl font-black">Aksiyalarim</h2>
+                {business.verificationStatus === 'VERIFIED' ? (
+                  <a href="/business/deals/new" className="rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white">+ Yangi aksiya</a>
+                ) : null}
               </div>
+              {business.verificationStatus !== 'VERIFIED' ? (
+                <p className="mt-2 text-slate-600">Tasdiqlash holatini kuzating — moderator profilingizni tekshirgach, aksiya qo‘sha olasiz.</p>
+              ) : recentDeals.length ? (
+                <ul className="mt-4 divide-y divide-slate-100">
+                  {recentDeals.map((deal) => (
+                    <li key={deal.id} className="flex items-center justify-between gap-4 py-3 text-sm">
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-[#152a3b]">{deal.title}</p>
+                        <p className="text-xs text-slate-400">-{deal.discountPercent}% · {new Date(`${deal.createdAt}Z`).toLocaleDateString('uz-UZ')}</p>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{dealStatusLabels[deal.status] ?? deal.status}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-slate-600">Hali aksiya qo‘shilmagan. Birinchi taklifingizni joylashtiring.</p>
+              )}
             </div>
           </>
         ) : (

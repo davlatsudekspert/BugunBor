@@ -8,16 +8,18 @@ describe('admin panel authorization', () => {
     expect(canAdmin('SUPER_ADMIN', 'admin.deals.moderate')).toBe(true);
   });
 
-  it('lets a manager moderate and verify businesses, but not touch admin accounts or pricing', () => {
+  it('lets a manager moderate, verify businesses and post channel announcements, but not touch admin accounts or pricing', () => {
     expect(canAdmin('MANAGER', 'admin.deals.moderate')).toBe(true);
     expect(canAdmin('MANAGER', 'admin.businesses.manage')).toBe(true);
+    expect(canAdmin('MANAGER', 'admin.announcements.manage')).toBe(true);
     expect(canAdmin('MANAGER', 'admin.team.manage')).toBe(false);
     expect(canAdmin('MANAGER', 'admin.plans.manage')).toBe(false);
   });
 
-  it('lets an accountant manage pricing, but not moderation or admin accounts', () => {
+  it('lets an accountant manage pricing, but not moderation, marketing or admin accounts', () => {
     expect(canAdmin('ACCOUNTANT', 'admin.plans.manage')).toBe(true);
     expect(canAdmin('ACCOUNTANT', 'admin.deals.moderate')).toBe(false);
+    expect(canAdmin('ACCOUNTANT', 'admin.announcements.manage')).toBe(false);
     expect(canAdmin('ACCOUNTANT', 'admin.team.manage')).toBe(false);
   });
 

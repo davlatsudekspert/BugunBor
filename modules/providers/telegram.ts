@@ -1,4 +1,19 @@
-export type TelegramSendResult = { ok: true } | { ok: false; error: string };
+export type TelegramSendResult = { ok: true; messageId?: number } | { ok: false; error: string };
+
+async function callTelegramApi(botToken: string, method: string, payload: Record<string, unknown>): Promise<TelegramSendResult> {
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/${method}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const body = (await response.json().catch(() => null)) as { ok?: boolean; description?: string; result?: { message_id?: number } } | null;
+    if (!response.ok || !body?.ok) return { ok: false, error: body?.description ?? `telegram_http_${response.status}` };
+    return { ok: true, messageId: body.result?.message_id };
+  } catch {
+    return { ok: false, error: 'TELEGRAM_REQUEST_FAILED' };
+  }
+}
 
 export interface TelegramOtpProvider {
   sendLoginCode(input: { chatId: string; code: string; expiresInMinutes: number }): Promise<TelegramSendResult>;
@@ -30,18 +45,32 @@ export function createTelegramOtpProvider(botToken: string | undefined): Telegra
       if (!chatId) return { ok: false, error: 'NO_TELEGRAM_CHAT_ID' };
 
       const text = `BugunBor admin kirish kodi: ${code}\nKod ${expiresInMinutes} daqiqa amal qiladi. Agar bu siz bo‘lmasangiz, xabarni e’tiborsiz qoldiring.`;
-      try {
-        const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ chat_id: chatId, text }),
-        });
-        const payload = await response.json().catch(() => null) as { ok?: boolean; description?: string } | null;
-        if (!response.ok || !payload?.ok) return { ok: false, error: payload?.description ?? `telegram_http_${response.status}` };
+      return callTelegramApi(botToken, 'sendMessage', { chat_id: chatId, text });
+    },
+  };
+}
+
+export interface TelegramChannelProvider {
+  postAnnouncement(input: { channelId: string; text: string }): Promise<TelegramSendResult>;
+}
+
+/**
+ * Posts marketing announcements (a new deal, a promo) to a Telegram channel
+ * the bot administers. Same fail-closed-in-production / log-in-dev contract
+ * as the OTP provider above — see modules/admin for the caller.
+ */
+export function createTelegramChannelProvider(botToken: string | undefined): TelegramChannelProvider {
+  return {
+    async postAnnouncement({ channelId, text }) {
+      if (!botToken) {
+        if (process.env.NODE_ENV === 'production') return { ok: false, error: 'TELEGRAM_BOT_TOKEN_MISSING' };
+        console.info(`[dev] BugunBor channel announcement for ${channelId || '(no channel configured)'}:\n${text}`);
         return { ok: true };
-      } catch {
-        return { ok: false, error: 'TELEGRAM_REQUEST_FAILED' };
       }
+
+      if (!channelId) return { ok: false, error: 'NO_TELEGRAM_CHANNEL_ID' };
+
+      return callTelegramApi(botToken, 'sendMessage', { chat_id: channelId, text, disable_web_page_preview: false });
     },
   };
 }

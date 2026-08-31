@@ -49,7 +49,10 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
             {deals.map((deal) => (
               <article key={deal.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(20,40,55,.06)]">
                 <div className="flex h-28 items-center justify-between bg-[#152a3b] p-5 text-white">
-                  <Badge className="bg-primary text-base font-black text-white">-{deal.discountPercent}%</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-primary text-base font-black text-white">-{deal.discountPercent}%</Badge>
+                    {deal.isSponsored ? <Badge className="border-orange-300 bg-orange-400/20 text-orange-200" variant="outline">Tavsiya etilgan</Badge> : null}
+                  </div>
                   <span className="text-6xl">{deal.categorySlug === 'xaridlar' ? '📚' : '🍽️'}</span>
                 </div>
                 <div className="p-5">

@@ -9,6 +9,7 @@
 - [x] Development payment and NFCStore adapters fail closed in production.
 - [x] Security headers, noindex on private screens and sanitized public errors.
 - [x] Admin panel (`/admin`) gated by phone + Telegram one-time code: hashed OTP codes and session tokens, per-account rate limiting and attempt lockout, httpOnly session cookie, least-privilege roles (SUPER_ADMIN/MANAGER/ACCOUNTANT) enforced on every page and API route, and a guard against removing the last active SUPER_ADMIN.
+- [x] Anti-fraud on business listings: mandatory, server-enforced acceptance of `/rules` before onboarding or posting a deal; a deal can only be posted once its business is `VERIFIED`; a "discount" whose price is not below the original price is rejected outright rather than merely flagged. Sponsored placement is likewise enforced server-side, not just hidden in the UI, to a business's actual active Pro-plan status.
 - [ ] Production distributed rate limiting and abuse slowdown through Redis.
 - [ ] Full OTP hashing/attempt lockout and HTTP-only session rotation for the *customer/business* login (`/login`) — still a stub pending the platform's real OTP provider.
 - [ ] S3 upload content sniffing, malware scan and image re-encoding.

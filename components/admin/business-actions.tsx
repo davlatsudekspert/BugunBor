@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BadgeCheck, Ban, CheckCircle2, LoaderCircle, RotateCcw } from 'lucide-react';
+import { BadgeCheck, Ban, CheckCircle2, LoaderCircle, RotateCcw, Sparkles } from 'lucide-react';
 
 type Business = {
   id: string;
@@ -15,6 +15,8 @@ type Business = {
   createdAt: string;
 };
 
+type ActiveDeal = { id: string; title: string; isSponsored: number };
+
 const statusStyles: Record<string, string> = {
   VERIFIED: 'bg-emerald-50 text-emerald-700',
   PENDING: 'bg-amber-50 text-amber-700',
@@ -22,13 +24,28 @@ const statusStyles: Record<string, string> = {
   UNVERIFIED: 'bg-slate-100 text-slate-600',
 };
 
-export function BusinessActions({ business, plans, canManage, canManagePlan }: { business: Business; plans: Array<{ id: string; name: string }>; canManage: boolean; canManagePlan: boolean }) {
+export function BusinessActions({
+  business,
+  plans,
+  canManage,
+  canManagePlan,
+  activeDeals,
+}: {
+  business: Business;
+  plans: Array<{ id: string; name: string }>;
+  canManage: boolean;
+  canManagePlan: boolean;
+  activeDeals: ActiveDeal[];
+}) {
   const router = useRouter();
   const [verificationStatus, setVerificationStatus] = useState(business.verificationStatus);
   const [planId, setPlanId] = useState(business.planId);
   const [subscriptionStatus, setSubscriptionStatus] = useState(business.subscriptionStatus);
-  const [busy, setBusy] = useState<'decision' | 'plan' | null>(null);
+  const [sponsored, setSponsored] = useState<Record<string, boolean>>(Object.fromEntries(activeDeals.map((deal) => [deal.id, Boolean(deal.isSponsored)])));
+  const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState('');
+
+  const isProActive = planId === 'plan_pro' && subscriptionStatus === 'ACTIVE';
 
   async function decide(decision: 'VERIFY' | 'REJECT' | 'SUSPEND' | 'REINSTATE') {
     const reason = window.prompt('Qaror sababini yozing (kamida 10 belgi):');
@@ -58,6 +75,21 @@ export function BusinessActions({ business, plans, canManage, canManagePlan }: {
     const result = (await response.json()) as { error?: { message: string } };
     setBusy(null);
     if (!response.ok) { setError(result.error?.message ?? 'Reja saqlanmadi.'); return; }
+    router.refresh();
+  }
+
+  async function toggleSponsor(dealId: string, next: boolean) {
+    setBusy(dealId);
+    setError('');
+    const response = await fetch(`/api/v1/admin/deals/${dealId}/sponsor`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sponsored: next }),
+    });
+    const result = (await response.json()) as { error?: { message: string } };
+    setBusy(null);
+    if (!response.ok) { setError(result.error?.message ?? 'O‘zgartirilmadi.'); return; }
+    setSponsored((current) => ({ ...current, [dealId]: next }));
     router.refresh();
   }
 
@@ -114,6 +146,26 @@ export function BusinessActions({ business, plans, canManage, canManagePlan }: {
           <span className="text-xs font-semibold text-slate-500">Reja: {business.planName}</span>
         )}
       </div>
+
+      {canManage && activeDeals.length ? (
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">
+            <Sparkles className="size-3.5 text-orange-400" /> Qidiruvda ustuvor joylashuv {isProActive ? null : <span className="font-normal normal-case text-slate-400">(faqat faol Pro obuna uchun)</span>}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {activeDeals.map((deal) => {
+              const isSponsored = sponsored[deal.id] ?? false;
+              const disabled = busy !== null || (!isSponsored && !isProActive);
+              return (
+                <label key={deal.id} className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${isSponsored ? 'border-orange-300 bg-orange-50 text-orange-700' : 'border-slate-200 text-slate-600'} ${disabled && !isSponsored ? 'opacity-50' : ''}`}>
+                  <input type="checkbox" checked={isSponsored} disabled={disabled} onChange={(event) => toggleSponsor(deal.id, event.target.checked)} className="size-3.5" />
+                  {deal.title}
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

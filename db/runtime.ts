@@ -111,6 +111,14 @@ const schemaStatements = [
     FOREIGN KEY(admin_user_id) REFERENCES admin_users(id)
   )`,
   `CREATE INDEX IF NOT EXISTS idx_admin_sessions_admin ON admin_sessions(admin_user_id, revoked_at)`,
+  `CREATE TABLE IF NOT EXISTS admin_announcements (
+    id TEXT PRIMARY KEY, actor_admin_id TEXT NOT NULL, deal_id TEXT,
+    message TEXT NOT NULL, status TEXT NOT NULL CHECK(status IN ('SENT','FAILED')),
+    error TEXT, telegram_message_id INTEGER,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(actor_admin_id) REFERENCES admin_users(id), FOREIGN KEY(deal_id) REFERENCES deals(id)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_admin_announcements_created ON admin_announcements(created_at)`,
 ];
 
 const seedStatements = [

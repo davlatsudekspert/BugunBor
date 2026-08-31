@@ -7,5 +7,7 @@ declare namespace Cloudflare {
     ADMIN_BOOTSTRAP_PHONE?: string;
     /** Telegram chat id (from the bot's getUpdates, after the admin messages the bot) for the bootstrap SUPER_ADMIN. */
     ADMIN_BOOTSTRAP_TELEGRAM_CHAT_ID?: string;
+    /** Channel id (e.g. "@bugunbor" or "-100…") the bot posts admin announcements/promotions to. The bot must be an admin of that channel. */
+    TELEGRAM_ANNOUNCE_CHANNEL_ID?: string;
   }
 }

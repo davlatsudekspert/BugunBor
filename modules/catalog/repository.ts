@@ -24,6 +24,7 @@ export type DealCardRecord = {
   latitudeE6: number;
   longitudeE6: number;
   phone: string | null;
+  isSponsored: boolean;
 };
 
 const selectDeal = `
@@ -36,7 +37,8 @@ const selectDeal = `
     d.discount_percent AS discountPercent, d.ends_at AS endsAt,
     d.remaining_quantity AS remainingQuantity, d.status,
     c.slug AS categorySlug, br.working_hours_json AS workingHoursJson,
-    br.latitude_e6 AS latitudeE6, br.longitude_e6 AS longitudeE6, b.phone
+    br.latitude_e6 AS latitudeE6, br.longitude_e6 AS longitudeE6, b.phone,
+    d.is_sponsored AS isSponsored
   FROM deals d
   JOIN businesses b ON b.id = d.business_id
   JOIN categories c ON c.id = d.category_id

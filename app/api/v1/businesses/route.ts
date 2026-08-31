@@ -11,6 +11,7 @@ const businessSchema = z.object({
   city: z.enum(['Toshkent', 'Samarqand', 'Buxoro']),
   address: z.string().trim().min(8).max(240),
   phone: z.string().regex(/^\+998\d{9}$/),
+  acceptedRules: z.literal('on', { message: 'Qoidalarga rozilik shart.' }),
 });
 
 function slugify(value: string) {

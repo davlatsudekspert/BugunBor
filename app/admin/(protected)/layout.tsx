@@ -1,4 +1,4 @@
-import { BadgeCheck, LayoutDashboard, ShieldCheck, ShoppingBag, Users, Wallet } from 'lucide-react';
+import { BadgeCheck, LayoutDashboard, Megaphone, ShieldCheck, ShoppingBag, Users, Wallet } from 'lucide-react';
 
 import { AdminLogoutButton } from '@/components/admin/admin-logout-button';
 import { requireAdminPage } from '@/modules/admin/guard';
@@ -12,6 +12,7 @@ const navItems: Array<{ href: string; label: string; icon: typeof LayoutDashboar
   // Accountants can open Businesses read-only, to assign paid plans, even without moderation rights.
   { href: '/admin/businesses', label: 'Bizneslar', icon: ShoppingBag, visible: (role) => canAdmin(role, 'admin.businesses.manage') || canAdmin(role, 'admin.plans.manage') },
   { href: '/admin/plans', label: 'Rejalar va narxlar', icon: Wallet, visible: (role) => canAdmin(role, 'admin.plans.manage') },
+  { href: '/admin/announcements', label: 'Reklama va e’lonlar', icon: Megaphone, visible: (role) => canAdmin(role, 'admin.announcements.manage') },
   { href: '/admin/team', label: 'Admin jamoa', icon: Users, visible: (role) => canAdmin(role, 'admin.team.manage') },
 ];
 

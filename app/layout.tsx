@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 
+import { AiAssistantWidget } from '@/components/ai-assistant-widget';
+
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -32,7 +34,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="uz-Latn">
-      <body>{children}</body>
+      <body>
+        {children}
+        <AiAssistantWidget />
+      </body>
     </html>
   );
 }

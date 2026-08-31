@@ -31,6 +31,10 @@ export function BusinessOnboardingForm() {
         <label><span className="mb-2 block text-sm font-bold">Asosiy filial manzili</span><input required name="address" minLength={8} placeholder="Ko‘cha, uy" className="h-12 w-full rounded-xl border border-slate-200 px-4" /></label>
         <label className="sm:col-span-2"><span className="mb-2 block text-sm font-bold">Qisqa tavsif</span><textarea required name="description" minLength={20} maxLength={1200} rows={4} placeholder="Mijozlarga biznesingiz haqida tabiiy va aniq ayting…" className="w-full rounded-xl border border-slate-200 p-4" /></label>
       </div>
+      <label className="flex items-start gap-3 rounded-xl bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+        <input required type="checkbox" name="acceptedRules" className="mt-0.5 size-4 shrink-0 rounded border-amber-300" />
+        <span>Men <a href="/rules" target="_blank" className="font-bold underline underline-offset-2">BugunBor qoidalariga</a> roziman: barcha ma’lumot va narxlar rost bo‘lishi shart. Yolg‘on yoki aldovchi ma’lumot aniqlansa, profil to‘xtatiladi yoki bloklanadi.</span>
+      </label>
       {state === 'error' ? <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{message}</p> : null}
       <button disabled={state === 'loading'} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 font-bold text-white disabled:opacity-60">{state === 'loading' ? <LoaderCircle className="size-5 animate-spin" /> : null}{state === 'loading' ? 'Yuborilmoqda…' : 'Moderatsiyaga yuborish'}</button>
       <p className="text-center text-xs leading-5 text-slate-500">Yuborish orqali ma’lumotlar tekshirilishiga rozilik bildirasiz. Profil tasdiqlanmaguncha ochiq e’lon qilinmaydi.</p>

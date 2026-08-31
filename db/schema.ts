@@ -81,6 +81,22 @@ export const adminSessions = sqliteTable(
   ],
 );
 
+/** A record of every marketing message posted to the Telegram announcement channel — see modules/admin/auth and app/admin/(protected)/announcements. */
+export const adminAnnouncements = sqliteTable(
+  'admin_announcements',
+  {
+    id: text('id').primaryKey(),
+    actorAdminId: text('actor_admin_id').notNull().references(() => adminUsers.id),
+    dealId: text('deal_id').references(() => deals.id),
+    message: text('message').notNull(),
+    status: text('status', { enum: ['SENT', 'FAILED'] }).notNull(),
+    error: text('error'),
+    telegramMessageId: integer('telegram_message_id'),
+    createdAt: text('created_at').notNull().default(utcNow),
+  },
+  (table) => [index('idx_admin_announcements_created').on(table.createdAt)],
+);
+
 export const users = sqliteTable(
   'users',
   {

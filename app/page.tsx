@@ -200,7 +200,10 @@ export default async function Home() {
             <Card key={deal.id} className="group border-0 py-0 shadow-[0_10px_40px_rgba(25,45,60,.08)] ring-slate-200 transition hover:-translate-y-1 hover:shadow-[0_18px_55px_rgba(25,45,60,.14)]">
               <div className={cn('relative h-48 overflow-hidden bg-gradient-to-br p-5', deal.palette)}>
                 <div className="absolute -bottom-10 -right-6 text-[9rem] leading-none opacity-95 transition-transform duration-500 group-hover:scale-105 group-hover:-rotate-3">{deal.symbol}</div>
-                <Badge className="h-8 bg-white px-3 text-base font-black text-[#152a3b] shadow-sm">{deal.discount}</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge className="h-8 bg-white px-3 text-base font-black text-[#152a3b] shadow-sm">{deal.discount}</Badge>
+                  {deal.isSponsored ? <Badge className="h-8 border-white/40 bg-white/15 px-3 text-white" variant="outline">Tavsiya etilgan</Badge> : null}
+                </div>
                 <a href={`/login?returnTo=${encodeURIComponent(`/deals/${deal.slug}`)}`} className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/95 text-slate-600 shadow-sm transition hover:text-primary focus-visible:ring-2 focus-visible:ring-white" aria-label={`${deal.title} aksiyasini saqlash`}><Heart className="size-5" /></a>
                 <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full bg-[#152a3b]/90 px-3 py-2 text-xs font-bold text-white backdrop-blur"><Clock3 className="size-3.5 text-orange-300" /> {deal.left}</div>
               </div>
@@ -239,6 +242,18 @@ export default async function Home() {
           <a href="/nfcstore" className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-primary">Integratsiya qanday ishlaydi <ArrowRight className="size-4" /></a>
         </div>
       </section>
+
+      <footer className="border-t border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 py-8 text-sm text-slate-500 sm:flex-row sm:justify-between sm:px-6 lg:px-8">
+          <p>© {new Date().getFullYear()} BugunBor</p>
+          <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 font-semibold" aria-label="Qo‘shimcha havolalar">
+            <a className="hover:text-primary" href="/rules">Qoidalar</a>
+            <a className="hover:text-primary" href="/contact">Bog‘lanish</a>
+            <a className="hover:text-primary" href="/business">Biznes uchun</a>
+            <a className="hover:text-primary" href="/nfcstore">NFCStore</a>
+          </nav>
+        </div>
+      </footer>
 
       <nav className="fixed inset-x-3 bottom-3 z-50 grid grid-cols-4 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-[0_12px_50px_rgba(18,43,61,.2)] backdrop-blur md:hidden" aria-label="Mobil navigatsiya">
         <a className="flex flex-col items-center gap-1 rounded-xl py-1.5 text-[10px] font-bold text-primary" href="/"><Search className="size-5" />Topish</a>
