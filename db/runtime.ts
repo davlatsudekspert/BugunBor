@@ -38,11 +38,12 @@ const schemaStatements = [
   `CREATE INDEX IF NOT EXISTS idx_branches_business ON branches(business_id, deleted_at)`,
   `CREATE TABLE IF NOT EXISTS deals (
     id TEXT PRIMARY KEY, business_id TEXT NOT NULL, category_id TEXT NOT NULL, slug TEXT NOT NULL,
-    title TEXT NOT NULL, description TEXT NOT NULL, terms TEXT NOT NULL, original_price_uzs INTEGER,
-    discounted_price_uzs INTEGER NOT NULL, discount_percent INTEGER NOT NULL,
+    deal_type TEXT NOT NULL DEFAULT 'PRODUCT', title TEXT NOT NULL, description TEXT NOT NULL, terms TEXT NOT NULL,
+    original_price_uzs INTEGER, discounted_price_uzs INTEGER NOT NULL, discount_percent INTEGER NOT NULL,
     starts_at TEXT NOT NULL, ends_at TEXT NOT NULL, total_quantity INTEGER, remaining_quantity INTEGER,
     per_customer_limit INTEGER NOT NULL DEFAULT 1, redemption_method TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'DRAFT', is_sponsored INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'DRAFT', attributes_json TEXT NOT NULL DEFAULT '{}',
+    is_sponsored INTEGER NOT NULL DEFAULT 0,
     created_by_id TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, deleted_at TEXT,
     UNIQUE(business_id, slug), FOREIGN KEY(business_id) REFERENCES businesses(id),
@@ -51,19 +52,35 @@ const schemaStatements = [
   )`,
   `CREATE INDEX IF NOT EXISTS idx_deals_public_window ON deals(status, starts_at, ends_at)`,
   `CREATE INDEX IF NOT EXISTS idx_deals_category_status ON deals(category_id, status)`,
+  `CREATE INDEX IF NOT EXISTS idx_deals_type_status ON deals(deal_type, status)`,
   `CREATE TABLE IF NOT EXISTS deal_branches (
     deal_id TEXT NOT NULL, branch_id TEXT NOT NULL, capacity INTEGER,
     PRIMARY KEY(deal_id, branch_id), FOREIGN KEY(deal_id) REFERENCES deals(id), FOREIGN KEY(branch_id) REFERENCES branches(id)
   )`,
+  `CREATE TABLE IF NOT EXISTS deal_images (
+    id TEXT PRIMARY KEY, deal_id TEXT NOT NULL, url TEXT NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0,
+    is_cover INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(deal_id) REFERENCES deals(id) ON DELETE CASCADE
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_deal_images_deal ON deal_images(deal_id, sort_order)`,
+  `CREATE TABLE IF NOT EXISTS service_slots (
+    id TEXT PRIMARY KEY, deal_id TEXT NOT NULL, starts_at TEXT NOT NULL,
+    capacity INTEGER NOT NULL, remaining_capacity INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(deal_id) REFERENCES deals(id) ON DELETE CASCADE,
+    CHECK(remaining_capacity >= 0 AND remaining_capacity <= capacity)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_service_slots_deal_starts ON service_slots(deal_id, starts_at)`,
   `CREATE TABLE IF NOT EXISTS redemptions (
     id TEXT PRIMARY KEY, deal_id TEXT NOT NULL, branch_id TEXT NOT NULL, user_id TEXT NOT NULL,
-    idempotency_key TEXT NOT NULL UNIQUE, code_hash TEXT NOT NULL UNIQUE, code_hint TEXT NOT NULL,
+    slot_id TEXT, idempotency_key TEXT NOT NULL UNIQUE, code_hash TEXT NOT NULL UNIQUE, code_hint TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'CLAIMED', expires_at TEXT NOT NULL, completed_at TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(deal_id) REFERENCES deals(id), FOREIGN KEY(branch_id) REFERENCES branches(id),
-    FOREIGN KEY(user_id) REFERENCES users(id)
+    FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(slot_id) REFERENCES service_slots(id)
   )`,
   `CREATE INDEX IF NOT EXISTS idx_redemptions_deal_status ON redemptions(deal_id, status)`,
+  `CREATE INDEX IF NOT EXISTS idx_redemptions_slot ON redemptions(slot_id)`,
   `CREATE TABLE IF NOT EXISTS redemption_events (
     id TEXT PRIMARY KEY, redemption_id TEXT NOT NULL, actor_user_id TEXT, type TEXT NOT NULL,
     metadata_json TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -82,6 +99,15 @@ const schemaStatements = [
   )`,
 ];
 
+// Columns added after the initial CREATE TABLE definitions above. `CREATE TABLE IF NOT EXISTS`
+// leaves an already-existing table untouched, so these run individually and tolerate
+// "duplicate column" failures on databases that already have them.
+const alterStatements = [
+  `ALTER TABLE deals ADD COLUMN deal_type TEXT NOT NULL DEFAULT 'PRODUCT'`,
+  `ALTER TABLE deals ADD COLUMN attributes_json TEXT NOT NULL DEFAULT '{}'`,
+  `ALTER TABLE redemptions ADD COLUMN slot_id TEXT`,
+];
+
 const seedStatements = [
   `INSERT OR IGNORE INTO users(id, role, phone, email, display_name) VALUES
     ('usr_customer_demo', 'CUSTOMER', '+998901234567', 'customer@bugunbor.dev', 'Aziza Karimova'),
@@ -92,28 +118,39 @@ const seedStatements = [
     ('cat_food', 'taomlar', 'Taomlar', 'utensils', 10),
     ('cat_coffee', 'kofe', 'Kofe', 'coffee', 20),
     ('cat_shop', 'xaridlar', 'Xaridlar', 'shopping-bag', 30),
-    ('cat_delivery', 'yetkazish', 'Yetkazish', 'bike', 40)`,
+    ('cat_delivery', 'yetkazish', 'Yetkazish', 'bike', 40),
+    ('cat_service', 'xizmatlar', 'Xizmatlar', 'scissors', 50)`,
   `INSERT OR IGNORE INTO businesses(id, slug, name, description, city, category_id, phone, verification_status, rating_basis_points, review_count) VALUES
     ('biz_besh_qozon', 'besh-qozon', 'Besh Qozon', 'Toshkent palovi va milliy taomlar.', 'Toshkent', 'cat_food', '+998712005005', 'VERIFIED', 487, 1240),
     ('biz_safia', 'safia', 'Safia', 'Har kuni yangi pishiriq va tortlar.', 'Toshkent', 'cat_food', '+998712020202', 'VERIFIED', 474, 890),
     ('biz_bookuz', 'bookuz', 'Book.uz', 'Kitoblar, sovg‘alar va foydali to‘plamlar.', 'Toshkent', 'cat_shop', '+998712030303', 'VERIFIED', 469, 512),
-    ('biz_anhor', 'anhor-lokomotiv', 'Anhor Lokomotiv', 'Oilaviy restoran va tezkor tushliklar.', 'Toshkent', 'cat_food', '+998712040404', 'VERIFIED', 481, 708)`,
+    ('biz_anhor', 'anhor-lokomotiv', 'Anhor Lokomotiv', 'Oilaviy restoran va tezkor tushliklar.', 'Toshkent', 'cat_food', '+998712040404', 'VERIFIED', 481, 708),
+    ('biz_barber_house', 'barber-house', 'Barber House', 'Erkaklar sartaroshxonasi va soqol olish xizmati.', 'Toshkent', 'cat_service', '+998712050505', 'VERIFIED', 490, 356)`,
   `INSERT OR IGNORE INTO business_members(business_id, user_id, role) VALUES ('biz_besh_qozon', 'usr_owner_demo', 'OWNER')`,
   `INSERT OR IGNORE INTO branches(id, business_id, name, city, address, latitude_e6, longitude_e6, phone, working_hours_json) VALUES
     ('br_besh_yunusobod', 'biz_besh_qozon', 'Yunusobod filiali', 'Toshkent', 'Amir Temur shoh ko‘chasi, 108', 41349300, 69287200, '+998712005005', '{"mon-sun":"10:00-23:00"}'),
     ('br_safia_chilonzor', 'biz_safia', 'Chilonzor 19-kvartal', 'Toshkent', 'Bunyodkor shoh ko‘chasi, 52', 41285000, 69222000, '+998712020202', '{"mon-sun":"08:00-22:00"}'),
     ('br_book_samarkand', 'biz_bookuz', 'Samarqand Darvoza', 'Toshkent', 'Qoratosh ko‘chasi, 5A', 41316800, 69230800, '+998712030303', '{"mon-sun":"10:00-22:00"}'),
-    ('br_anhor_main', 'biz_anhor', 'Anhor filiali', 'Toshkent', 'Labzak ko‘chasi, 12/1', 41331600, 69266400, '+998712040404', '{"mon-sun":"09:00-23:00"}')`,
-  `INSERT OR IGNORE INTO deals(id, business_id, category_id, slug, title, description, terms, original_price_uzs, discounted_price_uzs, discount_percent, starts_at, ends_at, total_quantity, remaining_quantity, per_customer_limit, redemption_method, status, created_by_id) VALUES
-    ('deal_osh', 'biz_besh_qozon', 'cat_food', 'toy-oshi-chegirma', 'To‘y oshi va achchiq-chuchuk', 'Bir porsiya to‘y oshi, salat va issiq non.', 'Faqat Yunusobod filialida. Boshqa chegirmalar bilan qo‘shilmaydi.', 65000, 39000, 40, datetime('now','-1 hour'), datetime('now','+2 hour'), 40, 18, 1, 'ONSITE_CODE', 'ACTIVE', 'usr_owner_demo'),
-    ('deal_cake', 'biz_safia', 'cat_food', 'kechki-tort-chegirmasi', 'Tortlar uchun kechki chegirma', 'Bugun tayyorlangan tanlangan tortlarga maxsus narx.', 'Mavjud assortimentdan. Oldindan buyurtmaga tatbiq etilmaydi.', 120000, 84000, 30, datetime('now','-1 hour'), datetime('now','+4 hour'), 20, 7, 1, 'ONSITE_CODE', 'ACTIVE', 'usr_owner_demo'),
-    ('deal_books', 'biz_bookuz', 'cat_shop', 'biznes-kitoblar-toplami', 'Biznes kitoblar to‘plami', 'Uchta mashhur biznes kitobi bitta jamlanmada.', 'Samarqand Darvoza filialidan olib ketish.', 185000, 129000, 30, datetime('now','-2 hour'), datetime('now','+6 hour'), 25, 11, 1, 'ONLINE_VOUCHER', 'ACTIVE', 'usr_owner_demo'),
-    ('deal_lagmon', 'biz_anhor', 'cat_food', 'lagmon-salat-kombo', 'Lag‘mon va salat kombo', 'Issiq lag‘mon va yangi sabzavotli salat.', 'Restoranda iste’mol qilish uchun. Bir mijozga bir marta.', 65000, 42000, 35, datetime('now','-1 hour'), datetime('now','+50 minute'), 35, 13, 1, 'ONSITE_CODE', 'ACTIVE', 'usr_owner_demo'),
-    ('deal_pending', 'biz_besh_qozon', 'cat_food', 'oilaviy-osh-seti', 'Oilaviy osh seti', 'To‘rt kishilik palov, salatlar va issiq non.', 'Faqat ish kunlari. Oldindan band qilish talab etiladi.', 280000, 210000, 25, datetime('now','+1 hour'), datetime('now','+2 day'), 30, 30, 1, 'ONSITE_CODE', 'PENDING_REVIEW', 'usr_owner_demo')`,
+    ('br_anhor_main', 'biz_anhor', 'Anhor filiali', 'Toshkent', 'Labzak ko‘chasi, 12/1', 41331600, 69266400, '+998712040404', '{"mon-sun":"09:00-23:00"}'),
+    ('br_barber_yakkasaray', 'biz_barber_house', 'Yakkasaroy filiali', 'Toshkent', 'Shota Rustaveli ko‘chasi, 21', 41293400, 69258700, '+998712050505', '{"mon-sun":"09:00-21:00"}')`,
+  `INSERT OR IGNORE INTO deals(id, business_id, category_id, slug, deal_type, title, description, terms, original_price_uzs, discounted_price_uzs, discount_percent, starts_at, ends_at, total_quantity, remaining_quantity, per_customer_limit, redemption_method, status, attributes_json, created_by_id) VALUES
+    ('deal_osh', 'biz_besh_qozon', 'cat_food', 'toy-oshi-chegirma', 'PRODUCT', 'To‘y oshi va achchiq-chuchuk', 'Bir porsiya to‘y oshi, salat va issiq non.', 'Faqat Yunusobod filialida. Boshqa chegirmalar bilan qo‘shilmaydi.', 65000, 39000, 40, datetime('now','-1 hour'), datetime('now','+2 hour'), 40, 18, 1, 'ONSITE_CODE', 'ACTIVE', '{}', 'usr_owner_demo'),
+    ('deal_cake', 'biz_safia', 'cat_food', 'kechki-tort-chegirmasi', 'PRODUCT', 'Tortlar uchun kechki chegirma', 'Bugun tayyorlangan tanlangan tortlarga maxsus narx.', 'Mavjud assortimentdan. Oldindan buyurtmaga tatbiq etilmaydi.', 120000, 84000, 30, datetime('now','-1 hour'), datetime('now','+4 hour'), 20, 7, 1, 'ONSITE_CODE', 'ACTIVE', '{}', 'usr_owner_demo'),
+    ('deal_books', 'biz_bookuz', 'cat_shop', 'biznes-kitoblar-toplami', 'PRODUCT', 'Biznes kitoblar to‘plami', 'Uchta mashhur biznes kitobi bitta jamlanmada.', 'Samarqand Darvoza filialidan olib ketish.', 185000, 129000, 30, datetime('now','-2 hour'), datetime('now','+6 hour'), 25, 11, 1, 'ONLINE_VOUCHER', 'ACTIVE', '{"holati":"Yangi"}', 'usr_owner_demo'),
+    ('deal_lagmon', 'biz_anhor', 'cat_food', 'lagmon-salat-kombo', 'PRODUCT', 'Lag‘mon va salat kombo', 'Issiq lag‘mon va yangi sabzavotli salat.', 'Restoranda iste’mol qilish uchun. Bir mijozga bir marta.', 65000, 42000, 35, datetime('now','-1 hour'), datetime('now','+50 minute'), 35, 13, 1, 'ONSITE_CODE', 'ACTIVE', '{}', 'usr_owner_demo'),
+    ('deal_pending', 'biz_besh_qozon', 'cat_food', 'oilaviy-osh-seti', 'PRODUCT', 'Oilaviy osh seti', 'To‘rt kishilik palov, salatlar va issiq non.', 'Faqat ish kunlari. Oldindan band qilish talab etiladi.', 280000, 210000, 25, datetime('now','+1 hour'), datetime('now','+2 day'), 30, 30, 1, 'ONSITE_CODE', 'PENDING_REVIEW', '{}', 'usr_owner_demo'),
+    ('deal_barber', 'biz_barber_house', 'cat_service', 'premium-soch-oldirish', 'SERVICE', 'Premium soch oldirish + soqol', 'Soch olish, soqol tarashi va issiq sochiq bilan yuz parvarishi.', 'Faqat Yakkasaroy filialida. Bron qilingan vaqtga kelish shart.', 150000, 99000, 34, datetime('now','-1 hour'), datetime('now','+5 hour'), NULL, NULL, 1, 'ONSITE_CODE', 'ACTIVE', '{}', 'usr_owner_demo')`,
   `INSERT OR IGNORE INTO deal_branches(deal_id, branch_id) VALUES
     ('deal_osh', 'br_besh_yunusobod'), ('deal_cake', 'br_safia_chilonzor'),
     ('deal_books', 'br_book_samarkand'), ('deal_lagmon', 'br_anhor_main'),
-    ('deal_pending', 'br_besh_yunusobod')`,
+    ('deal_pending', 'br_besh_yunusobod'), ('deal_barber', 'br_barber_yakkasaray')`,
+  `INSERT OR IGNORE INTO deal_images(id, deal_id, url, sort_order, is_cover) VALUES
+    ('img_osh_1', 'deal_osh', '/og.png', 0, 1),
+    ('img_barber_1', 'deal_barber', '/og.png', 0, 1)`,
+  `INSERT OR IGNORE INTO service_slots(id, deal_id, starts_at, capacity, remaining_capacity) VALUES
+    ('slot_barber_1', 'deal_barber', datetime('now','+1 hour'), 1, 1),
+    ('slot_barber_2', 'deal_barber', datetime('now','+2 hour'), 2, 2),
+    ('slot_barber_3', 'deal_barber', datetime('now','+3 hour'), 1, 0)`,
 ];
 
 let ready: Promise<void> | undefined;
@@ -127,6 +164,17 @@ export async function ensurePhase1Database() {
   ready ??= (async () => {
     const db = getD1();
     await db.batch(schemaStatements.map((statement) => db.prepare(statement)));
+    for (const statement of alterStatements) {
+      try {
+        await db.prepare(statement).run();
+      } catch (error) {
+        if (
+          !(error instanceof Error) ||
+          !/duplicate column name/i.test(error.message)
+        )
+          throw error;
+      }
+    }
     await db.batch(seedStatements.map((statement) => db.prepare(statement)));
     await db.prepare('PRAGMA optimize').run();
   })();

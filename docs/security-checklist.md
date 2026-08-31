@@ -7,6 +7,8 @@
 - [x] Plain redemption token is returned once and only its SHA-256 digest plus short hint is stored.
 - [x] Moderator decisions require a reason and append moderation/audit records.
 - [x] Development payment and NFCStore adapters fail closed in production.
+- [x] Deal edit/delete/stop endpoints re-check tenant membership and the lifecycle edit-lock policy server-side, independent of the UI.
+- [x] The scheduler tick endpoint requires an ADMIN/SUPER_ADMIN session or a `CRON_SECRET` header match — never open to anonymous callers.
 - [x] Security headers, noindex on private screens and sanitized public errors.
 - [ ] Production distributed rate limiting and abuse slowdown through Redis.
 - [ ] Full OTP hashing/attempt lockout and HTTP-only session rotation.

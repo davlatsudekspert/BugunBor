@@ -8,25 +8,31 @@
 
 ## Phase 1 — marketplace core (started in this checkpoint)
 
-- Public discovery, search, categories, business and deal pages.
-- OTP/session contracts, business onboarding, deal draft/submission.
+- Public discovery, search, categories, business and deal pages; PRODUCT/SERVICE deal types with a shared discount/countdown model.
+- OTP/session contracts, business onboarding, deal creation (`POST /api/v1/deals`), and self-service editing under the lifecycle edit-lock policy.
+- Distance-radius location search (`lat`/`lng`/`radiusKm`) alongside city search; region/district reference data deferred (see product-spec.md).
+- The Auto Scheduler (`POST /api/v1/admin/scheduler/tick`): SCHEDULED→ACTIVE, ACTIVE→EXPIRED, ACTIVE→SOLD_OUT (PRODUCT quantity or SERVICE slots) with no business action required.
 - Moderation decisions and auditable state transitions.
-- Atomic, idempotent claim and staff validation.
+- Atomic, idempotent claim and staff validation for both PRODUCT quantity and SERVICE slots.
 - Admin overview and critical tests.
 
 Exit gate: lint, strict typecheck, unit/integration tests and production build all pass.
 
 ## Phase 2 — growth and monetization
 
+- A `region`/`district` reference-data taxonomy with a Viloyat → Shahar/Tuman → Mahalla picker, replacing the free-text `city` field.
+- Auto Skidka: time-tiered pricing with a business-set floor price.
+- The "🔔 Boshlanganda menga ayt" Telegram reminder, and a Telegram Mini App shell over the same API.
 - Immutable wallet ledger, bonus expiration and configurable 15% usage cap.
 - Referral qualification, holds, abuse flags, reversal.
-- Plan entitlement engine, subscriptions, boosts, notifications and analytics.
+- Plan entitlement engine (FREE/PRO/BOOST), subscriptions, boosts, notifications and analytics.
 
 ## Phase 3 — NFCStore boundary
 
 - OIDC discovery/client, external mappings, scoped tokens and rotation.
 - HMAC-signed idempotent webhooks with replay protection and dead letters.
 - Non-guessable `/n/{token}` redirect, NFC attribution and highest-tier welcome bonus.
+- The idle-slot AI recommender (concept §37): surfaces a suggested Auto Skidka window from a business's historically slow hours; the business still confirms before it publishes.
 
 ## Phase 4 — production hardening
 
