@@ -30,14 +30,14 @@ Still only planned: `/business/branches`, `/business/team`, `/business/profile`,
 
 ## Administration
 
-Implemented today, behind its own phone + Telegram OTP session (see `README.md` → Admin panel): `/admin/login`, `/admin` (dashboard), `/admin/deals` (moderation queue), `/admin/businesses` (verify/suspend, plan assignment, Pro-gated sponsored placement), `/admin/plans` (pricing), `/admin/announcements` (post to the Telegram channel), `/admin/team` (SUPER_ADMIN-only account management), `/admin/support` (Murojaatlar — every "Bog‘lanish" form and AI Yordamchi lead lands here as a ticket with name + phone, gated to `admin.support.manage`).
+Implemented today, behind its own phone + Telegram OTP session (see `README.md` → Admin panel): `/admin/login`, `/admin` (dashboard), `/admin/deals` (moderation queue), `/admin/businesses` (verify/suspend, plan assignment, Pro-gated sponsored placement), `/admin/plans` (pricing), `/admin/announcements` (post to the Telegram channel), `/admin/team` (SUPER_ADMIN-only account management), `/admin/support` (Murojaatlar — every "Bog‘lanish" form and AI Yordamchi lead lands here as a ticket with name + phone, gated to `admin.support.manage`), `/admin/promo-codes` (create a PERCENT/FIXED code with an optional use-limit and expiry, toggle one on/off, gated to `admin.promocodes.manage`).
 
 Still only planned: `/admin/users`, `/admin/categories`, `/admin/wallet`, `/admin/referrals`, `/admin/subscriptions`, `/admin/boosts`, `/admin/integrations`, `/admin/webhooks`, `/admin/reports`, `/admin/content`, `/admin/flags`, `/admin/settings`, `/admin/fraud`, `/admin/audit`, `/admin/health`.
 
 ## External API
 
 - `GET /api/v1/deals`, `GET /api/v1/deals/:slug`
-- `POST /api/v1/deals/:id/redemptions`, `POST /api/v1/redemptions/:id/validate`
+- `POST /api/v1/deals/:id/redemptions` (optional `promoCode` in the body applies a promo code's discount on top of the deal price — best-effort: a promo-code edge case never blocks the underlying claim), `POST /api/v1/redemptions/:id/validate`
 - `POST /api/v1/auth/otp/request`, `POST /api/v1/auth/otp/verify`, `DELETE /api/v1/sessions/:id`
 - `POST /api/v1/businesses`, `POST /api/v1/business/deals`
 - `POST /api/v1/business/deals/:id` (edit), `POST /api/v1/business/deals/:id/cancel`, `POST /api/v1/business/deals/:id/stop`
@@ -47,6 +47,7 @@ Still only planned: `/admin/users`, `/admin/categories`, `/admin/wallet`, `/admi
 - `POST /api/v1/admin/deals/:id/decision`, `POST /api/v1/admin/deals/:id/sponsor`
 - `POST /api/v1/admin/businesses/:id/decision`, `POST /api/v1/admin/businesses/:id/plan`
 - `POST /api/v1/admin/plans/:id`, `POST /api/v1/admin/announcements`, `POST /api/v1/admin/team`, `POST /api/v1/admin/team/:id`
+- `POST /api/v1/admin/promo-codes` (create), `POST /api/v1/admin/promo-codes/:id` (toggle active), both gated to `admin.promocodes.manage`
 - `POST /api/v1/favorites` (toggles a deal in/out of the signed-in caller's saved list)
 - `POST /api/v1/reviews` (rate + optionally comment on a business — only for a redemption the caller owns that staff has already marked COMPLETED, one review per redemption)
 - `POST /api/v1/support/tickets` (public — the contact form and the AI Yordamchi lead-capture gate both post here; name + phone required)

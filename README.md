@@ -179,6 +179,22 @@ no way to review a business without a staff-confirmed visit, and
 completed and unreviewed, a "Baholash" (rate) prompt appears next to that
 redemption on `/account/redemptions`.
 
+## Promokodlar (promo codes)
+
+`/admin/promo-codes` (SUPER_ADMIN or ACCOUNTANT, `admin.promocodes.manage`)
+creates a code with a PERCENT or FIXED-amount discount, an optional total
+use limit, and an optional expiry, and can toggle one active/inactive.
+`ClaimButton` on `/deals/[slug]` exposes an optional "Promokodingiz
+bormi?" field; `POST /api/v1/deals/:id/redemptions` validates the code
+(exists, active, not expired, under its use limit, not already used by
+this customer — `promo_code_redemptions` has a `(promo_code_id, user_id)`
+primary key so a code caps at one use per customer regardless of its
+total limit) and computes the discounted final price on top of the deal's
+own price. Applying the code is deliberately best-effort and happens
+*after* the underlying claim already succeeded: a promo-code race or edge
+case only means the discount doesn't land, never that a legitimate claim
+gets rejected because of it.
+
 ## Murojaatlar (support tickets)
 
 `POST /api/v1/support/tickets` is the single intake point for both the
