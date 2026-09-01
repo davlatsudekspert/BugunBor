@@ -155,6 +155,19 @@ configure, and it never fabricates an answer outside that knowledge base
 (it points to `/contact` instead). Swap in a real LLM backend (e.g. Workers
 AI) behind the same UI later if richer answers are needed.
 
+## Mijoz shaxsiy kabineti (customer account & favorites)
+
+`/account` is a signed-in customer's home: profile summary plus a count of
+saved deals and past redemptions, redirecting to `/login` when signed out.
+`/account/saved` lists every deal the customer has favorited (heart icon on
+`/deals/[slug]`, toggled by `POST /api/v1/favorites`) so they can find it
+again later even after it scrolls out of `/discover`; `/account/redemptions`
+lists every deal they've ever claimed with its current status (claimed,
+completed, expired, canceled). The homepage and `/discover` headers show
+"Hisobim" instead of "Kirish" once `getServerIdentity()` resolves a real
+visitor, same mechanism every other authenticated page in this codebase
+already uses — no new session system was introduced.
+
 ## Murojaatlar (support tickets)
 
 `POST /api/v1/support/tickets` is the single intake point for both the

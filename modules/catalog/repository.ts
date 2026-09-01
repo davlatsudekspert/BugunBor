@@ -78,6 +78,39 @@ export async function getActiveDealBySlug(slug: string) {
     .first<DealCardRecord>();
 }
 
+/** Every deal a customer has saved, most recently saved first — including an expired one, so they can see it ended. */
+export async function listFavoriteDeals(userId: string) {
+  await ensurePhase1Database();
+  await syncDealLifecycle();
+  const result = await getD1()
+    .prepare(`${selectDeal}
+      JOIN favorites f ON f.deal_id = d.id
+      WHERE f.user_id = ?1 AND d.deleted_at IS NULL
+      ORDER BY f.created_at DESC`)
+    .bind(userId)
+    .all<DealCardRecord>();
+  return result.results;
+}
+
+export async function isDealFavorited(userId: string, dealId: string) {
+  await ensurePhase1Database();
+  const row = await getD1().prepare(`SELECT 1 FROM favorites WHERE user_id = ?1 AND deal_id = ?2`).bind(userId, dealId).first();
+  return Boolean(row);
+}
+
+/** Adds or removes a favorite and reports which it ended up doing. */
+export async function toggleFavorite(userId: string, dealId: string): Promise<boolean> {
+  await ensurePhase1Database();
+  const db = getD1();
+  const existing = await db.prepare(`SELECT 1 FROM favorites WHERE user_id = ?1 AND deal_id = ?2`).bind(userId, dealId).first();
+  if (existing) {
+    await db.prepare(`DELETE FROM favorites WHERE user_id = ?1 AND deal_id = ?2`).bind(userId, dealId).run();
+    return false;
+  }
+  await db.prepare(`INSERT OR IGNORE INTO favorites(user_id, deal_id) VALUES (?1, ?2)`).bind(userId, dealId).run();
+  return true;
+}
+
 export async function listCategories() {
   await ensurePhase1Database();
   await syncDealLifecycle();

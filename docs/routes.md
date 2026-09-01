@@ -18,7 +18,9 @@
 
 ## Customer
 
-`/account`, `/account/saved`, `/account/following`, `/account/redemptions`, `/account/wallet`, `/account/referrals`, `/account/notifications`, `/account/security`, `/account/settings`.
+Implemented: `/account` (profile summary + counts, redirects to `/login` if signed out), `/account/saved` (favorited deals — a heart toggle on `/deals/[slug]` adds/removes here), `/account/redemptions` (every deal ever claimed, with its status: claimed / completed / expired / canceled).
+
+Still only planned: `/account/following`, `/account/wallet`, `/account/referrals`, `/account/notifications`, `/account/security`, `/account/settings`.
 
 ## Business
 
@@ -45,6 +47,7 @@ Still only planned: `/admin/users`, `/admin/categories`, `/admin/wallet`, `/admi
 - `POST /api/v1/admin/deals/:id/decision`, `POST /api/v1/admin/deals/:id/sponsor`
 - `POST /api/v1/admin/businesses/:id/decision`, `POST /api/v1/admin/businesses/:id/plan`
 - `POST /api/v1/admin/plans/:id`, `POST /api/v1/admin/announcements`, `POST /api/v1/admin/team`, `POST /api/v1/admin/team/:id`
+- `POST /api/v1/favorites` (toggles a deal in/out of the signed-in caller's saved list)
 - `POST /api/v1/support/tickets` (public — the contact form and the AI Yordamchi lead-capture gate both post here; name + phone required)
 - `POST /api/v1/admin/support/:id` (update a ticket's status/resolution note, gated to `admin.support.manage`)
 - `POST /api/v1/integrations/nfcstore/webhooks`, `GET /api/v1/integrations/nfcstore/status`

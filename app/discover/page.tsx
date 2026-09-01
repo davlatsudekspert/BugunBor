@@ -5,6 +5,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { DiscoverDealsGrid } from '@/components/discover-deals-grid';
 import { DiscoverSearchBar } from '@/components/discover-search-bar';
 import { cn } from '@/lib/utils';
+import { getServerIdentity } from '@/modules/auth/identity';
 import { listActiveDeals } from '@/modules/catalog/repository';
 
 export const metadata: Metadata = {
@@ -15,14 +16,17 @@ export const metadata: Metadata = {
 
 export default async function DiscoverPage({ searchParams }: { searchParams: Promise<{ q?: string; region?: string; city?: string; view?: string; sort?: string }> }) {
   const params = await searchParams;
-  const deals = await listActiveDeals({ region: params.region, city: params.city, query: params.q, limit: 24 });
+  const [deals, identity] = await Promise.all([
+    listActiveDeals({ region: params.region, city: params.city, query: params.q, limit: 24 }),
+    getServerIdentity(),
+  ]);
 
   return (
     <main className="min-h-screen bg-[#fffdf9] text-[#152a3b]">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <a href="/" className="text-xl font-black tracking-[-.04em]">Bugun<span className="text-primary">Bor</span></a>
-          <a href="/login" className={cn(buttonVariants({ variant: 'outline' }), 'h-10 rounded-xl px-4')}>Kirish</a>
+          <a href={identity ? '/account' : '/login'} className={cn(buttonVariants({ variant: 'outline' }), 'h-10 rounded-xl px-4')}>{identity ? 'Hisobim' : 'Kirish'}</a>
         </div>
       </header>
 

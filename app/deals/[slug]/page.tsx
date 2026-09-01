@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { BadgeCheck, CalendarClock, Clock3, Heart, MapPin, Navigation, Phone, ShieldCheck, TriangleAlert } from 'lucide-react';
+import { BadgeCheck, CalendarClock, Clock3, MapPin, Navigation, Phone, ShieldCheck, TriangleAlert } from 'lucide-react';
 
 import { ClaimButton } from '@/components/claim-button';
+import { FavoriteButton } from '@/components/favorite-button';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { getActiveDealBySlug } from '@/modules/catalog/repository';
+import { getServerIdentity } from '@/modules/auth/identity';
+import { getActiveDealBySlug, isDealFavorited } from '@/modules/catalog/repository';
 
 const formatPrice = (value: number | null) => value === null ? '' : new Intl.NumberFormat('uz-UZ').format(value);
 
@@ -23,6 +25,8 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const deal = await getActiveDealBySlug(slug);
   if (!deal) notFound();
+  const identity = await getServerIdentity();
+  const favorited = identity ? await isDealFavorited(identity.id, deal.id) : false;
   const directions = `https://www.google.com/maps/dir/?api=1&destination=${deal.latitudeE6 / 1_000_000},${deal.longitudeE6 / 1_000_000}`;
   const share = `https://t.me/share/url?url=${encodeURIComponent(`https://bugunbor.uz/deals/${deal.slug}`)}&text=${encodeURIComponent(`${deal.title} — ${deal.discountPercent}% chegirma`)}`;
 
@@ -49,7 +53,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
             {deal.phone ? <a className={cn(buttonVariants({ variant: 'outline' }), 'h-10 rounded-xl px-4')} href={`tel:${deal.phone}`}><Phone className="mr-2 size-4" /> Qo‘ng‘iroq</a> : null}
             <a className={cn(buttonVariants({ variant: 'outline' }), 'h-10 rounded-xl px-4')} href={directions} target="_blank" rel="noreferrer"><Navigation className="mr-2 size-4" /> Yo‘l ko‘rsatish</a>
             <a className={cn(buttonVariants({ variant: 'outline' }), 'h-10 rounded-xl px-4')} href={share} target="_blank" rel="noreferrer">Ulashish</a>
-            <a className={cn(buttonVariants({ variant: 'ghost' }), 'h-10 rounded-xl px-4')} href={`/login?returnTo=${encodeURIComponent(`/deals/${deal.slug}`)}`}><Heart className="mr-2 size-4" /> Saqlash</a>
+            <FavoriteButton dealId={deal.id} dealSlug={deal.slug} initialFavorited={favorited} isAuthenticated={Boolean(identity)} />
           </div>
           <a href={`/contact?subject=${encodeURIComponent(`Noto‘g‘ri ma’lumot: ${deal.title}`)}`} className="mt-7 inline-flex items-center gap-2 text-sm text-slate-500 underline-offset-4 hover:underline"><TriangleAlert className="size-4" /> Noto‘g‘ri ma’lumot haqida xabar berish</a>
         </section>

@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { UZBEKISTAN_REGIONS } from '@/lib/uzbekistan-regions';
+import { getServerIdentity } from '@/modules/auth/identity';
 import { listActiveDeals, listCategories } from '@/modules/catalog/repository';
 
 const categoryVisuals = {
@@ -55,9 +56,10 @@ function dealVisual(slug: string) {
 }
 
 export default async function Home() {
-  const [dealRecords, categoryRecords] = await Promise.all([
+  const [dealRecords, categoryRecords, identity] = await Promise.all([
     listActiveDeals({ limit: 3 }),
     listCategories(),
+    getServerIdentity(),
   ]);
   const deals = dealRecords.map((deal) => ({
     ...deal,
@@ -94,7 +96,7 @@ export default async function Home() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <a className={cn(buttonVariants({ variant: 'ghost' }), 'hidden sm:inline-flex')} href="/login">Kirish</a>
+            <a className={cn(buttonVariants({ variant: 'ghost' }), 'hidden sm:inline-flex')} href={identity ? '/account' : '/login'}>{identity ? 'Hisobim' : 'Kirish'}</a>
             <a className={cn(buttonVariants(), 'h-10 rounded-xl px-4 shadow-[0_6px_16px_rgba(245,89,55,.18)]')} href="/business/onboarding">Aksiya joylash</a>
           </div>
         </div>
