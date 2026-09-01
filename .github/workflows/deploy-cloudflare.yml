@@ -1,0 +1,110 @@
+name: Deploy to Cloudflare (standalone test)
+
+# Manually-triggered deploy to the operator's own Cloudflare account, separate from the
+# OpenAI Sites-hosted preview this project is normally built for (see .openai/hosting.json).
+# Runs on GitHub's runners so it isn't subject to any sandbox's outbound network policy.
+#
+# Required repo secrets (Settings -> Secrets and variables -> Actions):
+#   CLOUDFLARE_API_TOKEN   - Workers Scripts:Edit + D1:Edit permissions
+#   CLOUDFLARE_ACCOUNT_ID  - found on the Cloudflare dashboard's right sidebar
+# Optional:
+#   TELEGRAM_BOT_TOKEN     - lets the deployed /telegram Mini App actually verify initData;
+#                            without it POST /api/v1/telegram/webapp/auth returns 503
+on:
+  workflow_dispatch:
+    inputs:
+      worker_name:
+        description: 'Cloudflare Worker name'
+        required: false
+        default: 'bugunbor-platform'
+      d1_database_name:
+        description: 'D1 database name (created if it does not already exist)'
+        required: false
+        default: 'bugunbor-platform-db'
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.14.0
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+
+      - name: Rename the worker in the generated config
+        run: |
+          node -e "
+            const fs = require('fs');
+            const path = 'dist/server/wrangler.json';
+            const config = JSON.parse(fs.readFileSync(path, 'utf8'));
+            config.name = '${{ inputs.worker_name }}';
+            fs.writeFileSync(path, JSON.stringify(config));
+          "
+
+      - name: Ensure the D1 database exists and wire its id into the config
+        run: |
+          set -euo pipefail
+          NAME="${{ inputs.d1_database_name }}"
+          EXISTING_ID=$(npx wrangler d1 list --json | node -e "
+            const dbs = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+            const match = dbs.find((db) => db.name === process.argv[1]);
+            process.stdout.write(match ? match.uuid : '');
+          " "$NAME")
+          if [ -z "$EXISTING_ID" ]; then
+            echo "Creating D1 database $NAME..."
+            npx wrangler d1 create "$NAME"
+            EXISTING_ID=$(npx wrangler d1 list --json | node -e "
+              const dbs = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+              const match = dbs.find((db) => db.name === process.argv[1]);
+              process.stdout.write(match ? match.uuid : '');
+            " "$NAME")
+          fi
+          if [ -z "$EXISTING_ID" ]; then
+            echo "::error::Could not resolve the D1 database id for $NAME"
+            exit 1
+          fi
+          echo "Using D1 database $NAME ($EXISTING_ID)"
+          node -e "
+            const fs = require('fs');
+            const path = 'dist/server/wrangler.json';
+            const config = JSON.parse(fs.readFileSync(path, 'utf8'));
+            for (const db of config.d1_databases) {
+              db.database_name = process.argv[1];
+              db.database_id = process.argv[2];
+            }
+            fs.writeFileSync(path, JSON.stringify(config));
+          " "$NAME" "$EXISTING_ID"
+
+      - name: Deploy the Worker
+        id: deploy
+        run: |
+          set -euo pipefail
+          npx wrangler deploy --config dist/server/wrangler.json | tee /tmp/deploy-output.txt
+          URL=$(grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev' /tmp/deploy-output.txt | head -1)
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Set TELEGRAM_BOT_TOKEN secret (if provided)
+        if: ${{ secrets.TELEGRAM_BOT_TOKEN != '' }}
+        run: echo "${{ secrets.TELEGRAM_BOT_TOKEN }}" | npx wrangler secret put TELEGRAM_BOT_TOKEN --config dist/server/wrangler.json
+
+      - name: Summary
+        run: |
+          {
+            echo "### Deployed"
+            echo "- Worker: \`${{ inputs.worker_name }}\`"
+            echo "- URL: ${{ steps.deploy.outputs.url }}"
+            echo "- Telegram Mini App: ${{ steps.deploy.outputs.url }}/telegram"
+            if [ -z "${{ secrets.TELEGRAM_BOT_TOKEN }}" ]; then
+              echo "- ⚠️ TELEGRAM_BOT_TOKEN secret not set — /telegram will 503 until it is."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
