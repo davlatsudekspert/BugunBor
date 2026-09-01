@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { CheckCircle2, LoaderCircle, Phone, QrCode } from 'lucide-react';
 
+import { RedemptionQr } from '@/components/redemption-qr';
+
 type ClaimResponse = {
   data?: { code?: string; codeHint: string; expiresAt: string; finalPriceUzs?: number; promoApplied?: boolean; timeSlotRequested?: boolean; slotBooked?: boolean; replayed: boolean };
   error?: { code: string; message: string };
@@ -80,7 +82,12 @@ export function ClaimButton({ dealId, branchId, phone, timeSlots = [] }: { dealI
         <div className={`mt-3 rounded-xl px-3 py-2 text-sm font-semibold ${state === 'error' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-800'}`}>
           <p>{message}</p>
           {finalPriceUzs !== null ? <p className="mt-1 font-black">Yakuniy narx: {formatPrice(finalPriceUzs)} so‘m</p> : null}
-          {code ? <p className="mt-1 break-all rounded-lg bg-white px-3 py-2 text-center font-mono text-base font-black tracking-wide text-emerald-900">{code}</p> : null}
+          {code ? (
+            <>
+              <p className="mt-1 break-all rounded-lg bg-white px-3 py-2 text-center font-mono text-base font-black tracking-wide text-emerald-900">{code}</p>
+              <RedemptionQr value={code} />
+            </>
+          ) : null}
         </div>
       ) : null}
       {state === 'success' && slotWarning ? (

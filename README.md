@@ -226,6 +226,46 @@ the promo code above, so a slot race never blocks the claim itself, only
 the time in that case, echoing this project's existing "online booking
 still benefits from a confirmation call" guidance on every claim.
 
+## Kamera orqali QR skanerlash (camera QR scanning)
+
+A customer's claim success screen now renders their one-time code as a
+real scannable QR (`components/redemption-qr.tsx`, via the `qrcode`
+package) alongside the plaintext code, and `/business/redemptions`
+(`components/qr-scanner.tsx`) gets a "Kamera bilan skanerlash" toggle:
+it opens the device camera and decodes a frame using the browser-native
+`BarcodeDetector` API where available, falling back to `jsqr` (pure JS,
+no WASM) everywhere else — a match auto-fills and submits the same
+validation the manual-entry field always used, so nothing about the
+actual redemption logic changed, only how the code gets into that field.
+Denied camera permission or no camera hardware falls back cleanly to the
+manual field, which was never removed.
+
+Fixing this surfaced a real, unrelated bug worth calling out on its own:
+`next.config.ts`'s security headers (`Permissions-Policy` among them)
+were never reaching the homepage at all — its `/:path*` rule doesn't match
+the bare root path in this project's framework, so `/` alone shipped with
+none of X-Content-Type-Options, X-Frame-Options, Referrer-Policy,
+Permissions-Policy, COOP or HSTS while every other route correctly got
+them. Fixed by giving `/` its own explicit rule alongside `/:path*`. This
+also means `Permissions-Policy` genuinely blocked the camera outright
+until fixed — `camera=()` denied it everywhere; it's now `camera=(self)`.
+
+**Sandbox verification note**: this environment has no real camera
+hardware. What was verified live: the security-header fix (curl against
+`wrangler dev`, before and after, on both `/` and a nested route); the QR
+*generation* → decode round-trip (`qrcode` encodes a real redemption code,
+`jsqr` decodes the resulting PNG's raw pixels back to the exact same
+string); and, via Playwright with Chromium's fake-camera-device flag, that
+`getUserMedia` now actually succeeds and the scanner's `<video>` element
+renders a live stream once the header change ships (it failed before the
+fix, confirming the header was the actual blocker) — and that the claim
+success screen renders a real, correctly-encoded QR canvas next to the
+code. What could not be verified here is decoding an actual QR pattern
+through that live camera feed end-to-end, since faking a specific video
+frame content (rather than Chromium's built-in test pattern) needs
+hardware or a custom video file this sandbox doesn't have — the decode
+algorithm itself is confirmed correct against a real QR image separately.
+
 ## Murojaatlar (support tickets)
 
 `POST /api/v1/support/tickets` is the single intake point for both the
