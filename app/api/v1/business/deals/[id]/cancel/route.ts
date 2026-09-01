@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { ensurePhase1Database, getD1, syncDealLifecycle } from '@/db/runtime';
-import { getOwnedBusiness, getOwnedDeal } from '@/modules/catalog/ownership';
+import { getManagedDeal } from '@/modules/catalog/ownership';
 import { getRequestIdentity, requireSameOrigin } from '@/modules/auth/identity';
 
 const PRE_LAUNCH_STATUSES = new Set(['DRAFT', 'PENDING_REVIEW', 'REJECTED', 'SCHEDULED']);
@@ -20,12 +20,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   await ensurePhase1Database();
   await syncDealLifecycle();
   const db = getD1();
-  const business = await getOwnedBusiness(db, identity.id);
-  if (!business) return NextResponse.json({ error: { message: 'Ruxsat yo‘q.' } }, { status: 403 });
-
   const { id } = await context.params;
-  const deal = await getOwnedDeal(db, business.id, id);
-  if (!deal) return NextResponse.json({ error: { message: 'Aksiya topilmadi.' } }, { status: 404 });
+  const managed = await getManagedDeal(db, identity.id, id, 'deal.write');
+  if (!managed) return NextResponse.json({ error: { message: 'Aksiya topilmadi.' } }, { status: 404 });
+  const { business, deal } = managed;
   if (!PRE_LAUNCH_STATUSES.has(deal.status)) {
     return NextResponse.json({ error: { message: 'Faol yoki tugagan aksiyani bekor qilib bo‘lmaydi — "To‘xtatish"dan foydalaning.' } }, { status: 409 });
   }

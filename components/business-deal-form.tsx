@@ -1,15 +1,16 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, ArrowRight, CheckCircle2, LoaderCircle, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, ArrowRight, CheckCircle2, ImagePlus, LoaderCircle, Plus, Trash2, X } from 'lucide-react';
 
+import { compressImageToDataUrl } from '@/lib/image';
 import { tashkentLocalToUtcIso } from '@/lib/time';
 
 type Tier = { afterHours: string; discountPercent: string };
 type TimeSlot = { startsAtLocal: string; capacity: string };
 
-export function BusinessDealForm({ branches }: { branches: Array<{ id: string; name: string }> }) {
+export function BusinessDealForm({ businessId, branches }: { businessId: string; branches: Array<{ id: string; name: string }> }) {
   const router = useRouter();
   const [state, setState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
@@ -20,6 +21,9 @@ export function BusinessDealForm({ branches }: { branches: Array<{ id: string; n
   const [minPriceUzs, setMinPriceUzs] = useState('');
   const [tiers, setTiers] = useState<Tier[]>([{ afterHours: '2', discountPercent: '15' }]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([{ startsAtLocal: '', capacity: '1' }]);
+  const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
+  const [imageBusy, setImageBusy] = useState(false);
+  const [imageError, setImageError] = useState('');
 
   const discountPercent = useMemo(() => {
     const original = Number(originalPrice);
@@ -59,6 +63,8 @@ export function BusinessDealForm({ branches }: { branches: Array<{ id: string; n
       timeSlots: listingType === 'SERVICE'
         ? timeSlots.filter((slot) => slot.startsAtLocal !== '').map((slot) => ({ startsAt: tashkentLocalToUtcIso(slot.startsAtLocal), capacity: Number(slot.capacity) || 1 }))
         : undefined,
+      businessId,
+      imageUrl: imageDataUrl ?? undefined,
     };
 
     const response = await fetch('/api/v1/business/deals', {
@@ -71,6 +77,21 @@ export function BusinessDealForm({ branches }: { branches: Array<{ id: string; n
     setState('success');
     setMessage('Aksiya moderatsiyaga yuborildi. Tasdiqlangach faol bo‘ladi.');
     router.refresh();
+  }
+
+  async function pickImage(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = ''; // lets picking the same file again re-fire onChange
+    if (!file) return;
+    setImageError('');
+    setImageBusy(true);
+    try {
+      const compressed = await compressImageToDataUrl(file);
+      if (!compressed) { setImageError('Bu faylni rasm sifatida ochib bo‘lmadi yoki u juda katta — boshqasini tanlang.'); return; }
+      setImageDataUrl(compressed);
+    } finally {
+      setImageBusy(false);
+    }
   }
 
   function updateTier(index: number, field: keyof Tier, value: string) {
@@ -95,6 +116,26 @@ export function BusinessDealForm({ branches }: { branches: Array<{ id: string; n
   return (
     <form action={submit} className="space-y-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(20,40,55,.08)] sm:p-8">
       <div className="grid gap-5 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <span className="mb-2 block text-sm font-bold">Aksiya rasmi (ixtiyoriy)</span>
+          {imageDataUrl ? (
+            <div className="relative h-40 w-full overflow-hidden rounded-xl border border-slate-200 sm:w-64">
+              <img src={imageDataUrl} alt="" className="size-full object-cover" />
+              <button type="button" onClick={() => setImageDataUrl(null)} aria-label="Rasmni olib tashlash" className="absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-black/60 text-white hover:bg-black/80">
+                <X className="size-4" />
+              </button>
+            </div>
+          ) : (
+            <label className="flex h-28 w-full cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-slate-50 text-sm font-semibold text-slate-500 hover:border-primary hover:text-primary sm:w-64">
+              {imageBusy ? <LoaderCircle className="size-6 animate-spin" /> : <ImagePlus className="size-6" />}
+              {imageBusy ? 'Tayyorlanmoqda…' : 'Rasm tanlash'}
+              <input type="file" accept="image/*" onChange={pickImage} disabled={imageBusy} className="hidden" />
+            </label>
+          )}
+          {imageError ? <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-red-700"><AlertTriangle className="size-4" /> {imageError}</p> : null}
+          <p className="mt-2 text-xs text-slate-400">Rasm bo‘lmasa, aksiya standart rangli fon bilan ko‘rinadi.</p>
+        </div>
+
         <label className="sm:col-span-2">
           <span className="mb-2 block text-sm font-bold">Aksiya nomi</span>
           <input required name="title" minLength={3} maxLength={140} placeholder="Masalan, Kechki tort chegirmasi" className="h-12 w-full rounded-xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-primary/25" />

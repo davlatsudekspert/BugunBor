@@ -5,7 +5,7 @@
 | Route | Purpose |
 | --- | --- |
 | `/` | Homepage and active nearby deals (real per-deal distance once location is granted — see below) |
-| `/discover` | Search, viloyat/tuman picker (manual, all 14 regions with real districts — no GPS required), GPS-based "near me" sort and a 1/3/5/10/25/50km radius filter (implemented; map/list switch and cursor pagination still planned) |
+| `/discover` | Search, viloyat/tuman picker (manual, all 14 regions with real districts — no GPS required), GPS-based "near me" sort and a 1/3/5/10/25/50km radius filter (implemented; map/list switch and cursor pagination still planned) — also a "Rejalashtirilgan aksiyalar" section for approved deals that haven't started yet |
 | `/categories/[slug]` | Category discovery |
 | `/businesses/[slug]` | Public business profile and active deals |
 | `/deals/[slug]` | Deal terms, branch, countdown and claim |
@@ -25,7 +25,7 @@ Still only planned: `/account/following`, `/account/wallet`, `/account/referrals
 
 ## Business
 
-Implemented: `/business/onboarding` (requires accepting `/rules`), `/business/dashboard` (own business + recent deals), `/business/deals` (full list — edit, cancel a not-yet-launched deal, or stop a live one), `/business/deals/new` (create a deal, gated to `VERIFIED` businesses and a `deal.write` role, blocks a discount that isn't actually lower than the original price — also where a PRODUCT/SERVICE toggle, Auto Skidka discount tiers, and SERVICE time slots are set up, see `README.md`), `/business/redemptions` (staff enters a customer's code to redeem it — the counterpart to the claim flow, gated to a `redemption.validate` role — plus a panel to record units sold in person so the online stock count stays accurate).
+Implemented: `/business/onboarding` (requires accepting `/rules`; shows any business(es) the caller already has, so submitting again to create another is a deliberate choice, not a surprise), `/business/dashboard` (own business + recent deals — a `?business=` switcher when the caller belongs to more than one), `/business/deals` (full list — edit, cancel a not-yet-launched deal, or stop a live one; also `?business=`-aware), `/business/deals/new` (create a deal, gated to `VERIFIED` businesses and a `deal.write` role, blocks a discount that isn't actually lower than the original price, accepts an optional cover photo — also where a PRODUCT/SERVICE toggle, Auto Skidka discount tiers, and SERVICE time slots are set up, see `README.md`), `/business/redemptions` (staff enters a customer's code to redeem it — the counterpart to the claim flow, gated to a `redemption.validate` role — plus a panel to record units sold in person so the online stock count stays accurate).
 
 Still only planned: `/business/branches`, `/business/team`, `/business/profile`, `/business/media`, `/business/verification`, `/business/billing`, `/business/boosts`, `/business/nfcstore`, `/business/analytics`, `/business/audit`.
 

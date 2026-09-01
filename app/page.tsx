@@ -16,6 +16,7 @@ import {
 
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
+import { CountdownTimer } from '@/components/countdown-timer';
 import { DistanceBadge } from '@/components/distance-badge';
 import {
   Card,
@@ -40,14 +41,6 @@ function formatPrice(value: number | null) {
   return value === null ? '' : new Intl.NumberFormat('uz-UZ').format(value);
 }
 
-function formatTimeLeft(endsAt: string) {
-  const seconds = Math.max(0, Math.floor((new Date(`${endsAt}Z`).getTime() - Date.now()) / 1000));
-  const hours = Math.floor(seconds / 3600).toString().padStart(2, '0');
-  const minutes = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-  const rest = (seconds % 60).toString().padStart(2, '0');
-  return `${hours}:${minutes}:${rest}`;
-}
-
 function dealVisual(slug: string) {
   if (slug.includes('tort')) return { palette: 'from-[#f3ba61] to-[#d9852e]', symbol: '🍰' };
   if (slug.includes('kitob')) return { palette: 'from-[#345a76] to-[#18334c]', symbol: '📚' };
@@ -69,7 +62,6 @@ export default async function Home() {
     price: formatPrice(deal.discountedPriceUzs),
     oldPrice: formatPrice(deal.originalPriceUzs),
     discount: `-${deal.discountPercent}%`,
-    left: formatTimeLeft(deal.endsAt),
     quantity: deal.remainingQuantity === null ? 'Cheklanmagan' : `${deal.remainingQuantity} ta qoldi`,
     ...dealVisual(deal.slug),
   }));
@@ -200,13 +192,20 @@ export default async function Home() {
           {deals.map((deal) => (
             <Card key={deal.id} className="group border-0 py-0 shadow-[0_10px_40px_rgba(25,45,60,.08)] ring-slate-200 transition hover:-translate-y-1 hover:shadow-[0_18px_55px_rgba(25,45,60,.14)]">
               <div className={cn('relative h-48 overflow-hidden bg-gradient-to-br p-5', deal.palette)}>
-                <div className="absolute -bottom-10 -right-6 text-[9rem] leading-none opacity-95 transition-transform duration-500 group-hover:scale-105 group-hover:-rotate-3">{deal.symbol}</div>
-                <div className="flex items-center gap-2">
+                {deal.imageUrl ? (
+                  <>
+                    <img src={deal.imageUrl} alt="" className="absolute inset-0 size-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
+                  </>
+                ) : (
+                  <div className="absolute -bottom-10 -right-6 text-[9rem] leading-none opacity-95 transition-transform duration-500 group-hover:scale-105 group-hover:-rotate-3">{deal.symbol}</div>
+                )}
+                <div className="relative flex items-center gap-2">
                   <Badge className="h-8 bg-white px-3 text-base font-black text-[#152a3b] shadow-sm">{deal.discount}</Badge>
                   {deal.isSponsored ? <Badge className="h-8 border-white/40 bg-white/15 px-3 text-white" variant="outline">Tavsiya etilgan</Badge> : null}
                 </div>
                 <a href={`/login?returnTo=${encodeURIComponent(`/deals/${deal.slug}`)}`} className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/95 text-slate-600 shadow-sm transition hover:text-primary focus-visible:ring-2 focus-visible:ring-white" aria-label={`${deal.title} aksiyasini saqlash`}><Heart className="size-5" /></a>
-                <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full bg-[#152a3b]/90 px-3 py-2 text-xs font-bold text-white backdrop-blur"><Clock3 className="size-3.5 text-orange-300" /> {deal.left}</div>
+                <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full bg-[#152a3b]/90 px-3 py-2 text-xs font-bold text-white backdrop-blur"><Clock3 className="size-3.5 text-orange-300" /> <CountdownTimer endsAt={deal.endsAt} /></div>
               </div>
               <CardHeader>
                 <div className="flex items-center gap-2.5 text-sm font-bold text-slate-700">

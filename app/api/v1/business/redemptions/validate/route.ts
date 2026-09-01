@@ -27,25 +27,30 @@ export async function POST(request: Request) {
 
   await ensurePhase1Database();
   const db = getD1();
-  const business = await getOwnedBusiness(db, identity.id, 'redemption.validate');
-  if (!business) return NextResponse.json({ error: { message: 'Kodlarni tasdiqlash uchun ruxsat yo‘q.' } }, { status: 403 });
 
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: { message: 'Kodni kiriting.' } }, { status: 422 });
 
   // The code is a case-sensitive token (see modules randomToken in lib/crypto.ts) — it must be
   // hashed exactly as the customer received it, never case-normalized, or it will never match.
+  // Look up which business the code's deal actually belongs to first, then check membership
+  // against *that* business — not "whichever business getOwnedBusiness() happens to default
+  // to" (its most recently joined membership), which would reject a perfectly valid code the
+  // moment staff belonged to more than one business.
   const codeHash = await sha256Hex(parsed.data.code.trim());
   const redemption = await db
-    .prepare(`SELECT r.id, r.status, r.expires_at AS expiresAt, d.title AS dealTitle, br.name AS branchName
+    .prepare(`SELECT r.id, r.status, r.expires_at AS expiresAt, d.title AS dealTitle, br.name AS branchName, br.business_id AS businessId
       FROM redemptions r
       JOIN deals d ON d.id = r.deal_id
       JOIN branches br ON br.id = r.branch_id
-      WHERE r.code_hash = ?1 AND br.business_id = ?2`)
-    .bind(codeHash, business.id)
-    .first<{ id: string; status: string; expiresAt: string; dealTitle: string; branchName: string }>();
+      WHERE r.code_hash = ?1`)
+    .bind(codeHash)
+    .first<{ id: string; status: string; expiresAt: string; dealTitle: string; branchName: string; businessId: string }>();
 
   if (!redemption) return NextResponse.json({ error: { code: 'NOT_FOUND', message: 'Kod noto‘g‘ri yoki bu biznesga tegishli emas.' } }, { status: 404 });
+
+  const business = await getOwnedBusiness(db, identity.id, 'redemption.validate', redemption.businessId);
+  if (!business) return NextResponse.json({ error: { message: 'Kodlarni tasdiqlash uchun ruxsat yo‘q.' } }, { status: 403 });
   if (redemption.status === 'COMPLETED') return NextResponse.json({ error: { code: 'ALREADY_USED', message: 'Bu kod allaqachon ishlatilgan.' } }, { status: 409 });
   if (redemption.status !== 'CLAIMED') return NextResponse.json({ error: { code: 'INVALID_STATE', message: 'Bu kod endi amal qilmaydi.' } }, { status: 409 });
   if (new Date(`${redemption.expiresAt}Z`) <= new Date()) return NextResponse.json({ error: { code: 'EXPIRED', message: 'Kod muddati o‘tgan.' } }, { status: 409 });

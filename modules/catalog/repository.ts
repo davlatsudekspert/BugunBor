@@ -17,6 +17,7 @@ export type DealCardRecord = {
   originalPriceUzs: number | null;
   discountedPriceUzs: number;
   discountPercent: number;
+  startsAt: string;
   endsAt: string;
   remainingQuantity: number | null;
   status: string;
@@ -27,6 +28,7 @@ export type DealCardRecord = {
   phone: string | null;
   isSponsored: boolean;
   listingType: 'PRODUCT' | 'SERVICE';
+  imageUrl: string | null;
 };
 
 const selectDeal = `
@@ -36,11 +38,11 @@ const selectDeal = `
     br.id AS branchId, br.name AS branchName, br.address, br.city,
     d.original_price_uzs AS originalPriceUzs,
     d.discounted_price_uzs AS discountedPriceUzs,
-    d.discount_percent AS discountPercent, d.ends_at AS endsAt,
+    d.discount_percent AS discountPercent, d.starts_at AS startsAt, d.ends_at AS endsAt,
     d.remaining_quantity AS remainingQuantity, d.status,
     c.slug AS categorySlug, br.working_hours_json AS workingHoursJson,
     br.latitude_e6 AS latitudeE6, br.longitude_e6 AS longitudeE6, b.phone,
-    d.is_sponsored AS isSponsored, d.listing_type AS listingType
+    d.is_sponsored AS isSponsored, d.listing_type AS listingType, d.image_url AS imageUrl
   FROM deals d
   JOIN businesses b ON b.id = d.business_id
   JOIN categories c ON c.id = d.category_id
@@ -65,6 +67,30 @@ export async function listActiveDeals(input: { region?: string; city?: string; q
       ORDER BY d.is_sponsored DESC, datetime(d.ends_at) ASC
       LIMIT ?4`)
     .bind(region, city, query, limit)
+    .all<DealCardRecord>();
+  return result.results;
+}
+
+/**
+ * Deals a moderator has approved but that haven't opened yet (status SCHEDULED, starts_at in
+ * the future) — approved, real, and worth a customer's anticipation, but invisible everywhere
+ * else on the site until now: listActiveDeals only ever shows status = 'ACTIVE'. Surfaced in
+ * its own "Rejalashtirilgan" section (see /discover) rather than mixed into the active grid,
+ * since these can't be claimed yet.
+ */
+export async function listUpcomingDeals(input: { region?: string; city?: string; limit?: number } = {}) {
+  await ensurePhase1Database();
+  await syncDealLifecycle();
+  const region = input.region?.trim() || 'Toshkent shahri';
+  const city = input.city?.trim() || '';
+  const limit = Math.min(Math.max(input.limit ?? 12, 1), 50);
+  const result = await getD1()
+    .prepare(`${selectDeal}
+      WHERE d.status = 'SCHEDULED' AND d.deleted_at IS NULL AND datetime(d.starts_at) > datetime('now')
+        AND ((?2 = '' AND br.region = ?1) OR (?2 != '' AND br.city = ?2))
+      ORDER BY datetime(d.starts_at) ASC
+      LIMIT ?3`)
+    .bind(region, city, limit)
     .all<DealCardRecord>();
   return result.results;
 }

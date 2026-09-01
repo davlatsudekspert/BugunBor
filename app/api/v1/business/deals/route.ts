@@ -23,6 +23,11 @@ const dealSchema = z
     acceptedRules: z.literal('on', { message: 'Qoidalarga rozilik shart.' }),
     listingType: z.enum(['PRODUCT', 'SERVICE']).default('PRODUCT'),
     minPriceUzs: z.coerce.number().int().min(0).optional(),
+    businessId: z.string().min(1).max(100).optional(),
+    // A compressed JPEG data URL — see lib/image.ts's compressImageToDataUrl(), which is the
+    // only thing that ever produces one client-side. The length cap mirrors its own, as a
+    // second, server-side backstop rather than trusting the client did its job.
+    imageUrl: z.string().regex(/^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/).max(900_000).optional(),
     autoDiscountTiers: z.array(z.object({ afterHours: z.coerce.number().min(0).max(1000), discountPercent: z.coerce.number().int().min(1).max(95) })).max(6).optional(),
     timeSlots: z.array(z.object({ startsAt: z.iso.datetime({ offset: true }), capacity: z.coerce.number().int().min(1).max(500) })).max(50).optional(),
   })
@@ -67,14 +72,18 @@ export async function POST(request: Request) {
 
   await ensurePhase1Database();
   const db = getD1();
-  const business = await getOwnedBusiness(db, identity.id);
+
+  const parsed = dealSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: { message: parsed.error.issues[0]?.message ?? 'Ma’lumotlarni tekshiring.' } }, { status: 422 });
+
+  // ?business=/a hidden form field lets an owner of more than one business pick which one —
+  // omitting it falls back to the newest membership, same as before, so a single-business
+  // owner sees no change.
+  const business = await getOwnedBusiness(db, identity.id, 'deal.write', parsed.data.businessId);
   if (!business) return NextResponse.json({ error: { message: 'Aksiya qo‘shish uchun ruxsat yo‘q.' } }, { status: 403 });
   if (business.verificationStatus !== 'VERIFIED') {
     return NextResponse.json({ error: { message: 'Aksiya qo‘shish uchun avval biznes profili moderator tomonidan tasdiqlanishi kerak.' } }, { status: 403 });
   }
-
-  const parsed = dealSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: { message: parsed.error.issues[0]?.message ?? 'Ma’lumotlarni tekshiring.' } }, { status: 422 });
 
   const branch = await db.prepare('SELECT id FROM branches WHERE id = ?1 AND business_id = ?2 AND deleted_at IS NULL').bind(parsed.data.branchId, business.id).first<{ id: string }>();
   if (!branch) return NextResponse.json({ error: { message: 'Filial ushbu biznesga tegishli emas.' } }, { status: 422 });
@@ -114,8 +123,8 @@ export async function POST(request: Request) {
 
   await db.batch([
     db
-      .prepare(`INSERT INTO deals(id, business_id, category_id, slug, title, description, terms, original_price_uzs, discounted_price_uzs, discount_percent, starts_at, ends_at, total_quantity, remaining_quantity, per_customer_limit, redemption_method, status, created_by_id, listing_type, min_price_uzs)
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?13, ?14, ?15, 'PENDING_REVIEW', ?16, ?17, ?18)`)
+      .prepare(`INSERT INTO deals(id, business_id, category_id, slug, title, description, terms, original_price_uzs, discounted_price_uzs, discount_percent, starts_at, ends_at, total_quantity, remaining_quantity, per_customer_limit, redemption_method, status, created_by_id, listing_type, min_price_uzs, image_url)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?13, ?14, ?15, 'PENDING_REVIEW', ?16, ?17, ?18, ?19)`)
       .bind(
         dealId,
         business.id,
@@ -135,6 +144,7 @@ export async function POST(request: Request) {
         identity.id,
         parsed.data.listingType,
         parsed.data.minPriceUzs ?? null,
+        parsed.data.imageUrl ?? null,
       ),
     db.prepare(`INSERT INTO deal_branches(deal_id, branch_id) VALUES (?1, ?2)`).bind(dealId, parsed.data.branchId),
     db

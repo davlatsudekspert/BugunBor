@@ -4,9 +4,10 @@ import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { DiscoverDealsGrid } from '@/components/discover-deals-grid';
 import { DiscoverSearchBar } from '@/components/discover-search-bar';
+import { UpcomingDealsSection } from '@/components/upcoming-deals-section';
 import { cn } from '@/lib/utils';
 import { getServerIdentity } from '@/modules/auth/identity';
-import { listActiveDeals } from '@/modules/catalog/repository';
+import { listActiveDeals, listUpcomingDeals } from '@/modules/catalog/repository';
 
 export const metadata: Metadata = {
   title: 'Faol aksiyalarni topish',
@@ -16,8 +17,9 @@ export const metadata: Metadata = {
 
 export default async function DiscoverPage({ searchParams }: { searchParams: Promise<{ q?: string; region?: string; city?: string; view?: string; sort?: string }> }) {
   const params = await searchParams;
-  const [deals, identity] = await Promise.all([
+  const [deals, upcomingDeals, identity] = await Promise.all([
     listActiveDeals({ region: params.region, city: params.city, query: params.q, limit: 24 }),
+    listUpcomingDeals({ region: params.region, city: params.city, limit: 6 }),
     getServerIdentity(),
   ]);
 
@@ -41,6 +43,8 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <DiscoverDealsGrid deals={deals} initialSort={params.sort === 'near' ? 'near' : undefined} />
       </section>
+
+      <UpcomingDealsSection deals={upcomingDeals} />
     </main>
   );
 }

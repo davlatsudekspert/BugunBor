@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, Ban, LoaderCircle, Pencil, StopCircle } from 'lucide-react';
+import { AlertTriangle, Ban, ImagePlus, LoaderCircle, Pencil, StopCircle } from 'lucide-react';
 
 import { dealStatusLabels, dealStatusStyles, PRE_LAUNCH_STATUSES } from '@/lib/deal-status';
+import { compressImageToDataUrl } from '@/lib/image';
 import { storedUtcToTashkentLocalInput, tashkentLocalToUtcIso } from '@/lib/time';
 
 type ManagedDeal = {
@@ -18,6 +19,7 @@ type ManagedDeal = {
   endsAt: string;
   totalQuantity: number | null;
   remainingQuantity: number | null;
+  imageUrl: string | null;
 };
 
 const formatPrice = (value: number | null) => (value === null ? '' : new Intl.NumberFormat('uz-UZ').format(value));
@@ -33,6 +35,8 @@ export function DealManagerCard({ deal }: { deal: ManagedDeal }) {
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
+  const [imageBusy, setImageBusy] = useState(false);
 
   const isPreLaunch = PRE_LAUNCH_STATUSES.has(deal.status);
   const isLive = deal.status === 'ACTIVE';
@@ -80,6 +84,8 @@ export function DealManagerCard({ deal }: { deal: ManagedDeal }) {
       const endsAtLocal = textField(formData, 'endsAt'); if (endsAtLocal) payload.endsAt = tashkentLocalToUtcIso(endsAtLocal);
     }
 
+    if (imageDataUrl) payload.imageUrl = imageDataUrl;
+
     if (Object.keys(payload).length === 0) { setBusy(false); setEditing(false); return; }
 
     const response = await fetch(`/api/v1/business/deals/${deal.id}`, {
@@ -91,23 +97,46 @@ export function DealManagerCard({ deal }: { deal: ManagedDeal }) {
     setBusy(false);
     if (!response.ok) { setError(result.error?.message ?? 'Saqlanmadi.'); return; }
     setEditing(false);
+    setImageDataUrl(null);
     router.refresh();
+  }
+
+  async function pickImage(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setError('');
+    setImageBusy(true);
+    try {
+      const compressed = await compressImageToDataUrl(file);
+      if (!compressed) { setError('Bu faylni rasm sifatida ochib bo‘lmadi yoki u juda katta — boshqasini tanlang.'); return; }
+      setImageDataUrl(compressed);
+    } finally {
+      setImageBusy(false);
+    }
   }
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-lg font-black">{deal.title}</p>
-          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500">
-            <span className="font-bold text-primary">-{deal.discountPercent}%</span>
-            <span>{formatPrice(deal.discountedPriceUzs)} so‘m</span>
-            {deal.originalPriceUzs ? <span className="text-slate-400 line-through">{formatPrice(deal.originalPriceUzs)}</span> : null}
-          </p>
-          <p className="mt-1 text-xs text-slate-400">
-            {formatDateTime(deal.startsAt)} → {formatDateTime(deal.endsAt)} ·{' '}
-            {deal.totalQuantity === null ? 'cheklanmagan' : `${deal.remainingQuantity ?? 0}/${deal.totalQuantity} dona qoldi`}
-          </p>
+        <div className="flex min-w-0 gap-3">
+          {deal.imageUrl ? (
+            <img src={deal.imageUrl} alt="" className="size-14 shrink-0 rounded-xl object-cover" />
+          ) : (
+            <div className="grid size-14 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-300"><ImagePlus className="size-5" /></div>
+          )}
+          <div className="min-w-0">
+            <p className="truncate text-lg font-black">{deal.title}</p>
+            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500">
+              <span className="font-bold text-primary">-{deal.discountPercent}%</span>
+              <span>{formatPrice(deal.discountedPriceUzs)} so‘m</span>
+              {deal.originalPriceUzs ? <span className="text-slate-400 line-through">{formatPrice(deal.originalPriceUzs)}</span> : null}
+            </p>
+            <p className="mt-1 text-xs text-slate-400">
+              {formatDateTime(deal.startsAt)} → {formatDateTime(deal.endsAt)} ·{' '}
+              {deal.totalQuantity === null ? 'cheklanmagan' : `${deal.remainingQuantity ?? 0}/${deal.totalQuantity} dona qoldi`}
+            </p>
+          </div>
         </div>
         <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${dealStatusStyles[deal.status] ?? dealStatusStyles.DRAFT}`}>{dealStatusLabels[deal.status] ?? deal.status}</span>
       </div>
@@ -133,6 +162,17 @@ export function DealManagerCard({ deal }: { deal: ManagedDeal }) {
 
       {editing ? (
         <form action={saveEdit} className="mt-4 grid gap-3 border-t border-slate-100 pt-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">Rasmni almashtirish</span>
+            <div className="flex items-center gap-3">
+              <img src={imageDataUrl ?? deal.imageUrl ?? undefined} alt="" className={imageDataUrl || deal.imageUrl ? 'size-14 rounded-lg object-cover' : 'hidden'} />
+              <label className="flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 text-xs font-bold text-slate-600 hover:border-primary hover:text-primary">
+                {imageBusy ? <LoaderCircle className="size-3.5 animate-spin" /> : <ImagePlus className="size-3.5" />}
+                {imageBusy ? 'Tayyorlanmoqda…' : 'Yangi rasm tanlash'}
+                <input type="file" accept="image/*" onChange={pickImage} disabled={imageBusy} className="hidden" />
+              </label>
+            </div>
+          </div>
           {isPreLaunch ? (
             <>
               <label className="sm:col-span-2">

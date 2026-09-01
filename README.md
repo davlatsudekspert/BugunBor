@@ -140,6 +140,58 @@ coordinates; `/discover` adds a 1/3/5/10/25/50km radius filter and sorts by
 that real distance. Until location is granted, no distance is shown at all
 — BugunBor never states a number it doesn't actually know.
 
+**Live countdown, not a frozen clock reading.** The homepage, `/discover`,
+and a deal's own page used to print the exact end time (or, on the
+homepage, an `HH:MM:SS` string) once, computed at render — it never
+changed until the page was reloaded, so a tab left open just showed a
+"frozen" timer indefinitely. `components/countdown-timer.tsx` is a small
+client component that ticks every second instead, so "Tugashiga qoldi"
+actually counts down live everywhere a deal's remaining time is shown.
+
+**Deal cover photos.** `components/business-deal-form.tsx` (create) and
+`components/business-deal-manager-card.tsx` (edit, any time — cosmetic,
+not price/quantity/date) let a business attach a photo. There's no S3/R2
+object store wired up for this app (`.openai/hosting.json`'s `r2` is
+`null`), so `lib/image.ts` downscales the picked file client-side into a
+compressed JPEG data URL (capped at ~650KB raw / 900KB encoded — comfortably
+under D1's row-size limit) and it's stored directly in `deals.image_url`
+(a column `db/schema.ts` had already documented but `db/runtime.ts` never
+actually created until now). Every place a deal renders — homepage,
+`/discover`, the deal page, saved deals, the business's own deal list —
+shows the real photo when one's set, falling back to the existing
+gradient-and-emoji placeholder otherwise.
+
+**A business owner managing more than one business could lose the older
+one.** Every "which business is this?" lookup (the dashboard, the deals
+list, creating a deal, redemption validation, stopping/canceling/editing a
+deal) picked the caller's *most recently joined* business membership only
+— `modules/catalog/ownership.ts`'s `getOwnedBusiness()`. A second
+membership (a genuinely new business, or an accidental re-submission of
+`/business/onboarding`, which never checked for an existing one) silently
+made every one of those features operate on the new business only; the
+old one — verified, with real deals — became unreachable through the UI
+even though nothing about it had changed. Fixed two ways: (1) an explicit
+`businessId` (via `?business=` on pages, a body field on deal creation) now
+selects which of the caller's businesses is meant, with `/business/dashboard`
+showing a switcher whenever there's more than one; (2) a deal-scoped action
+(edit, stop, cancel, adjust stock) now resolves its business from the deal
+itself first (`getManagedDeal()`), not from "whichever business happens to
+be newest" — the deal ID already says unambiguously which business is
+meant, so there was never a reason to guess. `/business/onboarding` also
+now shows any business(es) the caller already has before the "create a new
+one" form, so a second business is a deliberate choice, not a surprise.
+
+**Rejalashtirilgan aksiyalar (scheduled deals, surfaced).** A deal a
+moderator approved with a future start time goes `SCHEDULED` and — until
+now — stayed completely invisible to customers until the moment it turned
+`ACTIVE`; `listActiveDeals()` only ever selected `status = 'ACTIVE'`.
+`modules/catalog/repository.ts`'s `listUpcomingDeals()` and
+`components/upcoming-deals-section.tsx` surface these on `/discover` in
+their own "Rejalashtirilgan aksiyalar" section (real, approved deals worth
+anticipating — not mixed into the active grid, since they can't be claimed
+yet); the deal's own page shows a "hali boshlanmagan" (not started yet)
+state with its start time instead of a claim button that would just fail.
+
 ## AI Yordamchi
 
 A small FAQ assistant (`components/ai-assistant-widget.tsx`) sits on every

@@ -12,14 +12,19 @@ export const metadata: Metadata = { title: 'Kodni tasdiqlash', robots: { index: 
 
 type ActiveDeal = { id: string; title: string; remainingQuantity: number | null };
 
-export default async function BusinessRedemptionsPage() {
+export default async function BusinessRedemptionsPage({ searchParams }: { searchParams: Promise<{ business?: string }> }) {
   const identity = await getServerIdentity();
   if (!identity) redirect('/login?returnTo=%2Fbusiness%2Fredemptions');
 
   await ensurePhase1Database();
   await syncDealLifecycle();
   const db = getD1();
-  const business = await getOwnedBusiness(db, identity.id, 'redemption.validate');
+  const params = await searchParams;
+  // ?business= lets an owner of more than one business pick which one's deals show in the
+  // offline-sale dropdown below — omitting it falls back to the newest membership, same as
+  // before, so a single-business owner sees no change. The code validator itself already
+  // resolves its business from the scanned code, not from this page, so it needs no such param.
+  const business = await getOwnedBusiness(db, identity.id, 'redemption.validate', params.business);
 
   const activeDeals = business
     ? (await db
@@ -33,7 +38,7 @@ export default async function BusinessRedemptionsPage() {
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex h-16 max-w-2xl items-center justify-between px-4">
           <a href="/" className="text-xl font-black">Bugun<span className="text-primary">Bor</span></a>
-          <a href="/business/dashboard" className="text-sm font-bold text-slate-500">← Dashboard</a>
+          <a href={business ? `/business/dashboard?business=${business.id}` : '/business/dashboard'} className="text-sm font-bold text-slate-500">← Dashboard</a>
         </div>
       </header>
 

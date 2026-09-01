@@ -6,6 +6,8 @@ import { ensurePhase1Database, getD1, syncDealLifecycle } from '@/db/runtime';
 import { dealStatusLabels } from '@/lib/deal-status';
 import { canAccessBusiness, type BusinessRole } from '@/modules/auth/authorization';
 import { getServerIdentity } from '@/modules/auth/identity';
+import { listOwnedBusinesses } from '@/modules/catalog/ownership';
+import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = { title: 'Biznes dashboard', robots: { index: false, follow: false } };
 
@@ -13,26 +15,38 @@ type OwnedBusiness = { id: string; name: string; verificationStatus: string; rol
 type Metrics = { deals: number; activeDeals: number; redemptions: number };
 type DealRow = { id: string; title: string; status: string; discountPercent: number; createdAt: string };
 
-export default async function BusinessDashboardPage() {
+export default async function BusinessDashboardPage({ searchParams }: { searchParams: Promise<{ business?: string }> }) {
   const identity = await getServerIdentity();
   if (!identity) redirect('/login?returnTo=%2Fbusiness%2Fdashboard');
 
   await ensurePhase1Database();
   await syncDealLifecycle();
-  const business = await getD1()
-    .prepare(`
-      SELECT b.id, b.name, b.verification_status AS verificationStatus, bm.role AS role
-      FROM business_members bm
-      JOIN businesses b ON b.id = bm.business_id
-      WHERE bm.user_id = ?1 AND bm.revoked_at IS NULL AND b.deleted_at IS NULL
-      ORDER BY bm.created_at DESC
-      LIMIT 1
-    `)
-    .bind(identity.id)
-    .first<OwnedBusiness>();
+  const db = getD1();
+
+  // Every business this account has an active membership in — not just the most recently
+  // joined one. A business owner who ended up a member of a second business (their own new
+  // one, or one they were added to) must still be able to reach the first: picking only the
+  // newest here is exactly what used to make an older, real business "disappear" the moment
+  // a second one existed.
+  const businesses = await listOwnedBusinesses(db, identity.id);
+  const params = await searchParams;
+  const selectedId = params.business && businesses.some((entry) => entry.id === params.business) ? params.business : businesses[0]?.id;
+
+  const business = selectedId
+    ? await db
+        .prepare(`
+          SELECT b.id, b.name, b.verification_status AS verificationStatus, bm.role AS role
+          FROM business_members bm
+          JOIN businesses b ON b.id = bm.business_id
+          WHERE bm.user_id = ?1 AND bm.revoked_at IS NULL AND b.deleted_at IS NULL AND b.id = ?2
+          LIMIT 1
+        `)
+        .bind(identity.id, selectedId)
+        .first<OwnedBusiness>()
+    : null;
 
   const metrics = business
-    ? await getD1()
+    ? await db
         .prepare(`
           SELECT COUNT(DISTINCT d.id) AS deals,
             SUM(CASE WHEN d.status = 'ACTIVE' THEN 1 ELSE 0 END) AS activeDeals,
@@ -45,7 +59,7 @@ export default async function BusinessDashboardPage() {
     : null;
 
   const recentDeals = business
-    ? (await getD1()
+    ? (await db
         .prepare(`SELECT id, title, status, discount_percent AS discountPercent, created_at AS createdAt FROM deals WHERE business_id = ?1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 8`)
         .bind(business.id)
         .all<DealRow>()).results
@@ -68,6 +82,24 @@ export default async function BusinessDashboardPage() {
       </header>
 
       <div className="mx-auto max-w-6xl px-4 py-10">
+        {businesses.length > 1 ? (
+          <div className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2">
+            <span className="px-2 text-xs font-bold uppercase tracking-wide text-slate-400">Bizneslarim ({businesses.length})</span>
+            {businesses.map((entry) => (
+              <a
+                key={entry.id}
+                href={`/business/dashboard?business=${entry.id}`}
+                className={cn(
+                  'rounded-xl px-3 py-1.5 text-sm font-bold transition',
+                  entry.id === business?.id ? 'bg-[#152a3b] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+                )}
+              >
+                {entry.name}
+              </a>
+            ))}
+          </div>
+        ) : null}
+
         {business ? (
           <>
             <div className="flex flex-wrap items-end justify-between gap-4">
@@ -77,7 +109,7 @@ export default async function BusinessDashboardPage() {
               </div>
               <div className="flex items-center gap-2">
                 {canAccessBusiness({ requestedBusinessId: business.id, membershipBusinessId: business.id, role: business.role as BusinessRole, action: 'redemption.validate' }) ? (
-                  <a href="/business/redemptions" className="rounded-full bg-[#152a3b] px-4 py-2 text-sm font-bold text-white">Kodni tasdiqlash</a>
+                  <a href={`/business/redemptions?business=${business.id}`} className="rounded-full bg-[#152a3b] px-4 py-2 text-sm font-bold text-white">Kodni tasdiqlash</a>
                 ) : null}
                 <span className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold shadow-sm">
                   <BadgeCheck className="size-4 text-emerald-600" /> {business.verificationStatus}
@@ -99,9 +131,9 @@ export default async function BusinessDashboardPage() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xl font-black">Aksiyalarim</h2>
                 <div className="flex gap-2">
-                  {recentDeals.length ? <a href="/business/deals" className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600">Barchasini ko‘rish</a> : null}
+                  {recentDeals.length ? <a href={`/business/deals?business=${business.id}`} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600">Barchasini ko‘rish</a> : null}
                   {business.verificationStatus === 'VERIFIED' ? (
-                    <a href="/business/deals/new" className="rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white">+ Yangi aksiya</a>
+                    <a href={`/business/deals/new?business=${business.id}`} className="rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white">+ Yangi aksiya</a>
                   ) : null}
                 </div>
               </div>

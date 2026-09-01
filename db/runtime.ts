@@ -258,6 +258,14 @@ const columnMigrations: Array<{ table: string; column: string; ddl: string }> = 
   { table: 'branches', column: 'region', ddl: `TEXT` },
   { table: 'deals', column: 'listing_type', ddl: `TEXT NOT NULL DEFAULT 'PRODUCT'` },
   { table: 'deals', column: 'min_price_uzs', ddl: `INTEGER` },
+  // db/schema.ts already documented this column; it was never actually created here. A
+  // business-uploaded cover photo lives in it as a compressed JPEG data URL rather than a
+  // separate object store's URL (no S3/R2 is wired up for this app's D1-only Cloudflare
+  // deploy) — components/business-deal-form.tsx downscales it client-side before it ever
+  // reaches this column, keeping it comfortably under D1's row-size limit. A data: URL drops
+  // into an <img src> exactly the same way a real hosted image's URL would, so nothing else
+  // that reads this column needs to change if a real object store replaces this later.
+  { table: 'deals', column: 'image_url', ddl: `TEXT` },
   { table: 'redemptions', column: 'time_slot_id', ddl: `TEXT REFERENCES deal_time_slots(id)` },
   { table: 'redemptions', column: 'promo_code_id', ddl: `TEXT REFERENCES promo_codes(id)` },
   { table: 'redemptions', column: 'final_price_uzs', ddl: `INTEGER` },

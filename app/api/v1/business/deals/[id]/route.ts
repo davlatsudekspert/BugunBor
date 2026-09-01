@@ -3,10 +3,16 @@ import { z } from 'zod';
 
 import { ensurePhase1Database, getD1, syncDealLifecycle } from '@/db/runtime';
 import { toStoredUtc } from '@/lib/time';
-import { getOwnedBusiness, getOwnedDeal } from '@/modules/catalog/ownership';
+import { getManagedDeal } from '@/modules/catalog/ownership';
 import { getRequestIdentity, requireSameOrigin } from '@/modules/auth/identity';
 
 const PRE_LAUNCH_STATUSES = new Set(['DRAFT', 'PENDING_REVIEW', 'REJECTED', 'SCHEDULED']);
+
+// A compressed JPEG data URL — see lib/image.ts's compressImageToDataUrl(), the only thing
+// that ever produces one client-side. The length cap mirrors its own, as a second,
+// server-side backstop rather than trusting the client did its job. Swapping the photo is
+// cosmetic, unlike price/quantity/date, so it's allowed both before and after launch.
+const imageUrlField = z.string().regex(/^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/).max(900_000).optional();
 
 /**
  * Everything is editable before a deal opens. Only zeros-in the deal is
@@ -25,6 +31,7 @@ const preLaunchSchema = z.object({
   totalQuantity: z.coerce.number().int().min(1).max(100_000).optional(),
   perCustomerLimit: z.coerce.number().int().min(1).max(20).optional(),
   redemptionMethod: z.enum(['ONSITE_CODE', 'ONLINE_VOUCHER']).optional(),
+  imageUrl: imageUrlField,
 });
 
 /**
@@ -37,6 +44,7 @@ const postLaunchSchema = z.object({
   discountedPriceUzs: z.coerce.number().int().min(100).max(500_000_000).optional(),
   totalQuantity: z.coerce.number().int().min(1).max(100_000).optional(),
   endsAt: z.iso.datetime({ offset: true }).optional(),
+  imageUrl: imageUrlField,
 });
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -52,12 +60,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   await ensurePhase1Database();
   await syncDealLifecycle();
   const db = getD1();
-  const business = await getOwnedBusiness(db, identity.id);
-  if (!business) return NextResponse.json({ error: { message: 'Ruxsat yo‘q.' } }, { status: 403 });
-
   const { id } = await context.params;
-  const deal = await getOwnedDeal(db, business.id, id);
-  if (!deal) return NextResponse.json({ error: { message: 'Aksiya topilmadi.' } }, { status: 404 });
+  const managed = await getManagedDeal(db, identity.id, id, 'deal.write');
+  if (!managed) return NextResponse.json({ error: { message: 'Aksiya topilmadi.' } }, { status: 404 });
+  const { business, deal } = managed;
 
   const isPreLaunch = PRE_LAUNCH_STATUSES.has(deal.status);
   const isLive = deal.status === 'ACTIVE';
@@ -109,6 +115,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     }
     if (data.perCustomerLimit !== undefined) set('per_customer_limit', data.perCustomerLimit);
     if (data.redemptionMethod !== undefined) set('redemption_method', data.redemptionMethod);
+    if (data.imageUrl !== undefined) set('image_url', data.imageUrl);
     // A fixed typo/rejection reason is worth a second look — resubmit it rather than leaving it stuck forever.
     if (deal.status === 'REJECTED') set('status', 'PENDING_REVIEW');
   } else {
@@ -137,6 +144,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       if (nextEndsAt <= deal.startsAt) return NextResponse.json({ error: { message: 'Tugash vaqti hozirdan keyin bo‘lishi kerak — darhol to‘xtatish uchun "To‘xtatish" tugmasidan foydalaning.' } }, { status: 422 });
       set('ends_at', nextEndsAt);
     }
+    if (data.imageUrl !== undefined) set('image_url', data.imageUrl);
   }
 
   if (sets.length === 0) return NextResponse.json({ error: { message: 'O‘zgartiriladigan maydonni ko‘rsating.' } }, { status: 422 });

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { ensurePhase1Database, getD1, syncDealLifecycle } from '@/db/runtime';
-import { getOwnedBusiness } from '@/modules/catalog/ownership';
+import { getManagedDeal } from '@/modules/catalog/ownership';
 import { getRequestIdentity, requireSameOrigin } from '@/modules/auth/identity';
 
 const bodySchema = z.object({ quantitySold: z.coerce.number().int().min(1).max(1000).default(1) });
@@ -27,18 +27,13 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   await ensurePhase1Database();
   await syncDealLifecycle();
   const db = getD1();
-  const business = await getOwnedBusiness(db, identity.id, 'redemption.validate');
-  if (!business) return NextResponse.json({ error: { message: 'Ruxsat yo‘q.' } }, { status: 403 });
-
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: { message: 'Sotilgan miqdorni to‘g‘ri kiriting.' } }, { status: 422 });
 
   const { id } = await context.params;
-  const deal = await db
-    .prepare(`SELECT id, title, status, remaining_quantity AS remainingQuantity FROM deals WHERE id = ?1 AND business_id = ?2 AND deleted_at IS NULL`)
-    .bind(id, business.id)
-    .first<{ id: string; title: string; status: string; remainingQuantity: number | null }>();
-  if (!deal) return NextResponse.json({ error: { message: 'Aksiya topilmadi.' } }, { status: 404 });
+  const managed = await getManagedDeal(db, identity.id, id, 'redemption.validate');
+  if (!managed) return NextResponse.json({ error: { message: 'Aksiya topilmadi.' } }, { status: 404 });
+  const { business, deal } = managed;
   if (deal.status !== 'ACTIVE') return NextResponse.json({ error: { message: 'Faqat faol aksiya uchun miqdor belgilash mumkin.' } }, { status: 409 });
   if (deal.remainingQuantity === null) return NextResponse.json({ error: { message: 'Miqdori cheklanmagan aksiyada bu kerak emas.' } }, { status: 422 });
   if (parsed.data.quantitySold > deal.remainingQuantity) {

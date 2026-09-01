@@ -4,25 +4,23 @@ import { AlertTriangle } from 'lucide-react';
 
 import { BusinessDealForm } from '@/components/business-deal-form';
 import { ensurePhase1Database, getD1 } from '@/db/runtime';
-import { canAccessBusiness, type BusinessRole } from '@/modules/auth/authorization';
 import { getServerIdentity } from '@/modules/auth/identity';
+import { getOwnedBusiness } from '@/modules/catalog/ownership';
 
 export const metadata: Metadata = { title: 'Yangi aksiya', robots: { index: false, follow: false } };
 
-export default async function NewBusinessDealPage() {
+export default async function NewBusinessDealPage({ searchParams }: { searchParams: Promise<{ business?: string }> }) {
   const identity = await getServerIdentity();
   if (!identity) redirect('/login?returnTo=%2Fbusiness%2Fdeals%2Fnew');
 
   await ensurePhase1Database();
   const db = getD1();
-  const membership = await db
-    .prepare(`SELECT bm.business_id AS businessId, bm.role FROM business_members bm WHERE bm.user_id = ?1 AND bm.revoked_at IS NULL ORDER BY bm.created_at DESC LIMIT 1`)
-    .bind(identity.id)
-    .first<{ businessId: string; role: BusinessRole }>();
-
-  const canWrite = membership && canAccessBusiness({ requestedBusinessId: membership.businessId, membershipBusinessId: membership.businessId, role: membership.role, action: 'deal.write' });
-  const business = canWrite
-    ? await db.prepare('SELECT id, name, verification_status AS verificationStatus FROM businesses WHERE id = ?1 AND deleted_at IS NULL').bind(membership!.businessId).first<{ id: string; name: string; verificationStatus: string }>()
+  const params = await searchParams;
+  // ?business= lets an owner of more than one business pick which one — omitting it falls
+  // back to the newest membership, same as before, so a single-business owner sees no change.
+  const owned = await getOwnedBusiness(db, identity.id, 'deal.write', params.business);
+  const business = owned
+    ? await db.prepare('SELECT id, name, verification_status AS verificationStatus FROM businesses WHERE id = ?1 AND deleted_at IS NULL').bind(owned.id).first<{ id: string; name: string; verificationStatus: string }>()
     : null;
   const branches = business
     ? (await db.prepare('SELECT id, name FROM branches WHERE business_id = ?1 AND deleted_at IS NULL ORDER BY created_at ASC').bind(business.id).all<{ id: string; name: string }>()).results
@@ -33,7 +31,7 @@ export default async function NewBusinessDealPage() {
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4">
           <a href="/" className="text-xl font-black">Bugun<span className="text-primary">Bor</span></a>
-          <a href="/business/dashboard" className="text-sm font-bold text-slate-500">← Dashboard</a>
+          <a href={business ? `/business/dashboard?business=${business.id}` : '/business/dashboard'} className="text-sm font-bold text-slate-500">← Dashboard</a>
         </div>
       </header>
 
@@ -57,7 +55,7 @@ export default async function NewBusinessDealPage() {
           </div>
         ) : (
           <div className="mt-8">
-            <BusinessDealForm branches={branches} />
+            <BusinessDealForm businessId={business.id} branches={branches} />
           </div>
         )}
       </div>

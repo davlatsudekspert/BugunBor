@@ -20,6 +20,7 @@ type SavedDeal = {
   endsAt: string;
   status: string;
   categorySlug: string;
+  imageUrl: string | null;
 };
 
 const formatPrice = (value: number | null) => (value === null ? '' : new Intl.NumberFormat('uz-UZ').format(value));
@@ -49,12 +50,18 @@ export function SavedDealsGrid({ deals: initialDeals }: { deals: SavedDeal[] }) 
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {deals.map((deal) => (
         <article key={deal.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(20,40,55,.06)]">
-          <div className="flex h-24 items-center justify-between bg-[#152a3b] p-5 text-white">
-            <div className="flex items-center gap-2">
+          <div className="relative flex h-24 items-center justify-between overflow-hidden bg-[#152a3b] p-5 text-white">
+            {deal.imageUrl ? (
+              <>
+                <img src={deal.imageUrl} alt="" className="absolute inset-0 size-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+              </>
+            ) : null}
+            <div className="relative flex items-center gap-2">
               <Badge className="bg-primary text-base font-black text-white">-{deal.discountPercent}%</Badge>
               {deal.status !== 'ACTIVE' ? <Badge className="border-slate-300 bg-white/10 text-slate-200" variant="outline">Tugagan</Badge> : null}
             </div>
-            <button onClick={() => unsave(deal.id)} aria-label="Saqlanganlardan olib tashlash" className="rounded-full p-1.5 text-white/80 hover:bg-white/10 hover:text-white">
+            <button onClick={() => unsave(deal.id)} aria-label="Saqlanganlardan olib tashlash" className="relative rounded-full p-1.5 text-white/80 hover:bg-white/10 hover:text-white">
               <Heart className="size-5 fill-current" />
             </button>
           </div>
