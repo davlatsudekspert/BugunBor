@@ -74,6 +74,7 @@ CREATE TABLE `branches` (
 	`business_id` text NOT NULL,
 	`name` text NOT NULL,
 	`city` text NOT NULL,
+	`region` text,
 	`address` text NOT NULL,
 	`latitude_e6` integer NOT NULL,
 	`longitude_e6` integer NOT NULL,
@@ -106,6 +107,7 @@ CREATE TABLE `businesses` (
 	`name` text NOT NULL,
 	`description` text NOT NULL,
 	`city` text NOT NULL,
+	`region` text,
 	`category_id` text,
 	`phone` text,
 	`telegram` text,
@@ -149,6 +151,27 @@ CREATE TABLE `deal_branches` (
 );
 --> statement-breakpoint
 CREATE INDEX `idx_deal_branches_branch` ON `deal_branches` (`branch_id`);--> statement-breakpoint
+CREATE TABLE `deal_discount_tiers` (
+	`id` text PRIMARY KEY NOT NULL,
+	`deal_id` text NOT NULL,
+	`starts_at` text NOT NULL,
+	`ends_at` text NOT NULL,
+	`discount_percent` integer NOT NULL,
+	FOREIGN KEY (`deal_id`) REFERENCES `deals`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `idx_deal_discount_tiers_deal` ON `deal_discount_tiers` (`deal_id`,`starts_at`);--> statement-breakpoint
+CREATE TABLE `deal_time_slots` (
+	`id` text PRIMARY KEY NOT NULL,
+	`deal_id` text NOT NULL,
+	`starts_at` text NOT NULL,
+	`capacity` integer NOT NULL,
+	`remaining_capacity` integer NOT NULL,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	FOREIGN KEY (`deal_id`) REFERENCES `deals`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `idx_deal_time_slots_deal` ON `deal_time_slots` (`deal_id`,`starts_at`);--> statement-breakpoint
 CREATE TABLE `deals` (
 	`id` text PRIMARY KEY NOT NULL,
 	`business_id` text NOT NULL,
@@ -157,9 +180,11 @@ CREATE TABLE `deals` (
 	`title` text NOT NULL,
 	`description` text NOT NULL,
 	`terms` text NOT NULL,
+	`listing_type` text DEFAULT 'PRODUCT' NOT NULL,
 	`original_price_uzs` integer,
 	`discounted_price_uzs` integer NOT NULL,
 	`discount_percent` integer NOT NULL,
+	`min_price_uzs` integer,
 	`starts_at` text NOT NULL,
 	`ends_at` text NOT NULL,
 	`total_quantity` integer,
@@ -261,6 +286,32 @@ CREATE TABLE `plans` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `idx_plans_code` ON `plans` (`code`);--> statement-breakpoint
+CREATE TABLE `promo_code_redemptions` (
+	`promo_code_id` text NOT NULL,
+	`user_id` text NOT NULL,
+	`redemption_id` text NOT NULL,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	PRIMARY KEY(`promo_code_id`, `user_id`),
+	FOREIGN KEY (`promo_code_id`) REFERENCES `promo_codes`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`redemption_id`) REFERENCES `redemptions`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `promo_code_redemptions_redemption_id_unique` ON `promo_code_redemptions` (`redemption_id`);--> statement-breakpoint
+CREATE TABLE `promo_codes` (
+	`id` text PRIMARY KEY NOT NULL,
+	`code` text NOT NULL,
+	`discount_type` text NOT NULL,
+	`discount_value` integer NOT NULL,
+	`max_uses` integer,
+	`used_count` integer DEFAULT 0 NOT NULL,
+	`expires_at` text,
+	`is_active` integer DEFAULT true NOT NULL,
+	`created_by_admin_id` text,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `promo_codes_code_unique` ON `promo_codes` (`code`);--> statement-breakpoint
 CREATE TABLE `redemption_events` (
 	`id` text PRIMARY KEY NOT NULL,
 	`redemption_id` text NOT NULL,
@@ -284,16 +335,36 @@ CREATE TABLE `redemptions` (
 	`status` text DEFAULT 'CLAIMED' NOT NULL,
 	`expires_at` text NOT NULL,
 	`completed_at` text,
+	`time_slot_id` text,
+	`promo_code_id` text,
+	`final_price_uzs` integer,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	FOREIGN KEY (`deal_id`) REFERENCES `deals`(`id`) ON UPDATE no action ON DELETE restrict,
 	FOREIGN KEY (`branch_id`) REFERENCES `branches`(`id`) ON UPDATE no action ON DELETE restrict,
-	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE restrict
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE restrict,
+	FOREIGN KEY (`time_slot_id`) REFERENCES `deal_time_slots`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`promo_code_id`) REFERENCES `promo_codes`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `idx_redemptions_idempotency` ON `redemptions` (`idempotency_key`);--> statement-breakpoint
 CREATE UNIQUE INDEX `idx_redemptions_code_hash` ON `redemptions` (`code_hash`);--> statement-breakpoint
 CREATE INDEX `idx_redemptions_user_created` ON `redemptions` (`user_id`,`created_at`);--> statement-breakpoint
 CREATE INDEX `idx_redemptions_deal_status` ON `redemptions` (`deal_id`,`status`);--> statement-breakpoint
+CREATE TABLE `reviews` (
+	`id` text PRIMARY KEY NOT NULL,
+	`business_id` text NOT NULL,
+	`user_id` text NOT NULL,
+	`redemption_id` text NOT NULL,
+	`rating` integer NOT NULL,
+	`comment` text,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	FOREIGN KEY (`business_id`) REFERENCES `businesses`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`redemption_id`) REFERENCES `redemptions`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `reviews_redemption_id_unique` ON `reviews` (`redemption_id`);--> statement-breakpoint
+CREATE INDEX `idx_reviews_business` ON `reviews` (`business_id`,`created_at`);--> statement-breakpoint
 CREATE TABLE `sessions` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
@@ -309,6 +380,21 @@ CREATE TABLE `sessions` (
 --> statement-breakpoint
 CREATE UNIQUE INDEX `idx_sessions_token_hash` ON `sessions` (`token_hash`);--> statement-breakpoint
 CREATE INDEX `idx_sessions_user_active` ON `sessions` (`user_id`,`revoked_at`);--> statement-breakpoint
+CREATE TABLE `support_tickets` (
+	`id` text PRIMARY KEY NOT NULL,
+	`name` text NOT NULL,
+	`phone` text NOT NULL,
+	`subject` text NOT NULL,
+	`message` text NOT NULL,
+	`source` text DEFAULT 'CONTACT_FORM' NOT NULL,
+	`status` text DEFAULT 'OPEN' NOT NULL,
+	`resolved_by_admin_id` text,
+	`resolution_note` text,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+--> statement-breakpoint
+CREATE INDEX `idx_support_tickets_status` ON `support_tickets` (`status`,`created_at`);--> statement-breakpoint
 CREATE TABLE `users` (
 	`id` text PRIMARY KEY NOT NULL,
 	`role` text NOT NULL,

@@ -119,6 +119,60 @@ const schemaStatements = [
     FOREIGN KEY(actor_admin_id) REFERENCES admin_users(id), FOREIGN KEY(deal_id) REFERENCES deals(id)
   )`,
   `CREATE INDEX IF NOT EXISTS idx_admin_announcements_created ON admin_announcements(created_at)`,
+  `CREATE TABLE IF NOT EXISTS favorites (
+    user_id TEXT NOT NULL, deal_id TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY(user_id, deal_id), FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(deal_id) REFERENCES deals(id)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_favorites_deal ON favorites(deal_id)`,
+  // Every "Bog'lanish" submission and every AI Yordamchi lead lands here for admin to work — see /admin/support.
+  `CREATE TABLE IF NOT EXISTS support_tickets (
+    id TEXT PRIMARY KEY, name TEXT NOT NULL, phone TEXT NOT NULL, subject TEXT NOT NULL, message TEXT NOT NULL,
+    source TEXT NOT NULL DEFAULT 'CONTACT_FORM' CHECK(source IN ('CONTACT_FORM','AI_ASSISTANT')),
+    status TEXT NOT NULL DEFAULT 'OPEN' CHECK(status IN ('OPEN','IN_PROGRESS','RESOLVED')),
+    resolved_by_admin_id TEXT, resolution_note TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(resolved_by_admin_id) REFERENCES admin_users(id)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON support_tickets(status, created_at)`,
+  // A review requires owning a COMPLETED redemption (redemption_id UNIQUE) — no review without a real, staff-confirmed visit.
+  `CREATE TABLE IF NOT EXISTS reviews (
+    id TEXT PRIMARY KEY, business_id TEXT NOT NULL, user_id TEXT NOT NULL, redemption_id TEXT NOT NULL UNIQUE,
+    rating INTEGER NOT NULL CHECK(rating BETWEEN 1 AND 5), comment TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(business_id) REFERENCES businesses(id), FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(redemption_id) REFERENCES redemptions(id)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_reviews_business ON reviews(business_id, created_at)`,
+  `CREATE TABLE IF NOT EXISTS promo_codes (
+    id TEXT PRIMARY KEY, code TEXT NOT NULL UNIQUE,
+    discount_type TEXT NOT NULL CHECK(discount_type IN ('PERCENT','FIXED')), discount_value INTEGER NOT NULL,
+    max_uses INTEGER, used_count INTEGER NOT NULL DEFAULT 0, expires_at TEXT,
+    is_active INTEGER NOT NULL DEFAULT 1, created_by_admin_id TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(created_by_admin_id) REFERENCES admin_users(id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS promo_code_redemptions (
+    promo_code_id TEXT NOT NULL, user_id TEXT NOT NULL, redemption_id TEXT NOT NULL UNIQUE,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY(promo_code_id, user_id),
+    FOREIGN KEY(promo_code_id) REFERENCES promo_codes(id), FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(redemption_id) REFERENCES redemptions(id)
+  )`,
+  // "Auto Skidka": time-boxed discount steps for one deal (e.g. -10% then -20% then -30% as the window progresses).
+  // synced automatically by syncAutoDiscountTiers() alongside the deal status lifecycle — see below.
+  `CREATE TABLE IF NOT EXISTS deal_discount_tiers (
+    id TEXT PRIMARY KEY, deal_id TEXT NOT NULL, starts_at TEXT NOT NULL, ends_at TEXT NOT NULL,
+    discount_percent INTEGER NOT NULL CHECK(discount_percent BETWEEN 1 AND 95),
+    FOREIGN KEY(deal_id) REFERENCES deals(id)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_deal_discount_tiers_deal ON deal_discount_tiers(deal_id, starts_at)`,
+  // Time-slot booking for services (a haircut at 15:00, a car wash bay at 16:00, …) — a deal with rows here
+  // is a "xizmat" (service) booked by slot instead of by a flat quantity counter.
+  `CREATE TABLE IF NOT EXISTS deal_time_slots (
+    id TEXT PRIMARY KEY, deal_id TEXT NOT NULL, starts_at TEXT NOT NULL,
+    capacity INTEGER NOT NULL, remaining_capacity INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(deal_id) REFERENCES deals(id), CHECK(remaining_capacity >= 0 AND remaining_capacity <= capacity)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_deal_time_slots_deal ON deal_time_slots(deal_id, starts_at)`,
 ];
 
 const seedStatements = [
@@ -170,6 +224,13 @@ const seedStatements = [
 const columnMigrations: Array<{ table: string; column: string; ddl: string }> = [
   { table: 'businesses', column: 'plan_id', ddl: `TEXT REFERENCES plans(id)` },
   { table: 'businesses', column: 'subscription_status', ddl: `TEXT NOT NULL DEFAULT 'FREE'` },
+  { table: 'businesses', column: 'region', ddl: `TEXT` },
+  { table: 'branches', column: 'region', ddl: `TEXT` },
+  { table: 'deals', column: 'listing_type', ddl: `TEXT NOT NULL DEFAULT 'PRODUCT'` },
+  { table: 'deals', column: 'min_price_uzs', ddl: `INTEGER` },
+  { table: 'redemptions', column: 'time_slot_id', ddl: `TEXT REFERENCES deal_time_slots(id)` },
+  { table: 'redemptions', column: 'promo_code_id', ddl: `TEXT REFERENCES promo_codes(id)` },
+  { table: 'redemptions', column: 'final_price_uzs', ddl: `INTEGER` },
 ];
 
 let ready: Promise<void> | undefined;
@@ -198,6 +259,9 @@ export async function ensurePhase1Database() {
     await db.batch(seedStatements.map((statement) => db.prepare(statement)));
     // Backfill after seeding plans, so 'plan_free' already exists to reference.
     await db.prepare(`UPDATE businesses SET plan_id = 'plan_free' WHERE plan_id IS NULL`).run();
+    // Every seed record predates the region column — they're all Tashkent-city demo data.
+    await db.prepare(`UPDATE businesses SET region = 'Toshkent shahri' WHERE region IS NULL AND city = 'Toshkent'`).run();
+    await db.prepare(`UPDATE branches SET region = 'Toshkent shahri' WHERE region IS NULL AND city = 'Toshkent'`).run();
     await seedBootstrapAdmin(db);
     await db.prepare('PRAGMA optimize').run();
   })();
@@ -229,6 +293,37 @@ export async function syncDealLifecycle() {
     db.prepare(`UPDATE deals SET status = 'SOLD_OUT', updated_at = CURRENT_TIMESTAMP
       WHERE status = 'ACTIVE' AND deleted_at IS NULL AND remaining_quantity = 0`),
   ]);
+  await syncAutoDiscountTiers(db);
+}
+
+/**
+ * "Auto Skidka": a business can schedule a deal's discount to deepen in
+ * steps as its window progresses (e.g. -10% then -20% then -30%) instead of
+ * a single fixed price for the whole run. Computed in application code
+ * rather than one clever correlated SQL UPDATE — easier to get right and to
+ * verify — and folded into syncDealLifecycle() so it runs everywhere that
+ * already does, with no extra call sites to remember.
+ */
+async function syncAutoDiscountTiers(db: D1Database) {
+  const rows = await db
+    .prepare(`
+      SELECT dt.deal_id AS dealId, dt.discount_percent AS tierDiscountPercent,
+        d.original_price_uzs AS originalPriceUzs, d.min_price_uzs AS minPriceUzs, d.discount_percent AS currentDiscountPercent
+      FROM deal_discount_tiers dt
+      JOIN deals d ON d.id = dt.deal_id
+      WHERE d.status = 'ACTIVE' AND d.deleted_at IS NULL AND d.original_price_uzs IS NOT NULL
+        AND datetime('now') >= datetime(dt.starts_at) AND datetime('now') < datetime(dt.ends_at)
+    `)
+    .all<{ dealId: string; tierDiscountPercent: number; originalPriceUzs: number; minPriceUzs: number | null; currentDiscountPercent: number }>();
+
+  const statements = rows.results.flatMap((row) => {
+    const rawPrice = Math.round((row.originalPriceUzs * (100 - row.tierDiscountPercent)) / 100);
+    const finalPrice = row.minPriceUzs ? Math.max(rawPrice, row.minPriceUzs) : rawPrice;
+    const finalPercent = Math.round(((row.originalPriceUzs - finalPrice) / row.originalPriceUzs) * 100);
+    if (finalPercent === row.currentDiscountPercent) return [];
+    return [db.prepare(`UPDATE deals SET discounted_price_uzs = ?1, discount_percent = ?2, updated_at = CURRENT_TIMESTAMP WHERE id = ?3`).bind(finalPrice, finalPercent, row.dealId)];
+  });
+  if (statements.length) await db.batch(statements);
 }
 
 /**

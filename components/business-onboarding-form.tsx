@@ -3,9 +3,12 @@
 import { useState } from 'react';
 import { ArrowRight, CheckCircle2, LoaderCircle } from 'lucide-react';
 
+import { useRegionDistrict } from '@/hooks/use-region-district';
+
 export function BusinessOnboardingForm() {
   const [state, setState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const { region, setRegion, district, setDistrict, districts, regions } = useRegionDistrict();
 
   async function submit(formData: FormData) {
     setState('loading');
@@ -26,7 +29,8 @@ export function BusinessOnboardingForm() {
       <div className="grid gap-5 sm:grid-cols-2">
         <label className="sm:col-span-2"><span className="mb-2 block text-sm font-bold">Biznes nomi</span><input required name="name" minLength={2} maxLength={120} placeholder="Masalan, Oqtepa Lavash" className="h-12 w-full rounded-xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-primary/25" /></label>
         <label><span className="mb-2 block text-sm font-bold">Kategoriya</span><select required name="categoryId" className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4"><option value="cat_food">Taomlar</option><option value="cat_coffee">Kofe</option><option value="cat_shop">Xaridlar</option><option value="cat_delivery">Yetkazish</option></select></label>
-        <label><span className="mb-2 block text-sm font-bold">Shahar</span><select required name="city" className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4"><option>Toshkent</option><option>Samarqand</option><option>Buxoro</option></select></label>
+        <label><span className="mb-2 block text-sm font-bold">Viloyat</span><select required name="region" value={region} onChange={(event) => setRegion(event.target.value)} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4">{regions.map((entry) => <option key={entry.name} value={entry.name}>{entry.name}</option>)}</select></label>
+        <label><span className="mb-2 block text-sm font-bold">Tuman / shahar</span><select required name="city" value={district} onChange={(event) => setDistrict(event.target.value)} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4">{districts.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>
         <label><span className="mb-2 block text-sm font-bold">Telefon</span><input required name="phone" pattern="\+998\d{9}" defaultValue="+998" className="h-12 w-full rounded-xl border border-slate-200 px-4" /></label>
         <label><span className="mb-2 block text-sm font-bold">Asosiy filial manzili</span><input required name="address" minLength={8} placeholder="Ko‘cha, uy" className="h-12 w-full rounded-xl border border-slate-200 px-4" /></label>
         <label className="sm:col-span-2"><span className="mb-2 block text-sm font-bold">Qisqa tavsif</span><textarea required name="description" minLength={20} maxLength={1200} rows={4} placeholder="Mijozlarga biznesingiz haqida tabiiy va aniq ayting…" className="w-full rounded-xl border border-slate-200 p-4" /></label>

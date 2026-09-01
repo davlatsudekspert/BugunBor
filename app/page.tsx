@@ -25,6 +25,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { UZBEKISTAN_REGIONS } from '@/lib/uzbekistan-regions';
 import { listActiveDeals, listCategories } from '@/modules/catalog/repository';
 
 const categoryVisuals = {
@@ -121,11 +122,9 @@ export default async function Home() {
               </label>
               <label className="flex h-12 items-center gap-2 border-slate-200 px-3 text-sm font-semibold text-slate-700 sm:border-l">
                 <MapPin className="size-4 text-primary" />
-                <span className="sr-only">Shahar</span>
-                <select name="city" defaultValue="tashkent" className="bg-transparent pr-3 outline-none">
-                  <option value="tashkent">Toshkent</option>
-                  <option value="samarkand">Samarqand</option>
-                  <option value="bukhara">Buxoro</option>
+                <span className="sr-only">Viloyat</span>
+                <select name="region" defaultValue="Toshkent shahri" className="bg-transparent pr-3 outline-none">
+                  {UZBEKISTAN_REGIONS.map((region) => <option key={region.name} value={region.name}>{region.name}</option>)}
                 </select>
               </label>
               <button className="h-12 rounded-xl bg-primary px-6 text-sm font-bold text-white transition hover:bg-primary/90" type="submit">Topish</button>

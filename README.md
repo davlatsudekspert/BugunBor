@@ -143,13 +143,42 @@ that real distance. Until location is granted, no distance is shown at all
 ## AI Yordamchi
 
 A small FAQ assistant (`components/ai-assistant-widget.tsx`) sits on every
-public page (hidden on `/admin`). It answers common questions — claiming a
-deal, whether prices are genuine, joining as a business, Pro plan, reporting
-a problem — by keyword-matching a curated Uzbek knowledge base entirely in
-the browser: no external API, no cost, no credential to configure, and it
-never fabricates an answer outside that knowledge base (it points to
-`/contact` instead). Swap in a real LLM backend (e.g. Workers AI) behind the
-same UI later if richer answers are needed.
+public page (hidden on `/admin`). Before the chat opens it asks for a name
+and phone number once (stored in `localStorage` so a return visitor isn't
+asked again) and saves that as a `support_tickets` row
+(`source = 'AI_ASSISTANT'`) so the team can call back even if the visitor's
+question isn't in the knowledge base. It then answers common questions —
+claiming a deal, whether prices are genuine, joining as a business, Pro
+plan, reporting a problem — by keyword-matching a curated Uzbek knowledge
+base entirely in the browser: no external API, no cost, no credential to
+configure, and it never fabricates an answer outside that knowledge base
+(it points to `/contact` instead). Swap in a real LLM backend (e.g. Workers
+AI) behind the same UI later if richer answers are needed.
+
+## Murojaatlar (support tickets)
+
+`POST /api/v1/support/tickets` is the single intake point for both the
+`/contact` page form and the AI Yordamchi lead-capture gate above — it
+requires a name, a valid `+998` phone number, a subject and a message, and
+stores them in the `support_tickets` table. `/admin/support` (gated to the
+`admin.support.manage` action, held by `SUPER_ADMIN` and `MANAGER`) lists
+every ticket — open ones first — with a `tel:` link and buttons to mark a
+ticket "Ko‘rib chiqilmoqda" or "Hal qilindi" via
+`POST /api/v1/admin/support/:id`.
+
+## Viloyat/tuman (manual region picker)
+
+Alongside the existing GPS-based "near me" distance sort, `/discover`, the
+homepage hero search and business onboarding now also offer a manual
+region/district picker (`lib/uzbekistan-regions.ts` — all 14 Uzbekistan
+regions with their real districts/cities, no database table needed) via
+the `useRegionDistrict` hook, for the very common case of a visitor
+searching a city they aren't physically standing in, or a browser without
+location permission. `businesses` and `branches` gained a `region` column
+(backfilled to `'Toshkent shahri'` for all pre-existing `city = 'Toshkent'`
+rows so no seed/demo data disappeared from search); `listActiveDeals`
+defaults to the visitor's selected region when no specific district is
+chosen, and to a specific district's `city` match when one is.
 
 ## Important deployment note
 

@@ -46,20 +46,23 @@ const selectDeal = `
   JOIN branches br ON br.id = db.branch_id
 `;
 
-export async function listActiveDeals(input: { city?: string; query?: string; limit?: number } = {}) {
+export async function listActiveDeals(input: { region?: string; city?: string; query?: string; limit?: number } = {}) {
   await ensurePhase1Database();
   await syncDealLifecycle();
-  const city = input.city?.trim() || 'Toshkent';
+  const region = input.region?.trim() || 'Toshkent shahri';
+  // Empty city means "butun viloyat" (whole region); a specific city/district narrows within it.
+  const city = input.city?.trim() || '';
   const query = `%${input.query?.trim() || ''}%`;
   const limit = Math.min(Math.max(input.limit ?? 12, 1), 50);
   const result = await getD1()
     .prepare(`${selectDeal}
       WHERE d.status = 'ACTIVE' AND d.deleted_at IS NULL
         AND datetime(d.starts_at) <= datetime('now') AND datetime(d.ends_at) > datetime('now')
-        AND br.city = ?1 AND (?2 = '%%' OR d.title LIKE ?2 OR b.name LIKE ?2 OR d.description LIKE ?2)
+        AND ((?2 = '' AND br.region = ?1) OR (?2 != '' AND br.city = ?2))
+        AND (?3 = '%%' OR d.title LIKE ?3 OR b.name LIKE ?3 OR d.description LIKE ?3)
       ORDER BY d.is_sponsored DESC, datetime(d.ends_at) ASC
-      LIMIT ?3`)
-    .bind(city, query, limit)
+      LIMIT ?4`)
+    .bind(region, city, query, limit)
     .all<DealCardRecord>();
   return result.results;
 }

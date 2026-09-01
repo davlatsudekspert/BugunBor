@@ -146,6 +146,7 @@ export const businesses = sqliteTable(
     name: text('name').notNull(),
     description: text('description').notNull(),
     city: text('city').notNull(),
+    region: text('region'),
     categoryId: text('category_id'),
     phone: text('phone'),
     telegram: text('telegram'),
@@ -185,6 +186,7 @@ export const branches = sqliteTable(
     businessId: text('business_id').notNull().references(() => businesses.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
     city: text('city').notNull(),
+    region: text('region'),
     address: text('address').notNull(),
     latitudeE6: integer('latitude_e6').notNull(),
     longitudeE6: integer('longitude_e6').notNull(),
@@ -222,9 +224,11 @@ export const deals = sqliteTable(
     title: text('title').notNull(),
     description: text('description').notNull(),
     terms: text('terms').notNull(),
+    listingType: text('listing_type', { enum: ['PRODUCT', 'SERVICE'] }).notNull().default('PRODUCT'),
     originalPriceUzs: integer('original_price_uzs'),
     discountedPriceUzs: integer('discounted_price_uzs').notNull(),
     discountPercent: integer('discount_percent').notNull(),
+    minPriceUzs: integer('min_price_uzs'),
     startsAt: text('starts_at').notNull(),
     endsAt: text('ends_at').notNull(),
     totalQuantity: integer('total_quantity'),
@@ -280,6 +284,9 @@ export const redemptions = sqliteTable(
     status: text('status', { enum: ['CLAIMED', 'COMPLETED', 'CANCELED', 'EXPIRED'] }).notNull().default('CLAIMED'),
     expiresAt: text('expires_at').notNull(),
     completedAt: text('completed_at'),
+    timeSlotId: text('time_slot_id').references(() => dealTimeSlots.id),
+    promoCodeId: text('promo_code_id').references(() => promoCodes.id),
+    finalPriceUzs: integer('final_price_uzs'),
     createdAt: text('created_at').notNull().default(utcNow),
   },
   (table) => [
@@ -288,6 +295,91 @@ export const redemptions = sqliteTable(
     index('idx_redemptions_user_created').on(table.userId, table.createdAt),
     index('idx_redemptions_deal_status').on(table.dealId, table.status),
   ],
+);
+
+/** A review requires owning a COMPLETED redemption (redemptionId is UNIQUE) — no review without a real, staff-confirmed visit. */
+export const reviews = sqliteTable(
+  'reviews',
+  {
+    id: text('id').primaryKey(),
+    businessId: text('business_id').notNull().references(() => businesses.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    redemptionId: text('redemption_id').notNull().unique().references(() => redemptions.id),
+    rating: integer('rating').notNull(),
+    comment: text('comment'),
+    createdAt: text('created_at').notNull().default(utcNow),
+  },
+  (table) => [index('idx_reviews_business').on(table.businessId, table.createdAt)],
+);
+
+export const promoCodes = sqliteTable('promo_codes', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  discountType: text('discount_type', { enum: ['PERCENT', 'FIXED'] }).notNull(),
+  discountValue: integer('discount_value').notNull(),
+  maxUses: integer('max_uses'),
+  usedCount: integer('used_count').notNull().default(0),
+  expiresAt: text('expires_at'),
+  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  createdByAdminId: text('created_by_admin_id'),
+  createdAt: text('created_at').notNull().default(utcNow),
+});
+
+export const promoCodeRedemptions = sqliteTable(
+  'promo_code_redemptions',
+  {
+    promoCodeId: text('promo_code_id').notNull().references(() => promoCodes.id),
+    userId: text('user_id').notNull().references(() => users.id),
+    redemptionId: text('redemption_id').notNull().unique().references(() => redemptions.id),
+    createdAt: text('created_at').notNull().default(utcNow),
+  },
+  (table) => [primaryKey({ columns: [table.promoCodeId, table.userId] })],
+);
+
+/** "Auto Skidka": time-boxed discount steps for one deal — see syncAutoDiscountTiers() in db/runtime.ts. */
+export const dealDiscountTiers = sqliteTable(
+  'deal_discount_tiers',
+  {
+    id: text('id').primaryKey(),
+    dealId: text('deal_id').notNull().references(() => deals.id, { onDelete: 'cascade' }),
+    startsAt: text('starts_at').notNull(),
+    endsAt: text('ends_at').notNull(),
+    discountPercent: integer('discount_percent').notNull(),
+  },
+  (table) => [index('idx_deal_discount_tiers_deal').on(table.dealId, table.startsAt)],
+);
+
+/** Time-slot booking for services — a deal with rows here is booked by slot instead of by a flat quantity counter. */
+export const dealTimeSlots = sqliteTable(
+  'deal_time_slots',
+  {
+    id: text('id').primaryKey(),
+    dealId: text('deal_id').notNull().references(() => deals.id, { onDelete: 'cascade' }),
+    startsAt: text('starts_at').notNull(),
+    capacity: integer('capacity').notNull(),
+    remainingCapacity: integer('remaining_capacity').notNull(),
+    createdAt: text('created_at').notNull().default(utcNow),
+  },
+  (table) => [index('idx_deal_time_slots_deal').on(table.dealId, table.startsAt)],
+);
+
+/** Every "Bog'lanish" submission and AI Yordamchi lead — see /admin/support. */
+export const supportTickets = sqliteTable(
+  'support_tickets',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    phone: text('phone').notNull(),
+    subject: text('subject').notNull(),
+    message: text('message').notNull(),
+    source: text('source', { enum: ['CONTACT_FORM', 'AI_ASSISTANT'] }).notNull().default('CONTACT_FORM'),
+    status: text('status', { enum: ['OPEN', 'IN_PROGRESS', 'RESOLVED'] }).notNull().default('OPEN'),
+    resolvedByAdminId: text('resolved_by_admin_id'),
+    resolutionNote: text('resolution_note'),
+    createdAt: text('created_at').notNull().default(utcNow),
+    updatedAt: text('updated_at').notNull().default(utcNow),
+  },
+  (table) => [index('idx_support_tickets_status').on(table.status, table.createdAt)],
 );
 
 export const redemptionEvents = sqliteTable(

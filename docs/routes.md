@@ -5,7 +5,7 @@
 | Route | Purpose |
 | --- | --- |
 | `/` | Homepage and active nearby deals (real per-deal distance once location is granted — see below) |
-| `/discover` | Search, city filter, GPS-based "near me" sort and a 1/3/5/10/25/50km radius filter (implemented; map/list switch and cursor pagination still planned) |
+| `/discover` | Search, viloyat/tuman picker (manual, all 14 regions with real districts — no GPS required), GPS-based "near me" sort and a 1/3/5/10/25/50km radius filter (implemented; map/list switch and cursor pagination still planned) |
 | `/categories/[slug]` | Category discovery |
 | `/businesses/[slug]` | Public business profile and active deals |
 | `/deals/[slug]` | Deal terms, branch, countdown and claim |
@@ -28,7 +28,7 @@ Still only planned: `/business/branches`, `/business/team`, `/business/profile`,
 
 ## Administration
 
-Implemented today, behind its own phone + Telegram OTP session (see `README.md` → Admin panel): `/admin/login`, `/admin` (dashboard), `/admin/deals` (moderation queue), `/admin/businesses` (verify/suspend, plan assignment, Pro-gated sponsored placement), `/admin/plans` (pricing), `/admin/announcements` (post to the Telegram channel), `/admin/team` (SUPER_ADMIN-only account management).
+Implemented today, behind its own phone + Telegram OTP session (see `README.md` → Admin panel): `/admin/login`, `/admin` (dashboard), `/admin/deals` (moderation queue), `/admin/businesses` (verify/suspend, plan assignment, Pro-gated sponsored placement), `/admin/plans` (pricing), `/admin/announcements` (post to the Telegram channel), `/admin/team` (SUPER_ADMIN-only account management), `/admin/support` (Murojaatlar — every "Bog‘lanish" form and AI Yordamchi lead lands here as a ticket with name + phone, gated to `admin.support.manage`).
 
 Still only planned: `/admin/users`, `/admin/categories`, `/admin/wallet`, `/admin/referrals`, `/admin/subscriptions`, `/admin/boosts`, `/admin/integrations`, `/admin/webhooks`, `/admin/reports`, `/admin/content`, `/admin/flags`, `/admin/settings`, `/admin/fraud`, `/admin/audit`, `/admin/health`.
 
@@ -45,6 +45,8 @@ Still only planned: `/admin/users`, `/admin/categories`, `/admin/wallet`, `/admi
 - `POST /api/v1/admin/deals/:id/decision`, `POST /api/v1/admin/deals/:id/sponsor`
 - `POST /api/v1/admin/businesses/:id/decision`, `POST /api/v1/admin/businesses/:id/plan`
 - `POST /api/v1/admin/plans/:id`, `POST /api/v1/admin/announcements`, `POST /api/v1/admin/team`, `POST /api/v1/admin/team/:id`
+- `POST /api/v1/support/tickets` (public — the contact form and the AI Yordamchi lead-capture gate both post here; name + phone required)
+- `POST /api/v1/admin/support/:id` (update a ticket's status/resolution note, gated to `admin.support.manage`)
 - `POST /api/v1/integrations/nfcstore/webhooks`, `GET /api/v1/integrations/nfcstore/status`
 - `GET /api/v1/openapi.json`
 
