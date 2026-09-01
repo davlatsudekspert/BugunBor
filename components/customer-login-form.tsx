@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LoaderCircle, LockKeyhole, Send, RotateCcw } from 'lucide-react';
 
@@ -13,8 +13,18 @@ export function CustomerLoginForm({ returnTo }: { returnTo: string }) {
   const [deepLink, setDeepLink] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // A touchscreen double-tap (or a keyboard "Done" plus an already-in-flight tap on the same
+  // button) can fire this handler twice before React's next render disables the button — the
+  // `busy` state alone doesn't close that window, since it's async. A ref updates
+  // synchronously, so it's what actually stops a second /otp/request from firing and quietly
+  // superseding the code the visitor already has on their phone (verifyCode below only ever
+  // matches the *latest* code — see modules/auth/otp.ts) — the exact "the code I just got says
+  // invalid" report this fixes.
+  const inFlightRef = useRef(false);
 
   async function requestCode(formData: FormData) {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     const rawPhone = formData.get('phone');
     const submittedPhone = typeof rawPhone === 'string' ? rawPhone : phone;
     setBusy(true);
@@ -38,10 +48,13 @@ export function CustomerLoginForm({ returnTo }: { returnTo: string }) {
       setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
     } finally {
       setBusy(false);
+      inFlightRef.current = false;
     }
   }
 
   async function retryAfterLink() {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     setBusy(true);
     setError('');
     try {
@@ -58,10 +71,13 @@ export function CustomerLoginForm({ returnTo }: { returnTo: string }) {
       setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
     } finally {
       setBusy(false);
+      inFlightRef.current = false;
     }
   }
 
   async function verifyCode(formData: FormData) {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     const rawCode = formData.get('code');
     const code = typeof rawCode === 'string' ? rawCode : '';
     setBusy(true);
@@ -80,6 +96,7 @@ export function CustomerLoginForm({ returnTo }: { returnTo: string }) {
       setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
     } finally {
       setBusy(false);
+      inFlightRef.current = false;
     }
   }
 
@@ -120,10 +137,17 @@ export function CustomerLoginForm({ returnTo }: { returnTo: string }) {
             className="h-12 w-full rounded-xl border border-slate-200 px-4 text-center text-lg font-black tracking-[.3em] outline-none focus:ring-2 focus:ring-primary/25"
           />
         </label>
-        {error ? <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</p> : null}
+        {error ? (
+          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+            {error} Kod ishlamasa, quyidagi <strong>“Kodni qayta yuborish”</strong>ni bosing — eski kod endi amal qilmaydi.
+          </p>
+        ) : null}
         <button disabled={busy} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-bold text-white disabled:opacity-60">
           {busy ? <LoaderCircle className="size-5 animate-spin" /> : <LockKeyhole className="size-5" />}
           Kirish
+        </button>
+        <button type="button" onClick={retryAfterLink} disabled={busy} className="flex w-full items-center justify-center gap-2 text-center text-sm font-semibold text-slate-500 hover:text-slate-700 disabled:opacity-60">
+          {busy ? <LoaderCircle className="size-4 animate-spin" /> : <RotateCcw className="size-4" />} Kodni qayta yuborish
         </button>
         <button type="button" onClick={() => { setStep('phone'); setError(''); }} className="w-full text-center text-sm font-semibold text-slate-500 hover:text-slate-700">
           Raqamni o‘zgartirish

@@ -216,7 +216,7 @@ saved deals and past redemptions, redirecting to `/login` when signed out.
 again later even after it scrolls out of `/discover`; `/account/redemptions`
 lists every deal they've ever claimed with its current status (claimed,
 completed, expired, canceled). The homepage and `/discover` headers show
-"Hisobim" instead of "Kirish" once `getServerIdentity()` resolves a real
+"Profil" instead of "Kirish" once `getServerIdentity()` resolves a real
 visitor, same mechanism every other authenticated page in this codebase
 already uses — no new session system was introduced.
 

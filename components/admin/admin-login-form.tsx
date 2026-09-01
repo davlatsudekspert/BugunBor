@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LoaderCircle, LockKeyhole, Send } from 'lucide-react';
+import { LoaderCircle, LockKeyhole, RotateCcw, Send } from 'lucide-react';
 
 type Step = 'phone' | 'code';
 
@@ -13,8 +13,14 @@ export function AdminLoginForm() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  // A synchronous re-entry guard — see components/customer-login-form.tsx's own comment on
+  // why `busy` state alone doesn't stop a double-tap from firing a second /request-otp call
+  // that silently supersedes the code already on the way.
+  const inFlightRef = useRef(false);
 
   async function requestCode(formData: FormData) {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     const rawPhone = formData.get('phone');
     const submittedPhone = typeof rawPhone === 'string' ? rawPhone : '';
     setBusy(true);
@@ -34,10 +40,13 @@ export function AdminLoginForm() {
       setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
     } finally {
       setBusy(false);
+      inFlightRef.current = false;
     }
   }
 
   async function verifyCode(formData: FormData) {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     const rawCode = formData.get('code');
     const code = typeof rawCode === 'string' ? rawCode : '';
     setBusy(true);
@@ -56,6 +65,29 @@ export function AdminLoginForm() {
       setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
     } finally {
       setBusy(false);
+      inFlightRef.current = false;
+    }
+  }
+
+  async function resendCode() {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
+    setBusy(true);
+    setError('');
+    try {
+      const response = await fetch('/api/v1/admin/auth/request-otp', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      });
+      const result = (await response.json()) as { data?: { message: string }; error?: { message: string } };
+      if (!response.ok) { setError(result.error?.message ?? 'So‘rov bajarilmadi.'); return; }
+      setNotice(result.data?.message ?? 'Kod Telegram orqali yuborildi.');
+    } catch {
+      setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
+    } finally {
+      setBusy(false);
+      inFlightRef.current = false;
     }
   }
 
@@ -75,10 +107,17 @@ export function AdminLoginForm() {
             className="h-12 w-full rounded-xl border border-slate-200 px-4 text-center text-lg font-black tracking-[.3em] outline-none focus:ring-2 focus:ring-primary/25"
           />
         </label>
-        {error ? <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</p> : null}
+        {error ? (
+          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+            {error} Kod ishlamasa, quyidagi <strong>“Kodni qayta yuborish”</strong>ni bosing — eski kod endi amal qilmaydi.
+          </p>
+        ) : null}
         <button disabled={busy} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-bold text-white disabled:opacity-60">
           {busy ? <LoaderCircle className="size-5 animate-spin" /> : <LockKeyhole className="size-5" />}
           Kirish
+        </button>
+        <button type="button" onClick={resendCode} disabled={busy} className="flex w-full items-center justify-center gap-2 text-center text-sm font-semibold text-slate-500 hover:text-slate-700 disabled:opacity-60">
+          {busy ? <LoaderCircle className="size-4 animate-spin" /> : <RotateCcw className="size-4" />} Kodni qayta yuborish
         </button>
         <button type="button" onClick={() => { setStep('phone'); setError(''); }} className="w-full text-center text-sm font-semibold text-slate-500 hover:text-slate-700">
           Raqamni o‘zgartirish

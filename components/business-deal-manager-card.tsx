@@ -181,11 +181,11 @@ export function DealManagerCard({ deal }: { deal: ManagedDeal }) {
               </label>
               <label>
                 <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">Eski narx</span>
-                <input name="originalPriceUzs" type="number" min={0} step={1000} defaultValue={deal.originalPriceUzs ?? ''} className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm" />
+                <input name="originalPriceUzs" type="number" min={0} defaultValue={deal.originalPriceUzs ?? ''} className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm" />
               </label>
               <label>
                 <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">Chegirmali narx</span>
-                <input name="discountedPriceUzs" type="number" min={100} step={1000} defaultValue={deal.discountedPriceUzs} className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm" />
+                <input name="discountedPriceUzs" type="number" min={100} defaultValue={deal.discountedPriceUzs} className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm" />
               </label>
               <label>
                 <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">Boshlanish</span>
@@ -213,7 +213,7 @@ export function DealManagerCard({ deal }: { deal: ManagedDeal }) {
               <p className="sm:col-span-2 text-xs text-slate-500">Aksiya faol — narxni faqat pasaytirish, miqdorni faqat oshirish va tugash vaqtini faqat oldinga surish mumkin.</p>
               <label>
                 <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">Yangi chegirmali narx (pastroq)</span>
-                <input name="discountedPriceUzs" type="number" min={100} step={1000} max={deal.discountedPriceUzs - 1} placeholder={String(deal.discountedPriceUzs)} className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm" />
+                <input name="discountedPriceUzs" type="number" min={100} max={deal.discountedPriceUzs - 1} placeholder={String(deal.discountedPriceUzs)} className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm" />
               </label>
               {deal.totalQuantity !== null ? (
                 <label>

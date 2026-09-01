@@ -4,6 +4,7 @@ import { Activity, BadgeCheck, Eye, QrCode, TicketCheck } from 'lucide-react';
 
 import { BusinessNfcStorePanel } from '@/components/business-nfcstore-panel';
 import { ensurePhase1Database, getD1, syncDealLifecycle } from '@/db/runtime';
+import { BUSINESS_STATUS_LABELS } from '@/lib/business-status';
 import { dealStatusLabels } from '@/lib/deal-status';
 import { cn } from '@/lib/utils';
 import { canAccessBusiness, type BusinessRole } from '@/modules/auth/authorization';
@@ -122,7 +123,7 @@ export default async function BusinessDashboardPage({ searchParams }: { searchPa
           <>
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
-                <p className="text-sm font-bold uppercase tracking-[.12em] text-primary">Business workspace</p>
+                <p className="text-sm font-bold uppercase tracking-[.12em] text-primary">Biznes kabineti</p>
                 <h1 className="mt-2 text-4xl font-black tracking-[-.05em]">{business.name}</h1>
               </div>
               <div className="flex items-center gap-2">
@@ -130,7 +131,7 @@ export default async function BusinessDashboardPage({ searchParams }: { searchPa
                   <a href={`/business/redemptions?business=${business.id}`} className="rounded-full bg-[#152a3b] px-4 py-2 text-sm font-bold text-white">Kodni tasdiqlash</a>
                 ) : null}
                 <span className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold shadow-sm">
-                  <BadgeCheck className="size-4 text-emerald-600" /> {business.verificationStatus}
+                  <BadgeCheck className="size-4 text-emerald-600" /> {BUSINESS_STATUS_LABELS[business.verificationStatus] ?? business.verificationStatus}
                 </span>
               </div>
             </div>
@@ -185,7 +186,7 @@ export default async function BusinessDashboardPage({ searchParams }: { searchPa
           </>
         ) : (
           <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center">
-            <p className="text-sm font-bold uppercase tracking-[.12em] text-primary">Business workspace</p>
+            <p className="text-sm font-bold uppercase tracking-[.12em] text-primary">Biznes kabineti</p>
             <h1 className="mt-2 text-3xl font-black tracking-[-.04em]">Sizda hali biznes profili yo‘q</h1>
             <p className="mx-auto mt-3 max-w-md text-slate-600">Dashboardni ko‘rish uchun avval biznesingizni qo‘shing. Ariza yuborilgach, u shu yerda moderator tasdig‘ini kutadi.</p>
             <a href="/business/onboarding" className="mt-6 inline-flex h-12 items-center rounded-xl bg-primary px-6 font-bold text-white">Biznes qo‘shish</a>

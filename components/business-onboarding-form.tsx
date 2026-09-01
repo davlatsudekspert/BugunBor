@@ -22,7 +22,7 @@ export function BusinessOnboardingForm() {
     setMessage('Ariza qabul qilindi. Moderator tekshiruvi boshlandi.');
   }
 
-  if (state === 'success') return <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-8 text-center"><CheckCircle2 className="mx-auto size-12 text-emerald-600" /><h2 className="mt-4 text-2xl font-black text-emerald-950">Ariza yuborildi</h2><p className="mt-2 text-emerald-800">{message}</p><a href="/business/dashboard" className="mt-6 inline-flex items-center gap-2 font-bold text-emerald-900">Dashboardga o‘tish <ArrowRight className="size-4" /></a></div>;
+  if (state === 'success') return <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-8 text-center"><CheckCircle2 className="mx-auto size-12 text-emerald-600" /><h2 className="mt-4 text-2xl font-black text-emerald-950">Ariza yuborildi</h2><p className="mt-2 text-emerald-800">{message}</p><a href="/business/dashboard" className="mt-6 inline-flex items-center gap-2 font-bold text-emerald-900">Boshqaruv paneliga o‘tish <ArrowRight className="size-4" /></a></div>;
 
   return (
     <form action={submit} className="space-y-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(20,40,55,.08)] sm:p-8">
@@ -35,9 +35,13 @@ export function BusinessOnboardingForm() {
         <label><span className="mb-2 block text-sm font-bold">Asosiy filial manzili</span><input required name="address" minLength={8} placeholder="Ko‘cha, uy" className="h-12 w-full rounded-xl border border-slate-200 px-4" /></label>
         <label className="sm:col-span-2"><span className="mb-2 block text-sm font-bold">Qisqa tavsif</span><textarea required name="description" minLength={20} maxLength={1200} rows={4} placeholder="Mijozlarga biznesingiz haqida tabiiy va aniq ayting…" className="w-full rounded-xl border border-slate-200 p-4" /></label>
         <label className="sm:col-span-2">
-          <span className="mb-2 block text-sm font-bold">NFCStore Business profilingiz</span>
+          <span className="mb-2 block text-sm font-bold"><span className="text-amber-500">NFCStore</span> Business profilingiz</span>
           <input name="nfcstoreBusinessUrl" type="url" maxLength={300} placeholder="https://nfcstore.uz/..." className="h-12 w-full rounded-xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-primary/25" />
-          <span className="mt-2 block text-xs leading-5 text-slate-500">Majburiy emas. Tasdiqlangan NFCStore Business profilingizni ulasangiz BugunBor tarifiga 10% chegirma beriladi.</span>
+          <span className="mt-2 block text-xs leading-5 text-slate-500">
+            Majburiy emas. Tasdiqlangan{' '}
+            <a href="https://nfcstore.uz" target="_blank" rel="noreferrer" className="font-bold text-amber-500 underline underline-offset-2 hover:text-amber-600">nfcstore.uz</a>
+            {' '}Business profilingizni ulasangiz BugunBor tarifiga 10% chegirma beriladi.
+          </span>
         </label>
       </div>
       <label className="flex items-start gap-3 rounded-xl bg-amber-50 p-4 text-sm leading-6 text-amber-900">

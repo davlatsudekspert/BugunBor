@@ -88,7 +88,7 @@ export default async function Home() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <a className={cn(buttonVariants({ variant: 'ghost' }), 'hidden sm:inline-flex')} href={identity ? '/account' : '/login'}>{identity ? 'Hisobim' : 'Kirish'}</a>
+            <a className={cn(buttonVariants({ variant: 'ghost' }), 'hidden sm:inline-flex')} href={identity ? '/account' : '/login'}>{identity ? 'Profil' : 'Kirish'}</a>
             <a className={cn(buttonVariants(), 'h-10 rounded-xl px-4 shadow-[0_6px_16px_rgba(245,89,55,.18)]')} href="/business/onboarding">Aksiya joylash</a>
           </div>
         </div>
@@ -99,7 +99,7 @@ export default async function Home() {
         <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[1.06fr_.94fr] lg:px-8 lg:py-20">
           <div>
             <Badge className="mb-5 h-7 border-orange-200 bg-orange-50 px-3 text-orange-700" variant="outline">
-              <Sparkles className="size-3.5" /> Bugun Toshkentda {activeDealCount} ta faol aksiya
+              <Sparkles className="size-3.5" /> Bugun O‘zbekiston bo‘ylab {activeDealCount} ta faol aksiya
             </Badge>
             <h1 className="max-w-3xl text-[clamp(2.6rem,6vw,5.4rem)] font-black leading-[.95] tracking-[-.065em] text-[#152a3b]">
               Bugun bor — <span className="text-primary">ertaga bo‘lmasligi</span> mumkin
@@ -117,7 +117,8 @@ export default async function Home() {
               <label className="flex h-12 items-center gap-2 border-slate-200 px-3 text-sm font-semibold text-slate-700 sm:border-l">
                 <MapPin className="size-4 text-primary" />
                 <span className="sr-only">Viloyat</span>
-                <select name="region" defaultValue="Toshkent shahri" className="bg-transparent pr-3 outline-none">
+                <select name="region" defaultValue="" className="bg-transparent pr-3 outline-none">
+                  <option value="">Butun O‘zbekiston</option>
                   {UZBEKISTAN_REGIONS.map((region) => <option key={region.name} value={region.name}>{region.name}</option>)}
                 </select>
               </label>

@@ -38,7 +38,7 @@ export default async function BusinessRedemptionsPage({ searchParams }: { search
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex h-16 max-w-2xl items-center justify-between px-4">
           <a href="/" className="text-xl font-black">Bugun<span className="text-primary">Bor</span></a>
-          <a href={business ? `/business/dashboard?business=${business.id}` : '/business/dashboard'} className="text-sm font-bold text-slate-500">← Dashboard</a>
+          <a href={business ? `/business/dashboard?business=${business.id}` : '/business/dashboard'} className="text-sm font-bold text-slate-500">← Boshqaruv paneli</a>
         </div>
       </header>
 

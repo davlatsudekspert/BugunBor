@@ -47,7 +47,7 @@ export function AccountNfcStoreForm({ initialUrl }: { initialUrl: string | null 
 
   return (
     <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6">
-      <p className="font-black">NFCStore profilingiz</p>
+      <p className="font-black"><span className="text-amber-500">NFCStore</span> profilingiz</p>
       {error ? <p className="mt-2 rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{error}</p> : null}
 
       {savedUrl && !editing ? (
@@ -76,7 +76,10 @@ export function AccountNfcStoreForm({ initialUrl }: { initialUrl: string | null 
           ) : null}
         </form>
       )}
-      <p className="mt-2 text-xs leading-5 text-slate-500">NFCStore profilingiz bo‘lsa, havolasini qo‘shishingiz mumkin. Bu majburiy emas.</p>
+      <p className="mt-2 text-xs leading-5 text-slate-500">
+        <a href="https://nfcstore.uz" target="_blank" rel="noreferrer" className="font-bold text-amber-500 underline underline-offset-2 hover:text-amber-600">nfcstore.uz</a>
+        {' '}profilingiz bo‘lsa, havolasini qo‘shishingiz mumkin. Bu majburiy emas.
+      </p>
     </div>
   );
 }

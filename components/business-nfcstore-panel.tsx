@@ -70,7 +70,7 @@ export function BusinessNfcStorePanel({
   return (
     <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 text-xl font-black"><Radio className="size-5 text-primary" /> NFCStore Business</h2>
+        <h2 className="flex items-center gap-2 text-xl font-black"><Radio className="size-5 text-amber-500" /> <span className="text-amber-500">NFCStore</span> Business</h2>
         <span className={`rounded-full px-3 py-1 text-xs font-bold ${NFCSTORE_STATUS_STYLES[status] ?? NFCSTORE_STATUS_STYLES.NOT_CONNECTED}`}>{NFCSTORE_STATUS_LABELS[status] ?? status}</span>
       </div>
 
@@ -122,7 +122,9 @@ export function BusinessNfcStorePanel({
         </form>
       )}
       <p className="mt-3 text-xs leading-5 text-slate-500">
-        Majburiy emas. Tasdiqlangan NFCStore Business profilingizni ulasangiz BugunBor tarifiga 10% chegirma beriladi — tekshiruv admin tomonidan qo‘lda tasdiqlanadi.
+        Majburiy emas. Tasdiqlangan{' '}
+        <a href="https://nfcstore.uz" target="_blank" rel="noreferrer" className="font-bold text-amber-500 underline underline-offset-2 hover:text-amber-600">nfcstore.uz</a>
+        {' '}Business profilingizni ulasangiz BugunBor tarifiga 10% chegirma beriladi — tekshiruv admin tomonidan qo‘lda tasdiqlanadi.
       </p>
     </div>
   );

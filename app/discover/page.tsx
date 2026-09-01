@@ -28,7 +28,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <a href="/" className="text-xl font-black tracking-[-.04em]">Bugun<span className="text-primary">Bor</span></a>
-          <a href={identity ? '/account' : '/login'} className={cn(buttonVariants({ variant: 'outline' }), 'h-10 rounded-xl px-4')}>{identity ? 'Hisobim' : 'Kirish'}</a>
+          <a href={identity ? '/account' : '/login'} className={cn(buttonVariants({ variant: 'outline' }), 'h-10 rounded-xl px-4')}>{identity ? 'Profil' : 'Kirish'}</a>
         </div>
       </header>
 

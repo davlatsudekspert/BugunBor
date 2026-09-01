@@ -17,7 +17,7 @@ export default async function SavedDealsPage() {
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <a href="/" className="text-xl font-black tracking-[-.04em]">Bugun<span className="text-primary">Bor</span></a>
-          <a href="/account" className="text-sm font-bold text-slate-600">← Hisobim</a>
+          <a href="/account" className="text-sm font-bold text-slate-600">← Profil</a>
         </div>
       </header>
 

@@ -3,6 +3,7 @@ import { BadgeCheck, Building2, MapPin, ShieldCheck } from 'lucide-react';
 
 import { BusinessOnboardingForm } from '@/components/business-onboarding-form';
 import { ensurePhase1Database, getD1 } from '@/db/runtime';
+import { BUSINESS_STATUS_LABELS } from '@/lib/business-status';
 import { getServerIdentity } from '@/modules/auth/identity';
 import { listOwnedBusinesses } from '@/modules/catalog/ownership';
 
@@ -53,12 +54,12 @@ export default async function BusinessOnboardingPage() {
                   <li key={business.id}>
                     <a href={`/business/dashboard?business=${business.id}`} className="flex items-center justify-between rounded-xl bg-white px-4 py-3 text-sm font-bold text-[#152a3b] shadow-sm hover:text-primary">
                       {business.name}
-                      <span className="text-xs font-semibold text-slate-400">{business.verificationStatus} → Dashboard</span>
+                      <span className="text-xs font-semibold text-slate-400">{BUSINESS_STATUS_LABELS[business.verificationStatus] ?? business.verificationStatus} → boshqaruv paneli</span>
                     </a>
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-sm leading-6 text-amber-800">Agar shu biznesga aksiya qo‘shmoqchi bo‘lsangiz, yuqoridagi havoladan dashboardga o‘ting — pastdagi shakl esa butunlay YANGI, alohida biznes yaratadi.</p>
+              <p className="mt-3 text-sm leading-6 text-amber-800">Agar shu biznesga aksiya qo‘shmoqchi bo‘lsangiz, yuqoridagi havoladan boshqaruv paneliga o‘ting — pastdagi shakl esa butunlay YANGI, alohida biznes yaratadi.</p>
             </div>
           ) : null}
           <BusinessOnboardingForm />

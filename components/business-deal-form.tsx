@@ -108,7 +108,7 @@ export function BusinessDealForm({ businessId, branches }: { businessId: string;
         <CheckCircle2 className="mx-auto size-12 text-emerald-600" />
         <h2 className="mt-4 text-2xl font-black text-emerald-950">Yuborildi</h2>
         <p className="mt-2 text-emerald-800">{message}</p>
-        <a href="/business/dashboard" className="mt-6 inline-flex items-center gap-2 font-bold text-emerald-900">Dashboardga o‘tish <ArrowRight className="size-4" /></a>
+        <a href="/business/dashboard" className="mt-6 inline-flex items-center gap-2 font-bold text-emerald-900">Boshqaruv paneliga o‘tish <ArrowRight className="size-4" /></a>
       </div>
     );
   }
@@ -168,11 +168,11 @@ export function BusinessDealForm({ businessId, branches }: { businessId: string;
 
         <label>
           <span className="mb-2 block text-sm font-bold">Eski narx (so‘m, ixtiyoriy)</span>
-          <input name="originalPriceUzs" type="number" min={0} step={1000} value={originalPrice} onChange={(event) => setOriginalPrice(event.target.value)} placeholder="65000" className="h-12 w-full rounded-xl border border-slate-200 px-4" />
+          <input name="originalPriceUzs" type="number" min={0} value={originalPrice} onChange={(event) => setOriginalPrice(event.target.value)} placeholder="65000" className="h-12 w-full rounded-xl border border-slate-200 px-4" />
         </label>
         <label>
           <span className="mb-2 block text-sm font-bold">Chegirmali narx (so‘m)</span>
-          <input required name="discountedPriceUzs" type="number" min={100} step={1000} value={discountedPrice} onChange={(event) => setDiscountedPrice(event.target.value)} placeholder="39000" className="h-12 w-full rounded-xl border border-slate-200 px-4" />
+          <input required name="discountedPriceUzs" type="number" min={100} value={discountedPrice} onChange={(event) => setDiscountedPrice(event.target.value)} placeholder="39000" className="h-12 w-full rounded-xl border border-slate-200 px-4" />
         </label>
 
         {discountPercent !== null ? (
@@ -243,7 +243,7 @@ export function BusinessDealForm({ businessId, branches }: { businessId: string;
         {autoDiscountOn ? (
           <div className="mt-4 space-y-3">
             <p className="text-sm text-slate-500">Masalan, boshlanganidan 2 soat keyin -15%, 4 soat keyin -25% bo‘lsin.</p>
-            <label className="block max-w-xs"><span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Minimal narx (so‘m, ixtiyoriy — bundan pastga tushmaydi)</span><input type="number" min={0} step={1000} value={minPriceUzs} onChange={(event) => setMinPriceUzs(event.target.value)} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm" /></label>
+            <label className="block max-w-xs"><span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Minimal narx (so‘m, ixtiyoriy — bundan pastga tushmaydi)</span><input type="number" min={0} value={minPriceUzs} onChange={(event) => setMinPriceUzs(event.target.value)} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm" /></label>
             <div className="space-y-2">
               {tiers.map((tier, index) => (
                 <div key={index} className="flex items-center gap-2">

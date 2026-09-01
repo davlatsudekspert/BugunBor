@@ -49,7 +49,7 @@ export default async function BusinessDealsPage({ searchParams }: { searchParams
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4">
           <a href="/" className="text-xl font-black">Bugun<span className="text-primary">Bor</span></a>
-          <a href={`/business/dashboard?business=${business.id}`} className="text-sm font-bold text-slate-500">← Dashboard</a>
+          <a href={`/business/dashboard?business=${business.id}`} className="text-sm font-bold text-slate-500">← Boshqaruv paneli</a>
         </div>
       </header>
 

@@ -53,8 +53,11 @@ const selectDeal = `
 export async function listActiveDeals(input: { region?: string; city?: string; query?: string; limit?: number } = {}) {
   await ensurePhase1Database();
   await syncDealLifecycle();
-  const region = input.region?.trim() || 'Toshkent shahri';
-  // Empty city means "butun viloyat" (whole region); a specific city/district narrows within it.
+  // Empty region means "butun O‘zbekiston" (the whole country) — the default for a visitor who
+  // hasn't picked anywhere yet, rather than silently narrowing to Toshkent. Empty city (with a
+  // region set) means "butun viloyat" (the whole region); a specific city/district narrows
+  // further within it.
+  const region = input.region?.trim() || '';
   const city = input.city?.trim() || '';
   const query = `%${input.query?.trim() || ''}%`;
   const limit = Math.min(Math.max(input.limit ?? 12, 1), 50);
@@ -62,7 +65,11 @@ export async function listActiveDeals(input: { region?: string; city?: string; q
     .prepare(`${selectDeal}
       WHERE d.status = 'ACTIVE' AND d.deleted_at IS NULL
         AND datetime(d.starts_at) <= datetime('now') AND datetime(d.ends_at) > datetime('now')
-        AND ((?2 = '' AND br.region = ?1) OR (?2 != '' AND br.city = ?2))
+        AND (
+          (?2 != '' AND br.city = ?2) OR
+          (?2 = '' AND ?1 != '' AND br.region = ?1) OR
+          (?2 = '' AND ?1 = '')
+        )
         AND (?3 = '%%' OR d.title LIKE ?3 OR b.name LIKE ?3 OR d.description LIKE ?3)
       ORDER BY d.is_sponsored DESC, datetime(d.ends_at) ASC
       LIMIT ?4`)
@@ -81,13 +88,17 @@ export async function listActiveDeals(input: { region?: string; city?: string; q
 export async function listUpcomingDeals(input: { region?: string; city?: string; limit?: number } = {}) {
   await ensurePhase1Database();
   await syncDealLifecycle();
-  const region = input.region?.trim() || 'Toshkent shahri';
+  const region = input.region?.trim() || '';
   const city = input.city?.trim() || '';
   const limit = Math.min(Math.max(input.limit ?? 12, 1), 50);
   const result = await getD1()
     .prepare(`${selectDeal}
       WHERE d.status = 'SCHEDULED' AND d.deleted_at IS NULL AND datetime(d.starts_at) > datetime('now')
-        AND ((?2 = '' AND br.region = ?1) OR (?2 != '' AND br.city = ?2))
+        AND (
+          (?2 != '' AND br.city = ?2) OR
+          (?2 = '' AND ?1 != '' AND br.region = ?1) OR
+          (?2 = '' AND ?1 = '')
+        )
       ORDER BY datetime(d.starts_at) ASC
       LIMIT ?3`)
     .bind(region, city, limit)
