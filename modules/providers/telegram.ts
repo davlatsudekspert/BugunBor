@@ -16,35 +16,39 @@ async function callTelegramApi(botToken: string, method: string, payload: Record
 }
 
 export interface TelegramOtpProvider {
-  sendLoginCode(input: { chatId: string; code: string; expiresInMinutes: number }): Promise<TelegramSendResult>;
+  sendLoginCode(input: { chatId: string; code: string; expiresInMinutes: number; audience?: 'admin' | 'customer' }): Promise<TelegramSendResult>;
 }
 
 /**
- * Delivers admin login codes over Telegram instead of SMS. The bot can only
- * message chats that have already messaged it first (Bot API limitation), so
- * each admin's `telegram_chat_id` must be captured once via Team management
- * (see docs in .env.example) before their first login.
+ * Delivers login codes over Telegram instead of SMS — used both by the admin panel
+ * (audience: 'admin', the default) and by the marketplace's phone+Telegram login
+ * (audience: 'customer', see modules/auth/otp.ts). The bot can only message chats
+ * that have already messaged it first (Bot API limitation): an admin's
+ * `telegram_chat_id` is captured once via Team management, while a customer links
+ * theirs by opening a one-time deep link to the bot (see the /telegram/bot/webhook
+ * route) before their first code can be sent.
  *
- * Fails closed in production when no bot token is configured — it never
- * pretends a code was delivered. In local development it logs the code to
- * the server console instead, so the login flow stays testable without a
- * real bot.
+ * Fails closed in production when no bot token is configured — it never pretends a
+ * code was delivered. In local development it logs the code to the server console
+ * instead, so both login flows stay testable without a real bot.
  */
 export function createTelegramOtpProvider(botToken: string | undefined): TelegramOtpProvider {
   return {
-    async sendLoginCode({ chatId, code, expiresInMinutes }) {
+    async sendLoginCode({ chatId, code, expiresInMinutes, audience = 'admin' }) {
       if (!botToken) {
         if (process.env.NODE_ENV === 'production') return { ok: false, error: 'TELEGRAM_BOT_TOKEN_MISSING' };
         // Local development never has a real bot to call, so the code goes to the
-        // server console instead — logged regardless of chat id, so the admin login
-        // flow is fully testable before Telegram is wired up.
-        console.info(`[dev] BugunBor admin OTP for chat ${chatId || '(no telegram_chat_id set)'}: ${code} (${expiresInMinutes} daqiqa amal qiladi)`);
+        // server console instead — logged regardless of chat id, so the login
+        // flow stays testable before Telegram is wired up.
+        console.info(`[dev] BugunBor ${audience} OTP for chat ${chatId || '(no telegram_chat_id set)'}: ${code} (${expiresInMinutes} daqiqa amal qiladi)`);
         return { ok: true };
       }
 
       if (!chatId) return { ok: false, error: 'NO_TELEGRAM_CHAT_ID' };
 
-      const text = `BugunBor admin kirish kodi: ${code}\nKod ${expiresInMinutes} daqiqa amal qiladi. Agar bu siz bo‘lmasangiz, xabarni e’tiborsiz qoldiring.`;
+      const text = audience === 'admin'
+        ? `BugunBor admin kirish kodi: ${code}\nKod ${expiresInMinutes} daqiqa amal qiladi. Agar bu siz bo‘lmasangiz, xabarni e’tiborsiz qoldiring.`
+        : `BugunBor kirish kodi: ${code}\nKod ${expiresInMinutes} daqiqa amal qiladi. Agar bu siz bo‘lmasangiz, xabarni e’tiborsiz qoldiring.`;
       return callTelegramApi(botToken, 'sendMessage', { chat_id: chatId, text });
     },
   };

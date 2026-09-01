@@ -9,5 +9,9 @@ declare namespace Cloudflare {
     ADMIN_BOOTSTRAP_TELEGRAM_CHAT_ID?: string;
     /** Channel id (e.g. "@bugunbor" or "-100…") the bot posts admin announcements/promotions to. The bot must be an admin of that channel. */
     TELEGRAM_ANNOUNCE_CHANNEL_ID?: string;
+    /** The bot's @username (no @), used to build the /login phone-linking deep link (https://t.me/<username>?start=…). Defaults to "bugunborbot". */
+    TELEGRAM_BOT_USERNAME?: string;
+    /** Shared secret Telegram echoes back on every webhook call (set via setWebhook's secret_token) — POST /api/v1/telegram/bot/webhook rejects anything that doesn't match. */
+    TELEGRAM_WEBHOOK_SECRET?: string;
   }
 }

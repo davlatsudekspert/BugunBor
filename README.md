@@ -309,6 +309,61 @@ around the page (its native back button, `MainButton`, haptics) — none of
 which this backend-side verification depends on, but none of which can be
 exercised without a real bot and a real Telegram client either.
 
+## Mijoz/biznes uchun kirish (phone + Telegram OTP login)
+
+`/login` is a real sign-in flow now, not the static explainer it used to
+be: enter a phone number, get a 6-digit code over Telegram, and a
+`__Host-bugunbor_session` httpOnly cookie is set on success —
+`modules/auth/identity.ts` recognizes it the same way it already
+recognizes a Telegram Mini App session or the platform's own header, so
+every existing customer/business feature (favorites, claiming a deal,
+business onboarding, posting a deal, reviews, `/account`) works through
+it with no further changes.
+
+The one wrinkle phone-based Telegram delivery has that admin login
+(which already works this way, manually, via Team management) doesn't:
+the Bot API can only message a chat that has already messaged the bot
+first, and a customer obviously hasn't done that yet on their very
+first visit. So a first-time phone gets back a bot deep link
+(`https://t.me/<bot>?start=link_<token>`) instead of a code; opening it
+and pressing Start sends `/start link_<token>` to `POST
+/api/v1/telegram/bot/webhook`, which pairs that Telegram chat with the
+phone that generated the token (`phone_link_tokens`, a one-time hashed
+nonce) — from then on, that phone's logins send a code directly, same
+as admin's. The webhook itself is gated by `TELEGRAM_WEBHOOK_SECRET`
+(compared with `timingSafeEqual`), a value nobody ever sets by hand —
+`deploy-cloudflare.yml` generates a fresh one on every deploy, sets it
+as the Worker secret, and registers the identical value with
+Telegram's own `setWebhook` in the same step, so the two can never
+drift out of sync. One Telegram account can't be linked to a second
+phone number — `linkPhoneToTelegramChat()` rejects it and the bot
+replies saying so, rather than silently letting someone else's phone
+start receiving your codes.
+
+Everything else follows the admin login's proven shape exactly: hashed
+OTP codes and session tokens (`user_otp_codes`, `sessions` — never
+stored or logged in the clear), per-phone rate limiting (3 codes / 10
+minutes) and attempt lockout (5 wrong guesses), a 30-day session. See
+`modules/auth/otp.ts`.
+
+**Verified live** (unlike the Mini App and camera-QR features above,
+this one needed no real Telegram client or hardware to check
+end-to-end — only a simulated webhook call, which is just an ordinary
+authenticated POST): requested a code for a fresh phone and got back a
+real deep link; posted a fake Telegram Update to the webhook
+simulating "pressed Start" and confirmed the phone linked (and that a
+wrong `secret_token` is rejected with 401); requested a code again for
+the same phone and this time got a real 6-digit code (logged to the
+console in local dev, exactly like admin OTP does with no bot token);
+verified it and got a working session cookie; used that cookie with
+zero other changes to favorite a real deal and render the right phone
+number and count on `/account`; confirmed a wrong code 401s, that the
+3-per-10-minutes rate limit actually trips on the 4th request, that
+`/api/v1/auth/logout` revokes the session (a subsequent request with
+the same cookie correctly 401s), and that trying to link a second
+phone's token to an already-linked Telegram chat is rejected with the
+right message instead of hijacking it.
+
 ## Murojaatlar (support tickets)
 
 `POST /api/v1/support/tickets` is the single intake point for both the

@@ -1,6 +1,7 @@
 import { headers } from 'next/headers';
 
 import { ensurePhase1Database, getD1 } from '@/db/runtime';
+import { resolveSessionToken, SESSION_COOKIE } from '@/modules/auth/otp';
 import { resolveTelegramSession, TELEGRAM_SESSION_COOKIE } from '@/modules/telegram/session';
 
 export type RequestIdentity = {
@@ -29,13 +30,19 @@ async function resolveIdentity(source: HeaderSource, hostname: string): Promise<
   const demoUser = isLocal ? source.get('x-bugunbor-demo-user') : null;
   const id = externalId ? `oai_${externalId}` : demoUser;
 
-  // No platform-supplied identity — fall back to a Telegram Mini App session, if any (see
-  // modules/telegram/session.ts). A Mini App visitor is otherwise an ordinary CUSTOMER identity,
-  // so every existing customer API just works for them with no further changes.
+  // No platform-supplied identity — fall back, in order, to: a phone+Telegram-OTP website
+  // login (modules/auth/otp.ts), then a Telegram Mini App session (modules/telegram/session.ts).
+  // Either way the result is an ordinary RequestIdentity, so every existing customer API just
+  // works for them with no further changes.
   if (!id) {
-    const telegramUser = await resolveTelegramSession(readCookieValue(source.get('cookie'), TELEGRAM_SESSION_COOKIE));
-    if (!telegramUser) return null;
-    return { id: telegramUser.id, email: null, role: 'CUSTOMER' };
+    const cookieHeader = source.get('cookie');
+    const sessionUser = await resolveSessionToken(readCookieValue(cookieHeader, SESSION_COOKIE));
+    if (sessionUser) return { id: sessionUser.id, email: null, role: sessionUser.role };
+
+    const telegramUser = await resolveTelegramSession(readCookieValue(cookieHeader, TELEGRAM_SESSION_COOKIE));
+    if (telegramUser) return { id: telegramUser.id, email: null, role: 'CUSTOMER' };
+
+    return null;
   }
 
   const role = demoUser?.includes('moderator')

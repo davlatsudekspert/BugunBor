@@ -13,7 +13,7 @@
 | `/pricing`, `/how-it-works`, `/nfcstore`, `/about`, `/faq`, `/contact` | Acquisition and trust content |
 | `/terms`, `/privacy` | Legal content |
 | `/rules` | Platform rules: accurate pricing, no false claims, enforcement consequences (implemented) |
-| `/login`, `/verify` | Authentication entry and OTP verification |
+| `/login` | Phone + Telegram OTP sign-in (implemented — see `README.md` → "Mijoz/biznes uchun kirish"). A first-time phone is walked through linking a Telegram chat via a bot deep link before its first code can be sent; no separate `/verify` page — code entry is a step within `/login` itself. |
 | `/n/[token]` | NFC tap recording and safe redirect |
 | `/telegram` | Telegram Mini App entry point — verifies `Telegram.WebApp.initData`, mints a session, then redirects into the app; shown a "open in Telegram" prompt instead if loaded outside Telegram |
 
@@ -39,7 +39,8 @@ Still only planned: `/admin/users`, `/admin/categories`, `/admin/wallet`, `/admi
 
 - `GET /api/v1/deals`, `GET /api/v1/deals/:slug`
 - `POST /api/v1/deals/:id/redemptions` (optional `promoCode` in the body applies a promo code's discount on top of the deal price, optional `timeSlotId` books a specific slot on a SERVICE deal — both best-effort: a promo-code or time-slot edge case never blocks the underlying claim), `POST /api/v1/redemptions/:id/validate`
-- `POST /api/v1/auth/otp/request`, `POST /api/v1/auth/otp/verify`, `DELETE /api/v1/sessions/:id`
+- `POST /api/v1/auth/otp/request` (returns `NEEDS_TELEGRAM_LINK` + a bot deep link for a phone with no Telegram chat linked yet, otherwise sends a code and returns `SENT`), `POST /api/v1/auth/otp/verify` (sets the `__Host-bugunbor_session` cookie), `POST /api/v1/auth/logout`
+- `POST /api/v1/telegram/bot/webhook` (Telegram calls this on every message to the bot; only acts on `/start link_<token>`, pairing that chat with the phone that generated the token — see `POST /api/v1/auth/otp/request` above)
 - `POST /api/v1/businesses`, `POST /api/v1/business/deals`
 - `POST /api/v1/business/deals/:id` (edit), `POST /api/v1/business/deals/:id/cancel`, `POST /api/v1/business/deals/:id/stop`
 - `POST /api/v1/business/redemptions/validate` (staff redeems a customer's code)

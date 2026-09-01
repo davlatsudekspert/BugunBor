@@ -63,6 +63,21 @@ export const adminOtpCodes = sqliteTable(
   (table) => [index('idx_admin_otp_admin_created').on(table.adminUserId, table.createdAt)],
 );
 
+/** A marketplace user's phone-login OTP, delivered over Telegram — see modules/auth/otp.ts. */
+export const userOtpCodes = sqliteTable(
+  'user_otp_codes',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    codeHash: text('code_hash').notNull(),
+    expiresAt: text('expires_at').notNull(),
+    attempts: integer('attempts').notNull().default(0),
+    consumedAt: text('consumed_at'),
+    createdAt: text('created_at').notNull().default(utcNow),
+  },
+  (table) => [index('idx_user_otp_user_created').on(table.userId, table.createdAt)],
+);
+
 export const adminSessions = sqliteTable(
   'admin_sessions',
   {
@@ -111,6 +126,9 @@ export const users = sqliteTable(
     phoneVerifiedAt: text('phone_verified_at'),
     emailVerifiedAt: text('email_verified_at'),
     status: text('status', { enum: ['ACTIVE', 'LOCKED', 'DELETION_REQUESTED', 'DELETED'] }).notNull().default('ACTIVE'),
+    // Set once a phone-login OTP request's Telegram deep link is opened (see phoneLinkTokens
+    // below and modules/auth/otp.ts) — lets future logins for this phone send the code directly.
+    telegramChatId: text('telegram_chat_id'),
     createdAt: text('created_at').notNull().default(utcNow),
     updatedAt: text('updated_at').notNull().default(utcNow),
     deletedAt: text('deleted_at'),
@@ -118,6 +136,7 @@ export const users = sqliteTable(
   (table) => [
     uniqueIndex('idx_users_phone_unique').on(table.phone),
     uniqueIndex('idx_users_email_unique').on(table.email),
+    uniqueIndex('idx_users_telegram_chat_id').on(table.telegramChatId),
     index('idx_users_role_status').on(table.role, table.status),
   ],
 );
@@ -380,6 +399,20 @@ export const telegramSessions = sqliteTable(
     uniqueIndex('idx_telegram_sessions_token_hash').on(table.tokenHash),
     index('idx_telegram_sessions_user').on(table.userId, table.revokedAt),
   ],
+);
+
+/** A one-time nonce a phone-login visitor carries to the bot as /start link_<token> — see
+ * modules/auth/otp.ts and the webhook at POST /api/v1/telegram/bot/webhook. */
+export const phoneLinkTokens = sqliteTable(
+  'phone_link_tokens',
+  {
+    tokenHash: text('token_hash').primaryKey(),
+    phone: text('phone').notNull(),
+    expiresAt: text('expires_at').notNull(),
+    consumedAt: text('consumed_at'),
+    createdAt: text('created_at').notNull().default(utcNow),
+  },
+  (table) => [index('idx_phone_link_tokens_phone').on(table.phone, table.createdAt)],
 );
 
 /** Every "Bog'lanish" submission and AI Yordamchi lead — see /admin/support. */

@@ -271,6 +271,15 @@ CREATE TABLE `nfc_tap_events` (
 );
 --> statement-breakpoint
 CREATE INDEX `idx_nfc_taps_mapping_created` ON `nfc_tap_events` (`device_mapping_id`,`created_at`);--> statement-breakpoint
+CREATE TABLE `phone_link_tokens` (
+	`token_hash` text PRIMARY KEY NOT NULL,
+	`phone` text NOT NULL,
+	`expires_at` text NOT NULL,
+	`consumed_at` text,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+--> statement-breakpoint
+CREATE INDEX `idx_phone_link_tokens_phone` ON `phone_link_tokens` (`phone`,`created_at`);--> statement-breakpoint
 CREATE TABLE `plans` (
 	`id` text PRIMARY KEY NOT NULL,
 	`code` text NOT NULL,
@@ -408,6 +417,18 @@ CREATE TABLE `telegram_sessions` (
 --> statement-breakpoint
 CREATE UNIQUE INDEX `idx_telegram_sessions_token_hash` ON `telegram_sessions` (`token_hash`);--> statement-breakpoint
 CREATE INDEX `idx_telegram_sessions_user` ON `telegram_sessions` (`user_id`,`revoked_at`);--> statement-breakpoint
+CREATE TABLE `user_otp_codes` (
+	`id` text PRIMARY KEY NOT NULL,
+	`user_id` text NOT NULL,
+	`code_hash` text NOT NULL,
+	`expires_at` text NOT NULL,
+	`attempts` integer DEFAULT 0 NOT NULL,
+	`consumed_at` text,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `idx_user_otp_user_created` ON `user_otp_codes` (`user_id`,`created_at`);--> statement-breakpoint
 CREATE TABLE `users` (
 	`id` text PRIMARY KEY NOT NULL,
 	`role` text NOT NULL,
@@ -418,6 +439,7 @@ CREATE TABLE `users` (
 	`phone_verified_at` text,
 	`email_verified_at` text,
 	`status` text DEFAULT 'ACTIVE' NOT NULL,
+	`telegram_chat_id` text,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`deleted_at` text
@@ -425,6 +447,7 @@ CREATE TABLE `users` (
 --> statement-breakpoint
 CREATE UNIQUE INDEX `idx_users_phone_unique` ON `users` (`phone`);--> statement-breakpoint
 CREATE UNIQUE INDEX `idx_users_email_unique` ON `users` (`email`);--> statement-breakpoint
+CREATE UNIQUE INDEX `idx_users_telegram_chat_id` ON `users` (`telegram_chat_id`);--> statement-breakpoint
 CREATE INDEX `idx_users_role_status` ON `users` (`role`,`status`);--> statement-breakpoint
 CREATE TABLE `wallet_ledger_entries` (
 	`id` text PRIMARY KEY NOT NULL,
