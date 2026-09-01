@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2, LoaderCircle, Send } from 'lucide-react';
 
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+
 type ActiveDeal = { id: string; title: string; slug: string; discountPercent: number; businessName: string };
 
 function templateFor(deal: ActiveDeal) {
@@ -46,10 +48,10 @@ export function AnnouncementComposer({ deals }: { deals: ActiveDeal[] }) {
     <div className="rounded-2xl border border-slate-200 bg-white p-6">
       <label className="block">
         <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">Aksiyadan shablon yaratish (ixtiyoriy)</span>
-        <select value={dealId} onChange={(event) => pickDeal(event.target.value)} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm">
-          <option value="">— Erkin xabar —</option>
-          {deals.map((deal) => <option key={deal.id} value={deal.id}>{deal.businessName} — {deal.title}</option>)}
-        </select>
+        <NativeSelect value={dealId} onChange={(event) => pickDeal(event.target.value)} className="w-full" selectClassName="h-11 text-sm">
+          <NativeSelectOption value="">— Erkin xabar —</NativeSelectOption>
+          {deals.map((deal) => <NativeSelectOption key={deal.id} value={deal.id}>{deal.businessName} — {deal.title}</NativeSelectOption>)}
+        </NativeSelect>
       </label>
 
       <label className="mt-4 block">

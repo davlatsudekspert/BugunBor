@@ -539,6 +539,30 @@ export const nfcDeviceMappings = sqliteTable('nfc_device_mappings', {
   createdAt: text('created_at').notNull().default(utcNow),
 }, (table) => [uniqueIndex('idx_nfc_token_hash').on(table.tokenHash), index('idx_nfc_business_status').on(table.businessId, table.status)]);
 
+/** A Pro-plan purchase attempt — see modules/billing/payme.ts. Only Payme's own webhook
+ * (POST /api/v1/payments/payme/webhook) ever moves `status` to PAID/CANCELED; a business owner
+ * requesting a checkout link only ever creates a PENDING row. */
+export const businessPlanOrders = sqliteTable('business_plan_orders', {
+  id: text('id').primaryKey(),
+  businessId: text('business_id').notNull().references(() => businesses.id, { onDelete: 'restrict' }),
+  planId: text('plan_id').notNull().references(() => plans.id),
+  amountUzs: integer('amount_uzs').notNull(),
+  status: text('status', { enum: ['PENDING', 'PAID', 'CANCELED'] }).notNull().default('PENDING'),
+  paymeTransactionId: text('payme_transaction_id'),
+  paymeState: integer('payme_state'),
+  paymeCreateTime: integer('payme_create_time'),
+  paymePerformTime: integer('payme_perform_time'),
+  paymeCancelTime: integer('payme_cancel_time'),
+  paymeReason: integer('payme_reason'),
+  createdById: text('created_by_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
+  createdAt: text('created_at').notNull().default(utcNow),
+  paidAt: text('paid_at'),
+  canceledAt: text('canceled_at'),
+}, (table) => [
+  uniqueIndex('idx_business_plan_orders_payme_tx').on(table.paymeTransactionId),
+  index('idx_business_plan_orders_business').on(table.businessId, table.status),
+]);
+
 export const nfcTapEvents = sqliteTable('nfc_tap_events', {
   id: text('id').primaryKey(),
   deviceMappingId: text('device_mapping_id').notNull().references(() => nfcDeviceMappings.id, { onDelete: 'restrict' }),

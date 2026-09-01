@@ -88,6 +88,25 @@ export async function POST(request: Request) {
   const branch = await db.prepare('SELECT id FROM branches WHERE id = ?1 AND business_id = ?2 AND deleted_at IS NULL').bind(parsed.data.branchId, business.id).first<{ id: string }>();
   if (!branch) return NextResponse.json({ error: { message: 'Filial ushbu biznesga tegishli emas.' } }, { status: 422 });
 
+  // Bepul (FREE) reja bir vaqtda 2 tagacha faol aksiyaga cheklangan — Pro reja cheksiz (see
+  // plans.features_json seed data and components/business-plan-panel.tsx, which show the same
+  // limit). Only an ACTIVE Pro subscription lifts it; a lapsed one (PAST_DUE/CANCELED) falls
+  // back to the FREE cap, same gate POST /api/v1/admin/deals/:id/sponsor already uses.
+  const planRow = await db
+    .prepare(`SELECT plan_id AS planId, subscription_status AS subscriptionStatus FROM businesses WHERE id = ?1`)
+    .bind(business.id)
+    .first<{ planId: string; subscriptionStatus: string }>();
+  const isProActive = planRow?.planId === 'plan_pro' && planRow.subscriptionStatus === 'ACTIVE';
+  if (!isProActive) {
+    const openDeals = await db
+      .prepare(`SELECT COUNT(*) AS n FROM deals WHERE business_id = ?1 AND deleted_at IS NULL AND status IN ('PENDING_REVIEW','SCHEDULED','ACTIVE')`)
+      .bind(business.id)
+      .first<{ n: number }>();
+    if ((openDeals?.n ?? 0) >= 2) {
+      return NextResponse.json({ error: { message: 'Bepul rejada bir vaqtda faqat 2 tagacha faol aksiya bo‘lishi mumkin. Pro rejaga o‘ting yoki mavjud aksiyalardan birini yakunlang.' } }, { status: 409 });
+    }
+  }
+
   const discountPercent = parsed.data.originalPriceUzs
     ? Math.round(((parsed.data.originalPriceUzs - parsed.data.discountedPriceUzs) / parsed.data.originalPriceUzs) * 100)
     : 0;

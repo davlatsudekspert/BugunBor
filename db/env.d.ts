@@ -13,5 +13,11 @@ declare namespace Cloudflare {
     TELEGRAM_BOT_USERNAME?: string;
     /** Shared secret Telegram echoes back on every webhook call (set via setWebhook's secret_token) — POST /api/v1/telegram/bot/webhook rejects anything that doesn't match. */
     TELEGRAM_WEBHOOK_SECRET?: string;
+    /** Payme Merchant ID (Cashbox id) from business.payme.uz — see modules/billing/payme.ts. Without it, POST /api/v1/business/plan/checkout always 503s rather than faking a checkout link. */
+    PAYME_MERCHANT_ID?: string;
+    /** Payme Merchant API secret key — the password half of the "Paycom" Basic auth Payme's own servers send on every POST /api/v1/payments/payme/webhook call. */
+    PAYME_SECRET_KEY?: string;
+    /** Overrides the checkout redirect host (defaults to https://checkout.paycom.uz) — only ever needed for Payme's sandbox/test environment. */
+    PAYME_CHECKOUT_URL?: string;
   }
 }

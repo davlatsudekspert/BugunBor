@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LoaderCircle, Plus } from 'lucide-react';
 
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+
 export function PromoCodeForm() {
   const router = useRouter();
   const [error, setError] = useState('');
@@ -39,7 +41,7 @@ export function PromoCodeForm() {
   return (
     <form action={submit} className="grid gap-4 rounded-2xl border border-dashed border-slate-300 bg-white p-6 sm:grid-cols-2">
       <label><span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Kod</span><input required name="code" placeholder="BUGUN10" maxLength={24} className="h-11 w-full rounded-xl border border-slate-200 px-3 font-mono uppercase" /></label>
-      <label><span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Turi</span><select name="discountType" className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3"><option value="PERCENT">Foiz (%)</option><option value="FIXED">Aniq summa (so‘m)</option></select></label>
+      <label htmlFor="promo-discount-type"><span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Turi</span><NativeSelect id="promo-discount-type" name="discountType" className="w-full" selectClassName="h-11"><NativeSelectOption value="PERCENT">Foiz (%)</NativeSelectOption><NativeSelectOption value="FIXED">Aniq summa (so‘m)</NativeSelectOption></NativeSelect></label>
       <label><span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Qiymati</span><input required type="number" min={1} name="discountValue" placeholder="10" className="h-11 w-full rounded-xl border border-slate-200 px-3" /></label>
       <label><span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Maksimal ishlatish soni (ixtiyoriy)</span><input type="number" min={1} name="maxUses" placeholder="Cheklanmagan" className="h-11 w-full rounded-xl border border-slate-200 px-3" /></label>
       <label className="sm:col-span-2"><span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Amal qilish muddati (ixtiyoriy)</span><input type="datetime-local" name="expiresAt" className="h-11 w-full rounded-xl border border-slate-200 px-3" /></label>

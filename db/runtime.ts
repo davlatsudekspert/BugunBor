@@ -203,6 +203,23 @@ const schemaStatements = [
     FOREIGN KEY(user_id) REFERENCES users(id)
   )`,
   `CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id, revoked_at)`,
+  // One row per Pro-plan purchase attempt — see modules/billing/payme.ts. `status` starts
+  // PENDING the moment a business owner requests a checkout link; Payme's own servers then
+  // call POST /api/v1/payments/payme/webhook to move it to PAID (which is the only thing that
+  // ever upgrades businesses.plan_id) or CANCELED. The payme_* columns track Payme's own
+  // transaction state machine 1:1 so every JSON-RPC method (CheckTransaction, GetStatement, a
+  // retried call) can be answered from this row alone, idempotently.
+  `CREATE TABLE IF NOT EXISTS business_plan_orders (
+    id TEXT PRIMARY KEY, business_id TEXT NOT NULL, plan_id TEXT NOT NULL, amount_uzs INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK(status IN ('PENDING','PAID','CANCELED')),
+    payme_transaction_id TEXT, payme_state INTEGER,
+    payme_create_time INTEGER, payme_perform_time INTEGER, payme_cancel_time INTEGER, payme_reason INTEGER,
+    created_by_id TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    paid_at TEXT, canceled_at TEXT,
+    FOREIGN KEY(business_id) REFERENCES businesses(id), FOREIGN KEY(plan_id) REFERENCES plans(id),
+    FOREIGN KEY(created_by_id) REFERENCES users(id)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_business_plan_orders_business ON business_plan_orders(business_id, status)`,
 ];
 
 const seedStatements = [
@@ -316,6 +333,10 @@ export async function ensurePhase1Database() {
     // level — a second business trying to claim an already-linked profile URL fails this
     // constraint outright, not merely a check the application code could get wrong.
     await db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_businesses_nfcstore_url ON businesses(nfcstore_business_url) WHERE nfcstore_business_url IS NOT NULL`).run();
+    // A Payme transaction id can only ever settle one order — this is what makes CreateTransaction
+    // safe to retry (see modules/billing/payme.ts): a second order can never silently steal an
+    // already-assigned transaction id.
+    await db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_business_plan_orders_payme_tx ON business_plan_orders(payme_transaction_id) WHERE payme_transaction_id IS NOT NULL`).run();
     // Cleanup: an earlier deploy's deep-link phone-linking flow used this table; the bot's
     // "share phone number" button (modules/auth/otp.ts's linkPhoneFromContact) replaced it
     // entirely, so drop it on any database that still has it from that earlier schema.

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { Activity, BadgeCheck, Eye, QrCode, TicketCheck } from 'lucide-react';
 
 import { BusinessNfcStorePanel } from '@/components/business-nfcstore-panel';
+import { BusinessPlanPanel } from '@/components/business-plan-panel';
 import { ensurePhase1Database, getD1, syncDealLifecycle } from '@/db/runtime';
 import { BUSINESS_STATUS_LABELS } from '@/lib/business-status';
 import { dealStatusLabels } from '@/lib/deal-status';
@@ -22,8 +23,11 @@ type OwnedBusiness = {
   nfcstoreBusinessUrl: string | null;
   nfcstoreStatus: string;
   nfcstoreDiscountEligible: number;
+  planId: string;
+  planCode: string;
   planName: string;
   planPriceUzs: number;
+  subscriptionStatus: string;
 };
 type Metrics = { deals: number; activeDeals: number; redemptions: number };
 type DealRow = { id: string; title: string; status: string; discountPercent: number; createdAt: string };
@@ -51,7 +55,8 @@ export default async function BusinessDashboardPage({ searchParams }: { searchPa
           SELECT b.id, b.name, b.verification_status AS verificationStatus, bm.role AS role,
             b.nfcstore_business_url AS nfcstoreBusinessUrl, b.nfcstore_status AS nfcstoreStatus,
             b.nfcstore_discount_eligible AS nfcstoreDiscountEligible,
-            p.name AS planName, p.price_uzs AS planPriceUzs
+            b.plan_id AS planId, p.code AS planCode, p.name AS planName, p.price_uzs AS planPriceUzs,
+            b.subscription_status AS subscriptionStatus
           FROM business_members bm
           JOIN businesses b ON b.id = bm.business_id
           LEFT JOIN plans p ON p.id = b.plan_id
@@ -63,6 +68,7 @@ export default async function BusinessDashboardPage({ searchParams }: { searchPa
     : null;
   const planPrice = business ? computeEffectivePlanPriceUzs(business.planPriceUzs, Boolean(business.nfcstoreDiscountEligible)) : null;
   const canManageNfcStore = business ? canAccessBusiness({ requestedBusinessId: business.id, membershipBusinessId: business.id, role: business.role as BusinessRole, action: 'nfcstore.manage' }) : false;
+  const canManagePlan = business ? canAccessBusiness({ requestedBusinessId: business.id, membershipBusinessId: business.id, role: business.role as BusinessRole, action: 'plan.manage' }) : false;
 
   const metrics = business
     ? await db
@@ -145,6 +151,15 @@ export default async function BusinessDashboardPage({ searchParams }: { searchPa
                 </div>
               ))}
             </div>
+
+            <BusinessPlanPanel
+              businessId={business.id}
+              planCode={business.planCode}
+              planName={business.planName}
+              subscriptionStatus={business.subscriptionStatus}
+              planPrice={planPrice!}
+              canManage={canManagePlan}
+            />
 
             <BusinessNfcStorePanel
               businessId={business.id}

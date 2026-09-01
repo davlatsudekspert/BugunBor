@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { BadgeCheck, Ban, CheckCircle2, LoaderCircle, Radio, RotateCcw, Sparkles } from 'lucide-react';
 
 import { NFCSTORE_STATUS_LABELS, NFCSTORE_STATUS_STYLES } from '@/lib/nfcstore';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { computeEffectivePlanPriceUzs } from '@/modules/billing/nfcstore-discount';
 
 type Business = {
@@ -158,15 +159,15 @@ export function BusinessActions({
 
         {canManagePlan ? (
           <div className="flex flex-wrap items-center gap-2">
-            <select value={planId} onChange={(event) => setPlanId(event.target.value)} className="h-9 rounded-lg border border-slate-200 px-2 text-xs font-semibold">
-              {plans.map((plan) => <option key={plan.id} value={plan.id}>{plan.name}</option>)}
-            </select>
-            <select value={subscriptionStatus} onChange={(event) => setSubscriptionStatus(event.target.value)} className="h-9 rounded-lg border border-slate-200 px-2 text-xs font-semibold">
-              <option value="FREE">FREE</option>
-              <option value="ACTIVE">ACTIVE</option>
-              <option value="PAST_DUE">PAST_DUE</option>
-              <option value="CANCELED">CANCELED</option>
-            </select>
+            <NativeSelect value={planId} onChange={(event) => setPlanId(event.target.value)} selectClassName="h-9 text-xs font-semibold">
+              {plans.map((plan) => <NativeSelectOption key={plan.id} value={plan.id}>{plan.name}</NativeSelectOption>)}
+            </NativeSelect>
+            <NativeSelect value={subscriptionStatus} onChange={(event) => setSubscriptionStatus(event.target.value)} selectClassName="h-9 text-xs font-semibold">
+              <NativeSelectOption value="FREE">FREE</NativeSelectOption>
+              <NativeSelectOption value="ACTIVE">ACTIVE</NativeSelectOption>
+              <NativeSelectOption value="PAST_DUE">PAST_DUE</NativeSelectOption>
+              <NativeSelectOption value="CANCELED">CANCELED</NativeSelectOption>
+            </NativeSelect>
             <button onClick={savePlan} disabled={busy !== null} className="flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-bold text-white disabled:opacity-50">
               {busy === 'plan' ? <LoaderCircle className="size-3.5 animate-spin" /> : null} Rejani saqlash
             </button>

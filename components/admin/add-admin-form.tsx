@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2, LoaderCircle, UserPlus } from 'lucide-react';
 
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+
 export function AddAdminForm() {
   const router = useRouter();
   const [state, setState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -34,13 +36,13 @@ export function AddAdminForm() {
         <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">Telefon</span>
         <input required name="phone" pattern="\+998\d{9}" defaultValue="+998" className="h-11 w-full rounded-xl border border-slate-200 px-3" />
       </label>
-      <label className="block">
+      <label className="block" htmlFor="add-admin-role">
         <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">Lavozim</span>
-        <select required name="role" className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3">
-          <option value="MANAGER">Menejer</option>
-          <option value="ACCOUNTANT">Hisobchi</option>
-          <option value="SUPER_ADMIN">Bosh admin</option>
-        </select>
+        <NativeSelect id="add-admin-role" required name="role" className="w-full" selectClassName="h-11">
+          <NativeSelectOption value="MANAGER">Menejer</NativeSelectOption>
+          <NativeSelectOption value="ACCOUNTANT">Hisobchi</NativeSelectOption>
+          <NativeSelectOption value="SUPER_ADMIN">Bosh admin</NativeSelectOption>
+        </NativeSelect>
       </label>
       <label className="block">
         <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">Telegram chat ID</span>

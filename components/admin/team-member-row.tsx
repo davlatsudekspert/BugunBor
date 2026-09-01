@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Ban, LoaderCircle, RotateCcw, ShieldCheck } from 'lucide-react';
 
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+
 type Member = { id: string; phone: string; displayName: string; role: string; status: string; telegramChatId: string | null; createdAt: string };
 
 const roleLabels: Record<string, string> = { SUPER_ADMIN: 'Bosh admin', MANAGER: 'Menejer', ACCOUNTANT: 'Hisobchi' };
@@ -48,11 +50,11 @@ export function TeamMemberRow({ member, isSelf }: { member: Member; isSelf: bool
           <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500"><ShieldCheck className="size-3.5" /> {roleLabels[role] ?? role}</span>
         ) : (
           <>
-            <select value={role} onChange={(event) => update({ role: event.target.value })} disabled={busy} className="h-9 rounded-lg border border-slate-200 px-2 text-xs font-semibold">
-              <option value="MANAGER">Menejer</option>
-              <option value="ACCOUNTANT">Hisobchi</option>
-              <option value="SUPER_ADMIN">Bosh admin</option>
-            </select>
+            <NativeSelect value={role} onChange={(event) => update({ role: event.target.value })} disabled={busy} selectClassName="h-9 text-xs font-semibold">
+              <NativeSelectOption value="MANAGER">Menejer</NativeSelectOption>
+              <NativeSelectOption value="ACCOUNTANT">Hisobchi</NativeSelectOption>
+              <NativeSelectOption value="SUPER_ADMIN">Bosh admin</NativeSelectOption>
+            </NativeSelect>
             {status === 'ACTIVE' ? (
               <button onClick={() => update({ status: 'SUSPENDED' })} disabled={busy} className="flex h-9 items-center gap-1.5 rounded-lg bg-red-50 px-3 text-xs font-bold text-red-700 disabled:opacity-50">
                 {busy ? <LoaderCircle className="size-3.5 animate-spin" /> : <Ban className="size-3.5" />} To‘xtatish
