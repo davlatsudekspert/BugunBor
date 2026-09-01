@@ -4,19 +4,26 @@ import { useState } from 'react';
 import { CheckCircle2, LoaderCircle, Phone, QrCode } from 'lucide-react';
 
 type ClaimResponse = {
-  data?: { code?: string; codeHint: string; expiresAt: string; finalPriceUzs?: number; promoApplied?: boolean; replayed: boolean };
+  data?: { code?: string; codeHint: string; expiresAt: string; finalPriceUzs?: number; promoApplied?: boolean; timeSlotRequested?: boolean; slotBooked?: boolean; replayed: boolean };
   error?: { code: string; message: string };
 };
 
-const formatPrice = (value: number) => new Intl.NumberFormat('uz-UZ').format(value);
+type TimeSlot = { id: string; startsAt: string; remainingCapacity: number };
 
-export function ClaimButton({ dealId, branchId, phone }: { dealId: string; branchId: string; phone?: string | null }) {
+const formatPrice = (value: number) => new Intl.NumberFormat('uz-UZ').format(value);
+const formatSlotTime = (startsAt: string) => new Date(`${startsAt}Z`).toLocaleString('uz-UZ', { weekday: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent' });
+
+export function ClaimButton({ dealId, branchId, phone, timeSlots = [] }: { dealId: string; branchId: string; phone?: string | null; timeSlots?: TimeSlot[] }) {
   const [state, setState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [code, setCode] = useState('');
   const [promoCode, setPromoCode] = useState('');
   const [promoOpen, setPromoOpen] = useState(false);
+  const [timeSlotId, setTimeSlotId] = useState(timeSlots[0]?.id ?? '');
   const [finalPriceUzs, setFinalPriceUzs] = useState<number | null>(null);
+  const [slotWarning, setSlotWarning] = useState(false);
+
+  const requiresSlot = timeSlots.length > 0;
 
   async function claim() {
     setState('loading');
@@ -27,7 +34,7 @@ export function ClaimButton({ dealId, branchId, phone }: { dealId: string; branc
     const response = await fetch(`/api/v1/deals/${dealId}/redemptions`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ branchId, promoCode: promoCode.trim() || undefined }),
+      body: JSON.stringify({ branchId, promoCode: promoCode.trim() || undefined, timeSlotId: timeSlotId || undefined }),
     });
     const payload = (await response.json()) as ClaimResponse;
     if (!response.ok || !payload.data) {
@@ -37,6 +44,7 @@ export function ClaimButton({ dealId, branchId, phone }: { dealId: string; branc
     }
     setState('success');
     setFinalPriceUzs(payload.data.finalPriceUzs ?? null);
+    setSlotWarning(Boolean(payload.data.timeSlotRequested) && !payload.data.slotBooked);
     if (payload.data.code) {
       setCode(payload.data.code);
       setMessage(payload.data.promoApplied ? 'Promokod qo‘llandi! Ushbu kodni filialda ko‘rsating:' : 'Ushbu kodni filialda ko‘rsating:');
@@ -47,6 +55,14 @@ export function ClaimButton({ dealId, branchId, phone }: { dealId: string; branc
 
   return (
     <div aria-live="polite">
+      {state === 'idle' && requiresSlot ? (
+        <label className="mb-3 block">
+          <span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Vaqtni tanlang</span>
+          <select value={timeSlotId} onChange={(event) => setTimeSlotId(event.target.value)} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold">
+            {timeSlots.map((slot) => <option key={slot.id} value={slot.id}>{formatSlotTime(slot.startsAt)} — {slot.remainingCapacity} joy bo‘sh</option>)}
+          </select>
+        </label>
+      ) : null}
       {state === 'idle' ? (
         promoOpen ? (
           <div className="mb-3 flex gap-2">
@@ -56,7 +72,7 @@ export function ClaimButton({ dealId, branchId, phone }: { dealId: string; branc
           <button onClick={() => setPromoOpen(true)} className="mb-3 text-sm font-bold text-primary underline underline-offset-2">Promokodingiz bormi?</button>
         )
       ) : null}
-      <button onClick={claim} disabled={state === 'loading' || state === 'success'} className="flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-white shadow-[0_10px_25px_rgba(245,89,55,.24)] transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70">
+      <button onClick={claim} disabled={state === 'loading' || state === 'success' || (requiresSlot && !timeSlotId)} className="flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-white shadow-[0_10px_25px_rgba(245,89,55,.24)] transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70">
         {state === 'loading' ? <LoaderCircle className="size-5 animate-spin" /> : state === 'success' ? <CheckCircle2 className="size-5" /> : <QrCode className="size-5" />}
         {state === 'success' ? 'Aksiya band qilindi' : state === 'loading' ? 'Tekshirilmoqda…' : 'Aksiyadan foydalanish'}
       </button>
@@ -66,6 +82,13 @@ export function ClaimButton({ dealId, branchId, phone }: { dealId: string; branc
           {finalPriceUzs !== null ? <p className="mt-1 font-black">Yakuniy narx: {formatPrice(finalPriceUzs)} so‘m</p> : null}
           {code ? <p className="mt-1 break-all rounded-lg bg-white px-3 py-2 text-center font-mono text-base font-black tracking-wide text-emerald-900">{code}</p> : null}
         </div>
+      ) : null}
+      {state === 'success' && slotWarning ? (
+        <p className="mt-3 flex items-start gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold leading-5 text-red-800">
+          <Phone className="mt-0.5 size-3.5 shrink-0" />
+          Tanlagan vaqtingiz ayni paytda to‘lib qoldi — bandingiz saqlandi, lekin vaqtni{' '}
+          {phone ? <a href={`tel:${phone}`} className="underline underline-offset-2">{phone}</a> : 'filial'} orqali qayta kelishib oling.
+        </p>
       ) : null}
       {state === 'success' && phone ? (
         <p className="mt-3 flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold leading-5 text-amber-800">

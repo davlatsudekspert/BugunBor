@@ -9,6 +9,7 @@ import { evaluateClaimPolicy } from '@/modules/redemptions/policy';
 const bodySchema = z.object({
   branchId: z.string().min(3).max(100),
   promoCode: z.string().trim().toUpperCase().max(24).optional(),
+  timeSlotId: z.string().min(1).max(100).optional(),
 });
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -57,6 +58,20 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
   const branch = await db.prepare('SELECT deal_id FROM deal_branches WHERE deal_id = ?1 AND branch_id = ?2').bind(dealId, parsed.data.branchId).first();
   if (!branch) return NextResponse.json({ error: { code: 'BRANCH_UNAVAILABLE', message: 'Aksiya bu filialda mavjud emas.' } }, { status: 409 });
+
+  // A time slot (service bookings) is checked up front for a clear error message, then applied
+  // best-effort right after the claim succeeds — the same pattern as the promo code below.
+  let timeSlotId: string | null = null;
+  if (parsed.data.timeSlotId) {
+    const slot = await db
+      .prepare(`SELECT id, remaining_capacity AS remainingCapacity, starts_at AS startsAt FROM deal_time_slots WHERE id = ?1 AND deal_id = ?2`)
+      .bind(parsed.data.timeSlotId, dealId)
+      .first<{ id: string; remainingCapacity: number; startsAt: string }>();
+    if (!slot) return NextResponse.json({ error: { code: 'SLOT_NOT_FOUND', message: 'Vaqt-slot topilmadi.' } }, { status: 422 });
+    if (slot.remainingCapacity <= 0) return NextResponse.json({ error: { code: 'SLOT_FULL', message: 'Bu vaqt-slot to‘lgan.' } }, { status: 409 });
+    if (new Date(`${slot.startsAt}Z`) <= new Date()) return NextResponse.json({ error: { code: 'SLOT_PAST', message: 'Bu vaqt-slot allaqachon o‘tib ketgan.' } }, { status: 409 });
+    timeSlotId = slot.id;
+  }
 
   // A promo code is optional and validated up front; it's applied best-effort right after the
   // claim succeeds (see below) so a promo-code edge case never blocks a legitimate claim.
@@ -130,5 +145,21 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     promoApplied = (promoResults[1].meta.changes ?? 0) === 1;
   }
 
-  return NextResponse.json({ data: { id: redemptionId, status: 'CLAIMED', code, codeHint, expiresAt, finalPriceUzs: promoApplied ? finalPriceUzs : deal.discountedPriceUzs, promoApplied, replayed: false } }, { status: 201 });
+  let slotBooked = false;
+  if (timeSlotId) {
+    const slotResults = await db.batch([
+      db.prepare(`UPDATE deal_time_slots SET remaining_capacity = remaining_capacity - 1 WHERE id = ?1 AND remaining_capacity > 0`).bind(timeSlotId),
+      db.prepare(`UPDATE redemptions SET time_slot_id = ?1 WHERE id = ?2 AND changes() = 1`).bind(timeSlotId, redemptionId),
+    ]);
+    slotBooked = (slotResults[1].meta.changes ?? 0) === 1;
+  }
+
+  return NextResponse.json({
+    data: {
+      id: redemptionId, status: 'CLAIMED', code, codeHint, expiresAt,
+      finalPriceUzs: promoApplied ? finalPriceUzs : deal.discountedPriceUzs, promoApplied,
+      timeSlotRequested: Boolean(timeSlotId), slotBooked,
+      replayed: false,
+    },
+  }, { status: 201 });
 }

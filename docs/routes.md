@@ -24,7 +24,7 @@ Still only planned: `/account/following`, `/account/wallet`, `/account/referrals
 
 ## Business
 
-Implemented: `/business/onboarding` (requires accepting `/rules`), `/business/dashboard` (own business + recent deals), `/business/deals` (full list — edit, cancel a not-yet-launched deal, or stop a live one), `/business/deals/new` (create a deal, gated to `VERIFIED` businesses and a `deal.write` role, blocks a discount that isn't actually lower than the original price), `/business/redemptions` (staff enters a customer's code to redeem it — the counterpart to the claim flow, gated to a `redemption.validate` role — plus a panel to record units sold in person so the online stock count stays accurate).
+Implemented: `/business/onboarding` (requires accepting `/rules`), `/business/dashboard` (own business + recent deals), `/business/deals` (full list — edit, cancel a not-yet-launched deal, or stop a live one), `/business/deals/new` (create a deal, gated to `VERIFIED` businesses and a `deal.write` role, blocks a discount that isn't actually lower than the original price — also where a PRODUCT/SERVICE toggle, Auto Skidka discount tiers, and SERVICE time slots are set up, see `README.md`), `/business/redemptions` (staff enters a customer's code to redeem it — the counterpart to the claim flow, gated to a `redemption.validate` role — plus a panel to record units sold in person so the online stock count stays accurate).
 
 Still only planned: `/business/branches`, `/business/team`, `/business/profile`, `/business/media`, `/business/verification`, `/business/billing`, `/business/boosts`, `/business/nfcstore`, `/business/analytics`, `/business/audit`.
 
@@ -37,7 +37,7 @@ Still only planned: `/admin/users`, `/admin/categories`, `/admin/wallet`, `/admi
 ## External API
 
 - `GET /api/v1/deals`, `GET /api/v1/deals/:slug`
-- `POST /api/v1/deals/:id/redemptions` (optional `promoCode` in the body applies a promo code's discount on top of the deal price — best-effort: a promo-code edge case never blocks the underlying claim), `POST /api/v1/redemptions/:id/validate`
+- `POST /api/v1/deals/:id/redemptions` (optional `promoCode` in the body applies a promo code's discount on top of the deal price, optional `timeSlotId` books a specific slot on a SERVICE deal — both best-effort: a promo-code or time-slot edge case never blocks the underlying claim), `POST /api/v1/redemptions/:id/validate`
 - `POST /api/v1/auth/otp/request`, `POST /api/v1/auth/otp/verify`, `DELETE /api/v1/sessions/:id`
 - `POST /api/v1/businesses`, `POST /api/v1/business/deals`
 - `POST /api/v1/business/deals/:id` (edit), `POST /api/v1/business/deals/:id/cancel`, `POST /api/v1/business/deals/:id/stop`

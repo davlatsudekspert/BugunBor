@@ -2,9 +2,12 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, ArrowRight, CheckCircle2, LoaderCircle } from 'lucide-react';
+import { AlertTriangle, ArrowRight, CheckCircle2, LoaderCircle, Plus, Trash2 } from 'lucide-react';
 
 import { tashkentLocalToUtcIso } from '@/lib/time';
+
+type Tier = { afterHours: string; discountPercent: string };
+type TimeSlot = { startsAtLocal: string; capacity: string };
 
 export function BusinessDealForm({ branches }: { branches: Array<{ id: string; name: string }> }) {
   const router = useRouter();
@@ -12,6 +15,11 @@ export function BusinessDealForm({ branches }: { branches: Array<{ id: string; n
   const [message, setMessage] = useState('');
   const [originalPrice, setOriginalPrice] = useState('');
   const [discountedPrice, setDiscountedPrice] = useState('');
+  const [listingType, setListingType] = useState<'PRODUCT' | 'SERVICE'>('PRODUCT');
+  const [autoDiscountOn, setAutoDiscountOn] = useState(false);
+  const [minPriceUzs, setMinPriceUzs] = useState('');
+  const [tiers, setTiers] = useState<Tier[]>([{ afterHours: '2', discountPercent: '15' }]);
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([{ startsAtLocal: '', capacity: '1' }]);
 
   const discountPercent = useMemo(() => {
     const original = Number(originalPrice);
@@ -43,6 +51,14 @@ export function BusinessDealForm({ branches }: { branches: Array<{ id: string; n
       perCustomerLimit: formData.get('perCustomerLimit'),
       redemptionMethod: formData.get('redemptionMethod'),
       acceptedRules: formData.get('acceptedRules'),
+      listingType,
+      minPriceUzs: autoDiscountOn && minPriceUzs ? minPriceUzs : undefined,
+      autoDiscountTiers: autoDiscountOn
+        ? tiers.filter((tier) => tier.afterHours !== '' && tier.discountPercent !== '').map((tier) => ({ afterHours: Number(tier.afterHours), discountPercent: Number(tier.discountPercent) }))
+        : undefined,
+      timeSlots: listingType === 'SERVICE'
+        ? timeSlots.filter((slot) => slot.startsAtLocal !== '').map((slot) => ({ startsAt: tashkentLocalToUtcIso(slot.startsAtLocal), capacity: Number(slot.capacity) || 1 }))
+        : undefined,
     };
 
     const response = await fetch('/api/v1/business/deals', {
@@ -55,6 +71,14 @@ export function BusinessDealForm({ branches }: { branches: Array<{ id: string; n
     setState('success');
     setMessage('Aksiya moderatsiyaga yuborildi. Tasdiqlangach faol bo‘ladi.');
     router.refresh();
+  }
+
+  function updateTier(index: number, field: keyof Tier, value: string) {
+    setTiers((current) => current.map((tier, i) => (i === index ? { ...tier, [field]: value } : tier)));
+  }
+
+  function updateSlot(index: number, field: keyof TimeSlot, value: string) {
+    setTimeSlots((current) => current.map((slot, i) => (i === index ? { ...slot, [field]: value } : slot)));
   }
 
   if (state === 'success') {
@@ -92,6 +116,14 @@ export function BusinessDealForm({ branches }: { branches: Array<{ id: string; n
             <option value="cat_delivery">Yetkazish</option>
           </select>
         </label>
+
+        <div className="sm:col-span-2">
+          <span className="mb-2 block text-sm font-bold">Turi</span>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setListingType('PRODUCT')} className={`h-11 flex-1 rounded-xl border text-sm font-bold ${listingType === 'PRODUCT' ? 'border-primary bg-primary/10 text-primary' : 'border-slate-200 text-slate-600'}`}>📦 Mahsulot</button>
+            <button type="button" onClick={() => setListingType('SERVICE')} className={`h-11 flex-1 rounded-xl border text-sm font-bold ${listingType === 'SERVICE' ? 'border-primary bg-primary/10 text-primary' : 'border-slate-200 text-slate-600'}`}>🗓️ Xizmat (vaqt-slot bilan)</button>
+          </div>
+        </div>
 
         <label>
           <span className="mb-2 block text-sm font-bold">Eski narx (so‘m, ixtiyoriy)</span>
@@ -143,6 +175,49 @@ export function BusinessDealForm({ branches }: { branches: Array<{ id: string; n
           <span className="mb-2 block text-sm font-bold">Shartlar va cheklovlar</span>
           <textarea required name="terms" minLength={10} maxLength={800} rows={3} placeholder="Masalan: faqat shu filialda, boshqa chegirma bilan qo‘shilmaydi…" className="w-full rounded-xl border border-slate-200 p-4" />
         </label>
+      </div>
+
+      {listingType === 'SERVICE' ? (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+          <p className="font-black">Vaqt-slotlar</p>
+          <p className="mt-1 text-sm text-slate-500">Mijoz aynan shu vaqtlardan birini band qiladi (masalan, soch olish 15:00 da).</p>
+          <div className="mt-4 space-y-2">
+            {timeSlots.map((slot, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <input type="datetime-local" value={slot.startsAtLocal} onChange={(event) => updateSlot(index, 'startsAtLocal', event.target.value)} className="h-11 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm" />
+                <input type="number" min={1} max={50} value={slot.capacity} onChange={(event) => updateSlot(index, 'capacity', event.target.value)} placeholder="Sig'imi" className="h-11 w-24 rounded-xl border border-slate-200 bg-white px-3 text-sm" />
+                <button type="button" onClick={() => setTimeSlots((current) => current.filter((_, i) => i !== index))} aria-label="Slotni o‘chirish" className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:text-red-600"><Trash2 className="size-4" /></button>
+              </div>
+            ))}
+          </div>
+          <button type="button" onClick={() => setTimeSlots((current) => [...current, { startsAtLocal: '', capacity: '1' }])} className="mt-3 flex items-center gap-1.5 text-sm font-bold text-primary"><Plus className="size-4" /> Yana slot qo‘shish</button>
+        </div>
+      ) : null}
+
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+        <label className="flex items-center gap-2 text-sm font-bold">
+          <input type="checkbox" checked={autoDiscountOn} onChange={(event) => setAutoDiscountOn(event.target.checked)} className="size-4 rounded border-slate-300" />
+          Avto Skidka — vaqt o‘tgani sayin chegirma avtomatik chuqurlashsin
+        </label>
+        {autoDiscountOn ? (
+          <div className="mt-4 space-y-3">
+            <p className="text-sm text-slate-500">Masalan, boshlanganidan 2 soat keyin -15%, 4 soat keyin -25% bo‘lsin.</p>
+            <label className="block max-w-xs"><span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Minimal narx (so‘m, ixtiyoriy — bundan pastga tushmaydi)</span><input type="number" min={0} step={1000} value={minPriceUzs} onChange={(event) => setMinPriceUzs(event.target.value)} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm" /></label>
+            <div className="space-y-2">
+              {tiers.map((tier, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <span className="text-sm text-slate-500">Boshlanganidan</span>
+                  <input type="number" min={0} max={1000} value={tier.afterHours} onChange={(event) => updateTier(index, 'afterHours', event.target.value)} className="h-11 w-20 rounded-xl border border-slate-200 bg-white px-2 text-center text-sm" />
+                  <span className="text-sm text-slate-500">soat keyin</span>
+                  <input type="number" min={1} max={95} value={tier.discountPercent} onChange={(event) => updateTier(index, 'discountPercent', event.target.value)} className="h-11 w-20 rounded-xl border border-slate-200 bg-white px-2 text-center text-sm" />
+                  <span className="text-sm text-slate-500">% chegirma</span>
+                  <button type="button" onClick={() => setTiers((current) => current.filter((_, i) => i !== index))} aria-label="Bosqichni o‘chirish" className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:text-red-600"><Trash2 className="size-4" /></button>
+                </div>
+              ))}
+            </div>
+            <button type="button" onClick={() => setTiers((current) => [...current, { afterHours: '', discountPercent: '' }])} className="flex items-center gap-1.5 text-sm font-bold text-primary"><Plus className="size-4" /> Yana bosqich qo‘shish</button>
+          </div>
+        ) : null}
       </div>
 
       <label className="flex items-start gap-3 rounded-xl bg-amber-50 p-4 text-sm leading-6 text-amber-900">

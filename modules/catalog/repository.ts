@@ -26,6 +26,7 @@ export type DealCardRecord = {
   longitudeE6: number;
   phone: string | null;
   isSponsored: boolean;
+  listingType: 'PRODUCT' | 'SERVICE';
 };
 
 const selectDeal = `
@@ -39,7 +40,7 @@ const selectDeal = `
     d.remaining_quantity AS remainingQuantity, d.status,
     c.slug AS categorySlug, br.working_hours_json AS workingHoursJson,
     br.latitude_e6 AS latitudeE6, br.longitude_e6 AS longitudeE6, b.phone,
-    d.is_sponsored AS isSponsored
+    d.is_sponsored AS isSponsored, d.listing_type AS listingType
   FROM deals d
   JOIN businesses b ON b.id = d.business_id
   JOIN categories c ON c.id = d.category_id
@@ -135,6 +136,20 @@ export async function listBusinessReviews(businessId: string, limit = 20) {
     `)
     .bind(businessId, limit)
     .all<ReviewRecord>();
+  return result.results;
+}
+
+export type TimeSlotRecord = { id: string; startsAt: string; capacity: number; remainingCapacity: number };
+
+/** Only slots that still have an open spot and haven't started yet — a customer can't book the past. */
+export async function listDealTimeSlots(dealId: string) {
+  await ensurePhase1Database();
+  const result = await getD1()
+    .prepare(`SELECT id, starts_at AS startsAt, capacity, remaining_capacity AS remainingCapacity
+      FROM deal_time_slots WHERE deal_id = ?1 AND remaining_capacity > 0 AND datetime(starts_at) > datetime('now')
+      ORDER BY starts_at ASC`)
+    .bind(dealId)
+    .all<TimeSlotRecord>();
   return result.results;
 }
 

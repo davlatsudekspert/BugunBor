@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getServerIdentity } from '@/modules/auth/identity';
-import { getActiveDealBySlug, getBusinessRatingSummary, isDealFavorited, listBusinessReviews } from '@/modules/catalog/repository';
+import { getActiveDealBySlug, getBusinessRatingSummary, isDealFavorited, listBusinessReviews, listDealTimeSlots } from '@/modules/catalog/repository';
 
 const formatPrice = (value: number | null) => value === null ? '' : new Intl.NumberFormat('uz-UZ').format(value);
 
@@ -27,10 +27,11 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
   const deal = await getActiveDealBySlug(slug);
   if (!deal) notFound();
   const identity = await getServerIdentity();
-  const [favorited, ratingSummary, reviews] = await Promise.all([
+  const [favorited, ratingSummary, reviews, timeSlots] = await Promise.all([
     identity ? isDealFavorited(identity.id, deal.id) : Promise.resolve(false),
     getBusinessRatingSummary(deal.businessId),
     listBusinessReviews(deal.businessId, 6),
+    deal.listingType === 'SERVICE' ? listDealTimeSlots(deal.id) : Promise.resolve([]),
   ]);
   const directions = `https://www.google.com/maps/dir/?api=1&destination=${deal.latitudeE6 / 1_000_000},${deal.longitudeE6 / 1_000_000}`;
   const share = `https://t.me/share/url?url=${encodeURIComponent(`https://bugunbor.uz/deals/${deal.slug}`)}&text=${encodeURIComponent(`${deal.title} — ${deal.discountPercent}% chegirma`)}`;
@@ -100,7 +101,10 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
                 <Phone className="mt-0.5 size-3.5 shrink-0" /> Joy kam qoldi — filialga borishdan oldin <a href={`tel:${deal.phone}`} className="underline underline-offset-2">{deal.phone}</a> raqamiga qo‘ng‘iroq qilib tasdiqlashingiz tavsiya etiladi.
               </p>
             ) : null}
-            <div className="mt-5"><ClaimButton dealId={deal.id} branchId={deal.branchId} phone={deal.phone} /></div>
+            {deal.listingType === 'SERVICE' && timeSlots.length === 0 ? (
+              <p className="mt-4 rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-600">Barcha vaqtlar band — filialga qo‘ng‘iroq qilib bo‘sh vaqt so‘rang.</p>
+            ) : null}
+            <div className="mt-5"><ClaimButton dealId={deal.id} branchId={deal.branchId} phone={deal.phone} timeSlots={timeSlots} /></div>
             <p className="mt-4 text-xs leading-5 text-slate-500">Band qilingandan so‘ng 15 daqiqalik bir martalik kod beriladi. Takroriy tasdiqlash rad etiladi. BugunBor onlayn bron qiladi — filial xodimi tizimni doim kuzatib turmasligi mumkin, shu sabab borishdan oldin qo‘ng‘iroq qilib tasdiqlash tavsiya etiladi.</p>
           </div>
         </aside>

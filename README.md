@@ -195,6 +195,37 @@ own price. Applying the code is deliberately best-effort and happens
 case only means the discount doesn't land, never that a legitimate claim
 gets rejected because of it.
 
+## Auto Skidka (progressive discount)
+
+A business creating a deal can opt into "Avto Skidka" — a series of steps,
+each entered as "N soat keyin, X% chegirma" ("N hours after the deal
+starts, X% off"), plus an optional floor price. `POST
+/api/v1/business/deals` turns those into `deal_discount_tiers` rows with
+absolute timestamps (tier *i*'s window runs from the deal's start plus its
+`afterHours` to the next tier's start, or the deal's own end for the last
+one); `db/runtime.ts`'s `syncAutoDiscountTiers()` — already wired into the
+same lifecycle sync every deal read triggers — recomputes
+`discounted_price_uzs`/`discount_percent` from the deal's `original_price_uzs`
+whenever the current time falls inside a tier's window, clamped to
+`min_price_uzs` if one was set. No cron or background worker needed: the
+price is simply always correct by the time anyone reads it.
+
+## Xizmatlar uchun vaqt-slot bron tizimi (service time-slot booking)
+
+A deal can be listed as a "🗓️ Xizmat" (SERVICE) instead of "📦 Mahsulot"
+(PRODUCT) in the same creation form, with a set of specific time slots
+(each a start time + capacity) instead of a flat quantity counter.
+`/deals/[slug]` shows a slot picker instead of a bare claim button for a
+SERVICE deal; `POST /api/v1/deals/:id/redemptions` accepts an optional
+`timeSlotId`, pre-checks it (exists on this deal, still has capacity,
+hasn't started yet) for a clear error, then decrements
+`deal_time_slots.remaining_capacity` atomically right after the
+underlying claim succeeds — the same best-effort-after-success pattern as
+the promo code above, so a slot race never blocks the claim itself, only
+(rarely) the specific time; the customer is told to call and re-confirm
+the time in that case, echoing this project's existing "online booking
+still benefits from a confirmation call" guidance on every claim.
+
 ## Murojaatlar (support tickets)
 
 `POST /api/v1/support/tickets` is the single intake point for both the
