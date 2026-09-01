@@ -1,4 +1,4 @@
-import { ensurePhase1Database, getD1 } from '@/db/runtime';
+import { ensurePhase1Database, getD1, syncDealLifecycle } from '@/db/runtime';
 
 export type DealCardRecord = {
   id: string;
@@ -48,6 +48,7 @@ const selectDeal = `
 
 export async function listActiveDeals(input: { city?: string; query?: string; limit?: number } = {}) {
   await ensurePhase1Database();
+  await syncDealLifecycle();
   const city = input.city?.trim() || 'Toshkent';
   const query = `%${input.query?.trim() || ''}%`;
   const limit = Math.min(Math.max(input.limit ?? 12, 1), 50);
@@ -65,6 +66,7 @@ export async function listActiveDeals(input: { city?: string; query?: string; li
 
 export async function getActiveDealBySlug(slug: string) {
   await ensurePhase1Database();
+  await syncDealLifecycle();
   return getD1()
     .prepare(`${selectDeal}
       WHERE d.slug = ?1 AND d.deleted_at IS NULL
@@ -75,6 +77,7 @@ export async function getActiveDealBySlug(slug: string) {
 
 export async function listCategories() {
   await ensurePhase1Database();
+  await syncDealLifecycle();
   const result = await getD1().prepare(`
     SELECT c.slug, c.name_uz AS name, c.icon, COUNT(d.id) AS activeCount
     FROM categories c

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import { AiAssistantWidget } from '@/components/ai-assistant-widget';
+import { LocationProvider } from '@/components/location-provider';
 
 import './globals.css';
 
@@ -35,8 +36,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="uz-Latn">
       <body>
-        {children}
-        <AiAssistantWidget />
+        <LocationProvider>
+          {children}
+          <AiAssistantWidget />
+        </LocationProvider>
       </body>
     </html>
   );

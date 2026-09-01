@@ -11,6 +11,7 @@ type ClaimResponse = {
 export function ClaimButton({ dealId, branchId }: { dealId: string; branchId: string }) {
   const [state, setState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const [code, setCode] = useState('');
 
   async function claim() {
     setState('loading');
@@ -30,7 +31,12 @@ export function ClaimButton({ dealId, branchId }: { dealId: string; branchId: st
       return;
     }
     setState('success');
-    setMessage(payload.data.code ? `Tasdiqlash kodi: ${payload.data.codeHint}` : `Band qilingan. Kod: ${payload.data.codeHint}`);
+    if (payload.data.code) {
+      setCode(payload.data.code);
+      setMessage('Ushbu kodni filialda ko‘rsating:');
+    } else {
+      setMessage(`Band qilingan. Kod oxiri: ${payload.data.codeHint}`);
+    }
   }
 
   return (
@@ -39,7 +45,12 @@ export function ClaimButton({ dealId, branchId }: { dealId: string; branchId: st
         {state === 'loading' ? <LoaderCircle className="size-5 animate-spin" /> : state === 'success' ? <CheckCircle2 className="size-5" /> : <QrCode className="size-5" />}
         {state === 'success' ? 'Aksiya band qilindi' : state === 'loading' ? 'Tekshirilmoqda…' : 'Aksiyadan foydalanish'}
       </button>
-      {message ? <p className={`mt-3 rounded-xl px-3 py-2 text-sm font-semibold ${state === 'error' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-800'}`}>{message}</p> : null}
+      {message ? (
+        <div className={`mt-3 rounded-xl px-3 py-2 text-sm font-semibold ${state === 'error' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-800'}`}>
+          <p>{message}</p>
+          {code ? <p className="mt-1 break-all rounded-lg bg-white px-3 py-2 text-center font-mono text-base font-black tracking-wide text-emerald-900">{code}</p> : null}
+        </div>
+      ) : null}
     </div>
   );
 }

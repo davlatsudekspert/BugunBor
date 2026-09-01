@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Activity, BadgeCheck, Clock3, ShoppingBag, TicketCheck, Wallet } from 'lucide-react';
 
-import { ensurePhase1Database, getD1 } from '@/db/runtime';
+import { ensurePhase1Database, getD1, syncDealLifecycle } from '@/db/runtime';
 import { requireAdminPage } from '@/modules/admin/guard';
 import { canAdmin } from '@/modules/admin/authorization';
 
@@ -12,6 +12,7 @@ const formatUzs = (value: number) => new Intl.NumberFormat('uz-UZ').format(value
 export default async function AdminDashboardPage() {
   const admin = await requireAdminPage('admin.dashboard.read');
   await ensurePhase1Database();
+  await syncDealLifecycle();
   const db = getD1();
 
   const [businessCounts, dealCounts, redemptions30d, mrr, recentAudit] = await Promise.all([

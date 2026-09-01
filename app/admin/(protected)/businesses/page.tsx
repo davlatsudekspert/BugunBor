@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { BusinessActions } from '@/components/admin/business-actions';
-import { ensurePhase1Database, getD1 } from '@/db/runtime';
+import { ensurePhase1Database, getD1, syncDealLifecycle } from '@/db/runtime';
 import { canAdmin } from '@/modules/admin/authorization';
 import { requireAdminPage } from '@/modules/admin/guard';
 
@@ -28,6 +28,7 @@ export default async function AdminBusinessesPage() {
   if (!canManage && !canManagePlan) redirect('/admin');
 
   await ensurePhase1Database();
+  await syncDealLifecycle();
   const db = getD1();
   const [businesses, plans, activeDeals] = await Promise.all([
     db

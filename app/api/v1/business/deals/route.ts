@@ -2,13 +2,9 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { ensurePhase1Database, getD1 } from '@/db/runtime';
-import { canAccessBusiness, type BusinessRole } from '@/modules/auth/authorization';
+import { toStoredUtc } from '@/lib/time';
+import { getOwnedBusiness } from '@/modules/catalog/ownership';
 import { getRequestIdentity, requireSameOrigin } from '@/modules/auth/identity';
-
-/** Matches the naive "YYYY-MM-DD HH:MM:SS" UTC format SQLite's own datetime() produces, so it stays consistent with every other stored timestamp (read-side code appends 'Z' to it directly). */
-function toStoredUtc(isoWithOffset: string) {
-  return new Date(isoWithOffset).toISOString().slice(0, 19).replace('T', ' ');
-}
 
 const dealSchema = z
   .object({
@@ -44,16 +40,8 @@ export async function POST(request: Request) {
 
   await ensurePhase1Database();
   const db = getD1();
-  const membership = await db
-    .prepare(`SELECT bm.business_id AS businessId, bm.role FROM business_members bm WHERE bm.user_id = ?1 AND bm.revoked_at IS NULL ORDER BY bm.created_at DESC LIMIT 1`)
-    .bind(identity.id)
-    .first<{ businessId: string; role: BusinessRole }>();
-  if (!membership || !canAccessBusiness({ requestedBusinessId: membership.businessId, membershipBusinessId: membership.businessId, role: membership.role, action: 'deal.write' })) {
-    return NextResponse.json({ error: { message: 'Aksiya qo‘shish uchun ruxsat yo‘q.' } }, { status: 403 });
-  }
-
-  const business = await db.prepare('SELECT id, verification_status AS verificationStatus FROM businesses WHERE id = ?1 AND deleted_at IS NULL').bind(membership.businessId).first<{ id: string; verificationStatus: string }>();
-  if (!business) return NextResponse.json({ error: { message: 'Biznes topilmadi.' } }, { status: 404 });
+  const business = await getOwnedBusiness(db, identity.id);
+  if (!business) return NextResponse.json({ error: { message: 'Aksiya qo‘shish uchun ruxsat yo‘q.' } }, { status: 403 });
   if (business.verificationStatus !== 'VERIFIED') {
     return NextResponse.json({ error: { message: 'Aksiya qo‘shish uchun avval biznes profili moderator tomonidan tasdiqlanishi kerak.' } }, { status: 403 });
   }

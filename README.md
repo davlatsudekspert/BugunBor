@@ -86,6 +86,44 @@ through the existing admin moderation/business-suspension flow (`/admin/deals`,
 `/admin/businesses`), each recorded with a reason in `moderation_actions` /
 `audit_logs`.
 
+## Deal lifecycle: scheduling, editing, and redemption
+
+**Auto-scheduler.** A deal approved with a future start time goes `SCHEDULED`;
+once live it's `ACTIVE`; once its stock or time runs out it's `SOLD_OUT` or
+`EXPIRED` — all without a human opening the app. There is no Cloudflare Cron
+Trigger for this (vinext's build doesn't expose a supported way to add a
+`scheduled()` handler); instead `syncDealLifecycle()` (`db/runtime.ts`) runs
+these transitions at the top of every read path that shows deal status
+(public listings, business dashboard, admin), so the stored status is always
+correct by the time anyone looks — the same guarantee a cron job would give,
+without depending on one.
+
+**Editing rules** (`POST /api/v1/business/deals/:id`) mirror `/rules`'
+promise to customers: before a deal launches, everything is editable
+(price either direction, quantity, dates, copy) — a rejected deal even
+resubmits for review automatically on edit. Once live, only price-down,
+quantity-up, or ending early are allowed; title, description, category and
+the original price lock. `/business/deals/:id/cancel` withdraws a deal that
+never launched; `/business/deals/:id/stop` ends a live one immediately.
+
+**Redemption loop.** Claiming a deal (`POST /api/v1/deals/:id/redemptions`)
+was previously a dead end — the customer got a code but nothing let a
+business actually redeem it. `POST /api/v1/business/redemptions/validate`
+(UI: `/business/redemptions`) closes that: staff enters the code the
+customer shows on their phone, it's hashed and matched against the stored
+`code_hash`, and marked `COMPLETED` exactly once (a concurrent double-scan
+of the same code can't both succeed).
+
+**Real distance, not a fabricated number.** `/discover` and the homepage
+used to print a distance computed from a hardcoded formula
+(`1.2 + index * 1.4`), unrelated to the visitor's actual location.
+`components/location-provider.tsx` now asks the browser for real
+geolocation once (shared across every distance badge on the page) and
+`lib/geo.ts` computes true haversine distance against each branch's stored
+coordinates; `/discover` adds a 1/3/5/10/25/50km radius filter and sorts by
+that real distance. Until location is granted, no distance is shown at all
+— BugunBor never states a number it doesn't actually know.
+
 ## AI Yordamchi
 
 A small FAQ assistant (`components/ai-assistant-widget.tsx`) sits on every

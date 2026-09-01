@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { Activity, BadgeCheck, Eye, QrCode, TicketCheck } from 'lucide-react';
 
-import { ensurePhase1Database, getD1 } from '@/db/runtime';
+import { ensurePhase1Database, getD1, syncDealLifecycle } from '@/db/runtime';
+import { dealStatusLabels } from '@/lib/deal-status';
+import { canAccessBusiness, type BusinessRole } from '@/modules/auth/authorization';
 import { getServerIdentity } from '@/modules/auth/identity';
 
 export const metadata: Metadata = { title: 'Biznes dashboard', robots: { index: false, follow: false } };
@@ -11,23 +13,12 @@ type OwnedBusiness = { id: string; name: string; verificationStatus: string; rol
 type Metrics = { deals: number; activeDeals: number; redemptions: number };
 type DealRow = { id: string; title: string; status: string; discountPercent: number; createdAt: string };
 
-const dealStatusLabels: Record<string, string> = {
-  DRAFT: 'Qoralama',
-  PENDING_REVIEW: 'Tekshiruvda',
-  SCHEDULED: 'Rejalashtirilgan',
-  ACTIVE: 'Faol',
-  PAUSED: 'To‘xtatilgan',
-  SOLD_OUT: 'Tugadi',
-  EXPIRED: 'Muddati o‘tgan',
-  REJECTED: 'Rad etilgan',
-  ARCHIVED: 'Arxivlangan',
-};
-
 export default async function BusinessDashboardPage() {
   const identity = await getServerIdentity();
   if (!identity) redirect('/login?returnTo=%2Fbusiness%2Fdashboard');
 
   await ensurePhase1Database();
+  await syncDealLifecycle();
   const business = await getD1()
     .prepare(`
       SELECT b.id, b.name, b.verification_status AS verificationStatus, bm.role AS role
@@ -84,9 +75,14 @@ export default async function BusinessDashboardPage() {
                 <p className="text-sm font-bold uppercase tracking-[.12em] text-primary">Business workspace</p>
                 <h1 className="mt-2 text-4xl font-black tracking-[-.05em]">{business.name}</h1>
               </div>
-              <span className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold shadow-sm">
-                <BadgeCheck className="size-4 text-emerald-600" /> {business.verificationStatus}
-              </span>
+              <div className="flex items-center gap-2">
+                {canAccessBusiness({ requestedBusinessId: business.id, membershipBusinessId: business.id, role: business.role as BusinessRole, action: 'redemption.validate' }) ? (
+                  <a href="/business/redemptions" className="rounded-full bg-[#152a3b] px-4 py-2 text-sm font-bold text-white">Kodni tasdiqlash</a>
+                ) : null}
+                <span className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold shadow-sm">
+                  <BadgeCheck className="size-4 text-emerald-600" /> {business.verificationStatus}
+                </span>
+              </div>
             </div>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -102,9 +98,12 @@ export default async function BusinessDashboardPage() {
             <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xl font-black">Aksiyalarim</h2>
-                {business.verificationStatus === 'VERIFIED' ? (
-                  <a href="/business/deals/new" className="rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white">+ Yangi aksiya</a>
-                ) : null}
+                <div className="flex gap-2">
+                  {recentDeals.length ? <a href="/business/deals" className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600">Barchasini ko‘rish</a> : null}
+                  {business.verificationStatus === 'VERIFIED' ? (
+                    <a href="/business/deals/new" className="rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white">+ Yangi aksiya</a>
+                  ) : null}
+                </div>
               </div>
               {business.verificationStatus !== 'VERIFIED' ? (
                 <p className="mt-2 text-slate-600">Tasdiqlash holatini kuzating — moderator profilingizni tekshirgach, aksiya qo‘sha olasiz.</p>

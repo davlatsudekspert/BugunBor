@@ -205,6 +205,33 @@ export async function ensurePhase1Database() {
 }
 
 /**
+ * Advances every deal's `status` to match its schedule and stock, without any
+ * background job or Cron Trigger: SCHEDULED -> ACTIVE once starts_at arrives,
+ * ACTIVE/SCHEDULED -> EXPIRED once ends_at passes, ACTIVE -> SOLD_OUT once
+ * remaining_quantity hits zero (a backstop — the claim endpoint already sets
+ * this inline, atomically, at the moment a claim empties the last unit).
+ *
+ * Called at the top of every read path that shows deal status (public
+ * listings, business dashboard, admin businesses/dashboard), so the stored
+ * status is always correct by the time anyone looks at it — "the server
+ * does it, the business doesn't have to open the app" — without depending
+ * on Cloudflare Cron Triggers, which vinext's build does not expose a
+ * supported way to hook a `scheduled()` handler into.
+ */
+export async function syncDealLifecycle() {
+  const db = getD1();
+  await db.batch([
+    db.prepare(`UPDATE deals SET status = 'ACTIVE', updated_at = CURRENT_TIMESTAMP
+      WHERE status = 'SCHEDULED' AND deleted_at IS NULL
+        AND datetime(starts_at) <= datetime('now') AND datetime(ends_at) > datetime('now')`),
+    db.prepare(`UPDATE deals SET status = 'EXPIRED', updated_at = CURRENT_TIMESTAMP
+      WHERE status IN ('ACTIVE', 'SCHEDULED') AND deleted_at IS NULL AND datetime(ends_at) <= datetime('now')`),
+    db.prepare(`UPDATE deals SET status = 'SOLD_OUT', updated_at = CURRENT_TIMESTAMP
+      WHERE status = 'ACTIVE' AND deleted_at IS NULL AND remaining_quantity = 0`),
+  ]);
+}
+
+/**
  * Seeds the first SUPER_ADMIN so a fresh deployment always has one working login.
  * Configure ADMIN_BOOTSTRAP_PHONE / ADMIN_BOOTSTRAP_TELEGRAM_CHAT_ID before going live —
  * without a real Telegram chat id this account exists but cannot receive login codes.

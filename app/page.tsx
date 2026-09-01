@@ -16,6 +16,7 @@ import {
 
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
+import { DistanceBadge } from '@/components/distance-badge';
 import {
   Card,
   CardContent,
@@ -57,7 +58,7 @@ export default async function Home() {
     listActiveDeals({ limit: 3 }),
     listCategories(),
   ]);
-  const deals = dealRecords.map((deal, index) => ({
+  const deals = dealRecords.map((deal) => ({
     ...deal,
     business: deal.businessName,
     monogram: deal.businessName.split(/\s+/).map((word) => word[0]).join('').slice(0, 2),
@@ -65,7 +66,6 @@ export default async function Home() {
     price: formatPrice(deal.discountedPriceUzs),
     oldPrice: formatPrice(deal.originalPriceUzs),
     discount: `-${deal.discountPercent}%`,
-    distance: `${(1.2 + index * 1.4).toFixed(1).replace('.', ',')} km`,
     left: formatTimeLeft(deal.endsAt),
     quantity: deal.remainingQuantity === null ? 'Cheklanmagan' : `${deal.remainingQuantity} ta qoldi`,
     ...dealVisual(deal.slug),
@@ -216,7 +216,7 @@ export default async function Home() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-end gap-2"><strong className="text-2xl font-black text-primary">{deal.price} <span className="text-sm">so‘m</span></strong><span className="pb-1 text-sm text-slate-400 line-through">{deal.oldPrice}</span></div>
-                <div className="mt-3 flex items-center justify-between text-xs text-slate-500"><span className="flex items-center gap-1"><MapPin className="size-3.5" /> {deal.branch} · {deal.distance}</span><span className="font-bold text-amber-700">{deal.quantity}</span></div>
+                <div className="mt-3 flex items-center justify-between text-xs text-slate-500"><span className="flex items-center gap-1"><MapPin className="size-3.5" /> {deal.branch}<DistanceBadge latitudeE6={deal.latitudeE6} longitudeE6={deal.longitudeE6} prefix=" · " /></span><span className="font-bold text-amber-700">{deal.quantity}</span></div>
               </CardContent>
               <CardFooter className="mt-1 border-slate-100 bg-slate-50/70">
                 <a className={cn(buttonVariants(), 'h-10 w-full rounded-xl font-bold')} href={`/deals/${deal.slug}`}>Aksiyani ko‘rish <ArrowRight className="ml-1 size-4" /></a>

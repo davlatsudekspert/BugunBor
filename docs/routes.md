@@ -4,8 +4,8 @@
 
 | Route | Purpose |
 | --- | --- |
-| `/` | Homepage and active nearby deals |
-| `/discover` | Search, filters, cursor pagination, map/list switch |
+| `/` | Homepage and active nearby deals (real per-deal distance once location is granted — see below) |
+| `/discover` | Search, city filter, GPS-based "near me" sort and a 1/3/5/10/25/50km radius filter (implemented; map/list switch and cursor pagination still planned) |
 | `/categories/[slug]` | Category discovery |
 | `/businesses/[slug]` | Public business profile and active deals |
 | `/deals/[slug]` | Deal terms, branch, countdown and claim |
@@ -22,9 +22,9 @@
 
 ## Business
 
-Implemented: `/business/onboarding` (requires accepting `/rules`), `/business/dashboard` (own business + recent deals), `/business/deals/new` (create a deal, gated to `VERIFIED` businesses and a `deal.write` role, blocks a discount that isn't actually lower than the original price).
+Implemented: `/business/onboarding` (requires accepting `/rules`), `/business/dashboard` (own business + recent deals), `/business/deals` (full list — edit, cancel a not-yet-launched deal, or stop a live one), `/business/deals/new` (create a deal, gated to `VERIFIED` businesses and a `deal.write` role, blocks a discount that isn't actually lower than the original price), `/business/redemptions` (staff enters a customer's code to redeem it — the counterpart to the claim flow, gated to a `redemption.validate` role).
 
-Still only planned: `/business/deals` (full list/edit view — dashboard currently shows the 8 most recent), `/business/branches`, `/business/team`, `/business/profile`, `/business/media`, `/business/verification`, `/business/billing`, `/business/boosts`, `/business/nfcstore`, `/business/redemptions`, `/business/analytics`, `/business/audit`.
+Still only planned: `/business/branches`, `/business/team`, `/business/profile`, `/business/media`, `/business/verification`, `/business/billing`, `/business/boosts`, `/business/nfcstore`, `/business/analytics`, `/business/audit`.
 
 ## Administration
 
@@ -38,6 +38,8 @@ Still only planned: `/admin/users`, `/admin/categories`, `/admin/wallet`, `/admi
 - `POST /api/v1/deals/:id/redemptions`, `POST /api/v1/redemptions/:id/validate`
 - `POST /api/v1/auth/otp/request`, `POST /api/v1/auth/otp/verify`, `DELETE /api/v1/sessions/:id`
 - `POST /api/v1/businesses`, `POST /api/v1/business/deals`
+- `POST /api/v1/business/deals/:id` (edit), `POST /api/v1/business/deals/:id/cancel`, `POST /api/v1/business/deals/:id/stop`
+- `POST /api/v1/business/redemptions/validate` (staff redeems a customer's code)
 - `POST /api/v1/admin/auth/request-otp`, `POST /api/v1/admin/auth/verify-otp`, `POST /api/v1/admin/auth/logout`
 - `POST /api/v1/admin/deals/:id/decision`, `POST /api/v1/admin/deals/:id/sponsor`
 - `POST /api/v1/admin/businesses/:id/decision`, `POST /api/v1/admin/businesses/:id/plan`

@@ -4,12 +4,7 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle, ArrowRight, CheckCircle2, LoaderCircle } from 'lucide-react';
 
-/** Uzbekistan runs UTC+5 year-round (no DST), so a datetime-local value picked
- * in the business owner's browser can be converted to a real UTC instant by
- * simply appending that fixed offset before parsing. */
-function tashkentLocalToUtcIso(datetimeLocalValue: string) {
-  return new Date(`${datetimeLocalValue}:00+05:00`).toISOString();
-}
+import { tashkentLocalToUtcIso } from '@/lib/time';
 
 export function BusinessDealForm({ branches }: { branches: Array<{ id: string; name: string }> }) {
   const router = useRouter();
