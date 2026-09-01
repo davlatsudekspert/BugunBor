@@ -1,3 +1,5 @@
+import { cache } from 'react';
+
 import { ensurePhase1Database, getD1, syncDealLifecycle } from '@/db/runtime';
 
 export type DealCardRecord = {
@@ -106,7 +108,11 @@ export async function listUpcomingDeals(input: { region?: string; city?: string;
   return result.results;
 }
 
-export async function getActiveDealBySlug(slug: string) {
+// /deals/[slug]'s generateMetadata() and the page component itself both need this deal — React's
+// per-request cache() means the second call reuses the first's result (ensurePhase1Database,
+// syncDealLifecycle, and the query itself all run once, not twice) instead of paying two D1
+// round-trips for the exact same row on one page view.
+export const getActiveDealBySlug = cache(async (slug: string) => {
   await ensurePhase1Database();
   await syncDealLifecycle();
   return getD1()
@@ -115,7 +121,7 @@ export async function getActiveDealBySlug(slug: string) {
       ORDER BY datetime(d.ends_at) DESC LIMIT 1`)
     .bind(slug)
     .first<DealCardRecord>();
-}
+});
 
 /** Every deal a customer has saved, most recently saved first — including an expired one, so they can see it ended. */
 export async function listFavoriteDeals(userId: string) {

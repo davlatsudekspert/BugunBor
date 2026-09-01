@@ -36,6 +36,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="uz-Latn">
       <body>
+        {/* iOS Safari only ever applies :active (the "pressed" look — see globals.css's
+            button:active rule) once some touch listener exists on the page; without this,
+            a tapped button never visibly reacts even though the tap itself works fine. A
+            long-documented WebKit quirk, not something CSS or onClick alone can fix. */}
+        <script dangerouslySetInnerHTML={{ __html: "document.addEventListener('touchstart', function(){}, {passive:true});" }} />
         <LocationProvider>
           {children}
           <AiAssistantWidget />

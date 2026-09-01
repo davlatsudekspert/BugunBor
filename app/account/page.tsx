@@ -14,16 +14,19 @@ export default async function AccountPage() {
   if (!identity) redirect('/login?returnTo=/account');
 
   await ensurePhase1Database();
-  const user = await getD1()
-    .prepare(`SELECT display_name AS displayName, phone, email, created_at AS createdAt, nfcstore_profile_url AS nfcstoreProfileUrl FROM users WHERE id = ?1`)
-    .bind(identity.id)
-    .first<{ displayName: string; phone: string | null; email: string | null; createdAt: string; nfcstoreProfileUrl: string | null }>();
-  const [{ savedCount } = { savedCount: 0 }] = (
-    await getD1().prepare(`SELECT COUNT(*) AS savedCount FROM favorites WHERE user_id = ?1`).bind(identity.id).all<{ savedCount: number }>()
-  ).results;
-  const [{ redemptionCount } = { redemptionCount: 0 }] = (
-    await getD1().prepare(`SELECT COUNT(*) AS redemptionCount FROM redemptions WHERE user_id = ?1`).bind(identity.id).all<{ redemptionCount: number }>()
-  ).results;
+  const db = getD1();
+  // Three independent reads for the same user — run together rather than one D1 round-trip
+  // waiting on the last.
+  const [user, savedResult, redemptionResult] = await Promise.all([
+    db
+      .prepare(`SELECT display_name AS displayName, phone, email, created_at AS createdAt, nfcstore_profile_url AS nfcstoreProfileUrl FROM users WHERE id = ?1`)
+      .bind(identity.id)
+      .first<{ displayName: string; phone: string | null; email: string | null; createdAt: string; nfcstoreProfileUrl: string | null }>(),
+    db.prepare(`SELECT COUNT(*) AS savedCount FROM favorites WHERE user_id = ?1`).bind(identity.id).all<{ savedCount: number }>(),
+    db.prepare(`SELECT COUNT(*) AS redemptionCount FROM redemptions WHERE user_id = ?1`).bind(identity.id).all<{ redemptionCount: number }>(),
+  ]);
+  const [{ savedCount } = { savedCount: 0 }] = savedResult.results;
+  const [{ redemptionCount } = { redemptionCount: 0 }] = redemptionResult.results;
 
   return (
     <main className="min-h-screen bg-[#fffdf9] pb-24 text-[#152a3b]">

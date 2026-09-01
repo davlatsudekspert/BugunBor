@@ -129,4 +129,16 @@ body { font-family: var(--font-sans); }
   html {
     @apply font-sans;
   }
+  /* Every hand-rolled <button> across the app (login/logout, claim, favorite, admin actions,
+     deal forms — most of them predate components/ui/button.tsx's cva variants, which already
+     has its own press effect) gets a visible "I was pressed" feedback for free, without
+     touching each of those files individually. Skipped while :disabled so a busy/loading
+     button (disabled={busy} is the app's own convention) doesn't look pressable. See the
+     <script> in app/layout.tsx for why :active needs a touch listener to fire at all on iOS. */
+  button:not(:disabled) {
+    transition: transform 100ms ease-out;
+  }
+  button:not(:disabled):active {
+    transform: scale(0.96);
+  }
 }

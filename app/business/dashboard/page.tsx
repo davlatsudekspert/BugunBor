@@ -71,25 +71,27 @@ export default async function BusinessDashboardPage({ searchParams }: { searchPa
   const canManageNfcStore = business ? canAccessBusiness({ requestedBusinessId: business.id, membershipBusinessId: business.id, role: business.role as BusinessRole, action: 'nfcstore.manage' }) : false;
   const canManagePlan = business ? canAccessBusiness({ requestedBusinessId: business.id, membershipBusinessId: business.id, role: business.role as BusinessRole, action: 'plan.manage' }) : false;
 
-  const metrics = business
-    ? await db
-        .prepare(`
-          SELECT COUNT(DISTINCT d.id) AS deals,
-            SUM(CASE WHEN d.status = 'ACTIVE' THEN 1 ELSE 0 END) AS activeDeals,
-            COUNT(r.id) AS redemptions
-          FROM deals d LEFT JOIN redemptions r ON r.deal_id = d.id
-          WHERE d.business_id = ?1
-        `)
-        .bind(business.id)
-        .first<Metrics>()
-    : null;
-
-  const recentDeals = business
-    ? (await db
-        .prepare(`SELECT id, title, status, discount_percent AS discountPercent, created_at AS createdAt FROM deals WHERE business_id = ?1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 8`)
-        .bind(business.id)
-        .all<DealRow>()).results
-    : [];
+  // Independent of each other (both only need business.id) — run together instead of one
+  // waiting on the other, since every D1 query pays its own network round-trip.
+  const [metrics, recentDealsResult] = business
+    ? await Promise.all([
+        db
+          .prepare(`
+            SELECT COUNT(DISTINCT d.id) AS deals,
+              SUM(CASE WHEN d.status = 'ACTIVE' THEN 1 ELSE 0 END) AS activeDeals,
+              COUNT(r.id) AS redemptions
+            FROM deals d LEFT JOIN redemptions r ON r.deal_id = d.id
+            WHERE d.business_id = ?1
+          `)
+          .bind(business.id)
+          .first<Metrics>(),
+        db
+          .prepare(`SELECT id, title, status, discount_percent AS discountPercent, created_at AS createdAt FROM deals WHERE business_id = ?1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 8`)
+          .bind(business.id)
+          .all<DealRow>(),
+      ])
+    : [null, { results: [] as DealRow[] }];
+  const recentDeals = recentDealsResult.results;
 
   const cards = [
     { label: 'Faol aksiyalar', value: metrics?.activeDeals ?? 0, icon: Activity },
