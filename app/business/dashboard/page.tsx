@@ -4,6 +4,7 @@ import { Activity, BadgeCheck, Eye, QrCode, TicketCheck } from 'lucide-react';
 
 import { BusinessNfcStorePanel } from '@/components/business-nfcstore-panel';
 import { BusinessPlanPanel } from '@/components/business-plan-panel';
+import { LogoutButton } from '@/components/logout-button';
 import { ensurePhase1Database, getD1, syncDealLifecycle } from '@/db/runtime';
 import { BUSINESS_STATUS_LABELS } from '@/lib/business-status';
 import { dealStatusLabels } from '@/lib/deal-status';
@@ -102,7 +103,10 @@ export default async function BusinessDashboardPage({ searchParams }: { searchPa
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <a href="/" className="text-xl font-black">Bugun<span className="text-primary">Bor</span></a>
-          <a href="/business/onboarding" className="text-sm font-bold text-primary">+ Yangi biznes</a>
+          <div className="flex items-center gap-4">
+            <a href="/business/onboarding" className="text-sm font-bold text-primary">+ Yangi biznes</a>
+            <LogoutButton className="flex items-center gap-1.5 text-sm font-bold text-slate-500 hover:text-slate-700 disabled:opacity-60" />
+          </div>
         </div>
       </header>
 

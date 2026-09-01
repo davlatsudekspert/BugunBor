@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { CalendarClock, Heart, LogOut, ShieldCheck, UserRound } from 'lucide-react';
+import { CalendarClock, Heart, ShieldCheck, UserRound } from 'lucide-react';
 
 import { AccountNfcStoreForm } from '@/components/account-nfcstore-form';
+import { LogoutButton } from '@/components/logout-button';
 import { ensurePhase1Database, getD1 } from '@/db/runtime';
 import { getServerIdentity } from '@/modules/auth/identity';
 
@@ -72,7 +73,7 @@ export default async function AccountPage() {
           <p className="flex items-center gap-2 text-sm font-bold text-slate-600"><ShieldCheck className="size-4 text-emerald-600" /> Hisobingiz {identity.role === 'CUSTOMER' ? 'mijoz' : identity.role.toLowerCase()} sifatida ro‘yxatdan o‘tgan{user?.createdAt ? `, ${new Date(`${user.createdAt}Z`).toLocaleDateString('uz-UZ')} dan beri` : ''}.</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <a href="/business/onboarding" className="flex items-center gap-2 text-sm font-bold text-primary"><UserRound className="size-4" /> Biznes sifatida qo‘shilish</a>
-            <a href="/login" className="flex items-center gap-2 text-sm font-bold text-slate-500"><LogOut className="size-4" /> Chiqish</a>
+            <LogoutButton />
           </div>
         </div>
 
