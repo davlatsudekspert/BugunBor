@@ -271,15 +271,6 @@ CREATE TABLE `nfc_tap_events` (
 );
 --> statement-breakpoint
 CREATE INDEX `idx_nfc_taps_mapping_created` ON `nfc_tap_events` (`device_mapping_id`,`created_at`);--> statement-breakpoint
-CREATE TABLE `phone_link_tokens` (
-	`token_hash` text PRIMARY KEY NOT NULL,
-	`phone` text NOT NULL,
-	`expires_at` text NOT NULL,
-	`consumed_at` text,
-	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
-);
---> statement-breakpoint
-CREATE INDEX `idx_phone_link_tokens_phone` ON `phone_link_tokens` (`phone`,`created_at`);--> statement-breakpoint
 CREATE TABLE `plans` (
 	`id` text PRIMARY KEY NOT NULL,
 	`code` text NOT NULL,

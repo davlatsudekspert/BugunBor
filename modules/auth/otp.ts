@@ -3,10 +3,8 @@ import { cookies } from 'next/headers';
 
 import { ensurePhase1Database, getD1 } from '@/db/runtime';
 import { randomDigits, randomToken, sha256Hex, timingSafeEqual } from '@/lib/crypto';
-import { extractLinkToken } from '@/modules/auth/link-token';
+import { normalizeUzbekPhone } from '@/modules/auth/phone';
 import { createTelegramOtpProvider } from '@/modules/providers/telegram';
-
-export { extractLinkToken };
 
 export type MarketplaceRole = 'CUSTOMER' | 'BUSINESS_OWNER' | 'BUSINESS_STAFF' | 'MODERATOR' | 'ADMIN' | 'SUPER_ADMIN';
 export type MarketplaceIdentity = { id: string; phone: string; displayName: string; role: MarketplaceRole };
@@ -16,7 +14,6 @@ const OTP_TTL_MINUTES = 5;
 const OTP_MAX_ATTEMPTS = 5;
 const OTP_MAX_PER_WINDOW = 3;
 const SESSION_TTL_DAYS = 30;
-const LINK_TOKEN_TTL_MINUTES = 15;
 
 type UserRow = { id: string; phone: string; displayName: string; role: MarketplaceRole; status: string; telegramChatId: string | null };
 
@@ -40,11 +37,12 @@ export type RequestLoginCodeResult =
 
 /**
  * A first-time phone has no Telegram chat linked yet — the bot can't message anyone who
- * hasn't messaged it first (Bot API limitation), so this hands back a deep link
- * (`https://t.me/<bot>?start=link_<token>`) instead of a code. Opening it and pressing
- * Start delivers `/start link_<token>` to POST /api/v1/telegram/bot/webhook, which pairs
- * that chat id with this phone (see linkPhoneToTelegramChat below); calling this function
- * again afterward finds the link and actually sends a code.
+ * hasn't messaged it first (Bot API limitation), so this hands back the bot's own link
+ * instead of a code. Opening it and sending /start makes the bot offer a native
+ * "share phone number" button (POST /api/v1/telegram/bot/webhook, see isStartCommand());
+ * tapping it sends a `contact` message the webhook pairs with this exact phone via
+ * linkPhoneFromContact() below — no token or copy-pasted command needed either way, since
+ * Telegram itself supplies the phone number straight from the tapped button.
  */
 export async function requestLoginCode(phone: string): Promise<RequestLoginCodeResult> {
   await ensurePhase1Database();
@@ -53,12 +51,8 @@ export async function requestLoginCode(phone: string): Promise<RequestLoginCodeR
   if (user.status !== 'ACTIVE') return { status: 'RATE_LIMITED' };
 
   if (!user.telegramChatId) {
-    const token = randomToken(24);
-    const tokenHash = await sha256Hex(token);
-    const expiresAt = new Date(Date.now() + LINK_TOKEN_TTL_MINUTES * 60 * 1000).toISOString();
-    await db.prepare(`INSERT INTO phone_link_tokens(token_hash, phone, expires_at) VALUES (?1, ?2, ?3)`).bind(tokenHash, phone, expiresAt).run();
     const botUsername = env.TELEGRAM_BOT_USERNAME || 'bugunborbot';
-    return { status: 'NEEDS_TELEGRAM_LINK', telegramDeepLink: `https://t.me/${botUsername}?start=link_${token}` };
+    return { status: 'NEEDS_TELEGRAM_LINK', telegramDeepLink: `https://t.me/${botUsername}` };
   }
 
   const recent = await db
@@ -169,32 +163,33 @@ export async function getSessionFromCookies(): Promise<MarketplaceIdentity | nul
 }
 
 
-export type LinkPhoneResult = { ok: true; phone: string } | { ok: false; reason: 'INVALID_TOKEN' | 'CHAT_ALREADY_LINKED' };
+export type LinkPhoneResult = { ok: true; phone: string } | { ok: false; reason: 'INVALID_PHONE' | 'CHAT_ALREADY_LINKED' };
 
 /**
- * Pairs a Telegram chat id with the phone number that generated `token` (see
- * requestLoginCode above). Called from the bot webhook once it sees `/start link_<token>`.
+ * Pairs a Telegram chat id with the phone number Telegram itself supplied via the tapped
+ * "share phone number" button (a `request_contact` reply-keyboard button always reports the
+ * tapping user's own number — never an arbitrary contact — so this can trust it outright).
+ * Called from the bot webhook once it sees `message.contact`.
  */
-export async function linkPhoneToTelegramChat(token: string, chatId: string): Promise<LinkPhoneResult> {
+export async function linkPhoneFromContact(rawPhone: string, chatId: string): Promise<LinkPhoneResult> {
+  let phone: string;
+  try {
+    phone = normalizeUzbekPhone(rawPhone);
+  } catch {
+    return { ok: false, reason: 'INVALID_PHONE' };
+  }
+
   await ensurePhase1Database();
   const db = getD1();
-  const tokenHash = await sha256Hex(token);
-  const row = await db
-    .prepare(`SELECT phone, expires_at AS expiresAt, consumed_at AS consumedAt FROM phone_link_tokens WHERE token_hash = ?1`)
-    .bind(tokenHash)
-    .first<{ phone: string; expiresAt: string; consumedAt: string | null }>();
-  if (!row || row.consumedAt || new Date(`${row.expiresAt}Z`) <= new Date()) return { ok: false, reason: 'INVALID_TOKEN' };
+  const user = await findOrCreateUserByPhone(db, phone);
 
   try {
-    await db.batch([
-      db.prepare(`UPDATE phone_link_tokens SET consumed_at = CURRENT_TIMESTAMP WHERE token_hash = ?1`).bind(tokenHash),
-      db.prepare(`UPDATE users SET telegram_chat_id = ?1, updated_at = CURRENT_TIMESTAMP WHERE phone = ?2`).bind(chatId, row.phone),
-    ]);
+    await db.prepare(`UPDATE users SET telegram_chat_id = ?1, updated_at = CURRENT_TIMESTAMP WHERE id = ?2`).bind(chatId, user.id).run();
   } catch (error) {
     // The partial UNIQUE index on telegram_chat_id rejects linking one Telegram account to
     // a second phone number — treat that as a normal, expected outcome, not a crash.
     if (error instanceof Error && /unique/i.test(error.message)) return { ok: false, reason: 'CHAT_ALREADY_LINKED' };
     throw error;
   }
-  return { ok: true, phone: row.phone };
+  return { ok: true, phone };
 }

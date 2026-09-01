@@ -187,7 +187,8 @@ const schemaStatements = [
   // delivered over Telegram instead of SMS — see modules/auth/otp.ts. Distinct from
   // telegram_sessions above: that one authenticates a Telegram Mini App visitor via
   // Telegram's own initData signature; this authenticates a phone number, using Telegram
-  // purely as the OTP delivery channel once phone_link_tokens below has paired the two.
+  // purely as the OTP delivery channel once the bot's "share phone number" button
+  // (POST /api/v1/telegram/bot/webhook) has paired the two.
   `CREATE TABLE IF NOT EXISTS user_otp_codes (
     id TEXT PRIMARY KEY, user_id TEXT NOT NULL, code_hash TEXT NOT NULL,
     expires_at TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, consumed_at TEXT,
@@ -202,15 +203,6 @@ const schemaStatements = [
     FOREIGN KEY(user_id) REFERENCES users(id)
   )`,
   `CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id, revoked_at)`,
-  // A one-time nonce a visitor carries to the bot as /start link_<token> to prove they're the
-  // same person who just entered this phone number on the website — the bot's webhook
-  // (POST /api/v1/telegram/bot/webhook) consumes it and writes the resulting chat id onto
-  // that phone's `users` row, so future logins can be sent an OTP directly.
-  `CREATE TABLE IF NOT EXISTS phone_link_tokens (
-    token_hash TEXT PRIMARY KEY, phone TEXT NOT NULL, expires_at TEXT NOT NULL,
-    consumed_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-  )`,
-  `CREATE INDEX IF NOT EXISTS idx_phone_link_tokens_phone ON phone_link_tokens(phone, created_at)`,
 ];
 
 const seedStatements = [
@@ -299,6 +291,10 @@ export async function ensurePhase1Database() {
     // schemaStatements — that batch runs before this loop, when a fresh database's `users`
     // table doesn't have telegram_chat_id yet).
     await db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_telegram_chat_id ON users(telegram_chat_id) WHERE telegram_chat_id IS NOT NULL`).run();
+    // Cleanup: an earlier deploy's deep-link phone-linking flow used this table; the bot's
+    // "share phone number" button (modules/auth/otp.ts's linkPhoneFromContact) replaced it
+    // entirely, so drop it on any database that still has it from that earlier schema.
+    await db.prepare(`DROP TABLE IF EXISTS phone_link_tokens`).run();
     await db.batch(seedStatements.map((statement) => db.prepare(statement)));
     // Backfill after seeding plans, so 'plan_free' already exists to reference.
     await db.prepare(`UPDATE businesses SET plan_id = 'plan_free' WHERE plan_id IS NULL`).run();
