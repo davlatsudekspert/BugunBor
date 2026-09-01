@@ -2,19 +2,31 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { AlertTriangle } from 'lucide-react';
 
+import { OfflineSaleAdjuster } from '@/components/offline-sale-adjuster';
 import { RedemptionValidator } from '@/components/redemption-validator';
-import { ensurePhase1Database, getD1 } from '@/db/runtime';
+import { ensurePhase1Database, getD1, syncDealLifecycle } from '@/db/runtime';
 import { getOwnedBusiness } from '@/modules/catalog/ownership';
 import { getServerIdentity } from '@/modules/auth/identity';
 
 export const metadata: Metadata = { title: 'Kodni tasdiqlash', robots: { index: false, follow: false } };
+
+type ActiveDeal = { id: string; title: string; remainingQuantity: number | null };
 
 export default async function BusinessRedemptionsPage() {
   const identity = await getServerIdentity();
   if (!identity) redirect('/login?returnTo=%2Fbusiness%2Fredemptions');
 
   await ensurePhase1Database();
-  const business = await getOwnedBusiness(getD1(), identity.id, 'redemption.validate');
+  await syncDealLifecycle();
+  const db = getD1();
+  const business = await getOwnedBusiness(db, identity.id, 'redemption.validate');
+
+  const activeDeals = business
+    ? (await db
+        .prepare(`SELECT id, title, remaining_quantity AS remainingQuantity FROM deals WHERE business_id = ?1 AND status = 'ACTIVE' AND deleted_at IS NULL AND remaining_quantity IS NOT NULL ORDER BY created_at DESC`)
+        .bind(business.id)
+        .all<ActiveDeal>()).results
+    : [];
 
   return (
     <main className="min-h-screen bg-slate-50 text-[#152a3b]">
@@ -31,8 +43,18 @@ export default async function BusinessRedemptionsPage() {
         <p className="mt-3 text-slate-600">Mijoz telefonida ko‘rsatgan kodni kiriting. Har bir kod faqat bir marta ishlaydi.</p>
 
         {business ? (
-          <div className="mt-8">
+          <div className="mt-8 space-y-8">
             <RedemptionValidator />
+
+            <div>
+              <h2 className="text-xl font-black">Filialda to‘g‘ridan-to‘g‘ri sotildimi?</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Agar mahsulotni onlayn tizimsiz, to‘g‘ridan-to‘g‘ri mijozga sotgan bo‘lsangiz, shu yerdan belgilang — aks holda onlayn miqdor noto‘g‘ri qolib, boshqa mijoz allaqachon tugagan taklifni band qilib qo‘yishi mumkin.
+              </p>
+              <div className="mt-4">
+                <OfflineSaleAdjuster deals={activeDeals} />
+              </div>
+            </div>
           </div>
         ) : (
           <div className="mt-8 rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center">

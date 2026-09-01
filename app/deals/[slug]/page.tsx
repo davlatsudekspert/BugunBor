@@ -60,8 +60,13 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
             {deal.originalPriceUzs ? <p className="mt-1 text-sm text-slate-400 line-through">{formatPrice(deal.originalPriceUzs)} so‘m</p> : null}
             <div className="mt-5 flex items-center justify-between rounded-2xl bg-[#152a3b] p-4 text-white"><span className="flex items-center gap-2 text-sm font-bold"><Clock3 className="size-5 text-orange-300" /> Tugash vaqti</span><span className="font-mono text-lg font-black">{new Date(`${deal.endsAt}Z`).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent' })}</span></div>
             <p className="mt-4 text-sm font-semibold text-amber-700">{deal.remainingQuantity === null ? 'Miqdor cheklanmagan' : `${deal.remainingQuantity} ta taklif qoldi`}</p>
-            <div className="mt-5"><ClaimButton dealId={deal.id} branchId={deal.branchId} /></div>
-            <p className="mt-4 text-xs leading-5 text-slate-500">Band qilingandan so‘ng 15 daqiqalik bir martalik kod beriladi. Takroriy tasdiqlash rad etiladi.</p>
+            {deal.remainingQuantity !== null && deal.remainingQuantity <= 3 && deal.phone ? (
+              <p className="mt-2 flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold leading-5 text-amber-800">
+                <Phone className="mt-0.5 size-3.5 shrink-0" /> Joy kam qoldi — filialga borishdan oldin <a href={`tel:${deal.phone}`} className="underline underline-offset-2">{deal.phone}</a> raqamiga qo‘ng‘iroq qilib tasdiqlashingiz tavsiya etiladi.
+              </p>
+            ) : null}
+            <div className="mt-5"><ClaimButton dealId={deal.id} branchId={deal.branchId} phone={deal.phone} /></div>
+            <p className="mt-4 text-xs leading-5 text-slate-500">Band qilingandan so‘ng 15 daqiqalik bir martalik kod beriladi. Takroriy tasdiqlash rad etiladi. BugunBor onlayn bron qiladi — filial xodimi tizimni doim kuzatib turmasligi mumkin, shu sabab borishdan oldin qo‘ng‘iroq qilib tasdiqlash tavsiya etiladi.</p>
           </div>
         </aside>
       </div>

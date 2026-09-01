@@ -114,6 +114,22 @@ customer shows on their phone, it's hashed and matched against the stored
 `code_hash`, and marked `COMPLETED` exactly once (a concurrent double-scan
 of the same code can't both succeed).
 
+**Online booking vs. a busy front counter.** A business that doesn't watch
+BugunBor in real time, or sells the same stock walk-in without touching the
+app, can end up overselling — a customer arrives with a valid code for
+something already gone. Two mitigations, since removing online booking
+entirely would defeat the point of the site:
+- Once stock is low (≤3 left), the deal page and the claim success message
+  both show the branch's phone number with a "call ahead to confirm before
+  you go" note (`app/deals/[slug]/page.tsx`, `components/claim-button.tsx`).
+- `POST /api/v1/business/deals/:id/adjust-stock` (UI: `/business/redemptions`
+  → "Filialda to‘g‘ridan-to‘g‘ri sotildimi?") lets staff mark units sold
+  in person, decrementing the *same* `remaining_quantity` the online claim
+  flow uses — so an offline sale is reflected online immediately instead of
+  silently going stale. Verified live: claiming online after an offline
+  sale was recorded correctly continued counting down from the adjusted
+  total, not the original one.
+
 **Real distance, not a fabricated number.** `/discover` and the homepage
 used to print a distance computed from a hardcoded formula
 (`1.2 + index * 1.4`), unrelated to the visitor's actual location.

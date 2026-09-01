@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckCircle2, LoaderCircle, QrCode } from 'lucide-react';
+import { CheckCircle2, LoaderCircle, Phone, QrCode } from 'lucide-react';
 
 type ClaimResponse = {
   data?: { code?: string; codeHint: string; expiresAt: string; replayed: boolean };
   error?: { code: string; message: string };
 };
 
-export function ClaimButton({ dealId, branchId }: { dealId: string; branchId: string }) {
+export function ClaimButton({ dealId, branchId, phone }: { dealId: string; branchId: string; phone?: string | null }) {
   const [state, setState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [code, setCode] = useState('');
@@ -50,6 +50,13 @@ export function ClaimButton({ dealId, branchId }: { dealId: string; branchId: st
           <p>{message}</p>
           {code ? <p className="mt-1 break-all rounded-lg bg-white px-3 py-2 text-center font-mono text-base font-black tracking-wide text-emerald-900">{code}</p> : null}
         </div>
+      ) : null}
+      {state === 'success' && phone ? (
+        <p className="mt-3 flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold leading-5 text-amber-800">
+          <Phone className="mt-0.5 size-3.5 shrink-0" />
+          Filial xodimi tizimni doim kuzatib turmasligi mumkin — borishdan oldin{' '}
+          <a href={`tel:${phone}`} className="underline underline-offset-2">{phone}</a> raqamiga qo‘ng‘iroq qilib bronni tasdiqlashingiz tavsiya etiladi.
+        </p>
       ) : null}
     </div>
   );
