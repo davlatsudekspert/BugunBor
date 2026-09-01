@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { CalendarClock, CheckCircle2, Clock3, MapPin, XCircle } from 'lucide-react';
 
+import { ReviewForm } from '@/components/review-form';
 import { ensurePhase1Database, getD1 } from '@/db/runtime';
 import { getServerIdentity } from '@/modules/auth/identity';
 
@@ -19,6 +20,7 @@ type Redemption = {
   businessName: string;
   branchName: string;
   address: string;
+  reviewId: string | null;
 };
 
 const statusLabel: Record<string, { label: string; icon: typeof CheckCircle2; className: string }> = {
@@ -36,11 +38,13 @@ export default async function RedemptionsPage() {
   const redemptions = await getD1()
     .prepare(`
       SELECT r.id, r.status, r.code_hint AS codeHint, r.expires_at AS expiresAt, r.completed_at AS completedAt, r.created_at AS createdAt,
-        d.title AS dealTitle, d.slug AS dealSlug, b.name AS businessName, br.name AS branchName, br.address
+        d.title AS dealTitle, d.slug AS dealSlug, b.name AS businessName, br.name AS branchName, br.address,
+        rv.id AS reviewId
       FROM redemptions r
       JOIN deals d ON d.id = r.deal_id
       JOIN businesses b ON b.id = d.business_id
       JOIN branches br ON br.id = r.branch_id
+      LEFT JOIN reviews rv ON rv.redemption_id = r.id
       WHERE r.user_id = ?1
       ORDER BY r.created_at DESC
       LIMIT 100
@@ -67,17 +71,18 @@ export default async function RedemptionsPage() {
               const status = statusLabel[redemption.status] ?? statusLabel.CLAIMED;
               const StatusIcon = status.icon;
               return (
-                <a key={redemption.id} href={`/deals/${redemption.dealSlug}`} aria-label={`${redemption.dealTitle} — ${status.label}`} className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_25px_rgba(20,40,55,.05)] transition hover:border-primary sm:flex-row sm:items-center sm:justify-between">
+                <div key={redemption.id} className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_25px_rgba(20,40,55,.05)] sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
-                    <p className="truncate font-black">{redemption.dealTitle}</p>
+                    <a href={`/deals/${redemption.dealSlug}`} className="truncate font-black hover:text-primary hover:underline">{redemption.dealTitle}</a>
                     <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500"><MapPin className="size-3.5 shrink-0" /> {redemption.businessName} · {redemption.branchName}</p>
                     <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-400"><CalendarClock className="size-3.5 shrink-0" /> {new Date(`${redemption.createdAt}Z`).toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' })}</p>
+                    {redemption.status === 'COMPLETED' && !redemption.reviewId ? <div className="mt-2"><ReviewForm redemptionId={redemption.id} /></div> : null}
                   </div>
                   <div className="flex shrink-0 items-center gap-3">
                     <span className="font-mono text-sm font-bold text-slate-500">…{redemption.codeHint}</span>
                     <span className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold ${status.className}`}><StatusIcon className="size-3.5" /> {status.label}</span>
                   </div>
-                </a>
+                </div>
               );
             })
           ) : (

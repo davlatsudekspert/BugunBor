@@ -6,6 +6,7 @@ export type DealCardRecord = {
   title: string;
   description: string;
   terms: string;
+  businessId: string;
   businessName: string;
   businessSlug: string;
   verified: boolean;
@@ -29,7 +30,7 @@ export type DealCardRecord = {
 
 const selectDeal = `
   SELECT d.id, d.slug, d.title, d.description, d.terms,
-    b.name AS businessName, b.slug AS businessSlug,
+    b.id AS businessId, b.name AS businessName, b.slug AS businessSlug,
     (b.verification_status = 'VERIFIED') AS verified,
     br.id AS branchId, br.name AS branchName, br.address, br.city,
     d.original_price_uzs AS originalPriceUzs,
@@ -109,6 +110,32 @@ export async function toggleFavorite(userId: string, dealId: string): Promise<bo
   }
   await db.prepare(`INSERT OR IGNORE INTO favorites(user_id, deal_id) VALUES (?1, ?2)`).bind(userId, dealId).run();
   return true;
+}
+
+export type ReviewRecord = { id: string; rating: number; comment: string | null; reviewerName: string; createdAt: string };
+
+/** Average rating and count for a business — null average when it has no reviews yet, not 0. */
+export async function getBusinessRatingSummary(businessId: string) {
+  await ensurePhase1Database();
+  const row = await getD1()
+    .prepare(`SELECT AVG(rating) AS avgRating, COUNT(*) AS reviewCount FROM reviews WHERE business_id = ?1`)
+    .bind(businessId)
+    .first<{ avgRating: number | null; reviewCount: number }>();
+  return { avgRating: row?.avgRating ?? null, reviewCount: row?.reviewCount ?? 0 };
+}
+
+export async function listBusinessReviews(businessId: string, limit = 20) {
+  await ensurePhase1Database();
+  const result = await getD1()
+    .prepare(`
+      SELECT r.id, r.rating, r.comment, r.created_at AS createdAt, u.display_name AS reviewerName
+      FROM reviews r JOIN users u ON u.id = r.user_id
+      WHERE r.business_id = ?1
+      ORDER BY r.created_at DESC LIMIT ?2
+    `)
+    .bind(businessId, limit)
+    .all<ReviewRecord>();
+  return result.results;
 }
 
 export async function listCategories() {

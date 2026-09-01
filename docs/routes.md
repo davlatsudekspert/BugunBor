@@ -48,6 +48,7 @@ Still only planned: `/admin/users`, `/admin/categories`, `/admin/wallet`, `/admi
 - `POST /api/v1/admin/businesses/:id/decision`, `POST /api/v1/admin/businesses/:id/plan`
 - `POST /api/v1/admin/plans/:id`, `POST /api/v1/admin/announcements`, `POST /api/v1/admin/team`, `POST /api/v1/admin/team/:id`
 - `POST /api/v1/favorites` (toggles a deal in/out of the signed-in caller's saved list)
+- `POST /api/v1/reviews` (rate + optionally comment on a business — only for a redemption the caller owns that staff has already marked COMPLETED, one review per redemption)
 - `POST /api/v1/support/tickets` (public — the contact form and the AI Yordamchi lead-capture gate both post here; name + phone required)
 - `POST /api/v1/admin/support/:id` (update a ticket's status/resolution note, gated to `admin.support.manage`)
 - `POST /api/v1/integrations/nfcstore/webhooks`, `GET /api/v1/integrations/nfcstore/status`

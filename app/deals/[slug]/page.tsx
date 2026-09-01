@@ -4,11 +4,12 @@ import { BadgeCheck, CalendarClock, Clock3, MapPin, Navigation, Phone, ShieldChe
 
 import { ClaimButton } from '@/components/claim-button';
 import { FavoriteButton } from '@/components/favorite-button';
+import { StarRating } from '@/components/star-rating';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getServerIdentity } from '@/modules/auth/identity';
-import { getActiveDealBySlug, isDealFavorited } from '@/modules/catalog/repository';
+import { getActiveDealBySlug, getBusinessRatingSummary, isDealFavorited, listBusinessReviews } from '@/modules/catalog/repository';
 
 const formatPrice = (value: number | null) => value === null ? '' : new Intl.NumberFormat('uz-UZ').format(value);
 
@@ -26,7 +27,11 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
   const deal = await getActiveDealBySlug(slug);
   if (!deal) notFound();
   const identity = await getServerIdentity();
-  const favorited = identity ? await isDealFavorited(identity.id, deal.id) : false;
+  const [favorited, ratingSummary, reviews] = await Promise.all([
+    identity ? isDealFavorited(identity.id, deal.id) : Promise.resolve(false),
+    getBusinessRatingSummary(deal.businessId),
+    listBusinessReviews(deal.businessId, 6),
+  ]);
   const directions = `https://www.google.com/maps/dir/?api=1&destination=${deal.latitudeE6 / 1_000_000},${deal.longitudeE6 / 1_000_000}`;
   const share = `https://t.me/share/url?url=${encodeURIComponent(`https://bugunbor.uz/deals/${deal.slug}`)}&text=${encodeURIComponent(`${deal.title} — ${deal.discountPercent}% chegirma`)}`;
 
@@ -39,7 +44,10 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
             <span className="text-[9rem]">{deal.categorySlug === 'xaridlar' ? '📚' : '🍽️'}</span>
             <Badge className="absolute left-5 top-5 h-10 bg-white px-4 text-lg font-black text-[#152a3b]">-{deal.discountPercent}%</Badge>
           </div>
-          <div className="mt-7 flex items-center gap-2 text-sm font-bold text-slate-600">{deal.businessName}{deal.verified ? <BadgeCheck className="size-5 fill-emerald-500 text-white" /> : null}</div>
+          <div className="mt-7 flex flex-wrap items-center gap-3 text-sm font-bold text-slate-600">
+            <span className="flex items-center gap-2">{deal.businessName}{deal.verified ? <BadgeCheck className="size-5 fill-emerald-500 text-white" /> : null}</span>
+            <StarRating rating={ratingSummary.avgRating} reviewCount={ratingSummary.reviewCount} />
+          </div>
           <h1 className="mt-3 text-4xl font-black tracking-[-.05em] sm:text-5xl">{deal.title}</h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">{deal.description}</p>
 
@@ -56,6 +64,29 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
             <FavoriteButton dealId={deal.id} dealSlug={deal.slug} initialFavorited={favorited} isAuthenticated={Boolean(identity)} />
           </div>
           <a href={`/contact?subject=${encodeURIComponent(`Noto‘g‘ri ma’lumot: ${deal.title}`)}`} className="mt-7 inline-flex items-center gap-2 text-sm text-slate-500 underline-offset-4 hover:underline"><TriangleAlert className="size-4" /> Noto‘g‘ri ma’lumot haqida xabar berish</a>
+
+          <div className="mt-10">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-black">Mijozlar fikri</h2>
+              <StarRating rating={ratingSummary.avgRating} reviewCount={ratingSummary.reviewCount} size="lg" />
+            </div>
+            {reviews.length ? (
+              <div className="mt-4 space-y-3">
+                {reviews.map((review) => (
+                  <div key={review.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold">{review.reviewerName}</span>
+                      <StarRating rating={review.rating} reviewCount={1} hideCount />
+                    </div>
+                    {review.comment ? <p className="mt-2 text-sm leading-6 text-slate-600">{review.comment}</p> : null}
+                    <p className="mt-2 text-xs text-slate-400">{new Date(`${review.createdAt}Z`).toLocaleDateString('uz-UZ')}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-slate-500">Bu biznes uchun hali sharh yo‘q — aksiyadan foydalangach birinchi bo‘lib baholang.</p>
+            )}
+          </div>
         </section>
 
         <aside className="lg:sticky lg:top-6 lg:self-start">

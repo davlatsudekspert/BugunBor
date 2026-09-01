@@ -168,6 +168,17 @@ completed, expired, canceled). The homepage and `/discover` headers show
 visitor, same mechanism every other authenticated page in this codebase
 already uses — no new session system was introduced.
 
+## Reyting va sharhlar (ratings & reviews)
+
+`/deals/[slug]` shows the business's average star rating and its most recent
+reviews. A review can only ever come from a redemption `POST
+/api/v1/reviews` confirms belongs to the caller and that staff have already
+marked `COMPLETED` via the existing redemption-validation flow — so there is
+no way to review a business without a staff-confirmed visit, and
+`reviews.redemption_id UNIQUE` caps it at one review per visit. Once
+completed and unreviewed, a "Baholash" (rate) prompt appears next to that
+redemption on `/account/redemptions`.
+
 ## Murojaatlar (support tickets)
 
 `POST /api/v1/support/tickets` is the single intake point for both the
