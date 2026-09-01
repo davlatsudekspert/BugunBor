@@ -8,8 +8,14 @@ name: Deploy to Cloudflare (standalone test)
 #   CLOUDFLARE_API_TOKEN   - Workers Scripts:Edit + D1:Edit permissions
 #   CLOUDFLARE_ACCOUNT_ID  - found on the Cloudflare dashboard's right sidebar
 # Optional:
-#   TELEGRAM_BOT_TOKEN     - lets the deployed /telegram Mini App actually verify initData;
-#                            without it POST /api/v1/telegram/webapp/auth returns 503
+#   TELEGRAM_BOT_TOKEN            - lets the deployed /telegram Mini App actually verify initData;
+#                                   without it POST /api/v1/telegram/webapp/auth returns 503
+#   ADMIN_BOOTSTRAP_PHONE         - the phone number that can sign in at /admin/login as the
+#                                   first (bootstrap) SUPER_ADMIN — see db/runtime.ts's
+#                                   seedBootstrapAdmin(). Defaults to +998900000000 if unset.
+#   ADMIN_BOOTSTRAP_TELEGRAM_CHAT_ID - the Telegram chat id that phone's login OTP is sent to
+#                                   (get it by messaging the bot, then reading
+#                                   https://api.telegram.org/bot<token>/getUpdates)
 on:
   workflow_dispatch:
     inputs:
@@ -33,6 +39,8 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      ADMIN_BOOTSTRAP_PHONE: ${{ secrets.ADMIN_BOOTSTRAP_PHONE }}
+      ADMIN_BOOTSTRAP_TELEGRAM_CHAT_ID: ${{ secrets.ADMIN_BOOTSTRAP_TELEGRAM_CHAT_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -98,6 +106,14 @@ jobs:
         if: ${{ env.TELEGRAM_BOT_TOKEN != '' }}
         run: echo "$TELEGRAM_BOT_TOKEN" | npx wrangler secret put TELEGRAM_BOT_TOKEN --config dist/server/wrangler.json
 
+      - name: Set ADMIN_BOOTSTRAP_PHONE secret (if provided)
+        if: ${{ env.ADMIN_BOOTSTRAP_PHONE != '' }}
+        run: echo "$ADMIN_BOOTSTRAP_PHONE" | npx wrangler secret put ADMIN_BOOTSTRAP_PHONE --config dist/server/wrangler.json
+
+      - name: Set ADMIN_BOOTSTRAP_TELEGRAM_CHAT_ID secret (if provided)
+        if: ${{ env.ADMIN_BOOTSTRAP_TELEGRAM_CHAT_ID != '' }}
+        run: echo "$ADMIN_BOOTSTRAP_TELEGRAM_CHAT_ID" | npx wrangler secret put ADMIN_BOOTSTRAP_TELEGRAM_CHAT_ID --config dist/server/wrangler.json
+
       - name: Summary
         run: |
           {
@@ -105,7 +121,11 @@ jobs:
             echo "- Worker: \`${{ inputs.worker_name }}\`"
             echo "- URL: ${{ steps.deploy.outputs.url }}"
             echo "- Telegram Mini App: ${{ steps.deploy.outputs.url }}/telegram"
+            echo "- Admin login: ${{ steps.deploy.outputs.url }}/admin/login"
             if [ -z "$TELEGRAM_BOT_TOKEN" ]; then
               echo "- ⚠️ TELEGRAM_BOT_TOKEN secret not set — /telegram will 503 until it is."
+            fi
+            if [ -z "$ADMIN_BOOTSTRAP_PHONE" ]; then
+              echo "- ⚠️ ADMIN_BOOTSTRAP_PHONE not set — the bootstrap admin still uses the +998900000000 placeholder."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
