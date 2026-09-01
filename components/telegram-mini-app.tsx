@@ -84,8 +84,8 @@ export function TelegramMiniApp({ returnTo = '/discover' }: { returnTo?: string 
           <Send className="mx-auto size-10 text-primary" />
           <h1 className="mt-4 text-xl font-black">Telegram orqali oching</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">Bu sahifa Telegram Mini App sifatida ishlaydi — botimizni Telegram ilovasida oching.</p>
-          <a href="https://t.me/bugunbor_bot" target="_blank" rel="noreferrer" className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 font-bold text-white">
-            <Send className="size-4" /> @bugunbor_bot ni ochish
+          <a href="https://t.me/bugunborbot" target="_blank" rel="noreferrer" className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 font-bold text-white">
+            <Send className="size-4" /> @bugunborbot ni ochish
           </a>
           <a href="/discover" className="mt-3 block text-sm font-semibold text-slate-500 underline underline-offset-2">Yoki brauzerda davom etish</a>
         </div>
