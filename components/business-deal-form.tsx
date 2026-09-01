@@ -67,16 +67,21 @@ export function BusinessDealForm({ businessId, branches }: { businessId: string;
       imageUrl: imageDataUrl ?? undefined,
     };
 
-    const response = await fetch('/api/v1/business/deals', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const result = (await response.json()) as { data?: { slug: string }; error?: { message: string } };
-    if (!response.ok) { setState('error'); setMessage(result.error?.message ?? 'Aksiya yuborilmadi.'); return; }
-    setState('success');
-    setMessage('Aksiya moderatsiyaga yuborildi. Tasdiqlangach faol bo‘ladi.');
-    router.refresh();
+    try {
+      const response = await fetch('/api/v1/business/deals', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const result = (await response.json()) as { data?: { slug: string }; error?: { message: string } };
+      if (!response.ok) { setState('error'); setMessage(result.error?.message ?? 'Aksiya yuborilmadi.'); return; }
+      setState('success');
+      setMessage('Aksiya moderatsiyaga yuborildi. Tasdiqlangach faol bo‘ladi.');
+      router.refresh();
+    } catch {
+      setState('error');
+      setMessage('Tarmoq xatosi. Qayta urinib ko‘ring.');
+    }
   }
 
   async function pickImage(event: ChangeEvent<HTMLInputElement>) {

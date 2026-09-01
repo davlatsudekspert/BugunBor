@@ -20,12 +20,20 @@ export function TeamMemberRow({ member, isSelf }: { member: Member; isSelf: bool
   async function update(patch: Record<string, string>) {
     setBusy(true);
     setError('');
-    const response = await fetch(`/api/v1/admin/team/${member.id}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(patch),
-    });
-    const result = (await response.json()) as { data?: { role: string; status: string }; error?: { message: string } };
+    let response: Response;
+    let result: { data?: { role: string; status: string }; error?: { message: string } };
+    try {
+      response = await fetch(`/api/v1/admin/team/${member.id}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(patch),
+      });
+      result = (await response.json()) as { data?: { role: string; status: string }; error?: { message: string } };
+    } catch {
+      setBusy(false);
+      setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
+      return;
+    }
     setBusy(false);
     if (!response.ok) { setError(result.error?.message ?? 'Yangilanmadi.'); return; }
     setRole(result.data!.role);

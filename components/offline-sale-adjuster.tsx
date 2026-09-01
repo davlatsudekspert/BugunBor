@@ -20,16 +20,21 @@ export function OfflineSaleAdjuster({ deals }: { deals: ActiveDeal[] }) {
   async function submit() {
     setState('loading');
     setMessage('');
-    const response = await fetch(`/api/v1/business/deals/${dealId}/adjust-stock`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ quantitySold }),
-    });
-    const result = (await response.json()) as { data?: { remainingQuantity: number }; error?: { message: string } };
-    if (!response.ok) { setState('error'); setMessage(result.error?.message ?? 'Belgilanmadi.'); return; }
-    setState('success');
-    setMessage(`Yangilandi: ${result.data!.remainingQuantity} ta qoldi.`);
-    router.refresh();
+    try {
+      const response = await fetch(`/api/v1/business/deals/${dealId}/adjust-stock`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ quantitySold }),
+      });
+      const result = (await response.json()) as { data?: { remainingQuantity: number }; error?: { message: string } };
+      if (!response.ok) { setState('error'); setMessage(result.error?.message ?? 'Belgilanmadi.'); return; }
+      setState('success');
+      setMessage(`Yangilandi: ${result.data!.remainingQuantity} ta qoldi.`);
+      router.refresh();
+    } catch {
+      setState('error');
+      setMessage('Tarmoq xatosi. Qayta urinib ko‘ring.');
+    }
   }
 
   return (

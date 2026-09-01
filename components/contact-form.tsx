@@ -10,14 +10,19 @@ export function ContactForm({ defaultSubject }: { defaultSubject?: string }) {
   async function submit(formData: FormData) {
     setState('loading');
     const payload = Object.fromEntries(formData.entries());
-    const response = await fetch('/api/v1/support/tickets', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const result = (await response.json()) as { error?: { message: string } };
-    if (!response.ok) { setState('error'); setMessage(result.error?.message ?? 'Xabar yuborilmadi.'); return; }
-    setState('success');
+    try {
+      const response = await fetch('/api/v1/support/tickets', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const result = (await response.json()) as { error?: { message: string } };
+      if (!response.ok) { setState('error'); setMessage(result.error?.message ?? 'Xabar yuborilmadi.'); return; }
+      setState('success');
+    } catch {
+      setState('error');
+      setMessage('Tarmoq xatosi. Qayta urinib ko‘ring.');
+    }
   }
 
   if (state === 'success') {

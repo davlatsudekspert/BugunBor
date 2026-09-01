@@ -14,12 +14,20 @@ export function AddAdminForm() {
   async function submit(formData: FormData) {
     setState('loading');
     const payload = Object.fromEntries(formData.entries());
-    const response = await fetch('/api/v1/admin/team', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const result = (await response.json()) as { error?: { message: string } };
+    let response: Response;
+    let result: { error?: { message: string } };
+    try {
+      response = await fetch('/api/v1/admin/team', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      result = (await response.json()) as { error?: { message: string } };
+    } catch {
+      setState('error');
+      setMessage('Tarmoq xatosi. Qayta urinib ko‘ring.');
+      return;
+    }
     if (!response.ok) { setState('error'); setMessage(result.error?.message ?? 'Qo‘shilmadi.'); return; }
     setState('success');
     setMessage('A’zo qo‘shildi. U o‘z raqami bilan /admin sahifasidan kirishi mumkin.');

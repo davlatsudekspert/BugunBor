@@ -33,25 +33,35 @@ export function ClaimButton({ dealId, branchId, phone, timeSlots = [] }: { dealI
     const idempotencyKey = crypto.randomUUID();
     const headers: Record<string, string> = { 'content-type': 'application/json', 'idempotency-key': idempotencyKey };
     if (window.location.hostname === 'localhost') headers['x-bugunbor-demo-user'] = 'usr_customer_browser';
-    const response = await fetch(`/api/v1/deals/${dealId}/redemptions`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ branchId, promoCode: promoCode.trim() || undefined, timeSlotId: timeSlotId || undefined }),
-    });
-    const payload = (await response.json()) as ClaimResponse;
-    if (!response.ok || !payload.data) {
+    // A network drop or a non-JSON error response (a 502/504 HTML page, a dropped connection)
+    // must never leave the button stuck on "Tekshirilmoqda…" forever with no way to retry —
+    // this used to have no try/catch at all, so either of those threw past setState('error')
+    // straight into an unhandled rejection, and the button (disabled while state === 'loading')
+    // could never be pressed again.
+    try {
+      const response = await fetch(`/api/v1/deals/${dealId}/redemptions`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ branchId, promoCode: promoCode.trim() || undefined, timeSlotId: timeSlotId || undefined }),
+      });
+      const payload = (await response.json()) as ClaimResponse;
+      if (!response.ok || !payload.data) {
+        setState('error');
+        setMessage(payload.error?.message ?? 'So‘rov bajarilmadi. Qayta urinib ko‘ring.');
+        return;
+      }
+      setState('success');
+      setFinalPriceUzs(payload.data.finalPriceUzs ?? null);
+      setSlotWarning(Boolean(payload.data.timeSlotRequested) && !payload.data.slotBooked);
+      if (payload.data.code) {
+        setCode(payload.data.code);
+        setMessage(payload.data.promoApplied ? 'Promokod qo‘llandi! Ushbu kodni filialda ko‘rsating:' : 'Ushbu kodni filialda ko‘rsating:');
+      } else {
+        setMessage(`Band qilingan. Kod oxiri: ${payload.data.codeHint}`);
+      }
+    } catch {
       setState('error');
-      setMessage(payload.error?.message ?? 'So‘rov bajarilmadi. Qayta urinib ko‘ring.');
-      return;
-    }
-    setState('success');
-    setFinalPriceUzs(payload.data.finalPriceUzs ?? null);
-    setSlotWarning(Boolean(payload.data.timeSlotRequested) && !payload.data.slotBooked);
-    if (payload.data.code) {
-      setCode(payload.data.code);
-      setMessage(payload.data.promoApplied ? 'Promokod qo‘llandi! Ushbu kodni filialda ko‘rsating:' : 'Ushbu kodni filialda ko‘rsating:');
-    } else {
-      setMessage(`Band qilingan. Kod oxiri: ${payload.data.codeHint}`);
+      setMessage('Tarmoq xatosi. Qayta urinib ko‘ring.');
     }
   }
 

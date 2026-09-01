@@ -65,12 +65,20 @@ export function BusinessActions({
     if (!reason || reason.trim().length < 10) return;
     setBusy('decision');
     setError('');
-    const response = await fetch(`/api/v1/admin/businesses/${business.id}/decision`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ decision, reason }),
-    });
-    const result = (await response.json()) as { data?: { verificationStatus: string }; error?: { message: string } };
+    let response: Response;
+    let result: { data?: { verificationStatus: string }; error?: { message: string } };
+    try {
+      response = await fetch(`/api/v1/admin/businesses/${business.id}/decision`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ decision, reason }),
+      });
+      result = (await response.json()) as { data?: { verificationStatus: string }; error?: { message: string } };
+    } catch {
+      setBusy(null);
+      setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
+      return;
+    }
     setBusy(null);
     if (!response.ok) { setError(result.error?.message ?? 'Amal bajarilmadi.'); return; }
     setVerificationStatus(result.data!.verificationStatus);
@@ -82,12 +90,20 @@ export function BusinessActions({
     if (!reason || reason.trim().length < 10) return;
     setBusy('nfcstore');
     setError('');
-    const response = await fetch(`/api/v1/admin/businesses/${business.id}/nfcstore-decision`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ decision, reason }),
-    });
-    const result = (await response.json()) as { data?: { nfcstoreStatus: string }; error?: { message: string } };
+    let response: Response;
+    let result: { data?: { nfcstoreStatus: string }; error?: { message: string } };
+    try {
+      response = await fetch(`/api/v1/admin/businesses/${business.id}/nfcstore-decision`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ decision, reason }),
+      });
+      result = (await response.json()) as { data?: { nfcstoreStatus: string }; error?: { message: string } };
+    } catch {
+      setBusy(null);
+      setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
+      return;
+    }
     setBusy(null);
     if (!response.ok) { setError(result.error?.message ?? 'Amal bajarilmadi.'); return; }
     setNfcstoreStatus(result.data!.nfcstoreStatus);
@@ -97,12 +113,20 @@ export function BusinessActions({
   async function savePlan() {
     setBusy('plan');
     setError('');
-    const response = await fetch(`/api/v1/admin/businesses/${business.id}/plan`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ planId, subscriptionStatus }),
-    });
-    const result = (await response.json()) as { error?: { message: string } };
+    let response: Response;
+    let result: { error?: { message: string } };
+    try {
+      response = await fetch(`/api/v1/admin/businesses/${business.id}/plan`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ planId, subscriptionStatus }),
+      });
+      result = (await response.json()) as { error?: { message: string } };
+    } catch {
+      setBusy(null);
+      setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
+      return;
+    }
     setBusy(null);
     if (!response.ok) { setError(result.error?.message ?? 'Reja saqlanmadi.'); return; }
     router.refresh();
@@ -111,12 +135,20 @@ export function BusinessActions({
   async function toggleSponsor(dealId: string, next: boolean) {
     setBusy(dealId);
     setError('');
-    const response = await fetch(`/api/v1/admin/deals/${dealId}/sponsor`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sponsored: next }),
-    });
-    const result = (await response.json()) as { error?: { message: string } };
+    let response: Response;
+    let result: { error?: { message: string } };
+    try {
+      response = await fetch(`/api/v1/admin/deals/${dealId}/sponsor`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sponsored: next }),
+      });
+      result = (await response.json()) as { error?: { message: string } };
+    } catch {
+      setBusy(null);
+      setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
+      return;
+    }
     setBusy(null);
     if (!response.ok) { setError(result.error?.message ?? 'O‘zgartirilmadi.'); return; }
     setSponsored((current) => ({ ...current, [dealId]: next }));

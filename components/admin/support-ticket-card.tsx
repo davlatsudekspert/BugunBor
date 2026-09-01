@@ -17,13 +17,17 @@ export function SupportTicketCard({ ticket }: { ticket: Ticket }) {
 
   async function update(nextStatus: string) {
     setBusy(true);
-    const response = await fetch(`/api/v1/admin/support/${ticket.id}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ status: nextStatus }),
-    });
-    setBusy(false);
-    if (response.ok) { setStatus(nextStatus); router.refresh(); }
+    try {
+      const response = await fetch(`/api/v1/admin/support/${ticket.id}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (response.ok) { setStatus(nextStatus); router.refresh(); }
+    } finally {
+      // A network drop must never leave these buttons stuck spinning/disabled forever.
+      setBusy(false);
+    }
   }
 
   return (

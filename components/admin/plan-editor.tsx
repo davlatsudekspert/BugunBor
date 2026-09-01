@@ -22,16 +22,21 @@ export function PlanEditor({ plan }: { plan: Plan }) {
     setError('');
     setSaved(false);
     const features = featuresText.split('\n').map((line) => line.trim()).filter(Boolean);
-    const response = await fetch(`/api/v1/admin/plans/${plan.id}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name, priceUzs: Number(priceUzs), description, features, isActive }),
-    });
-    const result = (await response.json()) as { error?: { message: string } };
-    setBusy(false);
-    if (!response.ok) { setError(result.error?.message ?? 'Saqlanmadi.'); return; }
-    setSaved(true);
-    router.refresh();
+    try {
+      const response = await fetch(`/api/v1/admin/plans/${plan.id}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name, priceUzs: Number(priceUzs), description, features, isActive }),
+      });
+      const result = (await response.json()) as { error?: { message: string } };
+      if (!response.ok) { setError(result.error?.message ?? 'Saqlanmadi.'); return; }
+      setSaved(true);
+      router.refresh();
+    } catch {
+      setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -43,7 +48,7 @@ export function PlanEditor({ plan }: { plan: Plan }) {
 
       <label className="mt-4 block">
         <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">Oylik narx (so‘m)</span>
-        <input type="number" min={0} step={1000} value={priceUzs} onChange={(event) => setPriceUzs(event.target.value)} className="h-11 w-full rounded-xl border border-slate-200 px-3 font-bold" />
+        <input type="number" min={0} value={priceUzs} onChange={(event) => setPriceUzs(event.target.value)} className="h-11 w-full rounded-xl border border-slate-200 px-3 font-bold" />
       </label>
 
       <label className="mt-4 block">

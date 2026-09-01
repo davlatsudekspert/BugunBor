@@ -27,12 +27,20 @@ export function PromoCodeForm() {
     // Uzbekistan is a fixed UTC+5 offset year-round — see lib/time.ts.
     const expiresAt = expiresAtLocal ? `${expiresAtLocal}:00+05:00` : undefined;
 
-    const response = await fetch('/api/v1/admin/promo-codes', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ code, discountType, discountValue, maxUses, expiresAt }),
-    });
-    const result = (await response.json()) as { error?: { message: string } };
+    let response: Response;
+    let result: { error?: { message: string } };
+    try {
+      response = await fetch('/api/v1/admin/promo-codes', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ code, discountType, discountValue, maxUses, expiresAt }),
+      });
+      result = (await response.json()) as { error?: { message: string } };
+    } catch {
+      setBusy(false);
+      setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
+      return;
+    }
     setBusy(false);
     if (!response.ok) { setError(result.error?.message ?? 'Yaratilmadi.'); return; }
     router.refresh();

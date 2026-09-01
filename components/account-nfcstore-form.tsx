@@ -21,12 +21,20 @@ export function AccountNfcStoreForm({ initialUrl }: { initialUrl: string | null 
     if (typeof profileUrl !== 'string' || !profileUrl.trim()) return;
     setBusy(true);
     setError('');
-    const response = await fetch('/api/v1/account/nfcstore', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ profileUrl }),
-    });
-    const result = (await response.json()) as { data?: { profileUrl: string }; error?: { message: string } };
+    let response: Response;
+    let result: { data?: { profileUrl: string }; error?: { message: string } };
+    try {
+      response = await fetch('/api/v1/account/nfcstore', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ profileUrl }),
+      });
+      result = (await response.json()) as { data?: { profileUrl: string }; error?: { message: string } };
+    } catch {
+      setBusy(false);
+      setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
+      return;
+    }
     setBusy(false);
     if (!response.ok) { setError(result.error?.message ?? 'Saqlanmadi.'); return; }
     setSavedUrl(result.data!.profileUrl);
@@ -37,7 +45,14 @@ export function AccountNfcStoreForm({ initialUrl }: { initialUrl: string | null 
   async function remove() {
     setBusy(true);
     setError('');
-    const response = await fetch('/api/v1/account/nfcstore', { method: 'DELETE' });
+    let response: Response;
+    try {
+      response = await fetch('/api/v1/account/nfcstore', { method: 'DELETE' });
+    } catch {
+      setBusy(false);
+      setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
+      return;
+    }
     setBusy(false);
     if (!response.ok) { setError('O‘chirilmadi.'); return; }
     setSavedUrl(null);

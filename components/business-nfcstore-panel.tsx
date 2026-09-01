@@ -40,12 +40,20 @@ export function BusinessNfcStorePanel({
     if (typeof nfcstoreBusinessUrl !== 'string' || !nfcstoreBusinessUrl.trim()) return;
     setBusy(true);
     setError('');
-    const response = await fetch('/api/v1/business/nfcstore', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ businessId, nfcstoreBusinessUrl }),
-    });
-    const result = (await response.json()) as { error?: { message: string } };
+    let response: Response;
+    let result: { error?: { message: string } };
+    try {
+      response = await fetch('/api/v1/business/nfcstore', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ businessId, nfcstoreBusinessUrl }),
+      });
+      result = (await response.json()) as { error?: { message: string } };
+    } catch {
+      setBusy(false);
+      setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
+      return;
+    }
     setBusy(false);
     if (!response.ok) { setError(result.error?.message ?? 'Ulanmadi.'); return; }
     setEditing(false);
@@ -56,11 +64,18 @@ export function BusinessNfcStorePanel({
     if (!window.confirm('NFCStore Business profilini uzishni tasdiqlaysizmi? Faol chegirma bo‘lsa, keyingi tarif davridan boshlab bekor bo‘ladi.')) return;
     setBusy(true);
     setError('');
-    const response = await fetch('/api/v1/business/nfcstore', {
-      method: 'DELETE',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ businessId }),
-    });
+    let response: Response;
+    try {
+      response = await fetch('/api/v1/business/nfcstore', {
+        method: 'DELETE',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ businessId }),
+      });
+    } catch {
+      setBusy(false);
+      setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
+      return;
+    }
     setBusy(false);
     if (!response.ok) { setError('Uzilmadi.'); return; }
     setEditing(true);

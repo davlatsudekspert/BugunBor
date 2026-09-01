@@ -46,18 +46,26 @@ export function BusinessPlanPanel({
   async function buyPro() {
     setBusy(true);
     setError('');
-    const response = await fetch('/api/v1/business/plan/checkout', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ businessId }),
-    });
-    const result = (await response.json()) as { data?: { checkoutUrl: string }; error?: { message: string } };
-    if (!response.ok) {
+    try {
+      const response = await fetch('/api/v1/business/plan/checkout', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ businessId }),
+      });
+      const result = (await response.json()) as { data?: { checkoutUrl: string }; error?: { message: string } };
+      if (!response.ok) {
+        setBusy(false);
+        setError(result.error?.message ?? 'To‘lov boshlanmadi.');
+        return;
+      }
+      window.location.href = result.data!.checkoutUrl;
+    } catch {
+      // A network drop or a non-JSON error response (a 502 HTML page, a dropped connection)
+      // must never leave the button stuck spinning forever with no way to retry — see
+      // components/claim-button.tsx's identical fix for the same missing try/catch.
       setBusy(false);
-      setError(result.error?.message ?? 'To‘lov boshlanmadi.');
-      return;
+      setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
     }
-    window.location.href = result.data!.checkoutUrl;
   }
 
   return (

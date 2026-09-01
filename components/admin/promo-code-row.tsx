@@ -21,13 +21,16 @@ export function PromoCodeRow({ promoCode }: { promoCode: PromoCode }) {
 
   async function toggle() {
     setBusy(true);
-    await fetch(`/api/v1/admin/promo-codes/${promoCode.id}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ isActive: !promoCode.isActive }),
-    });
-    setBusy(false);
-    router.refresh();
+    try {
+      await fetch(`/api/v1/admin/promo-codes/${promoCode.id}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ isActive: !promoCode.isActive }),
+      });
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
   }
 
   const expired = promoCode.expiresAt ? new Date(`${promoCode.expiresAt}Z`) <= new Date() : false;

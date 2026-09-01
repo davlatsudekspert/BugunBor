@@ -16,20 +16,27 @@ export function RedemptionValidator() {
   const validate = useCallback(async (value: string) => {
     setState('loading');
     setMessage('');
-    const response = await fetch('/api/v1/business/redemptions/validate', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ code: value }),
-    });
-    const result = (await response.json()) as ValidateResponse;
-    if (!response.ok) {
+    try {
+      const response = await fetch('/api/v1/business/redemptions/validate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ code: value }),
+      });
+      const result = (await response.json()) as ValidateResponse;
+      if (!response.ok) {
+        setState('error');
+        setMessage(result.error?.message ?? 'Kod tasdiqlanmadi.');
+        return;
+      }
+      setState('success');
+      setMessage(`${result.data!.dealTitle} — ${result.data!.branchName}`);
+      setCode('');
+    } catch {
+      // Same fix as components/claim-button.tsx: never leave this stuck on
+      // "Tekshirilmoqda…" forever — a dropped connection must resolve to a retryable error.
       setState('error');
-      setMessage(result.error?.message ?? 'Kod tasdiqlanmadi.');
-      return;
+      setMessage('Tarmoq xatosi. Qayta urinib ko‘ring.');
     }
-    setState('success');
-    setMessage(`${result.data!.dealTitle} — ${result.data!.branchName}`);
-    setCode('');
   }, []);
 
   async function submit(formData: FormData) {

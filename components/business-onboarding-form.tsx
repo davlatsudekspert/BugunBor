@@ -15,11 +15,17 @@ export function BusinessOnboardingForm() {
     const headers: Record<string, string> = { 'content-type': 'application/json' };
     if (window.location.hostname === 'localhost') headers['x-bugunbor-demo-user'] = 'usr_owner_browser';
     const payload = Object.fromEntries(formData.entries());
-    const response = await fetch('/api/v1/businesses', { method: 'POST', headers, body: JSON.stringify(payload) });
-    const result = await response.json() as { data?: { slug: string }; error?: { message: string } };
-    if (!response.ok) { setState('error'); setMessage(result.error?.message ?? 'Ariza yuborilmadi.'); return; }
-    setState('success');
-    setMessage('Ariza qabul qilindi. Moderator tekshiruvi boshlandi.');
+    try {
+      const response = await fetch('/api/v1/businesses', { method: 'POST', headers, body: JSON.stringify(payload) });
+      const result = await response.json() as { data?: { slug: string }; error?: { message: string } };
+      if (!response.ok) { setState('error'); setMessage(result.error?.message ?? 'Ariza yuborilmadi.'); return; }
+      setState('success');
+      setMessage('Ariza qabul qilindi. Moderator tekshiruvi boshlandi.');
+    } catch {
+      setState('error');
+      setMessage('Tarmoq xatosi. Qayta urinib ko‘ring.');
+      return;
+    }
   }
 
   if (state === 'success') return <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-8 text-center"><CheckCircle2 className="mx-auto size-12 text-emerald-600" /><h2 className="mt-4 text-2xl font-black text-emerald-950">Ariza yuborildi</h2><p className="mt-2 text-emerald-800">{message}</p><a href="/business/dashboard" className="mt-6 inline-flex items-center gap-2 font-bold text-emerald-900">Boshqaruv paneliga o‘tish <ArrowRight className="size-4" /></a></div>;

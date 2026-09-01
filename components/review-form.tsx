@@ -23,9 +23,13 @@ export function ReviewForm({ redemptionId }: { redemptionId: string }) {
     setState('loading');
     const headers: Record<string, string> = { 'content-type': 'application/json' };
     if (window.location.hostname === 'localhost') headers['x-bugunbor-demo-user'] = 'usr_customer_browser';
-    const response = await fetch('/api/v1/reviews', { method: 'POST', headers, body: JSON.stringify({ redemptionId, rating, comment: comment.trim() || undefined }) });
-    if (!response.ok) { setState('error'); return; }
-    setState('done');
+    try {
+      const response = await fetch('/api/v1/reviews', { method: 'POST', headers, body: JSON.stringify({ redemptionId, rating, comment: comment.trim() || undefined }) });
+      if (!response.ok) { setState('error'); return; }
+      setState('done');
+    } catch {
+      setState('error');
+    }
   }
 
   return (

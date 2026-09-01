@@ -46,8 +46,16 @@ export function DealManagerCard({ deal }: { deal: ManagedDeal }) {
     if (!window.confirm('Aksiyani bekor qilishni tasdiqlaysizmi? Bu ro‘yxatdan butunlay olib tashlanadi.')) return;
     setBusy(true);
     setError('');
-    const response = await fetch(`/api/v1/business/deals/${deal.id}/cancel`, { method: 'POST' });
-    const result = (await response.json()) as { error?: { message: string } };
+    let response: Response;
+    let result: { error?: { message: string } };
+    try {
+      response = await fetch(`/api/v1/business/deals/${deal.id}/cancel`, { method: 'POST' });
+      result = (await response.json()) as { error?: { message: string } };
+    } catch {
+      setBusy(false);
+      setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
+      return;
+    }
     setBusy(false);
     if (!response.ok) { setError(result.error?.message ?? 'Bekor qilinmadi.'); return; }
     router.refresh();
@@ -57,8 +65,16 @@ export function DealManagerCard({ deal }: { deal: ManagedDeal }) {
     if (!window.confirm('Aksiyani hozir to‘xtatishni tasdiqlaysizmi? Bu amalni qaytarib bo‘lmaydi.')) return;
     setBusy(true);
     setError('');
-    const response = await fetch(`/api/v1/business/deals/${deal.id}/stop`, { method: 'POST' });
-    const result = (await response.json()) as { error?: { message: string } };
+    let response: Response;
+    let result: { error?: { message: string } };
+    try {
+      response = await fetch(`/api/v1/business/deals/${deal.id}/stop`, { method: 'POST' });
+      result = (await response.json()) as { error?: { message: string } };
+    } catch {
+      setBusy(false);
+      setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
+      return;
+    }
     setBusy(false);
     if (!response.ok) { setError(result.error?.message ?? 'To‘xtatilmadi.'); return; }
     router.refresh();
@@ -88,12 +104,20 @@ export function DealManagerCard({ deal }: { deal: ManagedDeal }) {
 
     if (Object.keys(payload).length === 0) { setBusy(false); setEditing(false); return; }
 
-    const response = await fetch(`/api/v1/business/deals/${deal.id}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const result = (await response.json()) as { error?: { message: string } };
+    let response: Response;
+    let result: { error?: { message: string } };
+    try {
+      response = await fetch(`/api/v1/business/deals/${deal.id}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      result = (await response.json()) as { error?: { message: string } };
+    } catch {
+      setBusy(false);
+      setError('Tarmoq xatosi. Qayta urinib ko‘ring.');
+      return;
+    }
     setBusy(false);
     if (!response.ok) { setError(result.error?.message ?? 'Saqlanmadi.'); return; }
     setEditing(false);
