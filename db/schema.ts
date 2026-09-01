@@ -130,6 +130,9 @@ export const users = sqliteTable(
     // (see modules/auth/otp.ts's linkPhoneFromContact) — lets future logins for this phone
     // send the code directly.
     telegramChatId: text('telegram_chat_id'),
+    // Optional NFCStore.uz personal profile link — see lib/nfcstore.ts. Purely informational
+    // for an ordinary customer: no verification, no discount, no bonus is tied to this field.
+    nfcstoreProfileUrl: text('nfcstore_profile_url'),
     createdAt: text('created_at').notNull().default(utcNow),
     updatedAt: text('updated_at').notNull().default(utcNow),
     deletedAt: text('deleted_at'),
@@ -174,7 +177,21 @@ export const businesses = sqliteTable(
     logoUrl: text('logo_url'),
     coverUrl: text('cover_url'),
     verificationStatus: text('verification_status', { enum: ['UNVERIFIED', 'PENDING', 'VERIFIED', 'REJECTED'] }).notNull().default('UNVERIFIED'),
-    nfcStoreStatus: text('nfcstore_status', { enum: ['DISCONNECTED', 'PENDING', 'CONNECTED', 'ERROR'] }).notNull().default('DISCONNECTED'),
+    // NFCStore.uz Business profile link — see modules/integrations/nfcstore-verification.ts.
+    // Distinct from `verificationStatus` above (BugunBor's own moderator review): this tracks
+    // whether an *externally hosted* NFCStore Business profile has been confirmed to belong to
+    // this business, which is what gates the 10% plan discount (nfcstoreDiscountEligible).
+    nfcstoreBusinessUrl: text('nfcstore_business_url'),
+    nfcstoreExternalId: text('nfcstore_external_id'),
+    nfcstoreStatus: text('nfcstore_status', {
+      enum: ['NOT_CONNECTED', 'PENDING_VERIFICATION', 'VERIFIED', 'VERIFICATION_FAILED', 'DISCONNECTED', 'SUSPENDED'],
+    }).notNull().default('NOT_CONNECTED'),
+    nfcstoreVerifiedAt: text('nfcstore_verified_at'),
+    nfcstoreLastCheckedAt: text('nfcstore_last_checked_at'),
+    // Only ever true while nfcstoreStatus = 'VERIFIED' — kept as its own column (rather than
+    // computed from status at read time) so a status change can only ever affect *future*
+    // billing reads, never rewrite history; see modules/billing/nfcstore-discount.ts.
+    nfcstoreDiscountEligible: integer('nfcstore_discount_eligible', { mode: 'boolean' }).notNull().default(false),
     planId: text('plan_id').notNull().default('plan_free').references(() => plans.id),
     subscriptionStatus: text('subscription_status', { enum: ['FREE', 'ACTIVE', 'PAST_DUE', 'CANCELED'] }).notNull().default('FREE'),
     ratingBasisPoints: integer('rating_basis_points').notNull().default(0),
@@ -183,7 +200,14 @@ export const businesses = sqliteTable(
     updatedAt: text('updated_at').notNull().default(utcNow),
     deletedAt: text('deleted_at'),
   },
-  (table) => [uniqueIndex('idx_businesses_slug').on(table.slug), index('idx_businesses_city_verification').on(table.city, table.verificationStatus)],
+  (table) => [
+    uniqueIndex('idx_businesses_slug').on(table.slug),
+    index('idx_businesses_city_verification').on(table.city, table.verificationStatus),
+    // Enforces "1 NFCStore Business profile = 1 BugunBor business account" at the database
+    // level, not just in application code — the same partial-unique-index pattern already
+    // used for users.telegramChatId.
+    uniqueIndex('idx_businesses_nfcstore_url').on(table.nfcstoreBusinessUrl),
+  ],
 );
 
 export const businessMembers = sqliteTable(

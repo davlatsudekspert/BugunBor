@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { CalendarClock, Heart, LogOut, ShieldCheck, UserRound } from 'lucide-react';
 
+import { AccountNfcStoreForm } from '@/components/account-nfcstore-form';
 import { ensurePhase1Database, getD1 } from '@/db/runtime';
 import { getServerIdentity } from '@/modules/auth/identity';
 
@@ -13,9 +14,9 @@ export default async function AccountPage() {
 
   await ensurePhase1Database();
   const user = await getD1()
-    .prepare(`SELECT display_name AS displayName, phone, email, created_at AS createdAt FROM users WHERE id = ?1`)
+    .prepare(`SELECT display_name AS displayName, phone, email, created_at AS createdAt, nfcstore_profile_url AS nfcstoreProfileUrl FROM users WHERE id = ?1`)
     .bind(identity.id)
-    .first<{ displayName: string; phone: string | null; email: string | null; createdAt: string }>();
+    .first<{ displayName: string; phone: string | null; email: string | null; createdAt: string; nfcstoreProfileUrl: string | null }>();
   const [{ savedCount } = { savedCount: 0 }] = (
     await getD1().prepare(`SELECT COUNT(*) AS savedCount FROM favorites WHERE user_id = ?1`).bind(identity.id).all<{ savedCount: number }>()
   ).results;
@@ -74,6 +75,8 @@ export default async function AccountPage() {
             <a href="/login" className="flex items-center gap-2 text-sm font-bold text-slate-500"><LogOut className="size-4" /> Chiqish</a>
           </div>
         </div>
+
+        <AccountNfcStoreForm initialUrl={user?.nfcstoreProfileUrl ?? null} />
       </div>
     </main>
   );

@@ -2,7 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BadgeCheck, Ban, CheckCircle2, LoaderCircle, RotateCcw, Sparkles } from 'lucide-react';
+import { BadgeCheck, Ban, CheckCircle2, LoaderCircle, Radio, RotateCcw, Sparkles } from 'lucide-react';
+
+import { NFCSTORE_STATUS_LABELS, NFCSTORE_STATUS_STYLES } from '@/lib/nfcstore';
+import { computeEffectivePlanPriceUzs } from '@/modules/billing/nfcstore-discount';
 
 type Business = {
   id: string;
@@ -13,6 +16,12 @@ type Business = {
   planName: string;
   subscriptionStatus: string;
   createdAt: string;
+  nfcstoreBusinessUrl: string | null;
+  nfcstoreStatus: string;
+  nfcstoreVerifiedAt: string | null;
+  nfcstoreLastCheckedAt: string | null;
+  nfcstoreDiscountEligible: number;
+  planPriceUzs: number;
 };
 
 type ActiveDeal = { id: string; title: string; isSponsored: number };
@@ -41,11 +50,14 @@ export function BusinessActions({
   const [verificationStatus, setVerificationStatus] = useState(business.verificationStatus);
   const [planId, setPlanId] = useState(business.planId);
   const [subscriptionStatus, setSubscriptionStatus] = useState(business.subscriptionStatus);
+  const [nfcstoreStatus, setNfcstoreStatus] = useState(business.nfcstoreStatus);
   const [sponsored, setSponsored] = useState<Record<string, boolean>>(Object.fromEntries(activeDeals.map((deal) => [deal.id, Boolean(deal.isSponsored)])));
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   const isProActive = planId === 'plan_pro' && subscriptionStatus === 'ACTIVE';
+  const planPrice = computeEffectivePlanPriceUzs(business.planPriceUzs, nfcstoreStatus === 'VERIFIED');
+  const formatUzs = (value: number) => new Intl.NumberFormat('uz-UZ').format(value);
 
   async function decide(decision: 'VERIFY' | 'REJECT' | 'SUSPEND' | 'REINSTATE') {
     const reason = window.prompt('Qaror sababini yozing (kamida 10 belgi):');
@@ -61,6 +73,23 @@ export function BusinessActions({
     setBusy(null);
     if (!response.ok) { setError(result.error?.message ?? 'Amal bajarilmadi.'); return; }
     setVerificationStatus(result.data!.verificationStatus);
+    router.refresh();
+  }
+
+  async function decideNfcStore(decision: 'VERIFY' | 'REJECT' | 'SUSPEND' | 'REINSTATE') {
+    const reason = window.prompt('Qaror sababini yozing (kamida 10 belgi):');
+    if (!reason || reason.trim().length < 10) return;
+    setBusy('nfcstore');
+    setError('');
+    const response = await fetch(`/api/v1/admin/businesses/${business.id}/nfcstore-decision`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ decision, reason }),
+    });
+    const result = (await response.json()) as { data?: { nfcstoreStatus: string }; error?: { message: string } };
+    setBusy(null);
+    if (!response.ok) { setError(result.error?.message ?? 'Amal bajarilmadi.'); return; }
+    setNfcstoreStatus(result.data!.nfcstoreStatus);
     router.refresh();
   }
 
@@ -145,7 +174,45 @@ export function BusinessActions({
         ) : (
           <span className="text-xs font-semibold text-slate-500">Reja: {business.planName}</span>
         )}
+        {planPrice.discountPercent > 0 ? (
+          <span className="text-xs font-bold text-emerald-700">{formatUzs(planPrice.basePriceUzs)} → {formatUzs(planPrice.finalPriceUzs)} so‘m (NFCStore -{planPrice.discountPercent}%)</span>
+        ) : null}
       </div>
+
+      {business.nfcstoreBusinessUrl ? (
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500"><Radio className="size-3.5 text-primary" /> NFCStore Business</p>
+            <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${NFCSTORE_STATUS_STYLES[nfcstoreStatus] ?? NFCSTORE_STATUS_STYLES.NOT_CONNECTED}`}>{NFCSTORE_STATUS_LABELS[nfcstoreStatus] ?? nfcstoreStatus}</span>
+          </div>
+          <a href={business.nfcstoreBusinessUrl} target="_blank" rel="noreferrer" className="mt-1.5 block truncate text-xs text-slate-500 underline-offset-2 hover:underline">{business.nfcstoreBusinessUrl}</a>
+          {business.nfcstoreVerifiedAt ? <p className="mt-1 text-xs text-slate-400">Tasdiqlangan: {new Date(business.nfcstoreVerifiedAt).toLocaleString('uz-UZ')}</p> : null}
+          {canManage ? (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {nfcstoreStatus !== 'VERIFIED' ? (
+                <button onClick={() => decideNfcStore('VERIFY')} disabled={busy !== null} className="flex h-8 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white disabled:opacity-50">
+                  {busy === 'nfcstore' ? <LoaderCircle className="size-3.5 animate-spin" /> : <CheckCircle2 className="size-3.5" />} Tasdiqlash
+                </button>
+              ) : null}
+              {nfcstoreStatus === 'PENDING_VERIFICATION' ? (
+                <button onClick={() => decideNfcStore('REJECT')} disabled={busy !== null} className="flex h-8 items-center gap-1.5 rounded-lg bg-red-50 px-3 text-xs font-bold text-red-700 disabled:opacity-50">
+                  <Ban className="size-3.5" /> Rad etish
+                </button>
+              ) : null}
+              {nfcstoreStatus === 'VERIFIED' ? (
+                <button onClick={() => decideNfcStore('SUSPEND')} disabled={busy !== null} className="flex h-8 items-center gap-1.5 rounded-lg bg-red-50 px-3 text-xs font-bold text-red-700 disabled:opacity-50">
+                  <Ban className="size-3.5" /> To‘xtatish
+                </button>
+              ) : null}
+              {nfcstoreStatus === 'SUSPENDED' ? (
+                <button onClick={() => decideNfcStore('REINSTATE')} disabled={busy !== null} className="flex h-8 items-center gap-1.5 rounded-lg bg-slate-100 px-3 text-xs font-bold text-slate-700 disabled:opacity-50">
+                  <RotateCcw className="size-3.5" /> Qayta tiklash
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       {canManage && activeDeals.length ? (
         <div className="mt-4 border-t border-slate-100 pt-4">

@@ -115,7 +115,12 @@ CREATE TABLE `businesses` (
 	`logo_url` text,
 	`cover_url` text,
 	`verification_status` text DEFAULT 'UNVERIFIED' NOT NULL,
-	`nfcstore_status` text DEFAULT 'DISCONNECTED' NOT NULL,
+	`nfcstore_business_url` text,
+	`nfcstore_external_id` text,
+	`nfcstore_status` text DEFAULT 'NOT_CONNECTED' NOT NULL,
+	`nfcstore_verified_at` text,
+	`nfcstore_last_checked_at` text,
+	`nfcstore_discount_eligible` integer DEFAULT false NOT NULL,
 	`plan_id` text DEFAULT 'plan_free' NOT NULL,
 	`subscription_status` text DEFAULT 'FREE' NOT NULL,
 	`rating_basis_points` integer DEFAULT 0 NOT NULL,
@@ -128,6 +133,7 @@ CREATE TABLE `businesses` (
 --> statement-breakpoint
 CREATE UNIQUE INDEX `idx_businesses_slug` ON `businesses` (`slug`);--> statement-breakpoint
 CREATE INDEX `idx_businesses_city_verification` ON `businesses` (`city`,`verification_status`);--> statement-breakpoint
+CREATE UNIQUE INDEX `idx_businesses_nfcstore_url` ON `businesses` (`nfcstore_business_url`);--> statement-breakpoint
 CREATE TABLE `categories` (
 	`id` text PRIMARY KEY NOT NULL,
 	`parent_id` text,
@@ -431,6 +437,7 @@ CREATE TABLE `users` (
 	`email_verified_at` text,
 	`status` text DEFAULT 'ACTIVE' NOT NULL,
 	`telegram_chat_id` text,
+	`nfcstore_profile_url` text,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`deleted_at` text

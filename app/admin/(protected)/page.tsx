@@ -4,6 +4,7 @@ import { Activity, BadgeCheck, Clock3, ShoppingBag, TicketCheck, Wallet } from '
 import { ensurePhase1Database, getD1, syncDealLifecycle } from '@/db/runtime';
 import { requireAdminPage } from '@/modules/admin/guard';
 import { canAdmin } from '@/modules/admin/authorization';
+import { computeEffectivePlanPriceUzs } from '@/modules/billing/nfcstore-discount';
 
 export const metadata: Metadata = { title: 'Boshqaruv paneli', robots: { index: false, follow: false } };
 
@@ -15,7 +16,7 @@ export default async function AdminDashboardPage() {
   await syncDealLifecycle();
   const db = getD1();
 
-  const [businessCounts, dealCounts, redemptions30d, mrr, recentAudit] = await Promise.all([
+  const [businessCounts, dealCounts, redemptions30d, mrr, activeBusinessPlans, recentAudit] = await Promise.all([
     db.prepare(`SELECT
         COUNT(*) AS total,
         SUM(CASE WHEN verification_status = 'PENDING' THEN 1 ELSE 0 END) AS pending,
@@ -30,10 +31,19 @@ export default async function AdminDashboardPage() {
     db.prepare(`SELECT p.name, p.price_uzs AS priceUzs, COUNT(b.id) AS businesses
       FROM plans p LEFT JOIN businesses b ON b.plan_id = p.id AND b.subscription_status = 'ACTIVE' AND b.deleted_at IS NULL
       WHERE p.is_active = 1 GROUP BY p.id ORDER BY p.price_uzs DESC`).all<{ name: string; priceUzs: number; businesses: number }>(),
+    // Per-business, not per-plan: a NFCStore-verified business's 10% discount (see
+    // modules/billing/nfcstore-discount.ts) means two businesses on the same plan can owe
+    // different amounts, which the grouped `mrr` query above can't represent.
+    db.prepare(`SELECT p.price_uzs AS priceUzs, b.nfcstore_discount_eligible AS nfcstoreDiscountEligible
+      FROM businesses b JOIN plans p ON p.id = b.plan_id
+      WHERE b.subscription_status = 'ACTIVE' AND b.deleted_at IS NULL AND p.is_active = 1`).all<{ priceUzs: number; nfcstoreDiscountEligible: number }>(),
     db.prepare(`SELECT action, target_type AS targetType, reason, created_at AS createdAt FROM audit_logs ORDER BY created_at DESC LIMIT 8`).all<{ action: string; targetType: string; reason: string | null; createdAt: string }>(),
   ]);
 
-  const monthlyRevenue = mrr.results.reduce((sum, row) => sum + row.priceUzs * row.businesses, 0);
+  const monthlyRevenue = activeBusinessPlans.results.reduce(
+    (sum, row) => sum + computeEffectivePlanPriceUzs(row.priceUzs, Boolean(row.nfcstoreDiscountEligible)).finalPriceUzs,
+    0,
+  );
   const cards = [
     { label: 'Bizneslar', value: businessCounts?.total ?? 0, hint: `${businessCounts?.pending ?? 0} tasdiqlash kutmoqda`, icon: ShoppingBag },
     { label: 'Faol aksiyalar', value: dealCounts?.active ?? 0, hint: `${dealCounts?.pendingReview ?? 0} moderatsiyada`, icon: Activity },

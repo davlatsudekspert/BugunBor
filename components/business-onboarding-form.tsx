@@ -34,6 +34,11 @@ export function BusinessOnboardingForm() {
         <label><span className="mb-2 block text-sm font-bold">Telefon</span><input required name="phone" pattern="\+998\d{9}" defaultValue="+998" className="h-12 w-full rounded-xl border border-slate-200 px-4" /></label>
         <label><span className="mb-2 block text-sm font-bold">Asosiy filial manzili</span><input required name="address" minLength={8} placeholder="Ko‘cha, uy" className="h-12 w-full rounded-xl border border-slate-200 px-4" /></label>
         <label className="sm:col-span-2"><span className="mb-2 block text-sm font-bold">Qisqa tavsif</span><textarea required name="description" minLength={20} maxLength={1200} rows={4} placeholder="Mijozlarga biznesingiz haqida tabiiy va aniq ayting…" className="w-full rounded-xl border border-slate-200 p-4" /></label>
+        <label className="sm:col-span-2">
+          <span className="mb-2 block text-sm font-bold">NFCStore Business profilingiz</span>
+          <input name="nfcstoreBusinessUrl" type="url" maxLength={300} placeholder="https://nfcstore.uz/..." className="h-12 w-full rounded-xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-primary/25" />
+          <span className="mt-2 block text-xs leading-5 text-slate-500">Majburiy emas. Tasdiqlangan NFCStore Business profilingizni ulasangiz BugunBor tarifiga 10% chegirma beriladi.</span>
+        </label>
       </div>
       <label className="flex items-start gap-3 rounded-xl bg-amber-50 p-4 text-sm leading-6 text-amber-900">
         <input required type="checkbox" name="acceptedRules" className="mt-0.5 size-4 shrink-0 rounded border-amber-300" />

@@ -17,6 +17,12 @@ type BusinessRow = {
   planName: string;
   subscriptionStatus: string;
   createdAt: string;
+  nfcstoreBusinessUrl: string | null;
+  nfcstoreStatus: string;
+  nfcstoreVerifiedAt: string | null;
+  nfcstoreLastCheckedAt: string | null;
+  nfcstoreDiscountEligible: number;
+  planPriceUzs: number;
 };
 
 type ActiveDealRow = { id: string; businessId: string; title: string; isSponsored: number };
@@ -32,7 +38,9 @@ export default async function AdminBusinessesPage() {
   const db = getD1();
   const [businesses, plans, activeDeals] = await Promise.all([
     db
-      .prepare(`SELECT b.id, b.name, b.city, b.verification_status AS verificationStatus, b.plan_id AS planId, p.name AS planName, b.subscription_status AS subscriptionStatus, b.created_at AS createdAt
+      .prepare(`SELECT b.id, b.name, b.city, b.verification_status AS verificationStatus, b.plan_id AS planId, p.name AS planName, p.price_uzs AS planPriceUzs, b.subscription_status AS subscriptionStatus, b.created_at AS createdAt,
+          b.nfcstore_business_url AS nfcstoreBusinessUrl, b.nfcstore_status AS nfcstoreStatus, b.nfcstore_verified_at AS nfcstoreVerifiedAt,
+          b.nfcstore_last_checked_at AS nfcstoreLastCheckedAt, b.nfcstore_discount_eligible AS nfcstoreDiscountEligible
         FROM businesses b LEFT JOIN plans p ON p.id = b.plan_id
         WHERE b.deleted_at IS NULL ORDER BY b.created_at DESC LIMIT 100`)
       .all<BusinessRow>(),

@@ -2,16 +2,28 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { Activity, BadgeCheck, Eye, QrCode, TicketCheck } from 'lucide-react';
 
+import { BusinessNfcStorePanel } from '@/components/business-nfcstore-panel';
 import { ensurePhase1Database, getD1, syncDealLifecycle } from '@/db/runtime';
 import { dealStatusLabels } from '@/lib/deal-status';
+import { cn } from '@/lib/utils';
 import { canAccessBusiness, type BusinessRole } from '@/modules/auth/authorization';
+import { computeEffectivePlanPriceUzs } from '@/modules/billing/nfcstore-discount';
 import { getServerIdentity } from '@/modules/auth/identity';
 import { listOwnedBusinesses } from '@/modules/catalog/ownership';
-import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = { title: 'Biznes dashboard', robots: { index: false, follow: false } };
 
-type OwnedBusiness = { id: string; name: string; verificationStatus: string; role: string };
+type OwnedBusiness = {
+  id: string;
+  name: string;
+  verificationStatus: string;
+  role: string;
+  nfcstoreBusinessUrl: string | null;
+  nfcstoreStatus: string;
+  nfcstoreDiscountEligible: number;
+  planName: string;
+  planPriceUzs: number;
+};
 type Metrics = { deals: number; activeDeals: number; redemptions: number };
 type DealRow = { id: string; title: string; status: string; discountPercent: number; createdAt: string };
 
@@ -35,15 +47,21 @@ export default async function BusinessDashboardPage({ searchParams }: { searchPa
   const business = selectedId
     ? await db
         .prepare(`
-          SELECT b.id, b.name, b.verification_status AS verificationStatus, bm.role AS role
+          SELECT b.id, b.name, b.verification_status AS verificationStatus, bm.role AS role,
+            b.nfcstore_business_url AS nfcstoreBusinessUrl, b.nfcstore_status AS nfcstoreStatus,
+            b.nfcstore_discount_eligible AS nfcstoreDiscountEligible,
+            p.name AS planName, p.price_uzs AS planPriceUzs
           FROM business_members bm
           JOIN businesses b ON b.id = bm.business_id
+          LEFT JOIN plans p ON p.id = b.plan_id
           WHERE bm.user_id = ?1 AND bm.revoked_at IS NULL AND b.deleted_at IS NULL AND b.id = ?2
           LIMIT 1
         `)
         .bind(identity.id, selectedId)
         .first<OwnedBusiness>()
     : null;
+  const planPrice = business ? computeEffectivePlanPriceUzs(business.planPriceUzs, Boolean(business.nfcstoreDiscountEligible)) : null;
+  const canManageNfcStore = business ? canAccessBusiness({ requestedBusinessId: business.id, membershipBusinessId: business.id, role: business.role as BusinessRole, action: 'nfcstore.manage' }) : false;
 
   const metrics = business
     ? await db
@@ -126,6 +144,15 @@ export default async function BusinessDashboardPage({ searchParams }: { searchPa
                 </div>
               ))}
             </div>
+
+            <BusinessNfcStorePanel
+              businessId={business.id}
+              status={business.nfcstoreStatus}
+              profileUrl={business.nfcstoreBusinessUrl}
+              planName={business.planName}
+              planPrice={planPrice!}
+              canManage={canManageNfcStore}
+            />
 
             <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
               <div className="flex flex-wrap items-center justify-between gap-3">

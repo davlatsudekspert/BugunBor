@@ -270,6 +270,19 @@ const columnMigrations: Array<{ table: string; column: string; ddl: string }> = 
   { table: 'redemptions', column: 'promo_code_id', ddl: `TEXT REFERENCES promo_codes(id)` },
   { table: 'redemptions', column: 'final_price_uzs', ddl: `INTEGER` },
   { table: 'users', column: 'telegram_chat_id', ddl: `TEXT` },
+  // NFCStore.uz integration (see modules/integrations/nfcstore-verification.ts and
+  // modules/billing/nfcstore-discount.ts). Purely optional, no bonus tied to it — see
+  // lib/nfcstore.ts.
+  { table: 'users', column: 'nfcstore_profile_url', ddl: `TEXT` },
+  { table: 'businesses', column: 'nfcstore_business_url', ddl: `TEXT` },
+  { table: 'businesses', column: 'nfcstore_external_id', ddl: `TEXT` },
+  { table: 'businesses', column: 'nfcstore_status', ddl: `TEXT NOT NULL DEFAULT 'NOT_CONNECTED'` },
+  { table: 'businesses', column: 'nfcstore_verified_at', ddl: `TEXT` },
+  { table: 'businesses', column: 'nfcstore_last_checked_at', ddl: `TEXT` },
+  // Only ever true while nfcstore_status = 'VERIFIED' — its own column (not derived from
+  // status at read time) so flipping status only ever affects *future* price reads, never
+  // rewrites a period already billed.
+  { table: 'businesses', column: 'nfcstore_discount_eligible', ddl: `INTEGER NOT NULL DEFAULT 0` },
 ];
 
 let ready: Promise<void> | undefined;
@@ -299,6 +312,10 @@ export async function ensurePhase1Database() {
     // schemaStatements — that batch runs before this loop, when a fresh database's `users`
     // table doesn't have telegram_chat_id yet).
     await db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_telegram_chat_id ON users(telegram_chat_id) WHERE telegram_chat_id IS NOT NULL`).run();
+    // Enforces "1 NFCStore Business profile = 1 BugunBor business account" at the database
+    // level — a second business trying to claim an already-linked profile URL fails this
+    // constraint outright, not merely a check the application code could get wrong.
+    await db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_businesses_nfcstore_url ON businesses(nfcstore_business_url) WHERE nfcstore_business_url IS NOT NULL`).run();
     // Cleanup: an earlier deploy's deep-link phone-linking flow used this table; the bot's
     // "share phone number" button (modules/auth/otp.ts's linkPhoneFromContact) replaced it
     // entirely, so drop it on any database that still has it from that earlier schema.
