@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LoaderCircle, LockKeyhole, Send, RotateCcw } from 'lucide-react';
+import { Check, Copy, LoaderCircle, LockKeyhole, Send, RotateCcw } from 'lucide-react';
 
 type Step = 'phone' | 'telegram_link' | 'code';
 
@@ -13,6 +13,30 @@ export function CustomerLoginForm({ returnTo }: { returnTo: string }) {
   const [deepLink, setDeepLink] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  // Telegram only auto-fills a deep link's `?start=` payload the very first time someone
+  // opens a chat with the bot. Anyone who's messaged it before (testing it, using another
+  // feature) just gets their existing chat reopened, no payload — so the exact command is
+  // always shown as a copy-pasteable fallback too, not just the button.
+  const startCommand = (() => {
+    try {
+      return `/start ${new URL(deepLink).searchParams.get('start') ?? ''}`;
+    } catch {
+      return '';
+    }
+  })();
+
+  async function copyStartCommand() {
+    try {
+      await navigator.clipboard.writeText(startCommand);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard API can be unavailable (permissions, non-secure context) — the text is
+      // still selectable and copyable by hand in that case, so this is not fatal.
+    }
+  }
 
   async function requestCode(formData: FormData) {
     const rawPhone = formData.get('phone');
@@ -92,6 +116,15 @@ export function CustomerLoginForm({ returnTo }: { returnTo: string }) {
         <a href={deepLink} target="_blank" rel="noreferrer" className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-bold text-white">
           <Send className="size-5" /> Telegram botni ochish
         </a>
+        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm">
+          <p className="text-slate-600">Bot avtomatik yubormasa (masalan, botga oldin yozgan bo‘lsangiz), shu buyruqni nusxalab botga qo‘lda yuboring:</p>
+          <div className="mt-2 flex items-center gap-2">
+            <code className="min-w-0 flex-1 break-all rounded-lg bg-white px-3 py-2 font-mono text-xs text-[#152a3b]">{startCommand}</code>
+            <button type="button" onClick={copyStartCommand} aria-label="Nusxalash" className="grid size-9 shrink-0 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-primary">
+              {copied ? <Check className="size-4 text-emerald-600" /> : <Copy className="size-4" />}
+            </button>
+          </div>
+        </div>
         {error ? <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</p> : null}
         <button onClick={retryAfterLink} disabled={busy} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 font-bold text-[#152a3b] disabled:opacity-60">
           {busy ? <LoaderCircle className="size-5 animate-spin" /> : <RotateCcw className="size-5" />}
