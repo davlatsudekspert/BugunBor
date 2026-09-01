@@ -173,6 +173,16 @@ const schemaStatements = [
     FOREIGN KEY(deal_id) REFERENCES deals(id), CHECK(remaining_capacity >= 0 AND remaining_capacity <= capacity)
   )`,
   `CREATE INDEX IF NOT EXISTS idx_deal_time_slots_deal ON deal_time_slots(deal_id, starts_at)`,
+  // A customer session minted after verifyTelegramInitData() confirms a Telegram Mini App
+  // visitor's initData was genuinely signed by this bot — same hashed-token pattern as
+  // admin_sessions, just for a marketplace user instead of an admin account.
+  `CREATE TABLE IF NOT EXISTS telegram_sessions (
+    id TEXT PRIMARY KEY, user_id TEXT NOT NULL, telegram_user_id TEXT NOT NULL,
+    token_hash TEXT NOT NULL UNIQUE, expires_at TEXT NOT NULL, revoked_at TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_telegram_sessions_user ON telegram_sessions(user_id, revoked_at)`,
 ];
 
 const seedStatements = [

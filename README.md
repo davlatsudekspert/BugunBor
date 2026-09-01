@@ -266,6 +266,49 @@ frame content (rather than Chromium's built-in test pattern) needs
 hardware or a custom video file this sandbox doesn't have — the decode
 algorithm itself is confirmed correct against a real QR image separately.
 
+## Telegram Mini App
+
+`/telegram` loads the real Telegram Web App JS SDK
+(`https://telegram.org/js/telegram-web-app.js`), reads
+`Telegram.WebApp.initData`, and posts it to `POST
+/api/v1/telegram/webapp/auth`. That endpoint verifies `initData`'s
+HMAC-SHA256 signature against `TELEGRAM_BOT_TOKEN` exactly as Telegram's
+own docs specify (`secret_key = HMAC_SHA256(key="WebAppData",
+message=bot_token)`, then `hash = HEX(HMAC_SHA256(key=secret_key,
+message=data_check_string))`), also rejecting anything older than 24
+hours so a leaked `initData` string can't be replayed indefinitely.
+`modules/telegram/webapp.ts` holds that check with unit tests
+(`webapp.test.ts`) covering a genuinely-signed payload, a tampered field,
+the right signature under the wrong bot token, and stale `auth_date`.
+
+A verified visitor gets a `bb_tg_session` httpOnly cookie
+(`modules/telegram/session.ts`, same hashed-token pattern as the admin
+panel's own sessions) mapped to an ordinary `users` row
+(`tg_<telegramUserId>`). `modules/auth/identity.ts` now falls back to
+that cookie whenever no platform-supplied identity header is present —
+so a Telegram Mini App visitor is just another `CUSTOMER`
+`RequestIdentity`, and every existing customer feature (favorites,
+claiming a deal, promo codes, reviews, `/account`) works for them with
+*zero* changes to those routes. Opened outside Telegram (no `initData`
+present), `/telegram` shows an "open in Telegram" prompt with a bot deep
+link instead of erroring.
+
+**Sandbox verification note**: this environment has neither a real
+registered Telegram bot nor a Telegram client. What was fully verified:
+the HMAC algorithm itself (unit tests against synthetic-but-correctly-signed
+data); the complete HTTP path with a real (test) bot token configured —
+a genuinely-signed `initData` string round-tripped through `POST
+/api/v1/telegram/webapp/auth` end to end, produced a working session
+cookie, and that cookie then authenticated a real `POST /api/v1/favorites`
+call and rendered the right name on `/account` with no other code path
+touched; tampered and missing `initData` both correctly rejected (401 /
+422) through the same real endpoint. What could not be verified here:
+registering an actual bot with @BotFather, opening `/telegram` from a
+real Telegram client, and the Mini App chrome Telegram itself renders
+around the page (its native back button, `MainButton`, haptics) — none of
+which this backend-side verification depends on, but none of which can be
+exercised without a real bot and a real Telegram client either.
+
 ## Murojaatlar (support tickets)
 
 `POST /api/v1/support/tickets` is the single intake point for both the

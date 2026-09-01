@@ -15,6 +15,7 @@
 | `/rules` | Platform rules: accurate pricing, no false claims, enforcement consequences (implemented) |
 | `/login`, `/verify` | Authentication entry and OTP verification |
 | `/n/[token]` | NFC tap recording and safe redirect |
+| `/telegram` | Telegram Mini App entry point — verifies `Telegram.WebApp.initData`, mints a session, then redirects into the app; shown a "open in Telegram" prompt instead if loaded outside Telegram |
 
 ## Customer
 
@@ -48,6 +49,7 @@ Still only planned: `/admin/users`, `/admin/categories`, `/admin/wallet`, `/admi
 - `POST /api/v1/admin/businesses/:id/decision`, `POST /api/v1/admin/businesses/:id/plan`
 - `POST /api/v1/admin/plans/:id`, `POST /api/v1/admin/announcements`, `POST /api/v1/admin/team`, `POST /api/v1/admin/team/:id`
 - `POST /api/v1/admin/promo-codes` (create), `POST /api/v1/admin/promo-codes/:id` (toggle active), both gated to `admin.promocodes.manage`
+- `POST /api/v1/telegram/webapp/auth` (verifies `initData`'s HMAC signature against `TELEGRAM_BOT_TOKEN`, sets an httpOnly `bb_tg_session` cookie the rest of the app recognizes as an ordinary customer identity)
 - `POST /api/v1/favorites` (toggles a deal in/out of the signed-in caller's saved list)
 - `POST /api/v1/reviews` (rate + optionally comment on a business — only for a redemption the caller owns that staff has already marked COMPLETED, one review per redemption)
 - `POST /api/v1/support/tickets` (public — the contact form and the AI Yordamchi lead-capture gate both post here; name + phone required)

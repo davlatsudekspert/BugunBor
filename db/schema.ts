@@ -363,6 +363,25 @@ export const dealTimeSlots = sqliteTable(
   (table) => [index('idx_deal_time_slots_deal').on(table.dealId, table.startsAt)],
 );
 
+/** A marketplace session minted after verifyTelegramInitData() confirms a Telegram Mini App
+ * visitor's initData — same hashed-token pattern as adminSessions, for a `users` row instead. */
+export const telegramSessions = sqliteTable(
+  'telegram_sessions',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    telegramUserId: text('telegram_user_id').notNull(),
+    tokenHash: text('token_hash').notNull(),
+    expiresAt: text('expires_at').notNull(),
+    revokedAt: text('revoked_at'),
+    createdAt: text('created_at').notNull().default(utcNow),
+  },
+  (table) => [
+    uniqueIndex('idx_telegram_sessions_token_hash').on(table.tokenHash),
+    index('idx_telegram_sessions_user').on(table.userId, table.revokedAt),
+  ],
+);
+
 /** Every "Bog'lanish" submission and AI Yordamchi lead — see /admin/support. */
 export const supportTickets = sqliteTable(
   'support_tickets',

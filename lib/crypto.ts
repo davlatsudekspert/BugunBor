@@ -1,6 +1,16 @@
 export async function sha256Hex(value: string) {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+  return bytesToHex(digest);
+}
+
+export function bytesToHex(buffer: ArrayBuffer) {
+  return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+/** HMAC-SHA256, returning the raw signature bytes (e.g. to use as the key of a second HMAC — see modules/telegram). */
+export async function hmacSha256(keyBytes: BufferSource, message: string): Promise<ArrayBuffer> {
+  const key = await crypto.subtle.importKey('raw', keyBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return crypto.subtle.sign('HMAC', key, new TextEncoder().encode(message));
 }
 
 /** URL-safe random token, suitable for session ids and one-time claim codes. */
