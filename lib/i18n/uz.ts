@@ -8,6 +8,8 @@ export const uz = {
   },
   common: {
     sum: 'so‘m',
+    million: 'mln',
+    billion: 'mlrd',
     loading: 'Yuklanmoqda…',
     retry: 'Qayta urinish',
     save: 'Saqlash',
@@ -85,6 +87,7 @@ export const uz = {
   },
   home: {
     badge: 'Bugun {city}da {count} ta faol aksiya',
+    stats: { deals: 'faol aksiya', businesses: 'ta biznes kutmoqda', maxDiscount: 'gacha chegirma', saved: 'mijozlar tejadi' },
     heroLead: 'Bugun bor —',
     heroAccent: 'ertaga bo‘lmasligi',
     heroTail: 'mumkin',

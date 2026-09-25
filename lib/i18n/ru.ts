@@ -10,6 +10,8 @@ export const ru: Dictionary = {
   },
   common: {
     sum: 'сум',
+    million: 'млн',
+    billion: 'млрд',
     loading: 'Загрузка…',
     retry: 'Повторить',
     save: 'Сохранить',
@@ -87,6 +89,7 @@ export const ru: Dictionary = {
   },
   home: {
     badge: '{city}: активных акций сегодня — {count}',
+    stats: { deals: 'активных акций', businesses: 'заведений ждут вас', maxDiscount: 'максимальная скидка', saved: 'сэкономили клиенты' },
     heroLead: 'Есть сегодня —',
     heroAccent: 'завтра может',
     heroTail: 'не быть',

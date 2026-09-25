@@ -23,6 +23,14 @@ export function formatSum(value: number, t: Dictionary) {
   return `${formatNumber(value)}${NBSP}${t.common.sum}`;
 }
 
+/** "12,4 mln so‘m" for big totals. */
+export function formatCompactSum(value: number, t: Dictionary) {
+  const compact = (divisor: number, unit: string) => `${(value / divisor).toFixed(1).replace(/\.0$/, '').replace('.', ',')}${NBSP}${unit}${NBSP}${t.common.sum}`;
+  if (value >= 1e9) return compact(1e9, t.common.billion);
+  if (value >= 1e6) return compact(1e6, t.common.million);
+  return formatSum(value, t);
+}
+
 /** "25-sentabr" / "25 сентября" in Tashkent time. */
 export function formatDay(date: Date, t: Dictionary, locale: 'uz' | 'ru') {
   const parts = tashkentParts(date);

@@ -11,23 +11,33 @@ import { getDb } from '@/db/client';
 import { cityName } from '@/lib/cities';
 import { getPreferredCity } from '@/lib/city-cookie';
 import { getConfig } from '@/lib/env';
-import { formatSum } from '@/lib/format';
+import { formatCompactSum, formatSum } from '@/lib/format';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
 import { cn } from '@/lib/utils';
 import { getCurrentUser } from '@/modules/auth/current';
-import { categoryName, countByCategory, getFavoriteIds, listCategories, listLiveDeals } from '@/modules/catalog/queries';
+import { categoryName, countByCategory, getFavoriteIds, listCategories, listLiveDeals, platformSavings } from '@/modules/catalog/queries';
 import { runMaintenance } from '@/modules/redemptions/service';
 
 export default async function Home() {
   const [{ t, locale }, city, user, db] = await Promise.all([getI18n(), getPreferredCity(), getCurrentUser(), getDb()]);
   await runMaintenance(db);
   const demo = getConfig().demoMode;
-  const [deals, categories, favorites] = await Promise.all([
+  const [deals, categories, favorites, savings] = await Promise.all([
     listLiveDeals(db, { city, demo, sort: 'ending' }),
     listCategories(db),
     user ? getFavoriteIds(db, user.id) : Promise.resolve(new Set<string>()),
+    platformSavings(db, { demo }),
   ]);
+  const businessCount = new Set(deals.map((deal) => deal.business.id)).size;
+  const maxDiscount = deals.reduce((max, deal) => Math.max(max, deal.discountPercent), 0);
+  const stats = [
+    { value: String(deals.length), label: t.home.stats.deals },
+    { value: String(businessCount), label: t.home.stats.businesses },
+    ...(maxDiscount ? [{ value: `−${maxDiscount}%`, label: t.home.stats.maxDiscount }] : []),
+    // Only worth showing once it is a meaningful number.
+    ...(savings.saved >= 1_000_000 ? [{ value: formatCompactSum(savings.saved, t), label: t.home.stats.saved }] : []),
+  ];
   const counts = countByCategory(deals);
   const featured = deals[0];
   const cityLabel = cityName(city, locale);
@@ -104,6 +114,20 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {deals.length ? (
+        <section aria-label={cityLabel} className="border-b border-slate-200/70 bg-white">
+          <dl className="mx-auto grid max-w-7xl grid-cols-2 gap-y-5 px-4 py-6 sm:px-6 md:flex md:justify-around lg:px-8">
+            {stats.map((item) => (
+              <div key={item.label} className="text-center">
+                <dt className="sr-only">{item.label}</dt>
+                <dd className="text-2xl font-black tracking-[-.03em] text-navy sm:text-3xl">{item.value}</dd>
+                <dd className="text-xs font-semibold text-slate-500 sm:text-sm">{item.label}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ) : null}
 
       <section id="categories" className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="mb-6 flex items-end justify-between">

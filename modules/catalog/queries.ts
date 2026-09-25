@@ -349,3 +349,14 @@ export async function listFavoriteDeals(db: D1Database, userId: string, options:
     ended: cards.filter((deal) => !available(deal)),
   };
 }
+
+/** Everything customers saved on redeemed codes (demo deals only count in demo mode). */
+export async function platformSavings(db: D1Database, options: { demo: boolean }) {
+  const row = await db
+    .prepare(`SELECT COALESCE(SUM(d.original_price_uzs - d.discounted_price_uzs), 0) AS saved, COUNT(*) AS redeemed
+      FROM redemptions r JOIN deals d ON d.id = r.deal_id
+      WHERE r.status = 'COMPLETED' AND d.original_price_uzs IS NOT NULL AND (?1 = 1 OR d.is_demo = 0)`)
+    .bind(options.demo ? 1 : 0)
+    .first<{ saved: number; redeemed: number }>();
+  return { saved: row?.saved ?? 0, redeemed: row?.redeemed ?? 0 };
+}
