@@ -8,6 +8,8 @@ import { getConfig } from '@/lib/env';
 import { htmlLang } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
 
+// Imported from JS (not from globals.css) so the build emits the font files.
+import '@fontsource-variable/inter/wght.css';
 import './globals.css';
 
 export async function generateMetadata(): Promise<Metadata> {
