@@ -417,7 +417,9 @@ export const ru: Dictionary = {
     noBusinessTitle: 'У вас пока нет бизнеса',
     noBusinessText: 'Добавьте бизнес — после проверки вы сможете размещать акции.',
     dashboard: {
-      stats: { live: 'Активные акции', claimsToday: 'Забронировано сегодня', redeemedToday: 'Использовано сегодня', views: 'Просмотры', pending: 'На проверке' },
+      stats: { live: 'Активные акции', claimsToday: 'Забронировано сегодня', redeemedToday: 'Использовано сегодня', views: 'Просмотры', pending: 'На проверке', followers: 'Подписчики', rating: 'Рейтинг', noRating: 'Оценок пока нет' },
+      reviewsTitle: 'Последние оценки',
+      reviewsEmpty: 'Клиенты оставляют оценки после использования кода — они появятся здесь.',
       quick: 'Быстрые действия',
       newDeal: 'Новая акция',
       redeem: 'Проверить код',

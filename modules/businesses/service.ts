@@ -193,6 +193,7 @@ export async function removeMember(db: D1Database, input: { businessId: string; 
 
 export type DashboardData = {
   live: number; pending: number; claimsToday: number; redeemedToday: number; views: number;
+  followers: number; ratingBp: number; reviewCount: number;
   recent: Array<{ id: string; status: string; createdAt: string; completedAt: string | null; dealTitle: string; customerName: string; branchName: string }>;
 };
 
@@ -206,7 +207,10 @@ export async function businessDashboard(db: D1Database, businessId: string, now 
         (SELECT COUNT(*) FROM deals WHERE business_id = ?1 AND deleted_at IS NULL AND status = 'PENDING_REVIEW') AS pending,
         (SELECT COUNT(*) FROM redemptions WHERE business_id = ?1 AND created_at >= ?3) AS claimsToday,
         (SELECT COUNT(*) FROM redemptions WHERE business_id = ?1 AND status = 'COMPLETED' AND completed_at >= ?3) AS redeemedToday,
-        (SELECT COALESCE(SUM(view_count), 0) FROM deals WHERE business_id = ?1 AND deleted_at IS NULL) AS views`)
+        (SELECT COALESCE(SUM(view_count), 0) FROM deals WHERE business_id = ?1 AND deleted_at IS NULL) AS views,
+        (SELECT COUNT(*) FROM follows WHERE business_id = ?1) AS followers,
+        (SELECT rating_basis_points FROM businesses WHERE id = ?1) AS ratingBp,
+        (SELECT review_count FROM businesses WHERE id = ?1) AS reviewCount`)
       .bind(businessId, nowDb, dayStart)
       .first<Omit<DashboardData, 'recent'>>(),
     db.prepare(`SELECT r.id, CASE WHEN r.status = 'CLAIMED' AND r.expires_at <= ?2 THEN 'EXPIRED' ELSE r.status END AS status,
@@ -223,6 +227,9 @@ export async function businessDashboard(db: D1Database, businessId: string, now 
     claimsToday: counts?.claimsToday ?? 0,
     redeemedToday: counts?.redeemedToday ?? 0,
     views: counts?.views ?? 0,
+    followers: counts?.followers ?? 0,
+    ratingBp: counts?.ratingBp ?? 0,
+    reviewCount: counts?.reviewCount ?? 0,
     recent: recent.results,
   };
 }

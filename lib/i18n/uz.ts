@@ -415,7 +415,9 @@ export const uz = {
     noBusinessTitle: 'Sizda hali biznes yo‘q',
     noBusinessText: 'Biznesingizni qo‘shing — tekshiruvdan so‘ng aksiya joylay olasiz.',
     dashboard: {
-      stats: { live: 'Faol aksiyalar', claimsToday: 'Bugun band qilindi', redeemedToday: 'Bugun ishlatildi', views: 'Ko‘rishlar', pending: 'Tekshiruvda' },
+      stats: { live: 'Faol aksiyalar', claimsToday: 'Bugun band qilindi', redeemedToday: 'Bugun ishlatildi', views: 'Ko‘rishlar', pending: 'Tekshiruvda', followers: 'Obunachilar', rating: 'Reyting', noRating: 'Hali baho yo‘q' },
+      reviewsTitle: 'So‘nggi baholar',
+      reviewsEmpty: 'Mijozlar kodni ishlatgach baho qoldiradi — ular shu yerda ko‘rinadi.',
       quick: 'Tezkor amallar',
       newDeal: 'Yangi aksiya',
       redeem: 'Kodni tekshirish',

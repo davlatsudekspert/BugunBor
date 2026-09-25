@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
-import { Activity, Clock3, Eye, Plus, QrCode, TicketCheck } from 'lucide-react';
+import { Activity, BellRing, Clock3, Eye, Plus, QrCode, Star, TicketCheck } from 'lucide-react';
 
 import { WorkspaceShell } from '@/components/business/workspace-shell';
+import { RatingStars, ratingText } from '@/components/deals/rating-stars';
 import { formatMoment } from '@/lib/format';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
@@ -10,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { roleCan } from '@/modules/auth/authorization';
 import { requireWorkspace } from '@/modules/businesses/current';
 import { businessDashboard } from '@/modules/businesses/service';
+import { listBusinessReviews } from '@/modules/engagement/reviews';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -26,18 +28,20 @@ const statusTone: Record<string, string> = {
 export default async function BusinessDashboardPage() {
   const ws = await requireWorkspace('/business/dashboard', 'analytics.read');
   const { t, locale, db, membership, subscription } = ws;
-  const data = await businessDashboard(db, membership.businessId);
+  const [data, reviews] = await Promise.all([businessDashboard(db, membership.businessId), listBusinessReviews(db, membership.businessId, 5)]);
   const planName = subscription.plan ? (locale === 'ru' ? subscription.plan.nameRu : subscription.plan.nameUz) : '';
   const cards = [
     { label: t.biz.dashboard.stats.live, value: data.live, icon: Activity },
     { label: t.biz.dashboard.stats.claimsToday, value: data.claimsToday, icon: TicketCheck },
     { label: t.biz.dashboard.stats.redeemedToday, value: data.redeemedToday, icon: QrCode },
     { label: t.biz.dashboard.stats.views, value: data.views, icon: Eye },
+    { label: t.biz.dashboard.stats.followers, value: data.followers, icon: BellRing },
+    { label: data.reviewCount ? `${t.biz.dashboard.stats.rating} · ${fmt(t.business.ratingCount, { count: data.reviewCount })}` : t.biz.dashboard.stats.noRating, value: data.reviewCount ? `★ ${ratingText(data.ratingBp)}` : '—', icon: Star },
   ];
 
   return (
     <WorkspaceShell ws={ws} active="dashboard">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
         {cards.map(({ label, value, icon: Icon }) => (
           <div key={label} className="rounded-2xl border border-slate-200 bg-white p-5">
             <Icon className="size-5 text-primary" aria-hidden />
@@ -77,6 +81,23 @@ export default async function BusinessDashboardPage() {
               ) : null}
             </div>
             {data.pending ? <p className="mt-3 flex items-center gap-1.5 text-sm text-amber-700"><Clock3 className="size-4" aria-hidden /> {t.biz.dashboard.stats.pending}: {data.pending}</p> : null}
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5">
+            <h2 className="font-black text-navy">{t.biz.dashboard.reviewsTitle}</h2>
+            {reviews.length ? (
+              <ul className="mt-3 space-y-3">
+                {reviews.map((review) => (
+                  <li key={review.id} className="text-sm">
+                    <RatingStars value={review.rating} className="[&>svg]:size-3.5" />
+                    {review.comment ? <p className="mt-1 text-slate-700">{review.comment}</p> : null}
+                    <p className="mt-0.5 text-xs text-slate-500">{review.author ?? '—'} · {review.dealTitle}</p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 text-sm text-slate-500">{t.biz.dashboard.reviewsEmpty}</p>
+            )}
           </section>
 
           <section className="rounded-2xl bg-navy p-5 text-white">

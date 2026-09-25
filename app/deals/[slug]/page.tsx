@@ -43,8 +43,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     description,
     alternates: { canonical: `/deals/${deal.slug}` },
     robots: { index: indexable, follow: true },
-    openGraph: { title, description },
-    twitter: { title, description },
+    // Telegram and other link previews show the deal's own photo when it has one.
+    openGraph: { title, description, ...(deal.photo ? { images: [{ url: deal.photo, width: 1280, height: 960, alt: deal.title }] } : {}) },
+    twitter: { title, description, ...(deal.photo ? { card: 'summary_large_image', images: [deal.photo] } : {}) },
   };
 }
 

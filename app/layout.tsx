@@ -15,7 +15,7 @@ import './globals.css';
 export async function generateMetadata(): Promise<Metadata> {
   const { t, locale } = await getI18n();
   return {
-    metadataBase: new URL('https://bugunbor.uz'),
+    metadataBase: new URL(getConfig().appUrl ?? 'https://bugunbor.uz'),
     title: { default: t.meta.title, template: '%s | BugunBor' },
     description: t.meta.description,
     applicationName: 'BugunBor',
