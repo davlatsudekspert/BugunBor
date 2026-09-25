@@ -2,13 +2,21 @@ import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
 import { LanguageSwitch } from './language-switch';
 import { Logo } from './logo';
+import { STOCK_PHOTOS } from '@/lib/stock-photos';
 
 export async function SiteFooter() {
   const { t, locale } = await getI18n();
   const columns = [
     { title: t.footer.product, links: [{ href: '/discover', label: t.nav.deals }, { href: '/categories', label: t.nav.categories }, { href: '/business', label: t.nav.forBusiness }] },
     { title: t.footer.help, links: [{ href: '/how-it-works', label: t.footer.howItWorks }, { href: '/faq', label: t.footer.faq }, { href: '/contact', label: t.footer.contact }] },
-    { title: t.footer.legal, links: [{ href: '/terms', label: t.footer.terms }, { href: '/privacy', label: t.footer.privacy }] },
+    {
+      title: t.footer.legal,
+      links: [
+        { href: '/terms', label: t.footer.terms },
+        { href: '/privacy', label: t.footer.privacy },
+        ...(Object.keys(STOCK_PHOTOS).length ? [{ href: '/credits', label: t.footer.credits }] : []),
+      ],
+    },
   ];
   return (
     <footer className="border-t border-slate-200 bg-white">

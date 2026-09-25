@@ -83,6 +83,7 @@ export const uz = {
     contact: 'Bog‘lanish',
     terms: 'Foydalanish shartlari',
     privacy: 'Maxfiylik siyosati',
+    credits: 'Rasm mualliflari',
     rights: '© {year} BugunBor. Barcha huquqlar himoyalangan.',
   },
   home: {
@@ -775,6 +776,14 @@ export const uz = {
   errorPage: {
     title: 'Nimadir xato ketdi',
     text: 'Sahifani yuklashda xatolik yuz berdi. Qayta urinib ko‘ring.',
+  },
+  credits: {
+    title: 'Rasm mualliflari',
+    text: 'Demo aksiyalardagi fotosuratlar Wikimedia Commons’dan ochiq litsenziya asosida olingan. Mualliflarga rahmat! Bizneslarning aksiyalarida esa ularning o‘z rasmlari ko‘rsatiladi.',
+    author: 'Muallif',
+    license: 'Litsenziya',
+    source: 'Manba',
+    empty: 'Hozircha tashqi fotosuratlar ishlatilmayapti.',
   },
   offline: {
     title: 'Internet yo‘q',
