@@ -1,26 +1,74 @@
 // Deals have no uploaded photos yet, so each one picks an illustrated visual:
 // an emoji on a brand-toned gradient. Businesses choose it in the deal form.
+// Keys are grouped by category so the picker reads naturally.
 
 export const DEAL_VISUALS = {
+  // Food
   plov: { emoji: '🍚', gradient: 'from-[#ff895d] to-[#f44e2f]' },
   noodles: { emoji: '🍜', gradient: 'from-[#f59e5d] to-[#df542c]' },
-  shashlik: { emoji: '🍢', gradient: 'from-[#f08a4b] to-[#c2410c]' },
+  shashlik: { emoji: '🍖', gradient: 'from-[#f08a4b] to-[#c2410c]' },
+  meat: { emoji: '🥘', gradient: 'from-[#e88a5a] to-[#b4432a]' },
+  dumplings: { emoji: '🥟', gradient: 'from-[#f5b77a] to-[#d9803f]' },
+  bread: { emoji: '🫓', gradient: 'from-[#f2c27b] to-[#c98a3c]' },
+  soup: { emoji: '🍲', gradient: 'from-[#f0a36b] to-[#c9582f]' },
+  chicken: { emoji: '🍗', gradient: 'from-[#f4b35e] to-[#d07a2b]' },
+  lunch: { emoji: '🍱', gradient: 'from-[#f59e6b] to-[#d45a3a]' },
   burger: { emoji: '🍔', gradient: 'from-[#f6b24e] to-[#e0762a]' },
   pizza: { emoji: '🍕', gradient: 'from-[#ff9f6b] to-[#e5533a]' },
+  wrap: { emoji: '🌯', gradient: 'from-[#f3c06f] to-[#d88935]' },
   salad: { emoji: '🥗', gradient: 'from-[#8fd19e] to-[#2f9e62]' },
   sushi: { emoji: '🍣', gradient: 'from-[#ff9a8b] to-[#e0475b]' },
+  // Cafés and sweets
+  coffee: { emoji: '☕', gradient: 'from-[#c08a5b] to-[#6f4328]' },
+  breakfast: { emoji: '🍳', gradient: 'from-[#ffd36e] to-[#e9a23b]' },
+  tea: { emoji: '🍵', gradient: 'from-[#9fd49a] to-[#4f9a5a]' },
   cake: { emoji: '🍰', gradient: 'from-[#f3ba61] to-[#d9852e]' },
   dessert: { emoji: '🧁', gradient: 'from-[#f7a8c4] to-[#d9587f]' },
-  coffee: { emoji: '☕', gradient: 'from-[#c08a5b] to-[#6f4328]' },
-  books: { emoji: '📚', gradient: 'from-[#345a76] to-[#18334c]' },
+  icecream: { emoji: '🍨', gradient: 'from-[#f9b4d0] to-[#e0719f]' },
+  sweets: { emoji: '🍬', gradient: 'from-[#f7b2c8] to-[#d45b8a]' },
+  // Shopping
   shopping: { emoji: '🛍️', gradient: 'from-[#6fa8dc] to-[#2f5f8f]' },
   clothes: { emoji: '👗', gradient: 'from-[#c79bf2] to-[#7c4dbd]' },
+  books: { emoji: '📚', gradient: 'from-[#345a76] to-[#18334c]' },
   gift: { emoji: '🎁', gradient: 'from-[#ff8a8a] to-[#d63f5c]' },
+  flowers: { emoji: '💐', gradient: 'from-[#f7a6c0] to-[#d2477a]' },
+  phone: { emoji: '📱', gradient: 'from-[#7fa7d8] to-[#35598d]' },
+  crafts: { emoji: '🏺', gradient: 'from-[#6fb1d6] to-[#2a6f9e]' },
+  fabric: { emoji: '🧵', gradient: 'from-[#c9a0f0] to-[#8150c4]' },
+  // Beauty
   beauty: { emoji: '💅', gradient: 'from-[#f7a1c1] to-[#c2477a]' },
+  hair: { emoji: '💇', gradient: 'from-[#f5a3b8] to-[#c85a7f]' },
+  barber: { emoji: '💈', gradient: 'from-[#8fb0d9] to-[#3f5f8f]' },
+  spa: { emoji: '💆', gradient: 'from-[#b7d9c9] to-[#5f9f86]' },
+  // Sport
   fitness: { emoji: '🏋️', gradient: 'from-[#5ec4b6] to-[#1f7a70]' },
-  fun: { emoji: '🎬', gradient: 'from-[#9d8cf5] to-[#5a47c9]' },
+  pool: { emoji: '🏊', gradient: 'from-[#6cc7e6] to-[#2385b3]' },
+  yoga: { emoji: '🧘', gradient: 'from-[#a9d8b8] to-[#4d9d74]' },
+  football: { emoji: '⚽', gradient: 'from-[#7fd08a] to-[#2f8f45]' },
+  boxing: { emoji: '🥊', gradient: 'from-[#f08a8a] to-[#c23b3b]' },
+  tennis: { emoji: '🎾', gradient: 'from-[#c8e36b] to-[#7fa82a]' },
+  // Entertainment
+  fun: { emoji: '🎉', gradient: 'from-[#9d8cf5] to-[#5a47c9]' },
+  cinema: { emoji: '🎬', gradient: 'from-[#9d8cf5] to-[#5a47c9]' },
+  bowling: { emoji: '🎳', gradient: 'from-[#8fa3f5] to-[#4a5bc9]' },
+  quest: { emoji: '🔐', gradient: 'from-[#7d8cc4] to-[#39447a]' },
+  kids: { emoji: '🧸', gradient: 'from-[#ffc07a] to-[#e8843a]' },
+  karaoke: { emoji: '🎤', gradient: 'from-[#e39cf0] to-[#a24ec2]' },
+  game: { emoji: '🎮', gradient: 'from-[#8f9cf7] to-[#4b4fc9]' },
+  theater: { emoji: '🎭', gradient: 'from-[#d88fa8] to-[#9c3f63]' },
+  horse: { emoji: '🐎', gradient: 'from-[#d2a679] to-[#8b5a2b]' },
+  // Services
   service: { emoji: '🛠️', gradient: 'from-[#8aa0b4] to-[#40566b]' },
+  car: { emoji: '🚗', gradient: 'from-[#7ab6e6] to-[#2f6fa8]' },
+  laundry: { emoji: '👔', gradient: 'from-[#9fb8d6] to-[#4c6a8f]' },
+  repair: { emoji: '🔧', gradient: 'from-[#9aa8b6] to-[#4a5a6b]' },
+  cleaning: { emoji: '🧹', gradient: 'from-[#8fd6c8] to-[#2f9483]' },
+  camera: { emoji: '📸', gradient: 'from-[#a3a9c9] to-[#4f577f]' },
+  education: { emoji: '🎓', gradient: 'from-[#7f9fd6] to-[#34508f]' },
+  // Delivery
   delivery: { emoji: '🛵', gradient: 'from-[#63c3a0] to-[#1f8a63]' },
+  fruit: { emoji: '🍎', gradient: 'from-[#f79a8a] to-[#d8433b]' },
+  water: { emoji: '💧', gradient: 'from-[#8fd3f2] to-[#2e8fc2]' },
 } as const;
 
 export type DealVisualKey = keyof typeof DEAL_VISUALS;
@@ -39,7 +87,7 @@ const categoryDefaults: Record<string, DealVisualKey> = {
 };
 
 export function isDealVisual(value: string | null | undefined): value is DealVisualKey {
-  return Boolean(value && value in DEAL_VISUALS);
+  return Boolean(value && Object.hasOwn(DEAL_VISUALS, value));
 }
 
 export function dealVisual(visual: string | null | undefined, categorySlug?: string | null) {

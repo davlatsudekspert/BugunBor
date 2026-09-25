@@ -74,7 +74,7 @@ describe('migrations', () => {
     await seedDemoData(db);
     await seedDemoData(db);
     const deals = await db.prepare(`SELECT COUNT(*) AS count FROM deals WHERE is_demo = 1`).first<{ count: number }>();
-    expect(deals?.count).toBe(9);
+    expect(deals?.count).toBe(9 + 17 * 8 * 2);
     const osh = await db.prepare(`SELECT status, remaining_quantity FROM deals WHERE id = 'deal_osh'`).first();
     expect(osh).toEqual({ status: 'ACTIVE', remaining_quantity: 0 });
   });

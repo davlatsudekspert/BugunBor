@@ -48,6 +48,7 @@ export const uz = {
     search: 'Qidirish',
     none: '—',
     demo: 'Demo',
+    demoBanner: 'Demo rejim: barcha bizneslar, aksiyalar va narxlar namuna uchun ko‘rsatilgan.',
   },
   months: ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'],
   nav: {
