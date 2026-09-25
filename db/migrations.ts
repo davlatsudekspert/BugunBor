@@ -345,4 +345,40 @@ const media: Migration = {
   },
 };
 
-export const migrations: readonly Migration[] = [baseline, systemV1, billing, media];
+/** Follows, reviews after a redemption, and the Telegram notification outbox. */
+const engagement: Migration = {
+  id: '0005_engagement',
+  async build({ db, columns }) {
+    const statements: D1PreparedStatement[] = [];
+    const existing = await columns('users');
+    for (const [name, definition] of Object.entries({ notify_deals: 'INTEGER NOT NULL DEFAULT 1', notify_reminders: 'INTEGER NOT NULL DEFAULT 1' })) {
+      if (!existing.has(name)) statements.push(db.prepare(`ALTER TABLE users ADD COLUMN ${name} ${definition}`));
+    }
+    statements.push(...sql(db, [
+      `CREATE TABLE IF NOT EXISTS follows (
+        user_id TEXT NOT NULL, business_id TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY(user_id, business_id),
+        FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(business_id) REFERENCES businesses(id)
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_follows_business ON follows(business_id)`,
+      `CREATE TABLE IF NOT EXISTS reviews (
+        id TEXT PRIMARY KEY, redemption_id TEXT NOT NULL UNIQUE, business_id TEXT NOT NULL, deal_id TEXT NOT NULL,
+        user_id TEXT NOT NULL, rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5), comment TEXT,
+        status TEXT NOT NULL DEFAULT 'VISIBLE', hidden_reason TEXT,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT,
+        FOREIGN KEY(redemption_id) REFERENCES redemptions(id), FOREIGN KEY(business_id) REFERENCES businesses(id)
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_reviews_business ON reviews(business_id, status, created_at)`,
+      `CREATE TABLE IF NOT EXISTS notifications (
+        id TEXT PRIMARY KEY, user_id TEXT NOT NULL, kind TEXT NOT NULL, dedupe_key TEXT NOT NULL UNIQUE,
+        payload_json TEXT NOT NULL DEFAULT '{}', status TEXT NOT NULL DEFAULT 'PENDING', attempts INTEGER NOT NULL DEFAULT 0,
+        send_after TEXT NOT NULL, claimed_at TEXT, sent_at TEXT, last_error TEXT,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_notifications_queue ON notifications(status, send_after)`,
+    ]));
+    return statements;
+  },
+};
+
+export const migrations: readonly Migration[] = [baseline, systemV1, billing, media, engagement];

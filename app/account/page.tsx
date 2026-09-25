@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
-import { ArrowRight, Heart, LayoutDashboard, PlusCircle, ShieldCheck, TicketCheck } from 'lucide-react';
+import { ArrowRight, Heart, LayoutDashboard, PiggyBank, PlusCircle, ShieldCheck, TicketCheck } from 'lucide-react';
 
 import { DeleteAccountButton, LogoutButton, NameForm } from '@/components/account/account-actions';
+import { NotificationSettings } from '@/components/account/notification-settings';
 import { LanguageSwitch } from '@/components/site/language-switch';
 import { getDb } from '@/db/client';
 import { formatPhone, formatSum, initials } from '@/lib/format';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
-import { accountStats } from '@/modules/auth/account';
+import { accountStats, getNotificationSettings } from '@/modules/auth/account';
 import { isModerator, requireUser } from '@/modules/auth/current';
 import { listMemberships } from '@/modules/businesses/access';
 
@@ -19,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function AccountPage() {
   const user = await requireUser('/account');
   const [{ t, locale }, db] = await Promise.all([getI18n(), getDb()]);
-  const [stats, memberships] = await Promise.all([accountStats(db, user.id), listMemberships(db, user.id)]);
+  const [stats, memberships, notifications] = await Promise.all([accountStats(db, user.id), listMemberships(db, user.id), getNotificationSettings(db, user.id)]);
 
   const links = [
     { href: '/account/codes', label: t.account.sections.codes, icon: TicketCheck, badge: stats.active ? String(stats.active) : null },
@@ -40,11 +41,17 @@ export default async function AccountPage() {
         </div>
       </div>
 
-      <dl className="mt-8 grid grid-cols-3 gap-3">
+      <div className="mt-8 overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 to-emerald-700 p-6 text-white shadow-[0_18px_50px_rgba(16,120,80,.25)]">
+        <p className="flex items-center gap-2 text-sm font-bold text-emerald-50"><PiggyBank className="size-5" aria-hidden /> {t.account.stats.saved}</p>
+        <p className="mt-2 text-2xl font-black tracking-[-.03em] sm:text-3xl">
+          {stats.savedUzs > 0 ? fmt(t.account.savedBanner, { sum: formatSum(stats.savedUzs, t) }) : t.account.savedBannerEmpty}
+        </p>
+      </div>
+
+      <dl className="mt-4 grid grid-cols-2 gap-3">
         {[
           { label: t.account.stats.active, value: String(stats.active) },
           { label: t.account.stats.redeemed, value: String(stats.redeemed) },
-          { label: t.account.stats.saved, value: formatSum(stats.savedUzs, t) },
         ].map((item) => (
           <div key={item.label} className="rounded-2xl border border-slate-200 bg-white p-4">
             <dt className="text-xs font-semibold text-slate-500">{item.label}</dt>
@@ -64,6 +71,13 @@ export default async function AccountPage() {
           </a>
         ))}
       </nav>
+
+      <div className="mt-6">
+        <NotificationSettings
+          initial={notifications}
+          labels={{ title: t.account.notifications, hint: t.account.notificationsHint, deals: t.account.notifyDeals, reminders: t.account.notifyReminders, networkError: t.common.networkError }}
+        />
+      </div>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
         <NameForm initial={user.displayName} labels={{ name: t.account.name, placeholder: t.account.namePlaceholder, save: t.account.saveName, saved: t.common.saved, error: t.common.unknownError }} />

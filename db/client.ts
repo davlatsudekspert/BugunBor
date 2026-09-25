@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:workers';
 
 import { getConfig } from '@/lib/env';
+import { tickBackgroundJobs } from '@/modules/jobs';
 import { applyMigrations } from './migrate';
 import { refreshDemoData, seedDemoData } from './seed';
 
@@ -35,5 +36,6 @@ export async function getDb(): Promise<D1Database> {
     lastDemoRefresh = Date.now();
     await refreshDemoData(db).catch((error: unknown) => console.error('Demo refresh failed', error));
   }
+  tickBackgroundJobs(db);
   return db;
 }

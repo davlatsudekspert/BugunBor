@@ -1,14 +1,15 @@
-import { ClipboardList, CreditCard, Inbox, LayoutDashboard, Settings, ShieldCheck, Store, Tags, Tag, Users } from 'lucide-react';
+import { ClipboardList, CreditCard, Inbox, LayoutDashboard, Settings, ShieldCheck, Star, Store, Tags, Tag, Users } from 'lucide-react';
 
 import type { Dictionary } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
-export type AdminTab = 'overview' | 'businesses' | 'deals' | 'users' | 'categories' | 'messages' | 'audit' | 'billing' | 'settings';
+export type AdminTab = 'overview' | 'businesses' | 'deals' | 'reviews' | 'users' | 'categories' | 'messages' | 'audit' | 'billing' | 'settings';
 
 const tabs: Array<{ key: AdminTab; href: string; adminOnly: boolean; icon: typeof LayoutDashboard }> = [
   { key: 'overview', href: '/admin', adminOnly: false, icon: LayoutDashboard },
   { key: 'businesses', href: '/admin/businesses', adminOnly: false, icon: Store },
   { key: 'deals', href: '/admin/deals', adminOnly: false, icon: Tag },
+  { key: 'reviews', href: '/admin/reviews', adminOnly: false, icon: Star },
   { key: 'messages', href: '/admin/messages', adminOnly: false, icon: Inbox },
   { key: 'billing', href: '/admin/billing', adminOnly: true, icon: CreditCard },
   { key: 'users', href: '/admin/users', adminOnly: true, icon: Users },

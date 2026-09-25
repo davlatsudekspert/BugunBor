@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { MapPin, Navigation, TicketCheck } from 'lucide-react';
 
 import { CancelCodeButton } from '@/components/account/account-actions';
+import { RateVisit } from '@/components/account/rate-visit';
 import { Countdown } from '@/components/deals/countdown';
 import { DealVisual } from '@/components/deals/deal-visual';
 import { QrCode } from '@/components/deals/qr-code';
@@ -14,6 +15,7 @@ import { directionsUrl } from '@/lib/maps';
 import { formatClock, parseDbTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { requireUser } from '@/modules/auth/current';
+import { givenRatings, reviewableRedemptions } from '@/modules/engagement/reviews';
 import { formatRedemptionCode } from '@/modules/redemptions/codes';
 import { listCustomerRedemptions, runMaintenance } from '@/modules/redemptions/service';
 
@@ -34,7 +36,11 @@ export default async function CodesPage() {
   const [{ t, locale }, db] = await Promise.all([getI18n(), getDb()]);
   const config = getConfig();
   await runMaintenance(db);
-  const redemptions = await listCustomerRedemptions(db, user.id, config.hashSecret);
+  const [redemptions, reviewable, ratings] = await Promise.all([
+    listCustomerRedemptions(db, user.id, config.hashSecret),
+    reviewableRedemptions(db, user.id),
+    givenRatings(db, user.id),
+  ]);
   const active = redemptions.filter((item) => item.status === 'CLAIMED');
   const history = redemptions.filter((item) => item.status !== 'CLAIMED');
   const origin = config.appUrl ?? 'https://bugunbor.uz';
@@ -91,16 +97,28 @@ export default async function CodesPage() {
         <section className="mt-10">
           <h2 className="text-sm font-black uppercase tracking-[.14em] text-slate-500">{t.codes.history}</h2>
           <ul className="mt-4 divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-            {history.map((item) => (
-              <li key={item.id} className="flex items-center gap-4 p-4">
-                <DealVisual visual={item.visual} categorySlug={item.categorySlug} photo={item.photo} className="size-14 shrink-0 rounded-xl" emojiClassName="-bottom-2 -right-1 text-4xl" />
-                <div className="min-w-0 flex-1">
-                  <a href={`/deals/${item.dealSlug}`} className="block truncate font-bold text-navy hover:text-primary">{item.dealTitle}</a>
-                  <p className="truncate text-sm text-slate-500">{item.businessName} · {formatMoment(parseDbTime(item.completedAt ?? item.createdAt), t, locale)}</p>
-                </div>
-                <span className={cn('shrink-0 rounded-full px-3 py-1 text-xs font-bold', statusTone[item.status])}>{t.codes.status[item.status]}</span>
-              </li>
-            ))}
+            {history.map((item) => {
+              const given = ratings.get(item.id);
+              return (
+                <li key={item.id} id={`review-${item.id}`} className="scroll-mt-24 p-4">
+                  <div className="flex items-center gap-4">
+                    <DealVisual visual={item.visual} categorySlug={item.categorySlug} photo={item.photo} className="size-14 shrink-0 rounded-xl" emojiClassName="-bottom-2 -right-1 text-4xl" />
+                    <div className="min-w-0 flex-1">
+                      <a href={`/deals/${item.dealSlug}`} className="block truncate font-bold text-navy hover:text-primary">{item.dealTitle}</a>
+                      <p className="truncate text-sm text-slate-500">{item.businessName} · {formatMoment(parseDbTime(item.completedAt ?? item.createdAt), t, locale)}</p>
+                      {given ? <p className="mt-0.5 text-xs font-bold text-amber-700">{fmt(t.codes.rated, { rating: given })}</p> : null}
+                    </div>
+                    <span className={cn('shrink-0 rounded-full px-3 py-1 text-xs font-bold', statusTone[item.status])}>{t.codes.status[item.status]}</span>
+                  </div>
+                  {reviewable.has(item.id) ? (
+                    <RateVisit
+                      redemptionId={item.id}
+                      labels={{ title: t.codes.rateTitle, aria: t.codes.rateAria, placeholder: t.codes.ratePlaceholder, submit: t.codes.rateSubmit, thanks: t.codes.rateThanks, networkError: t.common.networkError }}
+                    />
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
         </section>
       ) : null}

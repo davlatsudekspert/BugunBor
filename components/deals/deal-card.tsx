@@ -1,4 +1,4 @@
-import { ArrowRight, BadgeCheck, Clock3, MapPin } from 'lucide-react';
+import { ArrowRight, BadgeCheck, Clock3, MapPin, Star } from 'lucide-react';
 
 import { buttonVariants } from '@/components/ui/button';
 import { cityName } from '@/lib/cities';
@@ -11,6 +11,7 @@ import { BusinessAvatar } from './business-avatar';
 import { Countdown } from './countdown';
 import { DealVisual } from './deal-visual';
 import { FavoriteButton } from './favorite-button';
+import { ratingText } from './rating-stars';
 
 type Props = {
   deal: DealCardData;
@@ -50,6 +51,11 @@ export function DealCard({ deal, t, locale, favorite, loggedIn, showCity = false
           <BusinessAvatar name={deal.business.name} logo={deal.business.logo} className="size-8 rounded-full bg-slate-100 text-[11px] text-navy" />
           <span className="truncate">{deal.business.name}</span>
           <BadgeCheck className="size-4 shrink-0 fill-emerald-500 text-white" aria-label={t.common.verified} />
+          {deal.business.rating ? (
+            <span className="ml-auto flex shrink-0 items-center gap-1 text-xs font-bold text-navy" title={fmt(t.business.ratingCount, { count: deal.business.rating.count })}>
+              <Star className="size-3.5 fill-amber-400 text-amber-400" aria-hidden /> {ratingText(deal.business.rating.basisPoints)}
+            </span>
+          ) : null}
         </p>
         <h3 className="mt-3 text-lg font-black leading-snug tracking-[-.02em] text-navy">
           <a href={`/deals/${deal.slug}`} className="outline-none after:absolute after:inset-0 after:content-[''] focus-visible:underline">

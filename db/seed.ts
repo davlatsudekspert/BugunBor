@@ -8,7 +8,7 @@ import { buildDemoCatalog, DEMO_CATALOG_VERSION } from './demo-catalog';
 // businesses have no phone or Telegram so nobody real can be reached by mistake.
 
 /** Stored in app_settings; the full seed only runs again when this changes. */
-export const DEMO_SEED_VERSION = `${DEMO_CATALOG_VERSION}+curated.3`;
+export const DEMO_SEED_VERSION = `${DEMO_CATALOG_VERSION}+curated.4`;
 
 const cityPoint = (slug: string, dLat = 0, dLon = 0) => {
   const city = CITIES.find((item) => item.slug === slug)!;
@@ -163,7 +163,8 @@ export async function seedDemoData(db: D1Database, now = new Date(), options: { 
         trial_ends_at = CASE WHEN businesses.verification_status = 'VERIFIED' THEN ${sqlLiteral(trialEndsAt)} ELSE businesses.trial_ends_at END`),
     ...multiRow(db, `INSERT INTO branches(id, business_id, name, city, address, latitude_e6, longitude_e6, working_hours_json)`, branchRows,
       `ON CONFLICT(id) DO UPDATE SET business_id = excluded.business_id, name = excluded.name, city = excluded.city, address = excluded.address,
-        latitude_e6 = excluded.latitude_e6, longitude_e6 = excluded.longitude_e6, working_hours_json = excluded.working_hours_json, deleted_at = NULL`),
+        latitude_e6 = excluded.latitude_e6, longitude_e6 = excluded.longitude_e6, working_hours_json = excluded.working_hours_json,
+        phone = NULL, deleted_at = NULL`),
     ...multiRow(db, `INSERT INTO business_members(business_id, user_id, role)`, memberships.map((row) => [...row]),
       `ON CONFLICT(business_id, user_id) DO UPDATE SET role = excluded.role, revoked_at = NULL`),
     ...multiRow(db, `INSERT INTO deals(id, business_id, category_id, slug, title, description, terms, original_price_uzs, discounted_price_uzs,
@@ -209,7 +210,12 @@ export async function refreshDemoData(db: D1Database, now = new Date()) {
 /** Development only: forget all activity on demo deals and restore the seed state. */
 export async function resetDemoData(db: D1Database, now = new Date()) {
   const demoDeals = `SELECT id FROM deals WHERE is_demo = 1 OR business_id IN (SELECT id FROM businesses WHERE is_demo = 1)`;
+  const demoBusinesses = `SELECT id FROM businesses WHERE is_demo = 1`;
   await db.batch([
+    db.prepare(`DELETE FROM reviews WHERE business_id IN (${demoBusinesses}) OR deal_id IN (${demoDeals})`),
+    db.prepare(`DELETE FROM follows WHERE business_id IN (${demoBusinesses})`),
+    db.prepare(`DELETE FROM notifications WHERE user_id IN (${users.map((user) => `'${user.id}'`).join(', ')})`),
+    db.prepare(`UPDATE businesses SET rating_basis_points = 0, review_count = 0 WHERE is_demo = 1`),
     db.prepare(`DELETE FROM redemption_events WHERE redemption_id IN (SELECT id FROM redemptions WHERE deal_id IN (${demoDeals}))`),
     db.prepare(`DELETE FROM redemptions WHERE deal_id IN (${demoDeals})`),
     db.prepare(`DELETE FROM favorites WHERE deal_id IN (${demoDeals})`),

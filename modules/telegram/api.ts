@@ -5,8 +5,10 @@ export type TelegramMessage = { message_id: number; from?: TelegramUser; chat: T
 export type TelegramCallbackQuery = { id: string; from: TelegramUser; message?: TelegramMessage; data?: string };
 export type TelegramUpdate = { update_id: number; message?: TelegramMessage; callback_query?: TelegramCallbackQuery };
 
+export type InlineButton = { text: string; callback_data: string } | { text: string; url: string };
+
 export type ReplyMarkup =
-  | { inline_keyboard: Array<Array<{ text: string; callback_data: string }>> }
+  | { inline_keyboard: Array<Array<InlineButton>> }
   | { keyboard: Array<Array<{ text: string; request_contact?: boolean }>>; resize_keyboard?: boolean; one_time_keyboard?: boolean; is_persistent?: boolean }
   | { remove_keyboard: true };
 

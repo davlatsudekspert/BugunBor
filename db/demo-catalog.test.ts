@@ -82,6 +82,8 @@ describe('demo seed', () => {
     expect(version?.value).toBe(DEMO_SEED_VERSION);
     const phones = await db.prepare(`SELECT COUNT(*) AS n FROM businesses WHERE is_demo = 1 AND (phone IS NOT NULL OR telegram IS NOT NULL)`).first<{ n: number }>();
     expect(phones?.n).toBe(0);
+    const branchPhones = await db.prepare(`SELECT COUNT(*) AS n FROM branches br JOIN businesses b ON b.id = br.business_id WHERE b.is_demo = 1 AND br.phone IS NOT NULL`).first<{ n: number }>();
+    expect(branchPhones?.n).toBe(0);
 
     await db.prepare(`UPDATE deals SET title = 'Changed' WHERE id = 'gdeal_tashkent_food_1'`).run();
     await seedDemoData(db, NOW);

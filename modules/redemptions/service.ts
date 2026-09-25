@@ -3,6 +3,7 @@ import { addMinutes, parseDbTime, toDbTime } from '@/lib/time';
 import { auditStatementIf } from '@/modules/audit';
 import { DomainError } from '@/modules/errors';
 import { pruneOrphanMediaStatement } from '@/modules/media/service';
+import { codeReminderStatement, redeemedStatement } from '@/modules/notifications/service';
 import { deriveRedemptionCode, hashRedemptionCode } from './codes';
 import { evaluateClaimPolicy } from './policy';
 
@@ -105,6 +106,7 @@ export async function claimDeal(db: D1Database, input: ClaimInput): Promise<Clai
         db.prepare(`INSERT INTO redemption_events(id, redemption_id, actor_user_id, type, metadata_json, created_at)
           SELECT ?2, ?1, ?3, 'CLAIMED', ?4, ?5 WHERE ${inserted}`)
           .bind(id, crypto.randomUUID(), input.userId, JSON.stringify({ branchId: input.branchId }), nowDb),
+        codeReminderStatement(db, { redemptionId: id, nowDb }),
       ]);
     } catch (error) {
       if (!isConstraintError(error)) throw error;
@@ -260,6 +262,7 @@ export async function completeRedemption(db: D1Database, input: { businessId: st
       eventWritten,
       eventId,
     ),
+    redeemedStatement(db, { redemptionId: input.redemptionId, nowDb }),
   ]);
   if ((results[0].meta.changes ?? 0) !== 1) {
     const current = await db.prepare(`SELECT status, expires_at AS expiresAt FROM redemptions WHERE id = ?1 AND business_id = ?2`)

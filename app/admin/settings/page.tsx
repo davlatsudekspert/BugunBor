@@ -3,10 +3,12 @@ import { Bot, CheckCircle2, CircleAlert, FlaskConical } from 'lucide-react';
 
 import { ActionButton } from '@/components/admin/admin-controls';
 import { AdminShell } from '@/components/admin/admin-shell';
+import { getDb } from '@/db/client';
 import { getConfig, isTelegramConfigured } from '@/lib/env';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
 import { requireAdmin } from '@/modules/auth/current';
+import { notificationStats } from '@/modules/notifications/service';
 import { createTelegramApi, type WebhookInfo } from '@/modules/telegram/api';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,7 +18,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function AdminSettingsPage() {
   const user = await requireAdmin('/admin/settings');
-  const { t } = await getI18n();
+  const [{ t }, db] = await Promise.all([getI18n(), getDb()]);
+  const queue = await notificationStats(db);
   const config = getConfig();
   const configured = isTelegramConfigured(config);
   const s = t.admin.settings;
@@ -48,6 +51,8 @@ export default async function AdminSettingsPage() {
             <ActionButton payload={{ type: 'telegram.webhook' }} label={s.setWebhook} tone="success" networkError={t.common.networkError} />
           </div>
         ) : null}
+        <p className="mt-4 text-sm font-semibold text-navy">{t.admin.notificationsQueue}</p>
+        <p className="mt-1 text-sm text-slate-600">{fmt(t.admin.notificationsStats, { pending: queue.PENDING + queue.SENDING, sent: queue.SENT, skipped: queue.SKIPPED, failed: queue.FAILED })}</p>
         <p className="mt-4 rounded-xl bg-slate-50 p-4 text-xs leading-5 text-slate-600">{s.envHelp}</p>
       </section>
 

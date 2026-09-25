@@ -2,12 +2,14 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, BadgeCheck, CalendarClock, Clock3, Eye, MapPin, Navigation, Phone, ShieldCheck, Ticket, Timer, TriangleAlert } from 'lucide-react';
 
+import { BusinessAvatar } from '@/components/deals/business-avatar';
 import { ClaimPanel } from '@/components/deals/claim-panel';
 import { Countdown } from '@/components/deals/countdown';
 import { DealCard } from '@/components/deals/deal-card';
-import { BusinessAvatar } from '@/components/deals/business-avatar';
 import { DealVisual } from '@/components/deals/deal-visual';
 import { FavoriteButton } from '@/components/deals/favorite-button';
+import { FollowButton } from '@/components/deals/follow-button';
+import { RatingStars, ratingText } from '@/components/deals/rating-stars';
 import { ShareButton } from '@/components/deals/share-button';
 import { DealViewTracker } from '@/components/deals/view-tracker';
 import { getDb } from '@/db/client';
@@ -21,6 +23,7 @@ import { parseDbTime, toDbTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { getCurrentUser, isModerator } from '@/modules/auth/current';
 import { getDealBySlug, getFavoriteIds, getPublicBusiness } from '@/modules/catalog/queries';
+import { followState } from '@/modules/engagement/follows';
 
 async function loadDeal(slug: string) {
   return getDealBySlug(await getDb(), slug, { demo: getConfig().demoMode });
@@ -56,7 +59,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
   if (preview && !isMember && !isModerator(user)) notFound();
 
   const now = new Date();
-  const [favorites, usage, business] = await Promise.all([
+  const [favorites, usage, business, follow] = await Promise.all([
     user ? getFavoriteIds(db, user.id) : Promise.resolve(new Set<string>()),
     user
       ? db.prepare(`SELECT SUM(CASE WHEN status = 'CLAIMED' AND expires_at > ?3 THEN 1 ELSE 0 END) AS active,
@@ -64,6 +67,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
           FROM redemptions WHERE deal_id = ?1 AND user_id = ?2`).bind(deal.id, user.id, toDbTime(now)).first<{ active: number | null; used: number | null }>()
       : Promise.resolve(null),
     deal.isPublic ? getPublicBusiness(db, deal.business.slug, { demo: getConfig().demoMode }) : Promise.resolve(null),
+    followState(db, deal.business.id, user?.id ?? null),
   ]);
 
   const claimable = deal.isPublic && deal.effective === 'LIVE' && deal.business.onAir;
@@ -89,11 +93,24 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
             <span className={cn('relative ml-2 inline-flex h-8 items-center rounded-full px-3 text-xs font-bold', statusTone)}>{t.deal.status[deal.effective]}</span>
           </DealVisual>
 
-          <a href={`/businesses/${deal.business.slug}`} className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-primary">
-            <BusinessAvatar name={deal.business.name} logo={deal.business.logo} className="size-8 rounded-full bg-white text-[11px] text-navy ring-1 ring-slate-200" />
-            {deal.business.name}
-            {deal.business.verificationStatus === 'VERIFIED' ? <BadgeCheck className="size-5 fill-emerald-500 text-white" aria-label={t.common.verified} /> : null}
-          </a>
+          <div className="mt-7 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <a href={`/businesses/${deal.business.slug}`} className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-primary">
+                <BusinessAvatar name={deal.business.name} logo={deal.business.logo} className="size-8 rounded-full bg-white text-[11px] text-navy ring-1 ring-slate-200" />
+                {deal.business.name}
+                {deal.business.verificationStatus === 'VERIFIED' ? <BadgeCheck className="size-5 fill-emerald-500 text-white" aria-label={t.common.verified} /> : null}
+              </a>
+              {deal.business.rating ? (
+                <a href={`/businesses/${deal.business.slug}#reviews`} className="ml-10 mt-0.5 flex items-center gap-1.5 text-xs font-bold text-navy">
+                  <RatingStars value={deal.business.rating.basisPoints / 100} className="[&>svg]:size-3.5" />
+                  {ratingText(deal.business.rating.basisPoints)} <span className="font-semibold text-slate-500">· {fmt(t.business.ratingCount, { count: deal.business.rating.count })}</span>
+                </a>
+              ) : null}
+            </div>
+            {deal.isPublic ? (
+              <FollowButton businessId={deal.business.id} initial={follow} loggedIn={Boolean(user)} compact labels={{ follow: t.business.follow, following: t.business.following, followers: t.business.followers, hint: t.business.followHint }} />
+            ) : null}
+          </div>
           <h1 className="mt-2 text-4xl font-black tracking-[-.05em] text-navy sm:text-5xl">{deal.title}</h1>
           <p className="mt-5 max-w-2xl whitespace-pre-line text-lg leading-8 text-slate-600">{deal.description}</p>
 

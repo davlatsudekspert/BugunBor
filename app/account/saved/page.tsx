@@ -1,12 +1,16 @@
 import type { Metadata } from 'next';
 import { Heart } from 'lucide-react';
 
+import { BusinessAvatar } from '@/components/deals/business-avatar';
 import { DealCard } from '@/components/deals/deal-card';
 import { getDb } from '@/db/client';
+import { cityName } from '@/lib/cities';
 import { getConfig } from '@/lib/env';
+import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
 import { requireUser } from '@/modules/auth/current';
 import { listFavoriteDeals } from '@/modules/catalog/queries';
+import { listFollowedBusinesses } from '@/modules/engagement/follows';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -16,7 +20,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function SavedPage() {
   const user = await requireUser('/account/saved');
   const [{ t, locale }, db] = await Promise.all([getI18n(), getDb()]);
-  const { live, ended } = await listFavoriteDeals(db, user.id, { demo: getConfig().demoMode });
+  const demo = getConfig().demoMode;
+  const [{ live, ended }, followed] = await Promise.all([listFavoriteDeals(db, user.id, { demo }), listFollowedBusinesses(db, user.id, { demo })]);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -34,6 +39,27 @@ export default async function SavedPage() {
           {live.map((deal) => <DealCard key={deal.id} deal={deal} t={t} locale={locale} favorite loggedIn showCity />)}
         </div>
       ) : null}
+      <section className="mt-12">
+        <h2 className="text-sm font-black uppercase tracking-[.14em] text-slate-500">{t.saved.followedTitle}</h2>
+        {followed.length ? (
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {followed.map((business) => (
+              <li key={business.id}>
+                <a href={`/businesses/${business.slug}`} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-primary/40">
+                  <BusinessAvatar name={business.name} logo={business.logo} className="size-12 rounded-xl bg-navy text-sm font-black text-white" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-black text-navy">{business.name}</span>
+                    <span className="block text-xs text-slate-500">{cityName(business.city, locale)} · {business.liveDeals ? fmt(t.saved.liveDeals, { count: business.liveDeals }) : t.saved.noLiveDeals}</span>
+                  </span>
+                  {business.liveDeals ? <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-white">{business.liveDeals}</span> : null}
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">{t.saved.followedEmpty}</p>
+        )}
+      </section>
       {ended.length ? (
         <section className="mt-12">
           <h2 className="text-sm font-black uppercase tracking-[.14em] text-slate-500">{t.saved.ended}</h2>

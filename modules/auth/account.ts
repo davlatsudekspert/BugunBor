@@ -52,7 +52,30 @@ export async function deleteAccount(db: D1Database, userId: string, now = new Da
         display_name = 'Deleted user', deleted_at = ?2, updated_at = ?2 WHERE id = ?1`).bind(userId, nowDb),
     revokeAllSessionsStatement(db, userId, nowDb),
     db.prepare(`DELETE FROM favorites WHERE user_id = ?1`).bind(userId),
+    db.prepare(`DELETE FROM follows WHERE user_id = ?1`).bind(userId),
+    db.prepare(`DELETE FROM notifications WHERE user_id = ?1`).bind(userId),
+    // Ratings stay (they describe real visits) but the comment text is personal data.
+    db.prepare(`UPDATE reviews SET comment = NULL, updated_at = ?2 WHERE user_id = ?1`).bind(userId, nowDb),
     db.prepare(`UPDATE business_members SET revoked_at = ?2 WHERE user_id = ?1 AND revoked_at IS NULL`).bind(userId, nowDb),
     auditStatement(db, { actorUserId: userId, action: 'user.deleted', targetType: 'User', targetId: userId }, nowDb),
   ]);
+}
+
+export type NotificationSettings = { notifyDeals: boolean; notifyReminders: boolean };
+
+export async function getNotificationSettings(db: D1Database, userId: string): Promise<NotificationSettings> {
+  const row = await db.prepare(`SELECT notify_deals AS notifyDeals, notify_reminders AS notifyReminders FROM users WHERE id = ?1`).bind(userId).first<{ notifyDeals: number; notifyReminders: number }>();
+  return { notifyDeals: Boolean(row?.notifyDeals ?? 1), notifyReminders: Boolean(row?.notifyReminders ?? 1) };
+}
+
+export async function updateNotificationSettings(db: D1Database, userId: string, settings: Partial<NotificationSettings>) {
+  await db
+    .prepare(`UPDATE users SET notify_deals = COALESCE(?2, notify_deals), notify_reminders = COALESCE(?3, notify_reminders) WHERE id = ?1`)
+    .bind(userId, settings.notifyDeals === undefined ? null : Number(settings.notifyDeals), settings.notifyReminders === undefined ? null : Number(settings.notifyReminders))
+    .run();
+  // Turning a kind off also drops what is already queued for it.
+  const kinds = [settings.notifyDeals === false ? 'NEW_DEAL' : null, settings.notifyReminders === false ? 'CODE_REMINDER' : null].filter(Boolean);
+  for (const kind of kinds) {
+    await db.prepare(`UPDATE notifications SET status = 'SKIPPED' WHERE user_id = ?1 AND kind = ?2 AND status = 'PENDING'`).bind(userId, kind).run();
+  }
 }

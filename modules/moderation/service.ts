@@ -2,6 +2,7 @@ import { toDbTime } from '@/lib/time';
 import { auditStatement } from '@/modules/audit';
 import { getBillingSettings, trialStartStatement } from '@/modules/billing/service';
 import { DomainError } from '@/modules/errors';
+import { followersNewDealStatement, teamStatement } from '@/modules/notifications/service';
 
 export type Decision = 'APPROVE' | 'REJECT';
 export const MIN_REASON_LENGTH = 10;
@@ -21,10 +22,10 @@ function moderationStatement(db: D1Database, input: { actorId: string; targetTyp
 export async function decideDeal(db: D1Database, input: { actorId: string; dealId: string; decision: Decision; reason: string }, now = new Date()) {
   checkReason(input.decision, input.reason);
   const deal = await db
-    .prepare(`SELECT d.status, d.business_id AS businessId, b.verification_status AS businessStatus
+    .prepare(`SELECT d.status, d.business_id AS businessId, d.starts_at AS startsAt, b.verification_status AS businessStatus
       FROM deals d JOIN businesses b ON b.id = d.business_id WHERE d.id = ?1 AND d.deleted_at IS NULL`)
     .bind(input.dealId)
-    .first<{ status: string; businessId: string; businessStatus: string }>();
+    .first<{ status: string; businessId: string; startsAt: string; businessStatus: string }>();
   if (!deal) throw new DomainError('NOT_FOUND');
   if (deal.status !== 'PENDING_REVIEW') throw new DomainError('INVALID_TRANSITION');
   if (input.decision === 'APPROVE' && deal.businessStatus !== 'VERIFIED') throw new DomainError('BUSINESS_NOT_VERIFIED');
@@ -39,6 +40,13 @@ export async function decideDeal(db: D1Database, input: { actorId: string; dealI
       .bind(input.dealId, next, nowDb, reason),
     moderationStatement(db, { actorId: input.actorId, targetType: 'Deal', targetId: input.dealId, action: input.decision, reason, before: { status: deal.status }, after: { status: next } }, nowDb),
     auditStatement(db, { actorUserId: input.actorId, businessId: deal.businessId, action: 'deal.moderated', targetType: 'Deal', targetId: input.dealId, reason, before: { status: deal.status }, after: { status: next } }, nowDb),
+    ...(next === 'ACTIVE'
+      ? [
+          // Followers hear about it when it actually starts.
+          followersNewDealStatement(db, { dealId: input.dealId, sendAfter: deal.startsAt > nowDb ? deal.startsAt : nowDb, nowDb }),
+          teamStatement(db, { businessId: deal.businessId, kind: 'DEAL_APPROVED', key: input.dealId, payload: { dealId: input.dealId }, nowDb }),
+        ]
+      : [teamStatement(db, { businessId: deal.businessId, kind: 'DEAL_REJECTED', key: `${input.dealId}:${nowDb}`, payload: { dealId: input.dealId, reason }, nowDb })]),
   ]);
   if ((results[0].meta.changes ?? 0) !== 1) throw new DomainError('CONFLICT');
   return { status: next };
@@ -67,6 +75,11 @@ export async function decideBusiness(db: D1Database, input: { actorId: string; b
     auditStatement(db, { actorUserId: input.actorId, businessId: input.businessId, action: 'business.moderated', targetType: 'Business', targetId: input.businessId, reason, before: { status: business.status }, after: { status: next } }, nowDb),
   ];
   if (next === 'VERIFIED') statements.push(trialStartStatement(db, input.businessId, settings.trialMonths, now));
+  statements.push(
+    next === 'VERIFIED'
+      ? teamStatement(db, { businessId: input.businessId, kind: 'BUSINESS_APPROVED', key: input.businessId, payload: { businessId: input.businessId }, nowDb })
+      : teamStatement(db, { businessId: input.businessId, kind: 'BUSINESS_REJECTED', key: `${input.businessId}:${nowDb}`, payload: { businessId: input.businessId, reason }, nowDb }),
+  );
   const results = await db.batch(statements);
   if ((results[0].meta.changes ?? 0) !== 1) throw new DomainError('CONFLICT');
   return { status: next };
