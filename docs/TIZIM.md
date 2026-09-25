@@ -128,11 +128,24 @@ Istalgan bosqichda: 10 daqiqa o‘tsa ▶ Muddati o‘tgan (EXPIRED); botda «Me
 3. Egasi yoki menejer aksiya yaratadi (qoralama) va tekshiruvga yuboradi.
 4. Moderator aksiyani tasdiqlaydi. Boshlanish vaqti kelganda aksiya saytda **Faol** bo‘ladi.
 5. Kassir «Kodni tekshirish» sahifasida kodni yozadi yoki QR-kodni kamera bilan skanerlaydi. Mijoz, aksiya va filial ma’lumotini ko‘rib «Tasdiqlash» ni bosadi.
+6. Biznes aksiyaga o‘z mahsulotining **haqiqiy fotosuratini**, profiliga esa logotip va muqova rasmini yuklaydi. Rasm telefonda siqiladi (WebP, 1280 px gacha). Rasm bo‘lmasa, chiroyli belgi (emoji + rang) ko‘rsatiladi.
 
-### 4.4. Moderator va admin
+### 4.4. Mijoz bilan aloqa: obuna, xabarnoma, baho
+
+1. Mijoz yoqqan biznesga **obuna** bo‘ladi (biznes yoki aksiya sahifasida «Obuna bo‘lish»).
+2. Biznesning yangi aksiyasi tasdiqlanib, boshlanish vaqti kelganda obunachilarga **Telegram xabari** boradi.
+3. Olingan kod tugashiga **30 daqiqa qolganda** eslatma boradi (kod muddati kamida 60 daqiqa bo‘lsa).
+4. Kod ishlatilgach, mijozga «Siz N so‘m tejadingiz» xabari va **baholash** havolasi boradi.
+5. Baho (1–5 yulduz va ixtiyoriy izoh) faqat ishlatilgan kod uchun, bir marta, 30 kun ichida qoldiriladi. Biznes reytingi shu baholardan hisoblanadi. Ism «Aziza K.» ko‘rinishida chiqadi.
+6. Biznes egasi va menejerlari moderatsiya natijasini (tasdiqlandi / rad etildi va sababi) Telegram’da oladi.
+7. Mijoz profilida xabarnoma turlarini o‘chirishi mumkin. Botni bloklagan foydalanuvchiga xabar yuborilmaydi.
+
+### 4.5. Moderator va admin
 
 - Navbatda tekshiruvdagi bizneslar va aksiyalar turadi. Rad etishda sabab majburiy. Sabab biznesga ko‘rsatiladi.
 - Admin foydalanuvchini bloklashi mumkin: sessiyalari yopiladi va kira olmaydi. Admin rol berishi, biznesni to‘xtatishi, kategoriyalarni boshqarishi, murojaatlarni o‘qishi va audit jurnalini ko‘rishi mumkin.
+- Moderator nomaqbul rasmni (logotip, muqova, aksiya rasmi) va haqoratli sharhni olib tashlaydi yoki yashiradi — sabab bilan.
+- Admin tariflarni (narx va limitlar), bepul davr uzunligini (1–3 oy) va to‘lov ko‘rsatmalarini boshqaradi, to‘lov so‘rovlarini tasdiqlaydi yoki biznesga qo‘lda bepul oy/tarif beradi.
 
 ---
 
@@ -155,7 +168,22 @@ Istalgan bosqichda: 10 daqiqa o‘tsa ▶ Muddati o‘tgan (EXPIRED); botda «Me
 | Rad etish sababi | Kamida 10 belgi |
 | Vaqt zonasi | Hamma vaqt Toshkent vaqtida ko‘rsatiladi (UTC+5), bazada UTC saqlanadi |
 
-**To‘lov:** mijoz biznesga joyida to‘laydi. BugunBor bu bosqichda pul qabul qilmaydi. Platforma bizneslar uchun hozircha bepul.
+**To‘lov:** mijoz biznesga joyida to‘laydi. BugunBor mijozdan pul olmaydi.
+
+### 5.1. Bizneslar uchun tariflar
+
+| | Start | Biznes | Premium |
+| --- | --- | --- | --- |
+| Oylik narx | 149 000 so‘m | 299 000 so‘m | 599 000 so‘m |
+| Filiallar | 1 | 3 | cheklanmagan |
+| Bir vaqtda faol aksiyalar | 3 | 10 | cheklanmagan |
+| Xodimlar | 2 | 5 | cheklanmagan |
+| «Top» (yuqorida ko‘rsatish) | — | 1 | 3 |
+
+- Biznes tasdiqlangan kuni **bepul davr** boshlanadi (standart 3 oy, admin 1–3 oy qilib o‘zgartiradi). Bepul davrda «Biznes» tarifi imkoniyatlari ishlaydi.
+- 3, 6 va 12 oylik to‘lovga mos ravishda 5%, 10% va 15% chegirma bor. Biznes tarifni «Tarif» sahifasida tanlaydi, ko‘rsatmaga ko‘ra to‘laydi, admin to‘lovni tasdiqlaydi.
+- Bepul davr yoki tarif tugasa, biznes aksiyalari saytda ko‘rinmaydi va yangi kod berilmaydi; ma’lumotlar saqlanadi. Tarif tanlangach, hammasi qayta ishlaydi.
+- Narx va limitlar admin panelda o‘zgartiriladi.
 
 ---
 
@@ -163,11 +191,11 @@ Istalgan bosqichda: 10 daqiqa o‘tsa ▶ Muddati o‘tgan (EXPIRED); botda «Me
 
 **Ommaviy:** `/` bosh sahifa · `/discover` aksiyalar (qidiruv, filtr, saralash) · `/categories` va `/categories/[slug]` · `/businesses/[slug]` biznes sahifasi · `/deals/[slug]` aksiya sahifasi · `/business` bizneslar uchun · `/how-it-works` · `/faq` · `/contact` · `/terms` · `/privacy` · `/login`
 
-**Mijoz:** `/account` profil · `/account/codes` kodlarim · `/account/saved` saqlanganlar
+**Mijoz:** `/account` profil (tejalgan summa, xabarnomalar) · `/account/codes` kodlarim va baholash · `/account/saved` saqlanganlar va obunalar
 
-**Biznes:** `/business/onboarding` · `/business/dashboard` · `/business/redeem` kodni tekshirish · `/business/deals` · `/business/deals/new` · `/business/deals/[id]` · `/business/branches` · `/business/team` · `/business/profile`
+**Biznes:** `/business/onboarding` · `/business/dashboard` · `/business/redeem` kodni tekshirish · `/business/deals` · `/business/deals/new` · `/business/deals/[id]` · `/business/branches` · `/business/team` · `/business/profile` (logotip, muqova) · `/business/billing` tarif
 
-**Admin:** `/admin` · `/admin/businesses` · `/admin/deals` · `/admin/users` · `/admin/categories` · `/admin/messages` · `/admin/audit` · `/admin/settings`
+**Admin:** `/admin` · `/admin/businesses` · `/admin/deals` · `/admin/reviews` sharhlar · `/admin/messages` · `/admin/billing` tariflar · `/admin/users` · `/admin/categories` · `/admin/audit` · `/admin/settings`
 
 Mobil pastki menyu: Asosiy · Qidiruv · Saqlangan · Kodlarim · Profil.
 
@@ -194,7 +222,7 @@ Sayt o‘zbek (lotin) va rus tillarida ishlaydi. Til tepadagi UZ/RU tugmasi bila
 
 ## 9. Keyingi bosqichlar
 
-1. **Android ilova (APK)** — saytning o‘zi PWA sifatida o‘raladi (Trusted Web Activity). Sayt bunga tayyorlanadi: manifest, ikonkalar, offline sahifa.
-2. **Rasmlar** — aksiya va biznes uchun rasm yuklash (R2 xotira ulanganda).
-3. **Bildirishnomalar** — Telegram bot orqali: kod tasdiqlandi, saqlangan aksiya tugayapti, yangi aksiya.
-4. **Onlayn to‘lov, bonuslar, tariflar** — biznes talabi bo‘lganda alohida qaror bilan.
+1. **Android ilova (APK)** — sayt PWA sifatida tayyor (manifest, ikonkalar, oflayn sahifa). Ilova Trusted Web Activity bo‘ladi: saytning o‘zi, lekin Play Market’dan o‘rnatiladi.
+2. **iOS ilova** — xuddi shu asosda.
+3. **Onlayn to‘lov (Payme, Click)** — tarif to‘lovi avtomatik tasdiqlanishi uchun.
+4. **Demo uchun haqiqiy fotosuratlar** — tarmoq ruxsati berilgach (Wikimedia/Canva) yoki Google Drive orqali.

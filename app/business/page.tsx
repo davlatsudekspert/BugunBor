@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { ArrowRight, BarChart3, Building2, Check, QrCode, Wallet } from 'lucide-react';
+import { ArrowRight, BarChart3, BellRing, Building2, Check, QrCode, Star, Wallet } from 'lucide-react';
 
 import { buttonVariants } from '@/components/ui/button';
 import { getDb } from '@/db/client';
@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t.nav.forBusiness, description: t.forBusiness.text, alternates: { canonical: '/business' } };
 }
 
-const featureIcons = [Wallet, Building2, QrCode, BarChart3];
+const featureIcons = [Wallet, BellRing, QrCode, Star, Building2, BarChart3];
 
 export default async function BusinessLandingPage() {
   const [{ t, locale }, user, db] = await Promise.all([getI18n(), getCurrentUser(), getDb()]);

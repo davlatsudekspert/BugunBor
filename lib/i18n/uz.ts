@@ -333,9 +333,11 @@ export const uz = {
     cta: 'Bepul boshlash',
     dashboard: 'Kabinetga o‘tish',
     features: [
-      { title: 'Bepul', text: 'Platforma hozircha bizneslar uchun bepul.' },
-      { title: 'Filiallar', text: 'Har bir filial uchun manzil va ish vaqti.' },
+      { title: 'Bepul boshlang', text: 'Tasdiqlangandan so‘ng bepul davr, keyin qulay tarif.' },
+      { title: 'Obunachilar', text: 'Mijozlar sizga obuna bo‘ladi va yangi aksiyangizni Telegram’da darhol oladi.' },
       { title: 'Kassir', text: 'Kodni telefon kamerasi bilan bir soniyada tekshiring.' },
+      { title: 'Baholar', text: 'Faqat haqiqiy tashrif buyurgan mijozlar baho qoldiradi.' },
+      { title: 'Filiallar', text: 'Har bir filial uchun manzil, ish vaqti va xodimlar.' },
       { title: 'Statistika', text: 'Ko‘rishlar, band qilishlar va ishlatilgan kodlar.' },
     ],
     stepsTitle: 'Qanday boshlanadi',
@@ -721,7 +723,7 @@ export const uz = {
   faq: {
     title: 'Savol-javoblar',
     items: [
-      { q: 'BugunBor pullikmi?', a: 'Yo‘q. Mijozlar uchun band qilish bepul, bizneslar uchun platforma hozircha bepul.' },
+      { q: 'BugunBor pullikmi?', a: 'Mijozlar uchun butunlay bepul. Bizneslar tasdiqlangandan so‘ng bepul davrdan foydalanadi, keyin Start, Biznes yoki Premium tarifini tanlaydi.' },
       { q: 'To‘lov qanday qilinadi?', a: 'To‘lov biznesning o‘zida qilinadi. Siz faqat kodni ko‘rsatasiz va chegirmali narxni to‘laysiz.' },
       { q: 'Nega Telegram orqali kiraman?', a: 'Bu tez va bepul: telefon raqamingiz Telegram tomonidan tasdiqlanadi, parol va SMS kerak emas.' },
       { q: 'Kod qancha vaqt amal qiladi?', a: 'Har aksiyada ko‘rsatilgan: 30 daqiqadan 4 soatgacha. Muddat kod olingan paytdan hisoblanadi.' },
