@@ -29,7 +29,9 @@ function jpeg(width: number, height: number) {
 
 function webp(width: number, height: number) {
   const bytes = new Uint8Array(64);
-  const text = (offset: number, value: string) => [...value].forEach((char, index) => { bytes[offset + index] = char.charCodeAt(0); });
+  const text = (offset: number, value: string) => {
+    for (let index = 0; index < value.length; index += 1) bytes[offset + index] = value.charCodeAt(index);
+  };
   text(0, 'RIFF');
   text(8, 'WEBP');
   text(12, 'VP8X');
