@@ -8,6 +8,7 @@ import type { BusinessRole } from '@/modules/auth/authorization';
 import { getUserByPhone } from '@/modules/auth/users';
 import { assertWithinLimit } from '@/modules/billing/service';
 import { DomainError } from '@/modules/errors';
+import { assertOwnMedia } from '@/modules/media/service';
 import type { BranchInput, BusinessProfileInput, OnboardingInput } from './schema';
 
 const MAX_OWNED_BUSINESSES = 5;
@@ -61,6 +62,8 @@ export async function updateBusinessProfile(db: D1Database, input: { businessId:
   const category = await db.prepare(`SELECT id FROM categories WHERE id = ?1`).bind(input.data.categoryId).first();
   if (!category) throw new DomainError('VALIDATION');
   const { data } = input;
+  await assertOwnMedia(db, input.businessId, data.logoId);
+  await assertOwnMedia(db, input.businessId, data.coverId);
   const resubmit = input.resubmit && current.status === 'REJECTED';
   const nowDb = toDbTime(now);
   await db.batch([
@@ -68,10 +71,13 @@ export async function updateBusinessProfile(db: D1Database, input: { businessId:
         website = ?9, search_text = ?10, updated_at = ?11,
         verification_status = CASE WHEN ?12 = 1 THEN 'PENDING' ELSE verification_status END,
         rejection_reason = CASE WHEN ?12 = 1 THEN NULL ELSE rejection_reason END,
-        submitted_at = CASE WHEN ?12 = 1 THEN ?11 ELSE submitted_at END
+        submitted_at = CASE WHEN ?12 = 1 THEN ?11 ELSE submitted_at END,
+        logo_id = CASE WHEN ?13 = 1 THEN ?14 ELSE logo_id END,
+        cover_id = CASE WHEN ?15 = 1 THEN ?16 ELSE cover_id END
       WHERE id = ?1`)
       .bind(input.businessId, data.name, data.description, data.categoryId, data.city, data.phone, data.telegram ?? null, data.instagram ?? null,
-        data.website ?? null, buildSearchText(data.name, data.description), nowDb, resubmit ? 1 : 0),
+        data.website ?? null, buildSearchText(data.name, data.description), nowDb, resubmit ? 1 : 0,
+        data.logoId === undefined ? 0 : 1, data.logoId ?? null, data.coverId === undefined ? 0 : 1, data.coverId ?? null),
     auditStatement(db, { actorUserId: input.userId, businessId: input.businessId, action: resubmit ? 'business.resubmitted' : 'business.updated', targetType: 'Business', targetId: input.businessId, before: { name: current.name, status: current.status }, after: { name: data.name } }, nowDb),
   ]);
 }

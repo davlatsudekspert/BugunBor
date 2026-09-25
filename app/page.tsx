@@ -81,7 +81,7 @@ export default async function Home() {
               {featured ? (
                 <a href={`/deals/${featured.slug}`} className="group block overflow-hidden rounded-[24px] bg-[#f7efe5]">
                   <div className="relative p-5">
-                    <DealVisual visual={featured.visual} categorySlug={featured.categorySlug} className="absolute right-0 top-0 h-32 w-36 rounded-bl-[70px]" emojiClassName="-bottom-4 -right-2 text-7xl" />
+                    <DealVisual visual={featured.visual} categorySlug={featured.categorySlug} photo={featured.photo} priority className="absolute right-0 top-0 h-32 w-36 rounded-bl-[70px]" emojiClassName="-bottom-4 -right-2 text-7xl" />
                     <div className="relative max-w-[62%]">
                       <Badge className="bg-navy text-white">-{featured.discountPercent}%</Badge>
                       <h2 className="mt-8 text-2xl font-black leading-tight tracking-[-.04em] text-navy">{featured.title}</h2>

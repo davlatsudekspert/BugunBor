@@ -318,4 +318,31 @@ const billing: Migration = {
   },
 };
 
-export const migrations: readonly Migration[] = [baseline, systemV1, billing];
+/** Original photos uploaded by businesses: deal covers, logos and profile covers. */
+const media: Migration = {
+  id: '0004_media',
+  async build({ db, columns }) {
+    const statements: D1PreparedStatement[] = [];
+    const addColumns = async (table: string, definitions: Record<string, string>) => {
+      const existing = await columns(table);
+      for (const [name, definition] of Object.entries(definitions)) {
+        if (!existing.has(name)) statements.push(db.prepare(`ALTER TABLE ${table} ADD COLUMN ${name} ${definition}`));
+      }
+    };
+    await addColumns('deals', { photo_id: 'TEXT' });
+    await addColumns('businesses', { logo_id: 'TEXT', cover_id: 'TEXT' });
+    statements.push(...sql(db, [
+      // Images are stored base64-encoded: D1 returns TEXT far more cheaply than BLOBs.
+      `CREATE TABLE IF NOT EXISTS media (
+        id TEXT PRIMARY KEY, business_id TEXT, kind TEXT NOT NULL, mime TEXT NOT NULL, data_base64 TEXT NOT NULL,
+        size INTEGER NOT NULL, width INTEGER, height INTEGER, sha256 TEXT NOT NULL, uploaded_by TEXT,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(business_id) REFERENCES businesses(id)
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_media_business ON media(business_id, created_at)`,
+    ]));
+    return statements;
+  },
+};
+
+export const migrations: readonly Migration[] = [baseline, systemV1, billing, media];

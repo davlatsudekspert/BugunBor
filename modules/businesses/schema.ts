@@ -5,6 +5,8 @@ import { isTime } from '@/lib/hours';
 import { tryNormalizeUzbekPhone } from '@/modules/auth/phone';
 
 // Shared by business forms (client) and the API (server). Messages are keys of `t.validation`.
+// Forms send the parsed (transformed) values, so every schema must also accept
+// its own output: optional fields take both '' and null.
 
 const text = (min: number, max: number) => z.string().trim().min(min, 'tooShort').max(max, 'tooLong');
 
@@ -24,7 +26,8 @@ const optionalHandle = (pattern: RegExp) =>
   z
     .string()
     .trim()
-    .transform((value) => value.replace(/^https?:\/\/(www\.)?(t\.me|instagram\.com)\//i, '').replace(/^@/, '').replace(/\/+$/, ''))
+    .nullable()
+    .transform((value) => (value ?? '').replace(/^https?:\/\/(www\.)?(t\.me|instagram\.com)\//i, '').replace(/^@/, '').replace(/\/+$/, ''))
     .refine((value) => value === '' || pattern.test(value), 'invalid')
     .transform((value) => value || null);
 
@@ -32,6 +35,7 @@ const optionalWebsite = z
   .string()
   .trim()
   .max(200, 'tooLong')
+  .nullable()
   .refine((value) => {
     if (!value) return true;
     try {
@@ -54,6 +58,9 @@ export const businessProfileSchema = z.object({
   telegram: optionalHandle(/^[A-Za-z0-9_]{4,32}$/).optional(),
   instagram: optionalHandle(/^[A-Za-z0-9._]{1,30}$/).optional(),
   website: optionalWebsite.optional(),
+  /** Uploaded images; omitted keeps the current ones, null removes them. */
+  logoId: z.string().regex(/^[0-9a-f-]{36}$/, 'invalid').nullable().optional(),
+  coverId: z.string().regex(/^[0-9a-f-]{36}$/, 'invalid').nullable().optional(),
 });
 
 export const onboardingSchema = businessProfileSchema.extend({
@@ -71,6 +78,7 @@ export const branchSchema = z.object({
   phone: z
     .string()
     .trim()
+    .nullable()
     .transform((value, context) => {
       if (!value) return null;
       const phone = tryNormalizeUzbekPhone(value);

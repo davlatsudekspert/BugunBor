@@ -16,9 +16,10 @@ export default async function BusinessProfilePage() {
   const { t, locale, db, membership } = ws;
   const [categories, business] = await Promise.all([
     listCategories(db, { includeInactive: true }),
-    db.prepare(`SELECT name, description, category_id AS categoryId, city, phone, telegram, instagram, website FROM businesses WHERE id = ?1`)
+    db.prepare(`SELECT name, description, category_id AS categoryId, city, phone, telegram, instagram, website, logo_id AS logoId, cover_id AS coverId
+        FROM businesses WHERE id = ?1`)
       .bind(membership.businessId)
-      .first<{ name: string; description: string; categoryId: string; city: string; phone: string; telegram: string | null; instagram: string | null; website: string | null }>(),
+      .first<{ name: string; description: string; categoryId: string; city: string; phone: string; telegram: string | null; instagram: string | null; website: string | null; logoId: string | null; coverId: string | null }>(),
   ]);
   return (
     <WorkspaceShell ws={ws} active="profile">

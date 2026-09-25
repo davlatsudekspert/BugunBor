@@ -62,6 +62,12 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
                     {business.isDemo ? <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">{t.common.demo}</span> : null}
                   </div>
                 </div>
+                {business.logoId || business.coverId ? (
+                  <div className="mt-3 flex items-center gap-2">
+                    {business.logoId ? <img src={`/media/${business.logoId}`} alt="" className="size-14 rounded-xl object-cover ring-1 ring-slate-200" /> : null}
+                    {business.coverId ? <img src={`/media/${business.coverId}`} alt="" className="h-14 w-24 rounded-xl object-cover ring-1 ring-slate-200" /> : null}
+                  </div>
+                ) : null}
                 <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{business.description}</p>
                 <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
                   <div><dt className="text-slate-400">{a.businesses.owner}</dt><dd className="font-semibold text-navy">{business.ownerName ?? '—'} {business.ownerPhone ? `· ${formatPhone(business.ownerPhone)}` : ''}</dd></div>
@@ -87,6 +93,9 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
 
                 <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
                   {business.verificationStatus === 'VERIFIED' ? <a href={`/businesses/${business.slug}`} className="inline-flex h-9 items-center rounded-lg border border-slate-200 px-3 text-xs font-bold text-navy">{t.biz.viewPublic}</a> : null}
+                  {business.logoId || business.coverId ? (
+                    <ActionButton payload={{ type: 'images.remove', target: 'BUSINESS', id: business.id }} label={a.removeImages} reasonPrompt={a.removeImagesReason} tone="danger" networkError={t.common.networkError} />
+                  ) : null}
                   {isAdmin ? (
                     <>
                       {[1, 2, 3].map((months) => (

@@ -2,12 +2,13 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { AtSign, BadgeCheck, CalendarClock, Globe, MapPin, Navigation, Phone, Send } from 'lucide-react';
 
+import { BusinessAvatar } from '@/components/deals/business-avatar';
 import { CategoryIcon, categoryColor } from '@/components/deals/category-icon';
 import { DealCard } from '@/components/deals/deal-card';
 import { getDb } from '@/db/client';
 import { cityName } from '@/lib/cities';
 import { getConfig } from '@/lib/env';
-import { formatPhone, formatWorkingHours, initials } from '@/lib/format';
+import { formatPhone, formatWorkingHours } from '@/lib/format';
 import { getI18n } from '@/lib/i18n/server';
 import { directionsUrl, instagramUrl, telegramUrl } from '@/lib/maps';
 import { cn } from '@/lib/utils';
@@ -47,9 +48,15 @@ export default async function BusinessPage({ params }: { params: Promise<{ slug:
   return (
     <main className="bg-cream pb-16">
       <section className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+        {business.cover ? (
+          <div className="relative h-44 overflow-hidden bg-slate-200 sm:h-64">
+            <img src={business.cover} alt="" className="absolute inset-0 size-full object-cover" />
+            <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+          </div>
+        ) : null}
+        <div className={cn('mx-auto max-w-6xl px-4 py-10 sm:px-6', business.cover && 'pt-0')}>
           <div className="flex flex-wrap items-start gap-5">
-            <span className="grid size-20 shrink-0 place-items-center rounded-3xl bg-navy text-2xl font-black text-white shadow-[0_12px_30px_rgba(21,42,59,.25)]">{initials(business.name)}</span>
+            <BusinessAvatar name={business.name} logo={business.logo} className={cn('size-20 rounded-3xl bg-navy text-2xl font-black text-white shadow-[0_12px_30px_rgba(21,42,59,.25)]', business.cover && '-mt-10 ring-4 ring-white')} />
             <div className="min-w-0 flex-1">
               <p className="flex items-center gap-1.5 text-sm font-bold text-emerald-700"><BadgeCheck className="size-4 fill-emerald-500 text-white" aria-hidden /> {t.business.verified}</p>
               <h1 className="mt-1 text-4xl font-black tracking-[-.05em] text-navy">{business.name}</h1>

@@ -96,3 +96,18 @@ export async function archiveDealByModerator(db: D1Database, input: { actorId: s
     auditStatement(db, { actorUserId: input.actorId, businessId: deal.businessId, action: 'deal.archived_by_moderator', targetType: 'Deal', targetId: input.dealId, reason: input.reason.trim(), before: { status: deal.status }, after: { status: 'ARCHIVED' } }, nowDb),
   ]);
 }
+
+/** Moderators can take down an inappropriate logo, cover or deal photo without touching anything else. */
+export async function removeImagesByModerator(db: D1Database, input: { actorId: string; target: 'BUSINESS' | 'DEAL'; id: string; reason: string }, now = new Date()) {
+  if (input.reason.trim().length < MIN_REASON_LENGTH) throw new DomainError('VALIDATION');
+  const nowDb = toDbTime(now);
+  const update =
+    input.target === 'BUSINESS'
+      ? db.prepare(`UPDATE businesses SET logo_id = NULL, cover_id = NULL, updated_at = ?2 WHERE id = ?1 AND deleted_at IS NULL`).bind(input.id, nowDb)
+      : db.prepare(`UPDATE deals SET photo_id = NULL, updated_at = ?2 WHERE id = ?1 AND deleted_at IS NULL`).bind(input.id, nowDb);
+  const results = await db.batch([
+    update,
+    moderationStatement(db, { actorId: input.actorId, targetType: input.target === 'BUSINESS' ? 'Business' : 'Deal', targetId: input.id, action: 'REMOVE_IMAGES', reason: input.reason.trim(), before: {}, after: {} }, nowDb),
+  ]);
+  if ((results[0].meta.changes ?? 0) !== 1) throw new DomainError('NOT_FOUND');
+}

@@ -2,11 +2,12 @@ import { ArrowRight, BadgeCheck, Clock3, MapPin } from 'lucide-react';
 
 import { buttonVariants } from '@/components/ui/button';
 import { cityName } from '@/lib/cities';
-import { formatMoment, formatNumber, formatSum, initials } from '@/lib/format';
+import { formatMoment, formatNumber, formatSum } from '@/lib/format';
 import { fmt, type Dictionary, type Locale } from '@/lib/i18n';
 import { parseDbTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import type { DealCard as DealCardData } from '@/modules/catalog/queries';
+import { BusinessAvatar } from './business-avatar';
 import { Countdown } from './countdown';
 import { DealVisual } from './deal-visual';
 import { FavoriteButton } from './favorite-button';
@@ -18,16 +19,18 @@ type Props = {
   favorite: boolean;
   loggedIn: boolean;
   showCity?: boolean;
+  /** First cards on a page load their photo eagerly. */
+  priority?: boolean;
 };
 
-export function DealCard({ deal, t, locale, favorite, loggedIn, showCity = false }: Props) {
+export function DealCard({ deal, t, locale, favorite, loggedIn, showCity = false, priority = false }: Props) {
   const scheduled = deal.effective === 'SCHEDULED';
   const location = [deal.branch.name, showCity ? cityName(deal.branch.city, locale) : null, deal.distanceKm !== null ? fmt(t.discover.distance, { km: deal.distanceKm.toFixed(1).replace('.', ',') }) : null]
     .filter(Boolean)
     .join(' · ');
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-[0_10px_40px_rgba(25,45,60,.08)] ring-1 ring-slate-200/70 transition hover:-translate-y-1 hover:shadow-[0_18px_55px_rgba(25,45,60,.14)]">
-      <DealVisual visual={deal.visual} categorySlug={deal.categorySlug} className="h-44 p-4">
+      <DealVisual visual={deal.visual} categorySlug={deal.categorySlug} photo={deal.photo} priority={priority} className="h-44 p-4">
         <span className="relative inline-flex h-8 items-center rounded-full bg-white px-3 text-base font-black text-navy shadow-sm">-{deal.discountPercent}%</span>
         <div className="absolute right-4 top-4 z-10">
           <FavoriteButton dealId={deal.id} initial={favorite} loggedIn={loggedIn} labels={{ save: fmt(t.deal.saveAria, { title: deal.title }), unsave: fmt(t.deal.unsaveAria, { title: deal.title }) }} />
@@ -44,7 +47,7 @@ export function DealCard({ deal, t, locale, favorite, loggedIn, showCity = false
 
       <div className="flex flex-1 flex-col p-5">
         <p className="flex items-center gap-2.5 text-sm font-bold text-slate-700">
-          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-slate-100 text-[11px] text-navy">{initials(deal.business.name)}</span>
+          <BusinessAvatar name={deal.business.name} logo={deal.business.logo} className="size-8 rounded-full bg-slate-100 text-[11px] text-navy" />
           <span className="truncate">{deal.business.name}</span>
           <BadgeCheck className="size-4 shrink-0 fill-emerald-500 text-white" aria-label={t.common.verified} />
         </p>

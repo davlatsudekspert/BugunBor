@@ -1,3 +1,4 @@
+import { dealPhotoUrl } from '@/lib/photos';
 import { searchPattern } from '@/lib/search';
 import { startOfTashkentDay, toDbTime } from '@/lib/time';
 import { auditStatement } from '@/modules/audit';
@@ -28,6 +29,7 @@ export type AdminBusiness = {
   verificationStatus: string; rejectionReason: string | null; suspendedAt: string | null; suspendedReason: string | null;
   createdAt: string; trialEndsAt: string | null; paidUntil: string | null; planCode: string | null; isDemo: number;
   ownerName: string | null; ownerPhone: string | null; branchCount: number; dealCount: number;
+  logoId: string | null; coverId: string | null;
 };
 
 export async function listAdminBusinesses(db: D1Database, filter: { status?: 'PENDING' | null; query?: string | null }) {
@@ -35,6 +37,7 @@ export async function listAdminBusinesses(db: D1Database, filter: { status?: 'PE
     .prepare(`SELECT b.id, b.slug, b.name, b.description, b.city, b.phone, c.name_uz AS categoryName, b.verification_status AS verificationStatus,
         b.rejection_reason AS rejectionReason, b.suspended_at AS suspendedAt, b.suspended_reason AS suspendedReason, b.created_at AS createdAt,
         b.trial_ends_at AS trialEndsAt, b.paid_until AS paidUntil, b.plan_code AS planCode, b.is_demo AS isDemo,
+        b.logo_id AS logoId, b.cover_id AS coverId,
         (SELECT u.display_name FROM business_members m JOIN users u ON u.id = m.user_id WHERE m.business_id = b.id AND m.role = 'OWNER' AND m.revoked_at IS NULL LIMIT 1) AS ownerName,
         (SELECT u.phone FROM business_members m JOIN users u ON u.id = m.user_id WHERE m.business_id = b.id AND m.role = 'OWNER' AND m.revoked_at IS NULL LIMIT 1) AS ownerPhone,
         (SELECT COUNT(*) FROM branches br WHERE br.business_id = b.id AND br.deleted_at IS NULL) AS branchCount,
@@ -52,6 +55,9 @@ export type AdminDeal = {
   originalPrice: number | null; price: number; discountPercent: number; total: number | null; remaining: number | null;
   perCustomerLimit: number; claimTtlMinutes: number; visual: string | null; categorySlug: string; categoryName: string;
   businessId: string; businessName: string; businessStatus: string; submittedAt: string | null; branchNames: string | null; isDemo: number;
+  photo: string | null;
+  /** The business uploaded this photo (not a demo stock photo). */
+  ownPhoto: boolean;
 };
 
 export async function listAdminDeals(db: D1Database, filter: 'pending' | 'live' | 'all', now = new Date()) {
@@ -68,13 +74,14 @@ export async function listAdminDeals(db: D1Database, filter: 'pending' | 'live' 
         d.total_quantity AS total, d.remaining_quantity AS remaining, d.per_customer_limit AS perCustomerLimit,
         d.claim_ttl_minutes AS claimTtlMinutes, d.visual, c.slug AS categorySlug, c.name_uz AS categoryName,
         b.id AS businessId, b.name AS businessName, b.verification_status AS businessStatus, d.submitted_at AS submittedAt, d.is_demo AS isDemo,
+        d.photo_id AS photoId,
         (SELECT GROUP_CONCAT(br.name, ', ') FROM deal_branches db JOIN branches br ON br.id = db.branch_id WHERE db.deal_id = d.id AND br.deleted_at IS NULL) AS branchNames
       FROM deals d JOIN businesses b ON b.id = d.business_id JOIN categories c ON c.id = d.category_id
       WHERE d.deleted_at IS NULL AND ${where} AND (?1 IS NOT NULL)
       ORDER BY COALESCE(d.submitted_at, d.created_at) ${filter === 'pending' ? 'ASC' : 'DESC'} LIMIT 200`)
     .bind(nowDb)
-    .all<AdminDeal>();
-  return rows.results;
+    .all<Omit<AdminDeal, 'photo' | 'ownPhoto'> & { photoId: string | null }>();
+  return rows.results.map(({ photoId, ...row }) => ({ ...row, photo: dealPhotoUrl({ photoId, isDemo: row.isDemo, visual: row.visual }), ownPhoto: Boolean(photoId) }));
 }
 
 export type AdminUser = { id: string; displayName: string; phone: string | null; role: PlatformRole; status: UserStatus; createdAt: string; lastLoginAt: string | null; businesses: number };

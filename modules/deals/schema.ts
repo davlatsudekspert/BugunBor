@@ -25,6 +25,8 @@ export const dealInputSchema = z
     perCustomerLimit: z.coerce.number().int('invalid').min(1, 'invalid').max(DEAL_RULES.maxPerCustomer, 'invalid'),
     claimTtlMinutes: z.coerce.number().refine((value) => (DEAL_RULES.claimTtlOptions as readonly number[]).includes(value), 'invalid'),
     branchIds: z.array(z.string().min(1).max(100)).min(1, 'branchesRequired').max(50),
+    /** Uploaded cover photo; omitted keeps the current one, null removes it. */
+    photoId: z.string().regex(/^[0-9a-f-]{36}$/, 'invalid').nullable().optional(),
   })
   .superRefine((value, context) => {
     if (value.price >= value.originalPrice) {

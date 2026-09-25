@@ -1,4 +1,5 @@
 import { distanceKm } from '@/lib/cities';
+import { dealPhotoUrl, mediaUrl } from '@/lib/photos';
 import { searchPattern } from '@/lib/search';
 import { toDbTime } from '@/lib/time';
 import { PUBLIC_BUSINESS_SQL, effectiveDealStatus, liveDealSql, subscriptionActiveSql, type EffectiveDealStatus } from '@/modules/deals/status';
@@ -27,11 +28,13 @@ export type DealCard = {
   remaining: number | null;
   total: number | null;
   visual: string | null;
+  /** Cover photo URL, or null to draw the visual. */
+  photo: string | null;
   categorySlug: string;
   claimTtlMinutes: number;
   publishedAt: string;
   isSponsored: boolean;
-  business: { id: string; slug: string; name: string };
+  business: { id: string; slug: string; name: string; logo: string | null };
   branch: BranchSummary;
   branchCount: number;
   distanceKm: number | null;
@@ -42,7 +45,7 @@ type DealBranchRow = {
   id: string; slug: string; title: string; originalPrice: number | null; price: number; discountPercent: number;
   startsAt: string; endsAt: string; remaining: number | null; total: number | null; visual: string | null;
   publishedAt: string; isSponsored: number; claimTtlMinutes: number; status: string; categorySlug: string;
-  businessId: string; businessSlug: string; businessName: string;
+  businessId: string; businessSlug: string; businessName: string; logoId: string | null; photoId: string | null; isDemo: number;
   branchId: string; branchName: string; address: string; city: string; lat: number; lon: number;
 };
 
@@ -51,6 +54,7 @@ const DEAL_BRANCH_COLUMNS = `d.id, d.slug, d.title, d.original_price_uzs AS orig
   d.remaining_quantity AS remaining, d.total_quantity AS total, d.visual, d.status,
   COALESCE(d.approved_at, d.created_at) AS publishedAt, d.is_sponsored AS isSponsored, d.claim_ttl_minutes AS claimTtlMinutes,
   c.slug AS categorySlug, b.id AS businessId, b.slug AS businessSlug, b.name AS businessName,
+  b.logo_id AS logoId, d.photo_id AS photoId, d.is_demo AS isDemo,
   br.id AS branchId, br.name AS branchName, br.address, br.city, br.latitude_e6 AS lat, br.longitude_e6 AS lon`;
 
 type Point = { latitude: number; longitude: number };
@@ -83,11 +87,12 @@ function groupDeals(rows: DealBranchRow[], near: Point | null, now: Date): DealC
       remaining: row.remaining,
       total: row.total,
       visual: row.visual,
+      photo: dealPhotoUrl(row),
       categorySlug: row.categorySlug,
       claimTtlMinutes: row.claimTtlMinutes,
       publishedAt: row.publishedAt,
       isSponsored: Boolean(row.isSponsored),
-      business: { id: row.businessId, slug: row.businessSlug, name: row.businessName },
+      business: { id: row.businessId, slug: row.businessSlug, name: row.businessName, logo: mediaUrl(row.logoId) },
       branch,
       branchCount: 1,
       distanceKm: distance,
@@ -166,12 +171,13 @@ export type DealDetail = {
   id: string; slug: string; title: string; description: string; terms: string;
   originalPrice: number | null; price: number; discountPercent: number;
   startsAt: string; endsAt: string; remaining: number | null; total: number | null;
-  perCustomerLimit: number; claimTtlMinutes: number; visual: string | null; status: string;
+  perCustomerLimit: number; claimTtlMinutes: number; visual: string | null; photo: string | null; status: string;
   isDemo: boolean; viewCount: number; rejectionReason: string | null;
   category: { slug: string; nameUz: string; nameRu: string | null };
   business: {
     id: string; slug: string; name: string; description: string; phone: string | null; telegram: string | null;
     instagram: string | null; website: string | null; verificationStatus: string; suspendedAt: string | null; isDemo: boolean;
+    logo: string | null;
     /** Free trial or paid period is running, so the business's deals can be claimed. */
     onAir: boolean;
   };
@@ -181,8 +187,8 @@ export type DealDetail = {
   isPublic: boolean;
 };
 
-type DealDetailRow = Omit<DealDetail, 'category' | 'business' | 'branches' | 'effective' | 'isPublic' | 'isDemo'> & {
-  isDemo: number; categorySlug: string; categoryNameUz: string; categoryNameRu: string | null;
+type DealDetailRow = Omit<DealDetail, 'category' | 'business' | 'branches' | 'effective' | 'isPublic' | 'isDemo' | 'photo'> & {
+  isDemo: number; photoId: string | null; logoId: string | null; categorySlug: string; categoryNameUz: string; categoryNameRu: string | null;
   businessId: string; businessSlug: string; businessName: string; businessDescription: string; businessPhone: string | null;
   telegram: string | null; instagram: string | null; website: string | null; verificationStatus: string;
   suspendedAt: string | null; businessDeletedAt: string | null; businessIsDemo: number; onAir: number;
@@ -207,7 +213,7 @@ export async function getDealBySlug(db: D1Database, slug: string, options: { dem
         d.discounted_price_uzs AS price, d.discount_percent AS discountPercent, d.starts_at AS startsAt, d.ends_at AS endsAt,
         d.remaining_quantity AS remaining, d.total_quantity AS total, d.per_customer_limit AS perCustomerLimit,
         d.claim_ttl_minutes AS claimTtlMinutes, d.visual, d.status, d.is_demo AS isDemo, d.view_count AS viewCount,
-        d.rejection_reason AS rejectionReason,
+        d.rejection_reason AS rejectionReason, d.photo_id AS photoId, b.logo_id AS logoId,
         c.slug AS categorySlug, c.name_uz AS categoryNameUz, c.name_ru AS categoryNameRu,
         b.id AS businessId, b.slug AS businessSlug, b.name AS businessName, b.description AS businessDescription,
         b.phone AS businessPhone, b.telegram, b.instagram, b.website, b.verification_status AS verificationStatus,
@@ -236,6 +242,7 @@ export async function getDealBySlug(db: D1Database, slug: string, options: { dem
     perCustomerLimit: row.perCustomerLimit,
     claimTtlMinutes: row.claimTtlMinutes,
     visual: row.visual,
+    photo: dealPhotoUrl(row),
     status: row.status,
     isDemo: Boolean(row.isDemo),
     viewCount: row.viewCount,
@@ -253,6 +260,7 @@ export async function getDealBySlug(db: D1Database, slug: string, options: { dem
       verificationStatus: row.verificationStatus,
       suspendedAt: row.suspendedAt,
       isDemo: Boolean(row.businessIsDemo),
+      logo: mediaUrl(row.logoId),
       onAir: Boolean(row.onAir),
     },
     branches: await dealBranches(db, row.id),
@@ -264,6 +272,7 @@ export async function getDealBySlug(db: D1Database, slug: string, options: { dem
 export type PublicBusiness = {
   id: string; slug: string; name: string; description: string; city: string; phone: string | null;
   telegram: string | null; instagram: string | null; website: string | null; categorySlug: string | null;
+  logo: string | null; cover: string | null;
   branches: Array<BranchSummary & { phone: string | null; hoursJson: string }>;
   deals: DealCard[];
   upcoming: DealCard[];
@@ -272,11 +281,12 @@ export type PublicBusiness = {
 export async function getPublicBusiness(db: D1Database, slug: string, options: { demo: boolean; now?: Date }): Promise<PublicBusiness | null> {
   const now = options.now ?? new Date();
   const business = await db
-    .prepare(`SELECT b.id, b.slug, b.name, b.description, b.city, b.phone, b.telegram, b.instagram, b.website, c.slug AS categorySlug
+    .prepare(`SELECT b.id, b.slug, b.name, b.description, b.city, b.phone, b.telegram, b.instagram, b.website, c.slug AS categorySlug,
+        b.logo_id AS logoId, b.cover_id AS coverId
       FROM businesses b LEFT JOIN categories c ON c.id = b.category_id
       WHERE b.slug = ?1 AND ${PUBLIC_BUSINESS_SQL} AND (?2 = 1 OR b.is_demo = 0)`)
     .bind(slug, options.demo ? 1 : 0)
-    .first<Omit<PublicBusiness, 'branches' | 'deals' | 'upcoming'>>();
+    .first<Omit<PublicBusiness, 'branches' | 'deals' | 'upcoming' | 'logo' | 'cover'> & { logoId: string | null; coverId: string | null }>();
   if (!business) return null;
   const [branches, dealRows] = await Promise.all([
     db.prepare(`SELECT id, name, address, city, latitude_e6 AS lat, longitude_e6 AS lon, phone, working_hours_json AS hoursJson
@@ -292,8 +302,11 @@ export async function getPublicBusiness(db: D1Database, slug: string, options: {
       .all<DealBranchRow>(),
   ]);
   const cards = sortDeals(groupDeals(dealRows.results, null, now), 'ending');
+  const { logoId, coverId, ...rest } = business;
   return {
-    ...business,
+    ...rest,
+    logo: mediaUrl(logoId),
+    cover: mediaUrl(coverId),
     branches: branches.results.map(({ lat, lon, ...branch }) => ({ ...branch, latitude: lat / 1e6, longitude: lon / 1e6 })),
     deals: cards.filter((deal) => deal.effective === 'LIVE'),
     upcoming: cards.filter((deal) => deal.effective === 'SCHEDULED'),

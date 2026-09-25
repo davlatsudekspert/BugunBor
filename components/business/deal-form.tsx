@@ -12,13 +12,14 @@ import { cn } from '@/lib/utils';
 import { dealInputSchema } from '@/modules/deals/schema';
 import { DEAL_RULES, discountPercent } from '@/modules/deals/status';
 import { Field, FormMessage, fieldMessages, inputClass, textareaClass } from './form-controls';
+import { PhotoPicker } from './photo-picker';
 
 type Option = { id: string; name: string; slug?: string };
 
 export type DealFormValues = {
   title: string; description: string; terms: string; categoryId: string; visual: string;
   originalPrice: string; price: string; startsAt: string; endsAt: string; quantity: string; unlimited: boolean;
-  perCustomerLimit: string; claimTtlMinutes: string; branchIds: string[];
+  perCustomerLimit: string; claimTtlMinutes: string; branchIds: string[]; photoId: string | null;
 };
 
 type Props = {
@@ -62,6 +63,7 @@ export function DealForm({ businessId, businessName, dealId, categories, branche
       perCustomerLimit: values.perCustomerLimit,
       claimTtlMinutes: values.claimTtlMinutes,
       branchIds: values.branchIds,
+      photoId: values.photoId,
     };
     const parsed = dealInputSchema.safeParse(payload);
     if (!parsed.success) {
@@ -96,6 +98,16 @@ export function DealForm({ businessId, businessName, dealId, categories, branche
         <Field label={f.terms} error={errors.terms}>
           <textarea value={values.terms} onChange={(event) => set('terms', event.target.value)} rows={2} maxLength={600} placeholder={f.termsPlaceholder} aria-invalid={Boolean(errors.terms)} className={textareaClass} />
         </Field>
+
+        <PhotoPicker
+          businessId={businessId}
+          kind="DEAL"
+          value={values.photoId}
+          onChange={(photoId) => set('photoId', photoId)}
+          label={t.biz.photo.dealPhoto}
+          hint={t.biz.photo.dealHint}
+          labels={{ ...t.biz.photo, networkError: t.common.networkError }}
+        />
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label={f.category} error={errors.categoryId}>
@@ -183,7 +195,7 @@ export function DealForm({ businessId, businessName, dealId, categories, branche
       <aside className="lg:sticky lg:top-24 lg:self-start">
         <p className="mb-3 text-xs font-black uppercase tracking-[.14em] text-slate-500">{f.preview}</p>
         <article className="overflow-hidden rounded-2xl bg-white shadow-[0_10px_40px_rgba(25,45,60,.08)] ring-1 ring-slate-200/70">
-          <DealVisual visual={visual.key} categorySlug={category?.slug ?? ''} className="h-44 p-4">
+          <DealVisual visual={visual.key} categorySlug={category?.slug ?? ''} photo={values.photoId ? `/media/${values.photoId}` : null} className="h-44 p-4">
             <span className="relative inline-flex h-8 items-center rounded-full bg-white px-3 text-base font-black text-navy shadow-sm">-{percent}%</span>
             <span className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full bg-navy/90 px-3 py-2 text-xs font-bold text-white"><Clock3 className="size-3.5 text-orange-300" aria-hidden /> 04:00:00</span>
           </DealVisual>

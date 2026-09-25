@@ -8,7 +8,7 @@ import { apiModerator } from '@/modules/auth/current';
 import { cancelBillingRequest, confirmBillingRequest, grantPlan, grantTrial } from '@/modules/billing/service';
 import { BILLING_PERIODS, TRIAL_MONTH_OPTIONS } from '@/modules/billing/pricing';
 import { DomainError } from '@/modules/errors';
-import { archiveDealByModerator, decideBusiness, decideDeal, setBusinessSuspended } from '@/modules/moderation/service';
+import { archiveDealByModerator, decideBusiness, decideDeal, removeImagesByModerator, setBusinessSuspended } from '@/modules/moderation/service';
 import { createTelegramApi } from '@/modules/telegram/api';
 
 const id = z.string().min(1).max(100);
@@ -22,6 +22,7 @@ const actionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('deal.archive'), dealId: id, reason }),
   z.object({ type: z.literal('business.decide'), businessId: id, decision, reason }),
   z.object({ type: z.literal('message.status'), messageId: id, status: z.enum(['NEW', 'READ', 'ARCHIVED']) }),
+  z.object({ type: z.literal('images.remove'), target: z.enum(['BUSINESS', 'DEAL']), id, reason }),
   // Admin only below.
   z.object({ type: z.literal('business.suspend'), businessId: id, suspended: z.boolean(), reason }),
   z.object({ type: z.literal('business.trial'), businessId: id, months: z.number().int().refine((value) => (TRIAL_MONTH_OPTIONS as readonly number[]).includes(value)) }),
@@ -50,7 +51,7 @@ const actionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('telegram.webhook') }),
 ]);
 
-const moderatorActions = new Set(['deal.decide', 'deal.archive', 'business.decide', 'message.status']);
+const moderatorActions = new Set(['deal.decide', 'deal.archive', 'business.decide', 'message.status', 'images.remove']);
 
 export const POST = route(async (request: Request) => {
   assertSameOrigin(request);
@@ -70,6 +71,9 @@ export const POST = route(async (request: Request) => {
       return json({ data: await decideBusiness(db, { actorId, businessId: action.businessId, decision: action.decision, reason: action.reason }) });
     case 'message.status':
       await setMessageStatus(db, { messageId: action.messageId, status: action.status });
+      return json({ data: { ok: true } });
+    case 'images.remove':
+      await removeImagesByModerator(db, { actorId, target: action.target, id: action.id, reason: action.reason });
       return json({ data: { ok: true } });
     case 'business.suspend':
       await setBusinessSuspended(db, { actorId, businessId: action.businessId, suspended: action.suspended, reason: action.reason });

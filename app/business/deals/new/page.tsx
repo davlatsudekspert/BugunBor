@@ -49,6 +49,7 @@ export default async function NewDealPage() {
           perCustomerLimit: '1',
           claimTtlMinutes: String(DEAL_RULES.defaultClaimTtl),
           branchIds: branches.map((branch) => branch.id),
+          photoId: null,
         }}
         t={{ biz: t.biz, validation: t.validation, common: t.common, errors: t.errors, deal: t.deal }}
       />

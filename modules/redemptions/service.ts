@@ -1,6 +1,8 @@
+import { dealPhotoUrl } from '@/lib/photos';
 import { addMinutes, parseDbTime, toDbTime } from '@/lib/time';
 import { auditStatementIf } from '@/modules/audit';
 import { DomainError } from '@/modules/errors';
+import { pruneOrphanMediaStatement } from '@/modules/media/service';
 import { deriveRedemptionCode, hashRedemptionCode } from './codes';
 import { evaluateClaimPolicy } from './policy';
 
@@ -180,13 +182,14 @@ export async function runMaintenance(db: D1Database, now = new Date(), force = f
     db.prepare(`DELETE FROM login_requests WHERE expires_at < ?1`).bind(dayAgo),
     db.prepare(`DELETE FROM rate_limits WHERE window_start < ?1`).bind(Math.floor(now.getTime() / 1000) - 86_400),
     db.prepare(`DELETE FROM sessions WHERE expires_at < ?1 OR (revoked_at IS NOT NULL AND revoked_at < ?1)`).bind(dayAgo),
+    pruneOrphanMediaStatement(db, now),
   ]);
 }
 
 export type CustomerRedemption = {
   id: string; status: 'CLAIMED' | 'COMPLETED' | 'EXPIRED' | 'CANCELED'; expiresAt: string; createdAt: string;
   completedAt: string | null; dealSlug: string; dealTitle: string; price: number; originalPrice: number | null;
-  visual: string | null; categorySlug: string; businessName: string; branchName: string; address: string;
+  visual: string | null; photo: string | null; categorySlug: string; businessName: string; branchName: string; address: string;
   latitude: number; longitude: number; code: string | null;
 };
 
@@ -194,19 +197,20 @@ export async function listCustomerRedemptions(db: D1Database, userId: string, se
   const rows = await db
     .prepare(`SELECT r.id, r.status, r.expires_at AS expiresAt, r.created_at AS createdAt, r.completed_at AS completedAt,
         d.slug AS dealSlug, d.title AS dealTitle, d.discounted_price_uzs AS price, d.original_price_uzs AS originalPrice,
-        d.visual, c.slug AS categorySlug, b.name AS businessName, br.name AS branchName, br.address,
+        d.visual, d.photo_id AS photoId, d.is_demo AS isDemo, c.slug AS categorySlug, b.name AS businessName, br.name AS branchName, br.address,
         br.latitude_e6 AS lat, br.longitude_e6 AS lon
       FROM redemptions r JOIN deals d ON d.id = r.deal_id JOIN categories c ON c.id = d.category_id
       JOIN businesses b ON b.id = r.business_id JOIN branches br ON br.id = r.branch_id
       WHERE r.user_id = ?1 ORDER BY r.created_at DESC LIMIT 100`)
     .bind(userId)
-    .all<Omit<CustomerRedemption, 'code' | 'latitude' | 'longitude'> & { lat: number; lon: number }>();
+    .all<Omit<CustomerRedemption, 'code' | 'latitude' | 'longitude' | 'photo'> & { lat: number; lon: number; photoId: string | null; isDemo: number }>();
   const nowDb = toDbTime(now);
   return Promise.all(
-    rows.results.map(async ({ lat, lon, ...row }) => {
+    rows.results.map(async ({ lat, lon, photoId, isDemo, ...row }) => {
       const status = row.status === 'CLAIMED' && row.expiresAt <= nowDb ? 'EXPIRED' : row.status;
       return {
         ...row,
+        photo: dealPhotoUrl({ photoId, isDemo, visual: row.visual }),
         status,
         latitude: lat / 1e6,
         longitude: lon / 1e6,

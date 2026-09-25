@@ -5,6 +5,7 @@ import { ArrowLeft, BadgeCheck, CalendarClock, Clock3, Eye, MapPin, Navigation, 
 import { ClaimPanel } from '@/components/deals/claim-panel';
 import { Countdown } from '@/components/deals/countdown';
 import { DealCard } from '@/components/deals/deal-card';
+import { BusinessAvatar } from '@/components/deals/business-avatar';
 import { DealVisual } from '@/components/deals/deal-visual';
 import { FavoriteButton } from '@/components/deals/favorite-button';
 import { ShareButton } from '@/components/deals/share-button';
@@ -83,12 +84,13 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
       </div>
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[1.15fr_.85fr]">
         <section className="min-w-0">
-          <DealVisual visual={deal.visual} categorySlug={deal.category.slug} className="min-h-64 rounded-[28px] p-5 shadow-[0_20px_60px_rgba(245,89,55,.18)] sm:min-h-72" emojiClassName="-bottom-6 right-6 text-[9rem] sm:text-[11rem]">
+          <DealVisual visual={deal.visual} categorySlug={deal.category.slug} photo={deal.photo} priority className="min-h-64 rounded-[28px] p-5 shadow-[0_20px_60px_rgba(245,89,55,.18)] sm:min-h-80" emojiClassName="-bottom-6 right-6 text-[9rem] sm:text-[11rem]">
             <span className="relative inline-flex h-10 items-center rounded-full bg-white px-4 text-lg font-black text-navy shadow-sm">-{deal.discountPercent}%</span>
             <span className={cn('relative ml-2 inline-flex h-8 items-center rounded-full px-3 text-xs font-bold', statusTone)}>{t.deal.status[deal.effective]}</span>
           </DealVisual>
 
           <a href={`/businesses/${deal.business.slug}`} className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-primary">
+            <BusinessAvatar name={deal.business.name} logo={deal.business.logo} className="size-8 rounded-full bg-white text-[11px] text-navy ring-1 ring-slate-200" />
             {deal.business.name}
             {deal.business.verificationStatus === 'VERIFIED' ? <BadgeCheck className="size-5 fill-emerald-500 text-white" aria-label={t.common.verified} /> : null}
           </a>

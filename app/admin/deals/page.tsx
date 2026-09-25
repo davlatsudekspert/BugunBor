@@ -40,7 +40,7 @@ export default async function AdminDealsPage({ searchParams }: { searchParams: P
           {deals.map((deal) => (
             <article key={deal.id} className="rounded-2xl border border-slate-200 bg-white p-5">
               <div className="flex gap-4">
-                <DealVisual visual={deal.visual} categorySlug={deal.categorySlug} className="size-20 shrink-0 rounded-xl" emojiClassName="-bottom-3 -right-2 text-5xl" />
+                <DealVisual visual={deal.visual} categorySlug={deal.categorySlug} photo={deal.photo} className="size-20 shrink-0 rounded-xl" emojiClassName="-bottom-3 -right-2 text-5xl" />
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold text-slate-500">{deal.businessName} · {deal.categoryName}{deal.isDemo ? ` · ${t.common.demo}` : ''}</p>
                   <p className="mt-1 text-lg font-black leading-snug text-navy">{deal.title}</p>
@@ -65,6 +65,9 @@ export default async function AdminDealsPage({ searchParams }: { searchParams: P
                 <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
                   <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">{t.deal.status[(deal.status === 'ACTIVE' ? 'LIVE' : deal.status) as keyof typeof t.deal.status] ?? deal.status}</span>
                   <a href={`/deals/${deal.slug}`} className="inline-flex h-9 items-center rounded-lg border border-slate-200 px-3 text-xs font-bold text-navy">{t.biz.deals.actions.view}</a>
+                  {deal.ownPhoto ? (
+                    <ActionButton payload={{ type: 'images.remove', target: 'DEAL', id: deal.id }} label={a.removePhoto} reasonPrompt={a.removeImagesReason} tone="danger" networkError={t.common.networkError} />
+                  ) : null}
                   {deal.status === 'ACTIVE' || deal.status === 'PAUSED' ? (
                     <ActionButton payload={{ type: 'deal.archive', dealId: deal.id }} label={a.deals.archive} reasonPrompt={a.reasonHint} tone="danger" networkError={t.common.networkError} />
                   ) : null}

@@ -93,7 +93,7 @@ export default async function CodesPage() {
           <ul className="mt-4 divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white">
             {history.map((item) => (
               <li key={item.id} className="flex items-center gap-4 p-4">
-                <DealVisual visual={item.visual} categorySlug={item.categorySlug} className="size-14 shrink-0 rounded-xl" emojiClassName="-bottom-2 -right-1 text-4xl" />
+                <DealVisual visual={item.visual} categorySlug={item.categorySlug} photo={item.photo} className="size-14 shrink-0 rounded-xl" emojiClassName="-bottom-2 -right-1 text-4xl" />
                 <div className="min-w-0 flex-1">
                   <a href={`/deals/${item.dealSlug}`} className="block truncate font-bold text-navy hover:text-primary">{item.dealTitle}</a>
                   <p className="truncate text-sm text-slate-500">{item.businessName} · {formatMoment(parseDbTime(item.completedAt ?? item.createdAt), t, locale)}</p>

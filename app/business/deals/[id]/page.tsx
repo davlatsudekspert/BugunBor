@@ -55,6 +55,7 @@ export default async function EditDealPage({ params }: { params: Promise<{ id: s
               perCustomerLimit: String(deal.perCustomerLimit),
               claimTtlMinutes: String(deal.claimTtlMinutes),
               branchIds: deal.branchIds,
+              photoId: deal.photoId,
             }}
             t={{ biz: t.biz, validation: t.validation, common: t.common, errors: t.errors, deal: t.deal }}
           />

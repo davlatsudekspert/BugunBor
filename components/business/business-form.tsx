@@ -8,12 +8,13 @@ import { CITIES } from '@/lib/cities';
 import type { Dictionary } from '@/lib/i18n';
 import { businessProfileSchema, onboardingSchema } from '@/modules/businesses/schema';
 import { Field, FormMessage, fieldMessages, inputClass, textareaClass } from './form-controls';
+import { PhotoPicker } from './photo-picker';
 
 type Category = { id: string; name: string };
 
 type Initial = {
   name?: string; description?: string; categoryId?: string; city?: string; phone?: string;
-  telegram?: string | null; instagram?: string | null; website?: string | null;
+  telegram?: string | null; instagram?: string | null; website?: string | null; logoId?: string | null; coverId?: string | null;
 };
 
 type Props = {
@@ -32,10 +33,13 @@ export function BusinessForm({ mode, businessId, canResubmit, categories, initia
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [point, setPoint] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locating, setLocating] = useState(false);
+  const [logoId, setLogoId] = useState(initial.logoId ?? null);
+  const [coverId, setCoverId] = useState(initial.coverId ?? null);
 
   async function submit(form: HTMLFormElement, resubmit: boolean) {
     const values = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
-    const data = { ...values, latitude: point?.latitude ?? null, longitude: point?.longitude ?? null };
+    const images = mode === 'edit' ? { logoId, coverId } : {};
+    const data = { ...values, ...images, latitude: point?.latitude ?? null, longitude: point?.longitude ?? null };
     const parsed = (mode === 'create' ? onboardingSchema : businessProfileSchema).safeParse(data);
     if (!parsed.success) {
       const fields: Record<string, string> = {};
@@ -91,6 +95,12 @@ export function BusinessForm({ mode, businessId, canResubmit, categories, initia
       }}
       className="space-y-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_60px_rgba(20,40,55,.06)] sm:p-8"
     >
+      {mode === 'edit' && businessId ? (
+        <div className="grid gap-5 sm:grid-cols-[auto_1fr]">
+          <PhotoPicker businessId={businessId} kind="LOGO" value={logoId} onChange={setLogoId} label={t.biz.photo.logo} hint={t.biz.photo.logoHint} labels={{ ...t.biz.photo, networkError: t.common.networkError }} />
+          <PhotoPicker businessId={businessId} kind="COVER" value={coverId} onChange={setCoverId} label={t.biz.photo.cover} hint={t.biz.photo.coverHint} labels={{ ...t.biz.photo, networkError: t.common.networkError }} />
+        </div>
+      ) : null}
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label={f.name} error={errors.name} className="sm:col-span-2">
           <input name="name" defaultValue={initial.name} maxLength={80} placeholder={f.namePlaceholder} aria-invalid={Boolean(errors.name)} className={inputClass} />
