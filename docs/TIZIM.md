@@ -119,6 +119,7 @@ Istalgan bosqichda: 10 daqiqa o‘tsa ▶ Muddati o‘tgan (EXPIRED); botda «Me
 3. Server bitta tranzaksiyada holat, vaqt, miqdor va limitni tekshiradi, miqdorni 1 taga kamaytiradi va kod beradi.
 4. Mijoz «Kodlarim» bo‘limida kodni, QR-kodni va qolgan vaqtni ko‘radi.
 5. Filialga borib kodni ko‘rsatadi, kassir tasdiqlaydi va to‘lov joyida qilinadi.
+   Kartada filial hozir ochiq yoki yopiqligi ko‘rinadi; filial kod muddati ichida ochilmasa, band qilishdan oldin ogohlantirish chiqadi.
 6. Kodni bekor qilish mumkin. Bekor qilinsa yoki muddati o‘tsa, joy boshqalarga qaytadi.
 
 ### 4.3. Biznes: ro‘yxatdan o‘tish va aksiya
