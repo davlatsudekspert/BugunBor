@@ -64,6 +64,7 @@ export const ru: Dictionary = {
     forBusiness: 'Для бизнеса',
     login: 'Войти',
     postDeal: 'Разместить акцию',
+    postDealShort: '+ Акция',
     account: 'Кабинет',
     myBusiness: 'Мой бизнес',
     admin: 'Админ',

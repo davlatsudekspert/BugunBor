@@ -62,6 +62,7 @@ export const uz = {
     forBusiness: 'Biznes uchun',
     login: 'Kirish',
     postDeal: 'Aksiya joylash',
+    postDealShort: '+ Aksiya',
     account: 'Kabinet',
     myBusiness: 'Biznesim',
     admin: 'Admin',

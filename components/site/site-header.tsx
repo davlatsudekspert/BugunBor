@@ -17,7 +17,7 @@ export async function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-cream/90 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:gap-3 sm:px-6 lg:px-8">
         <Logo label={t.nav.homeAria} />
 
         <nav className="hidden items-center gap-7 text-sm font-semibold text-slate-600 md:flex" aria-label={t.nav.main}>
@@ -46,8 +46,9 @@ export async function SiteHeader() {
           ) : (
             <a className={cn(buttonVariants({ variant: 'ghost' }), 'hidden h-10 sm:inline-flex')} href="/login">{t.nav.login}</a>
           )}
-          <a className={cn(buttonVariants(), 'h-10 rounded-xl px-4 font-bold shadow-[0_6px_16px_rgba(245,89,55,.18)]')} href={postDealHref}>
-            {t.nav.postDeal}
+          <a className={cn(buttonVariants(), 'h-10 rounded-xl px-3 font-bold shadow-[0_6px_16px_rgba(245,89,55,.18)] sm:px-4')} href={postDealHref} aria-label={t.nav.postDeal}>
+            <span className="sm:hidden">{t.nav.postDealShort}</span>
+            <span className="hidden sm:inline">{t.nav.postDeal}</span>
           </a>
         </div>
       </div>

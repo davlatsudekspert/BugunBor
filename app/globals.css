@@ -103,6 +103,22 @@
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
+  /* Long Russian words ("конфиденциальности") must not push the page sideways. */
+  h1,
+  h2,
+  h3 {
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+}
+
+@layer base {
+  /* A grid without a base column count gets one flexible column instead of an
+     auto column that grows with long words and pushes the page sideways on
+     phones. Responsive grid-cols-* utilities still override it. */
+  :where(.grid:not([class^='grid-cols-']):not([class*=' grid-cols-'])) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @layer utilities {
