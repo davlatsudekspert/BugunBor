@@ -263,7 +263,7 @@ export const uz = {
     blocked: 'Hisobingiz bloklangan. Qo‘llab-quvvatlash bilan bog‘laning.',
   },
   bot: {
-    welcome: 'Salom! Bu BugunBor boti.\n\nSaytga kirish uchun {site} sahifasida «Telegram orqali kirish» tugmasini bosing.',
+    welcome: 'Salom! Bu BugunBor boti 👋\n\nBu yerda siz:\n• saytga parol va SMS’siz kirasiz;\n• obuna bo‘lgan bizneslaringizning yangi aksiyalarini birinchi bo‘lib bilasiz;\n• kodingiz tugashidan oldin eslatma olasiz.\n\nBugungi aksiyalar: {site}',
     loginPromptNew: '🔐 BugunBor’ga kirish so‘rovi\n\nSaytdagi moslik kodi: <b>{code}</b>\nQurilma: {device}\n\nKod bir xil bo‘lsa, pastdagi tugma orqali telefon raqamingizni yuboring.',
     loginPromptKnown: '🔐 BugunBor’ga kirish so‘rovi\n\nSaytdagi moslik kodi: <b>{code}</b>\nQurilma: {device}\n\nKod bir xil bo‘lsa, «Ha, men kiryapman» tugmasini bosing.',
     shareContact: '📱 Raqamni yuborish',
