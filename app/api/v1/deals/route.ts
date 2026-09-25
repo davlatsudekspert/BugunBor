@@ -1,14 +1,31 @@
-import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { listActiveDeals } from '@/modules/catalog/repository';
+import { getDb } from '@/db/client';
+import { CITY_SLUGS } from '@/lib/cities';
+import { getConfig } from '@/lib/env';
+import { json, route, ValidationError } from '@/lib/http';
+import { SORT_KEYS, listLiveDeals, type SortKey } from '@/modules/catalog/queries';
 
-const querySchema = z.object({ city: z.string().trim().max(80).optional(), q: z.string().trim().max(120).optional(), limit: z.coerce.number().int().min(1).max(50).optional() });
+const querySchema = z.object({
+  city: z.enum(CITY_SLUGS).optional(),
+  category: z.string().trim().max(40).optional(),
+  q: z.string().trim().max(120).optional(),
+  sort: z.enum(SORT_KEYS as [SortKey, ...SortKey[]]).optional(),
+  lat: z.coerce.number().min(-90).max(90).optional(),
+  lng: z.coerce.number().min(-180).max(180).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(24),
+  offset: z.coerce.number().int().min(0).max(2000).default(0),
+});
 
-export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const parsed = querySchema.safeParse(Object.fromEntries(url.searchParams.entries()));
-  if (!parsed.success) return NextResponse.json({ error: { code: 'VALIDATION', message: 'Qidiruv parametrlari noto‘g‘ri.' } }, { status: 422 });
-  const results = await listActiveDeals({ city: parsed.data.city, query: parsed.data.q, limit: parsed.data.limit });
-  return NextResponse.json({ data: results, page: { count: results.length, nextCursor: null } }, { headers: { 'cache-control': 'public, max-age=30, stale-while-revalidate=120' } });
-}
+// Public catalogue for the mobile apps: live deals only, paginated.
+export const GET = route(async (request: Request) => {
+  const parsed = querySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+  if (!parsed.success) throw new ValidationError(parsed.error);
+  const { city, category, q, sort, lat, lng, limit, offset } = parsed.data;
+  const near = lat !== undefined && lng !== undefined ? { latitude: lat, longitude: lng } : null;
+  const deals = await listLiveDeals(await getDb(), { city: city ?? null, category: category ?? null, query: q, sort, near, demo: getConfig().demoMode });
+  return json(
+    { data: deals.slice(offset, offset + limit), page: { total: deals.length, offset, limit } },
+    { headers: { 'cache-control': 'public, max-age=30, stale-while-revalidate=60' } },
+  );
+});

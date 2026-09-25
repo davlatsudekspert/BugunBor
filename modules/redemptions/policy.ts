@@ -7,7 +7,9 @@ export type ClaimableDeal = {
   perCustomerLimit: number;
 };
 
-export type ClaimPolicyResult = { ok: true } | { ok: false; code: string; message: string };
+export type ClaimRejection = 'DEAL_NOT_ACTIVE' | 'DEAL_NOT_STARTED' | 'DEAL_EXPIRED' | 'SOLD_OUT' | 'LIMIT_REACHED';
+
+export type ClaimPolicyResult = { ok: true } | { ok: false; code: ClaimRejection; message: string };
 
 export function evaluateClaimPolicy(deal: ClaimableDeal, now = new Date()): ClaimPolicyResult {
   if (deal.status !== 'ACTIVE') return { ok: false, code: 'DEAL_NOT_ACTIVE', message: 'Aksiya hozir faol emas.' };

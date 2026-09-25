@@ -1,3 +1,37 @@
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'Bog‘lanish', description: 'BugunBor jamoasiga savol yoki noto‘g‘ri ma’lumot haqida xabar yuboring.', alternates: { canonical: '/contact' } };
-export default async function ContactPage({ searchParams }: { searchParams: Promise<{ subject?: string }> }) { const { subject } = await searchParams; return <main className="grid min-h-screen place-items-center bg-[#f8f1e8] p-4 text-[#152a3b]"><section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8"><a href="/" className="text-xl font-black">Bugun<span className="text-primary">Bor</span></a><h1 className="mt-8 text-4xl font-black tracking-[-.05em]">Bizga yozing</h1><p className="mt-3 text-slate-600">Savol, shikoyat yoki noto‘g‘ri ma’lumotni yuboring. Moderatsiya murojaatni audit bilan ko‘rib chiqadi.</p><form className="mt-7 space-y-4" action="mailto:hello@bugunbor.uz" method="post" encType="text/plain"><input name="subject" defaultValue={subject} required placeholder="Mavzu" className="h-12 w-full rounded-xl border border-slate-200 px-4" /><input name="contact" required placeholder="Telefon yoki email" className="h-12 w-full rounded-xl border border-slate-200 px-4" /><textarea name="message" required minLength={20} rows={6} placeholder="Xabaringiz…" className="w-full rounded-xl border border-slate-200 p-4" /><button className="h-12 w-full rounded-xl bg-primary font-bold text-white">Xabar yuborish</button></form></section></main>; }
+
+import { ContactForm } from '@/components/site/contact-form';
+import { formatPhone } from '@/lib/format';
+import { getI18n } from '@/lib/i18n/server';
+import { getCurrentUser } from '@/modules/auth/current';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.footer.contact, description: t.contact.text, alternates: { canonical: '/contact' } };
+}
+
+export default async function ContactPage({ searchParams }: { searchParams: Promise<{ subject?: string }> }) {
+  const [{ subject }, { t }, user] = await Promise.all([searchParams, getI18n(), getCurrentUser()]);
+  return (
+    <main className="grid place-items-center bg-sand px-4 py-12">
+      <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-7 sm:p-8">
+        <h1 className="text-4xl font-black tracking-[-.05em] text-navy">{t.contact.title}</h1>
+        <p className="mt-3 leading-7 text-slate-600">{t.contact.text}</p>
+        <ContactForm
+          defaults={{ name: user?.displayName, contact: user?.phone ? formatPhone(user.phone) : undefined, subject: subject?.slice(0, 160) }}
+          labels={{
+            name: t.contact.name,
+            contact: t.contact.contact,
+            subject: t.contact.subject,
+            message: t.contact.message,
+            messagePlaceholder: t.contact.messagePlaceholder,
+            send: t.contact.send,
+            sending: t.contact.sending,
+            success: t.contact.success,
+            error: t.common.unknownError,
+          }}
+        />
+      </section>
+    </main>
+  );
+}
