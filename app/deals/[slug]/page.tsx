@@ -13,6 +13,7 @@ import { RatingStars, ratingText } from '@/components/deals/rating-stars';
 import { ShareButton } from '@/components/deals/share-button';
 import { OpenBadge } from '@/components/deals/open-badge';
 import { DealViewTracker } from '@/components/deals/view-tracker';
+import { JsonLd } from '@/components/site/json-ld';
 import { getDb } from '@/db/client';
 import { cityName } from '@/lib/cities';
 import { getConfig } from '@/lib/env';
@@ -78,8 +79,32 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
   const moreDeals = business?.deals.filter((item) => item.id !== deal.id).slice(0, 3) ?? [];
   const statusTone = deal.effective === 'LIVE' ? 'bg-emerald-50 text-emerald-700' : deal.effective === 'SCHEDULED' ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-600';
 
+  const origin = getConfig().appUrl ?? 'https://bugunbor.uz';
+  const structured = !deal.isPublic || deal.isDemo || deal.business.isDemo
+    ? null
+    : {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: deal.title,
+        description: deal.description,
+        ...(deal.photo ? { image: `${origin}${deal.photo}` } : {}),
+        brand: { '@type': 'Brand', name: deal.business.name },
+        offers: {
+          '@type': 'Offer',
+          url: `${origin}/deals/${deal.slug}`,
+          price: deal.price,
+          priceCurrency: 'UZS',
+          availability: deal.effective === 'LIVE' ? 'https://schema.org/InStock' : deal.effective === 'SOLD_OUT' ? 'https://schema.org/SoldOut' : 'https://schema.org/PreOrder',
+          validFrom: parseDbTime(deal.startsAt).toISOString(),
+          priceValidUntil: parseDbTime(deal.endsAt).toISOString().slice(0, 10),
+          seller: { '@type': 'LocalBusiness', name: deal.business.name },
+        },
+        ...(deal.business.rating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: (deal.business.rating.basisPoints / 100).toFixed(1), reviewCount: deal.business.rating.count } } : {}),
+      };
+
   return (
     <main className="bg-cream pb-16">
+      {structured ? <JsonLd data={structured} /> : null}
       {deal.isPublic ? <DealViewTracker dealId={deal.id} /> : null}
       {preview ? (
         <div className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-800">

@@ -282,7 +282,7 @@ export async function getDealBySlug(db: D1Database, slug: string, options: { dem
 export type PublicBusiness = {
   id: string; slug: string; name: string; description: string; city: string; phone: string | null;
   telegram: string | null; instagram: string | null; website: string | null; categorySlug: string | null;
-  logo: string | null; cover: string | null; rating: Rating | null;
+  logo: string | null; cover: string | null; rating: Rating | null; isDemo: boolean;
   branches: Array<BranchSummary & { phone: string | null; hoursJson: string }>;
   deals: DealCard[];
   upcoming: DealCard[];
@@ -292,11 +292,11 @@ export async function getPublicBusiness(db: D1Database, slug: string, options: {
   const now = options.now ?? new Date();
   const business = await db
     .prepare(`SELECT b.id, b.slug, b.name, b.description, b.city, b.phone, b.telegram, b.instagram, b.website, c.slug AS categorySlug,
-        b.logo_id AS logoId, b.cover_id AS coverId, b.rating_basis_points AS ratingBp, b.review_count AS reviewCount
+        b.logo_id AS logoId, b.cover_id AS coverId, b.rating_basis_points AS ratingBp, b.review_count AS reviewCount, b.is_demo AS isDemo
       FROM businesses b LEFT JOIN categories c ON c.id = b.category_id
       WHERE b.slug = ?1 AND ${PUBLIC_BUSINESS_SQL} AND (?2 = 1 OR b.is_demo = 0)`)
     .bind(slug, options.demo ? 1 : 0)
-    .first<Omit<PublicBusiness, 'branches' | 'deals' | 'upcoming' | 'logo' | 'cover' | 'rating'> & { logoId: string | null; coverId: string | null; ratingBp: number | null; reviewCount: number | null }>();
+    .first<Omit<PublicBusiness, 'branches' | 'deals' | 'upcoming' | 'logo' | 'cover' | 'rating' | 'isDemo'> & { logoId: string | null; coverId: string | null; ratingBp: number | null; reviewCount: number | null; isDemo: number }>();
   if (!business) return null;
   const [branches, dealRows] = await Promise.all([
     db.prepare(`SELECT id, name, address, city, latitude_e6 AS lat, longitude_e6 AS lon, phone, working_hours_json AS hoursJson
@@ -312,9 +312,10 @@ export async function getPublicBusiness(db: D1Database, slug: string, options: {
       .all<DealBranchRow>(),
   ]);
   const cards = sortDeals(groupDeals(dealRows.results, null, now), 'ending');
-  const { logoId, coverId, ratingBp, reviewCount, ...rest } = business;
+  const { logoId, coverId, ratingBp, reviewCount, isDemo, ...rest } = business;
   return {
     ...rest,
+    isDemo: Boolean(isDemo),
     logo: mediaUrl(logoId),
     cover: mediaUrl(coverId),
     rating: rating(ratingBp, reviewCount),

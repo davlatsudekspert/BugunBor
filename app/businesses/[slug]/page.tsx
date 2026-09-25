@@ -7,6 +7,7 @@ import { CategoryIcon, categoryColor } from '@/components/deals/category-icon';
 import { DealCard } from '@/components/deals/deal-card';
 import { FollowButton } from '@/components/deals/follow-button';
 import { RatingStars, ratingText } from '@/components/deals/rating-stars';
+import { JsonLd } from '@/components/site/json-ld';
 import { getDb } from '@/db/client';
 import { cityName } from '@/lib/cities';
 import { getConfig } from '@/lib/env';
@@ -56,8 +57,24 @@ export default async function BusinessPage({ params }: { params: Promise<{ slug:
   const category = categories.find((item) => item.slug === business.categorySlug);
   const websiteHost = safeHost(business.website);
 
+  const origin = getConfig().appUrl ?? 'https://bugunbor.uz';
+  const structured = business.isDemo
+    ? null
+    : {
+        '@context': 'https://schema.org',
+        '@type': 'LocalBusiness',
+        name: business.name,
+        description: business.description,
+        url: `${origin}/businesses/${business.slug}`,
+        ...(business.logo ? { logo: `${origin}${business.logo}`, image: `${origin}${business.cover ?? business.logo}` } : {}),
+        ...(business.phone ? { telephone: business.phone } : {}),
+        address: business.branches.map((branch) => ({ '@type': 'PostalAddress', streetAddress: branch.address, addressLocality: cityName(branch.city, 'uz'), addressCountry: 'UZ' })),
+        ...(business.rating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: (business.rating.basisPoints / 100).toFixed(1), reviewCount: business.rating.count } } : {}),
+      };
+
   return (
     <main className="bg-cream pb-16">
+      {structured ? <JsonLd data={structured} /> : null}
       <section className="border-b border-slate-200 bg-white">
         {business.cover ? (
           <div className="relative h-44 overflow-hidden bg-slate-200 sm:h-64">

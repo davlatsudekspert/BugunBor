@@ -7,6 +7,7 @@ import { DealCard } from '@/components/deals/deal-card';
 import { DealVisual } from '@/components/deals/deal-visual';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
+import { JsonLd } from '@/components/site/json-ld';
 import { getDb } from '@/db/client';
 import { cityName } from '@/lib/cities';
 import { getPreferredCity } from '@/lib/city-cookie';
@@ -42,8 +43,19 @@ export default async function Home() {
   const featured = deals[0];
   const cityLabel = cityName(city, locale);
 
+  const origin = getConfig().appUrl ?? 'https://bugunbor.uz';
+  const website = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'BugunBor',
+    url: origin,
+    inLanguage: ['uz', 'ru'],
+    potentialAction: { '@type': 'SearchAction', target: `${origin}/discover?q={search_term_string}`, 'query-input': 'required name=search_term_string' },
+  };
+
   return (
     <main className="overflow-hidden">
+      <JsonLd data={website} />
       <section className="relative border-b border-slate-200/70 bg-cream">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_14%,rgba(255,182,135,.3),transparent_28%),radial-gradient(circle_at_8%_84%,rgba(255,222,184,.35),transparent_22%)]" />
         <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[1.06fr_.94fr] lg:px-8 lg:py-20">
