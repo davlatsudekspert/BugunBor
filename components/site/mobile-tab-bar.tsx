@@ -18,7 +18,7 @@ const items = [
 export function MobileTabBar({ labels }: { labels: Labels }) {
   const pathname = usePathname();
   return (
-    <nav className="pb-safe fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 px-2 pt-1.5 shadow-[0_-8px_30px_rgba(18,43,61,.08)] backdrop-blur md:hidden" aria-label={labels.mobile}>
+    <nav className="pb-safe fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 px-2 pt-1.5 shadow-[0_-8px_30px_rgba(18,43,61,.08)] backdrop-blur md:hidden print:hidden" aria-label={labels.mobile}>
       <div className="mx-auto grid max-w-md grid-cols-5">
         {items.map(({ href, key, icon: Icon, match }) => {
           const active = match(pathname);

@@ -19,7 +19,7 @@ export async function SiteFooter() {
     },
   ];
   return (
-    <footer className="border-t border-slate-200 bg-white">
+    <footer className="border-t border-slate-200 bg-white print:hidden">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.3fr_2fr] lg:px-8">
         <div className="max-w-sm">
           <Logo label={t.nav.homeAria} />

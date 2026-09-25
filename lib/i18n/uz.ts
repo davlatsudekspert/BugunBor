@@ -388,6 +388,16 @@ export const uz = {
     title: 'Biznes kabineti',
     nav: { dashboard: 'Umumiy', redeem: 'Kodni tekshirish', deals: 'Aksiyalar', branches: 'Filiallar', team: 'Jamoa', profile: 'Profil', billing: 'Tarif' },
     switcher: 'Biznesni tanlash',
+    poster: {
+      title: 'QR poster',
+      open: 'QR poster',
+      intro: 'Posterni A4 formatda chop eting va kassa yoniga yoki eshikka yopishtiring. Mijozlar skanerlab sizga obuna bo‘ladi.',
+      print: 'Chop etish',
+      headline: 'Bizning chegirmalarimiz BugunBor’da',
+      text: 'Obuna bo‘ling — yangi aksiyalarimizni Telegram’da birinchi bo‘lib olasiz.',
+      steps: ['Telefon kamerasini QR kodga qarating', '«Obuna bo‘lish» tugmasini bosing', 'Aksiyani band qiling va kodni kassada ko‘rsating'],
+      scan: 'Skanerlang',
+    },
     photo: {
       dealPhoto: 'Aksiya rasmi',
       dealHint: 'Mahsulot yoki xizmatingizning o‘zingiz olgan haqiqiy fotosurati. Rasm bo‘lmasa, chiroyli belgi ko‘rsatiladi.',

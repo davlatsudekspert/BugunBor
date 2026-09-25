@@ -48,10 +48,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang={htmlLang(locale)}>
       <body className="min-h-dvh">
         {getConfig().demoMode ? (
-          <p className="bg-amber-100 px-4 py-1.5 text-center text-xs font-semibold text-amber-900">{t.common.demoBanner}</p>
+          <p className="bg-amber-100 px-4 py-1.5 text-center text-xs font-semibold text-amber-900 print:hidden">{t.common.demoBanner}</p>
         ) : null}
         <SiteHeader />
-        <div className="pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
+        <div className="pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0 print:pb-0">
           {children}
           <SiteFooter />
         </div>

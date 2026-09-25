@@ -16,7 +16,7 @@ export async function SiteHeader() {
   const postDealHref = memberships.some((membership) => membership.role !== 'CASHIER') ? '/business/deals/new' : '/business/onboarding';
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-cream/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-cream/90 backdrop-blur-xl print:hidden">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:gap-3 sm:px-6 lg:px-8">
         <Logo label={t.nav.homeAria} />
 

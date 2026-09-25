@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Activity, BellRing, Clock3, Eye, Plus, QrCode, Star, TicketCheck } from 'lucide-react';
+import { Activity, BellRing, Clock3, Eye, Plus, Printer, QrCode, Star, TicketCheck } from 'lucide-react';
 
 import { WorkspaceShell } from '@/components/business/workspace-shell';
 import { RatingStars, ratingText } from '@/components/deals/rating-stars';
@@ -78,6 +78,9 @@ export default async function BusinessDashboardPage() {
               <a href="/business/redeem" className="flex h-12 items-center justify-center gap-2 rounded-xl bg-primary font-bold text-white"><QrCode className="size-5" aria-hidden /> {t.biz.dashboard.redeem}</a>
               {roleCan(membership.role, 'deal.write') ? (
                 <a href="/business/deals/new" className="flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 font-bold text-navy hover:border-primary/40"><Plus className="size-5" aria-hidden /> {t.biz.dashboard.newDeal}</a>
+              ) : null}
+              {membership.verificationStatus === 'VERIFIED' ? (
+                <a href="/business/poster" className="flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 font-bold text-navy hover:border-primary/40"><Printer className="size-5" aria-hidden /> {t.biz.poster.open}</a>
               ) : null}
             </div>
             {data.pending ? <p className="mt-3 flex items-center gap-1.5 text-sm text-amber-700"><Clock3 className="size-4" aria-hidden /> {t.biz.dashboard.stats.pending}: {data.pending}</p> : null}

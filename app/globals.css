@@ -145,3 +145,8 @@
     scroll-behavior: auto !important;
   }
 }
+
+@page {
+  size: A4;
+  margin: 14mm;
+}
