@@ -697,6 +697,7 @@ export const uz = {
       webhookInfo: 'Webhook holati',
       pending: 'Navbatdagi yangilanishlar: {count}',
       lastError: 'Oxirgi xato: {error}',
+      hashSecretMissing: 'HASH_SECRET o‘rnatilmagan — standart qiymat ishlatilmoqda. Uzun tasodifiy qiymat qo‘ying va keyin uni o‘zgartirmang.',
       envHelp: 'Sozlamalar muhit o‘zgaruvchilari orqali kiritiladi: TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_USERNAME, TELEGRAM_WEBHOOK_SECRET, APP_URL, ADMIN_PHONES, HASH_SECRET.',
       demoMode: 'Demo rejim',
       demoOn: 'Yoqilgan — demo bizneslar saytda ko‘rinadi.',

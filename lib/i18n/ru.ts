@@ -699,6 +699,7 @@ export const ru: Dictionary = {
       webhookInfo: 'Состояние вебхука',
       pending: 'Обновлений в очереди: {count}',
       lastError: 'Последняя ошибка: {error}',
+      hashSecretMissing: 'HASH_SECRET не задан — используется значение по умолчанию. Задайте длинную случайную строку и больше не меняйте её.',
       envHelp: 'Настройки задаются переменными окружения: TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_USERNAME, TELEGRAM_WEBHOOK_SECRET, APP_URL, ADMIN_PHONES, HASH_SECRET.',
       demoMode: 'Демо-режим',
       demoOn: 'Включён — демо-заведения видны на сайте.',

@@ -4,7 +4,7 @@ import { Bot, CheckCircle2, CircleAlert, FlaskConical } from 'lucide-react';
 import { ActionButton } from '@/components/admin/admin-controls';
 import { AdminShell } from '@/components/admin/admin-shell';
 import { getDb } from '@/db/client';
-import { getConfig, isTelegramConfigured } from '@/lib/env';
+import { DEFAULT_HASH_SECRET, getConfig, isTelegramConfigured } from '@/lib/env';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
 import { requireAdmin } from '@/modules/auth/current';
@@ -35,6 +35,11 @@ export default async function AdminSettingsPage() {
 
   return (
     <AdminShell t={t} role={user.role} active="settings">
+      {!config.isDevelopment && config.hashSecret === DEFAULT_HASH_SECRET ? (
+        <p role="alert" className="mb-5 flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
+          <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden /> {s.hashSecretMissing}
+        </p>
+      ) : null}
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="flex items-center gap-2 text-lg font-black text-navy"><Bot className="size-5 text-[#229ED9]" aria-hidden /> {s.telegram}</h2>
         <p className="mt-3 flex items-center gap-2 text-sm font-semibold">
