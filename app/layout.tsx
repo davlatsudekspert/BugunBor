@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 
 import { MobileTabBar } from '@/components/site/mobile-tab-bar';
+import { ServiceWorker } from '@/components/site/service-worker';
 import { SiteFooter } from '@/components/site/site-footer';
 import { SiteHeader } from '@/components/site/site-header';
 import { getConfig } from '@/lib/env';
@@ -17,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: t.meta.description,
     applicationName: 'BugunBor',
     manifest: '/manifest.webmanifest',
-    icons: { icon: '/favicon.svg', apple: '/icons/apple-touch-icon.png' },
+    icons: { icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }, { url: '/icons/favicon-48.png', sizes: '48x48', type: 'image/png' }], apple: '/icons/apple-touch-icon.png' },
     appleWebApp: { capable: true, title: 'BugunBor', statusBarStyle: 'default' },
     openGraph: {
       title: t.meta.ogTitle,
@@ -52,6 +53,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           {children}
           <SiteFooter />
         </div>
+        <ServiceWorker />
         <MobileTabBar labels={{ mobile: t.nav.mobile, home: t.nav.home, search: t.nav.search, saved: t.nav.saved, codes: t.nav.codes, profile: t.nav.profile }} />
       </body>
     </html>

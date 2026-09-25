@@ -779,6 +779,14 @@ export const ru: Dictionary = {
   offline: {
     title: 'Нет интернета',
     text: 'Страница снова заработает, когда связь восстановится.',
+    retry: 'Повторить',
+    codesHint: 'Активные коды — на странице «Мои коды»; откройте её, пока есть интернет.',
+  },
+  app: {
+    shortName: 'BugunBor',
+    shortcutDeals: 'Акции',
+    shortcutCodes: 'Мои коды',
+    shortcutRedeem: 'Проверить код',
   },
   notify: {
     newDeal: '🔥 <b>{business}</b> — новая акция!\n\n<b>{title}</b>\n💰 {price} сум (−{percent}%)\n⏰ до {until}',

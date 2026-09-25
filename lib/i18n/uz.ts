@@ -777,6 +777,14 @@ export const uz = {
   offline: {
     title: 'Internet yo‘q',
     text: 'Aloqa tiklangach sahifa yana ishlaydi.',
+    retry: 'Qayta urinish',
+    codesHint: 'Faol kodlaringiz «Kodlarim» sahifasida — uni internet bor paytda oching.',
+  },
+  app: {
+    shortName: 'BugunBor',
+    shortcutDeals: 'Aksiyalar',
+    shortcutCodes: 'Kodlarim',
+    shortcutRedeem: 'Kodni tekshirish',
   },
   notify: {
     newDeal: '🔥 <b>{business}</b> — yangi aksiya!\n\n<b>{title}</b>\n💰 {price} so‘m (−{percent}%)\n⏰ {until} gacha',
