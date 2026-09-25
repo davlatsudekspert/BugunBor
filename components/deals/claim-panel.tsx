@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { formatRedemptionCode } from '@/modules/redemptions/codes';
 import { QrCode } from './qr-code';
 
-type Branch = { id: string; name: string; address: string };
+type Branch = { id: string; name: string; address: string; warning?: string | null };
 
 type Labels = {
   button: string;
@@ -117,6 +117,8 @@ export function ClaimPanel({ dealId, branches, loggedIn, loginHref, claimable, h
     }
   }
 
+  const closedWarning = claimable ? branches.find((branch) => branch.id === branchId)?.warning : null;
+
   return (
     <div className="space-y-3" aria-live="polite">
       {branches.length > 1 ? (
@@ -129,6 +131,7 @@ export function ClaimPanel({ dealId, branches, loggedIn, loginHref, claimable, h
           </select>
         </label>
       ) : null}
+      {closedWarning ? <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold leading-5 text-amber-800">{closedWarning}</p> : null}
       <button
         type="button"
         onClick={claim}

@@ -11,6 +11,7 @@ import { FavoriteButton } from '@/components/deals/favorite-button';
 import { FollowButton } from '@/components/deals/follow-button';
 import { RatingStars, ratingText } from '@/components/deals/rating-stars';
 import { ShareButton } from '@/components/deals/share-button';
+import { OpenBadge } from '@/components/deals/open-badge';
 import { DealViewTracker } from '@/components/deals/view-tracker';
 import { getDb } from '@/db/client';
 import { cityName } from '@/lib/cities';
@@ -18,6 +19,7 @@ import { getConfig } from '@/lib/env';
 import { formatDurationMinutes, formatMoment, formatNumber, formatPhone, formatSum, formatWorkingHours } from '@/lib/format';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
+import { minutesUntilOpen, parseHours } from '@/lib/hours';
 import { directionsUrl } from '@/lib/maps';
 import { parseDbTime, toDbTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
@@ -122,7 +124,8 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
                   <p className="flex items-center gap-2 text-sm font-bold text-navy"><MapPin className="size-4 text-primary" aria-hidden /> {branch.name}</p>
                   <p className="mt-2 text-sm leading-6 text-slate-500">{branch.address}, {cityName(branch.city, locale)}</p>
                   {hours ? <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500"><CalendarClock className="size-4" aria-hidden /> {hours}</p> : null}
-                  <a href={directionsUrl(branch)} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-primary"><Navigation className="size-4" aria-hidden /> {t.common.directions}</a>
+                  <OpenBadge hoursJson={branch.hoursJson} t={t} now={now} className="mt-1.5" />
+                  <a href={directionsUrl(branch)} target="_blank" rel="noreferrer" className="mt-3 flex items-center gap-1.5 text-sm font-bold text-primary"><Navigation className="size-4" aria-hidden /> {t.common.directions}</a>
                 </div>
               );
             })}
@@ -188,7 +191,15 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
             <div className="mt-5">
               <ClaimPanel
                 dealId={deal.id}
-                branches={deal.branches.map((branch) => ({ id: branch.id, name: branch.name, address: branch.address }))}
+                branches={deal.branches.map((branch) => {
+                  // Warn when the code would expire before this branch even opens.
+                  const hours = parseHours(branch.hoursJson);
+                  const wait = hours ? minutesUntilOpen(hours, now) : 0;
+                  const warning = hours && wait > 0 && wait >= deal.claimTtlMinutes
+                    ? fmt(t.deal.closedWarning, { time: hours.open, duration: formatDurationMinutes(deal.claimTtlMinutes, t) })
+                    : null;
+                  return { id: branch.id, name: branch.name, address: branch.address, warning };
+                })}
                 loggedIn={Boolean(user)}
                 loginHref={`/login?returnTo=${encodeURIComponent(`/deals/${deal.slug}`)}`}
                 claimable={claimable}

@@ -45,3 +45,19 @@ export function isOpenAt(hours: WorkingHours, date: Date) {
   if (open === close) return true;
   return open < close ? current >= open && current < close : current >= open || current < close;
 }
+
+export type OpenState = { open: true; until: string | null } | { open: false; opensAt: string };
+
+/** Open now (and until when), or closed and when it opens next — Tashkent time. */
+export function openState(hours: WorkingHours | null, date: Date): OpenState | null {
+  if (!hours) return null;
+  if (hours.open === hours.close) return { open: true, until: null };
+  return isOpenAt(hours, date) ? { open: true, until: hours.close } : { open: false, opensAt: hours.open };
+}
+
+/** Minutes until the branch next opens; 0 while it is open. */
+export function minutesUntilOpen(hours: WorkingHours, date: Date) {
+  if (isOpenAt(hours, date)) return 0;
+  const parts = tashkentParts(date);
+  return (minutesOf(hours.open) - (parts.hour * 60 + parts.minute) + 1440) % 1440;
+}

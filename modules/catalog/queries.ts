@@ -14,6 +14,7 @@ export type BranchSummary = {
   city: string;
   latitude: number;
   longitude: number;
+  hoursJson: string;
 };
 
 /** Average rating in basis points (470 = 4.7) and how many ratings it is based on. */
@@ -52,7 +53,7 @@ type DealBranchRow = {
   publishedAt: string; isSponsored: number; claimTtlMinutes: number; status: string; categorySlug: string;
   businessId: string; businessSlug: string; businessName: string; logoId: string | null; photoId: string | null; isDemo: number;
   ratingBp: number | null; reviewCount: number | null;
-  branchId: string; branchName: string; address: string; city: string; lat: number; lon: number;
+  branchId: string; branchName: string; address: string; city: string; lat: number; lon: number; hoursJson: string;
 };
 
 const DEAL_BRANCH_COLUMNS = `d.id, d.slug, d.title, d.original_price_uzs AS originalPrice, d.discounted_price_uzs AS price,
@@ -61,14 +62,14 @@ const DEAL_BRANCH_COLUMNS = `d.id, d.slug, d.title, d.original_price_uzs AS orig
   COALESCE(d.approved_at, d.created_at) AS publishedAt, d.is_sponsored AS isSponsored, d.claim_ttl_minutes AS claimTtlMinutes,
   c.slug AS categorySlug, b.id AS businessId, b.slug AS businessSlug, b.name AS businessName,
   b.logo_id AS logoId, d.photo_id AS photoId, d.is_demo AS isDemo, b.rating_basis_points AS ratingBp, b.review_count AS reviewCount,
-  br.id AS branchId, br.name AS branchName, br.address, br.city, br.latitude_e6 AS lat, br.longitude_e6 AS lon`;
+  br.id AS branchId, br.name AS branchName, br.address, br.city, br.latitude_e6 AS lat, br.longitude_e6 AS lon, br.working_hours_json AS hoursJson`;
 
 type Point = { latitude: number; longitude: number };
 
 function groupDeals(rows: DealBranchRow[], near: Point | null, now: Date): DealCard[] {
   const grouped = new Map<string, DealCard>();
   for (const row of rows) {
-    const branch: BranchSummary = { id: row.branchId, name: row.branchName, address: row.address, city: row.city, latitude: row.lat / 1e6, longitude: row.lon / 1e6 };
+    const branch: BranchSummary = { id: row.branchId, name: row.branchName, address: row.address, city: row.city, latitude: row.lat / 1e6, longitude: row.lon / 1e6, hoursJson: row.hoursJson };
     const distance = near ? distanceKm(near, branch) : null;
     const current = grouped.get(row.id);
     if (current) {

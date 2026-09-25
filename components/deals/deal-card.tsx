@@ -11,6 +11,7 @@ import { BusinessAvatar } from './business-avatar';
 import { Countdown } from './countdown';
 import { DealVisual } from './deal-visual';
 import { FavoriteButton } from './favorite-button';
+import { OpenBadge } from './open-badge';
 import { ratingText } from './rating-stars';
 
 type Props = {
@@ -66,7 +67,8 @@ export function DealCard({ deal, t, locale, favorite, loggedIn, showCity = false
           <strong className="text-2xl font-black text-primary">{formatSum(deal.price, t)}</strong>
           {deal.originalPrice ? <span className="pb-1 text-sm text-slate-400 line-through">{formatNumber(deal.originalPrice)}</span> : null}
         </div>
-        <div className="mt-3 flex items-center justify-between gap-3 text-xs text-slate-500">
+        {scheduled ? null : <OpenBadge hoursJson={deal.branch.hoursJson} t={t} className="mt-2" />}
+        <div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-500">
           <span className="flex min-w-0 items-center gap-1">
             <MapPin className="size-3.5 shrink-0" aria-hidden />
             <span className="truncate">{location}{deal.branchCount > 1 ? ` +${deal.branchCount - 1}` : ''}</span>
