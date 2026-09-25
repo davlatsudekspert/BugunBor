@@ -36,6 +36,8 @@
 
 ### Biznes uchun
 - Kabinetda obunachilar soni, reyting va so‘nggi baholar ko‘rinadi.
+- **QR poster:** biznes bitta tugma bilan A4 poster chop etadi va uni kassa yoki eshikka yopishtiradi. Mijoz skanerlab obuna bo‘ladi: yangi mijoz jalb qilishning oddiy yo‘li.
+- Google uchun tuzilgan ma’lumot (JSON-LD) qo‘shildi: biznes manzili, reytingi, aksiya narxi. Bu qidiruvda yaxshiroq chiqishga yordam beradi.
 - Moderatsiya natijasi (tasdiqlandi yoki rad etildi va sababi) egasiga Telegram’da boradi.
 - «Biznes uchun» sahifasi va savol-javoblar yangi tizimga moslandi: avval bepul davr, keyin tarif.
 
