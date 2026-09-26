@@ -21,6 +21,7 @@ export const POST = route(async (request: Request, context: { params: Promise<{ 
   await runMaintenance(db);
 
   const { id } = await context.params;
-  const result = await claimDeal(db, { dealId: id, branchId: body.branchId, userId: user.id, idempotencyKey, secret: getConfig().hashSecret });
+  const config = getConfig();
+  const result = await claimDeal(db, { dealId: id, branchId: body.branchId, userId: user.id, idempotencyKey, secret: config.hashSecret, allowDemo: config.isDevelopment });
   return json({ data: result }, { status: result.replayed ? 200 : 201 });
 });

@@ -13,6 +13,8 @@ export type ClaimInput = {
   userId: string;
   idempotencyKey: string;
   secret: string;
+  /** Demo deals show how the site works; only development lets anyone claim them. */
+  allowDemo?: boolean;
   now?: Date;
 };
 
@@ -38,7 +40,7 @@ async function activeClaim(db: D1Database, dealId: string, userId: string, now: 
 async function diagnoseClaim(db: D1Database, input: ClaimInput, now: Date): Promise<never> {
   const deal = await db
     .prepare(`SELECT d.status, d.starts_at AS startsAt, d.ends_at AS endsAt, d.remaining_quantity AS remainingQuantity,
-        d.per_customer_limit AS perCustomerLimit, d.deleted_at AS deletedAt,
+        d.per_customer_limit AS perCustomerLimit, d.deleted_at AS deletedAt, (d.is_demo OR b.is_demo) AS isDemo,
         b.verification_status AS verificationStatus, b.suspended_at AS suspendedAt, b.deleted_at AS businessDeletedAt,
         (b.trial_ends_at > ?4 OR b.paid_until > ?4) AS onAir,
         (SELECT COUNT(*) FROM redemptions r WHERE r.deal_id = d.id AND r.user_id = ?2 AND r.status IN ('CLAIMED', 'COMPLETED')) AS existingClaims,
@@ -47,10 +49,11 @@ async function diagnoseClaim(db: D1Database, input: ClaimInput, now: Date): Prom
       FROM deals d JOIN businesses b ON b.id = d.business_id WHERE d.id = ?1`)
     .bind(input.dealId, input.userId, input.branchId, toDbTime(now))
     .first<{
-      status: string; startsAt: string; endsAt: string; remainingQuantity: number | null; perCustomerLimit: number; deletedAt: string | null;
+      status: string; startsAt: string; endsAt: string; remainingQuantity: number | null; perCustomerLimit: number; deletedAt: string | null; isDemo: number;
       verificationStatus: string; suspendedAt: string | null; businessDeletedAt: string | null; onAir: number; existingClaims: number; branchOk: number;
     }>();
   if (!deal || deal.deletedAt) throw new DomainError('NOT_FOUND');
+  if (deal.isDemo && !input.allowDemo) throw new DomainError('DEMO_DEAL');
   if (deal.verificationStatus !== 'VERIFIED' || deal.suspendedAt || deal.businessDeletedAt || !deal.onAir) throw new DomainError('BUSINESS_UNAVAILABLE');
   if (await activeClaim(db, input.dealId, input.userId, now)) throw new DomainError('ALREADY_CLAIMED');
   const policy = evaluateClaimPolicy(
@@ -95,11 +98,12 @@ export async function claimDeal(db: D1Database, input: ClaimInput): Promise<Clai
             AND (d.remaining_quantity IS NULL OR d.remaining_quantity > 0)
             AND b.verification_status = 'VERIFIED' AND b.suspended_at IS NULL AND b.deleted_at IS NULL
             AND (b.trial_ends_at > ?2 OR b.paid_until > ?2)
+            AND ((d.is_demo = 0 AND b.is_demo = 0) OR ?9 = 1)
             AND EXISTS (SELECT 1 FROM deal_branches db JOIN branches br ON br.id = db.branch_id
               WHERE db.deal_id = d.id AND db.branch_id = ?3 AND br.deleted_at IS NULL)
             AND NOT EXISTS (SELECT 1 FROM redemptions r WHERE r.deal_id = d.id AND r.user_id = ?4 AND r.status = 'CLAIMED')
             AND (SELECT COUNT(*) FROM redemptions r WHERE r.deal_id = d.id AND r.user_id = ?4 AND r.status IN ('CLAIMED', 'COMPLETED')) < d.per_customer_limit`)
-          .bind(id, nowDb, input.branchId, input.userId, input.idempotencyKey, codeHash, '', input.dealId),
+          .bind(id, nowDb, input.branchId, input.userId, input.idempotencyKey, codeHash, '', input.dealId, input.allowDemo ? 1 : 0),
         db.prepare(`UPDATE deals SET remaining_quantity = remaining_quantity - 1, updated_at = ?2
           WHERE id = ?3 AND remaining_quantity IS NOT NULL AND ${inserted}`)
           .bind(id, nowDb, input.dealId),

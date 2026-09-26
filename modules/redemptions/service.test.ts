@@ -39,6 +39,15 @@ describe('claiming a deal', () => {
     expect(await remaining(db)).toBe(0);
   });
 
+  it('keeps demo deals read-only unless demo claims are allowed (development)', async () => {
+    const db = await marketplace();
+    await db.prepare(`UPDATE deals SET is_demo = 1 WHERE id = 'deal'`).run();
+    expect(await errorCode(claim(db, 'alice', 'key-alice-000001'))).toBe('DEMO_DEAL');
+    expect(await remaining(db)).toBe(2);
+    const allowed = await claim(db, 'alice', 'key-alice-000002', { allowDemo: true });
+    expect(allowed.code).toMatch(/^[A-HJ-NP-Z2-9]{6}$/);
+  });
+
   it('rejects branches outside the deal, suspended businesses and ended deals', async () => {
     const db = await marketplace();
     expect(await errorCode(claim(db, 'alice', 'key-alice-000001', { branchId: 'brx' }))).toBe('BRANCH_UNAVAILABLE');

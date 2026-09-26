@@ -138,8 +138,10 @@ async function handleCallback(db: D1Database, query: TelegramCallbackQuery, deps
   const t = getDictionary(query.from.language_code?.startsWith('ru') ? 'ru' : 'uz');
   const [action, requestId] = (query.data ?? '').split(':');
   const chatId = query.message?.chat.id;
-  await deps.sender.answerCallback(query.id);
-  if (query.message && chatId !== undefined) await deps.sender.clearInlineKeyboard(chatId, query.message.message_id);
+  // Acknowledging the button only stops its spinner; Telegram rejects late
+  // answers, and that must never block the login itself.
+  await deps.sender.answerCallback(query.id).catch(() => undefined);
+  if (query.message && chatId !== undefined) await deps.sender.clearInlineKeyboard(chatId, query.message.message_id).catch(() => undefined);
   if (chatId === undefined || !requestId) return;
 
   if (action === 'confirm') {

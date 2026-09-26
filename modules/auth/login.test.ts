@@ -86,6 +86,25 @@ describe('Telegram login flow', () => {
     expect(role).toBe('ADMIN');
   });
 
+  it('confirms the login even when Telegram rejects the button acknowledgement', async () => {
+    const { sender } = fakeSender();
+    const first = await startLogin(db, { locale: 'uz' }, now);
+    await handleTelegramUpdate(db, message(710, { text: `/start ${first.token}` }), { sender, adminPhones: [], siteUrl: 'x', now });
+    await handleTelegramUpdate(db, message(710, { contact: { phone_number: '+998901110044', first_name: 'Dilnoza', user_id: 710 } }), { sender, adminPhones: [], siteUrl: 'x', now });
+    expect((await pollLogin(db, loginCookieValue(first.id, first.browserSecret), now)).status).toBe('APPROVED');
+
+    const failing: BotSender = {
+      ...sender,
+      async answerCallback() { throw new Error('Bad Request: query is too old'); },
+      async clearInlineKeyboard() { throw new Error('Bad Request: message is not modified'); },
+    };
+    const second = await startLogin(db, { locale: 'uz' }, now);
+    await handleTelegramUpdate(db, message(710, { text: `/start ${second.token}` }), { sender, adminPhones: [], siteUrl: 'x', now });
+    const update: TelegramUpdate = { update_id: updateId++, callback_query: { id: 'late', from: { id: 710, first_name: 'Dilnoza' }, message: { message_id: 9, chat: { id: 710, type: 'private' } }, data: `confirm:${second.id}` } };
+    await handleTelegramUpdate(db, update, { sender: failing, adminPhones: [], siteUrl: 'x', now });
+    expect((await pollLogin(db, loginCookieValue(second.id, second.browserSecret), now)).status).toBe('APPROVED');
+  });
+
   it('does not let another Telegram account hijack a started request', async () => {
     const { sent, sender } = fakeSender();
     const login = await startLogin(db, { locale: 'uz' }, now);

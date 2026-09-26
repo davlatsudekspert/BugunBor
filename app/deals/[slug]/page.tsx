@@ -74,7 +74,9 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
     followState(db, deal.business.id, user?.id ?? null),
   ]);
 
-  const claimable = deal.isPublic && deal.effective === 'LIVE' && deal.business.onAir;
+  // Demo deals show how the site works; outside development nobody can claim them.
+  const demoOnly = (deal.isDemo || deal.business.isDemo) && !getConfig().isDevelopment;
+  const claimable = deal.isPublic && deal.effective === 'LIVE' && deal.business.onAir && !demoOnly;
   const firstBranch = deal.branches[0];
   const moreDeals = business?.deals.filter((item) => item.id !== deal.id).slice(0, 3) ?? [];
   const statusTone = deal.effective === 'LIVE' ? 'bg-emerald-50 text-emerald-700' : deal.effective === 'SCHEDULED' ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-600';
@@ -245,7 +247,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
                   limitReached: t.errors.LIMIT_REACHED,
                   viewCode: t.claim.viewCode,
                   chooseBranch: t.deal.chooseBranch,
-                  unavailable: t.claim.unavailable,
+                  unavailable: demoOnly ? t.claim.demoOnly : t.claim.unavailable,
                   networkError: t.common.networkError,
                   qrAria: t.codes.qrAria,
                 }}

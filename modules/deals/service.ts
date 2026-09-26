@@ -225,7 +225,8 @@ export async function setDealTop(db: D1Database, actor: Actor & { dealId: string
   ]);
 }
 
+/** A new deal starts right away (live as soon as it is approved) and runs four hours. */
 export function defaultDealWindow(now = new Date()) {
-  const start = new Date(Math.ceil(now.getTime() / 900_000) * 900_000);
+  const start = new Date(Math.floor(now.getTime() / 300_000) * 300_000);
   return { start, end: addMinutes(start, 4 * 60) };
 }

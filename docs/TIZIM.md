@@ -127,7 +127,7 @@ Istalgan bosqichda: 10 daqiqa o‘tsa ▶ Muddati o‘tgan (EXPIRED); botda «Me
 1. Foydalanuvchi «Biznes qo‘shish» formasini to‘ldiradi: nom, kategoriya, shahar, telefon, asosiy filial manzili, tavsif. Biznes **Tekshiruvda** holatiga tushadi va foydalanuvchi uning **Egasi** bo‘ladi.
 2. Moderator biznesni tasdiqlaydi yoki sabab bilan rad etadi.
 3. Egasi yoki menejer aksiya yaratadi (qoralama) va tekshiruvga yuboradi.
-4. Moderator aksiyani tasdiqlaydi. Boshlanish vaqti kelganda aksiya saytda **Faol** bo‘ladi.
+4. Moderator aksiyani tasdiqlaydi. Boshlanish vaqti kelganda aksiya saytda **Faol** bo‘ladi. Yangi aksiyaning boshlanish vaqti standart bo‘yicha «hozir», ya’ni aksiya tasdiqlanishi bilan saytda chiqadi. Egasi keyinroq vaqtni ham tanlashi mumkin.
 5. Kassir «Kodni tekshirish» sahifasida kodni yozadi yoki QR-kodni kamera bilan skanerlaydi. Mijoz, aksiya va filial ma’lumotini ko‘rib «Tasdiqlash» ni bosadi.
 6. Biznes aksiyaga o‘z mahsulotining **haqiqiy fotosuratini**, profiliga esa logotip va muqova rasmini yuklaydi. Rasm telefonda siqiladi (WebP, 1280 px gacha). Rasm bo‘lmasa, chiroyli belgi (emoji + rang) ko‘rsatiladi.
    Demo aksiyalarda o‘sha turdagi erkin litsenziyali haqiqiy foto chiqadi (Wikimedia Commons). Mualliflar «Rasm mualliflari» sahifasida ko‘rsatiladi (batafsil: `docs/RASMLAR.md`).
@@ -169,6 +169,7 @@ Istalgan bosqichda: 10 daqiqa o‘tsa ▶ Muddati o‘tgan (EXPIRED); botda «Me
 | Murojaat formasi | Bitta IP dan 10 daqiqada 5 ta |
 | Rad etish sababi | Kamida 10 belgi |
 | Vaqt zonasi | Hamma vaqt Toshkent vaqtida ko‘rsatiladi (UTC+5), bazada UTC saqlanadi |
+| Demo aksiyalar | Faqat namuna uchun: production’da (`DEMO_SEED=true`) ko‘rinadi, lekin band qilib bo‘lmaydi. Band qilish faqat ishlab chiqish muhitida ishlaydi |
 
 **To‘lov:** mijoz biznesga joyida to‘laydi. BugunBor mijozdan pul olmaydi.
 

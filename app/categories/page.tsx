@@ -32,7 +32,7 @@ export default async function CategoriesPage() {
               <span className={cn('grid size-12 shrink-0 place-items-center rounded-xl', categoryColor(category.slug))}><CategoryIcon icon={category.icon} className="size-6" /></span>
               <span className="min-w-0">
                 <strong className="block truncate text-xl text-navy">{categoryName(category, locale)}</strong>
-                <small className="mt-1 block text-slate-500">{fmt(t.categories.count, { count: counts.get(category.slug) ?? 0 })}</small>
+                <small className="mt-1 block text-slate-500">{counts.get(category.slug) ? fmt(t.categories.count, { count: counts.get(category.slug) ?? 0 }) : t.home.categorySoon}</small>
               </span>
             </span>
             <ArrowRight className="size-5 shrink-0 text-primary transition group-hover:translate-x-1" aria-hidden />

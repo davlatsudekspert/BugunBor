@@ -1,6 +1,7 @@
 'use client';
 
 import { CheckCircle2, LoaderCircle, LogIn, QrCode as QrIcon, TicketCheck } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { fmt } from '@/lib/i18n/config';
@@ -50,6 +51,7 @@ export function ClaimPanel({ dealId, branches, loggedIn, loginHref, claimable, h
   const [error, setError] = useState<{ code: string; message: string } | null>(null);
   const [success, setSuccess] = useState<Success | null>(null);
   const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
+  const router = useRouter();
 
   if (hasActiveCode && !success) {
     return (
@@ -111,6 +113,7 @@ export function ClaimPanel({ dealId, branches, loggedIn, loginHref, claimable, h
       }
       setSuccess(payload.data);
       setState('idle');
+      router.refresh(); // the page's "N left" counter reflects this claim
     } catch {
       setState('error');
       setError({ code: 'NETWORK', message: labels.networkError });

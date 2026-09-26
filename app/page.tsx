@@ -61,7 +61,7 @@ export default async function Home() {
         <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[1.06fr_.94fr] lg:px-8 lg:py-20">
           <div>
             <Badge className="mb-5 h-7 border-orange-200 bg-orange-50 px-3 text-orange-700" variant="outline">
-              <Sparkles className="size-3.5" aria-hidden /> {fmt(t.home.badge, { city: cityLabel, count: deals.length })}
+              <Sparkles className="size-3.5" aria-hidden /> {fmt(deals.length ? t.home.badge : t.home.badgeSoon, { city: cityLabel, count: deals.length })}
             </Badge>
             <h1 className="max-w-3xl text-[clamp(2.6rem,6vw,5.4rem)] font-black leading-[.95] tracking-[-.055em] text-navy">
               {t.home.heroLead} <span className="text-primary">{t.home.heroAccent}</span> {t.home.heroTail}
@@ -120,6 +120,7 @@ export default async function Home() {
                 <div className="rounded-[24px] bg-[#f7efe5] p-8 text-center">
                   <p className="text-lg font-black text-navy">{t.home.emptyTitle}</p>
                   <p className="mt-2 text-sm text-slate-600">{t.home.emptyText}</p>
+                  <a href="/business" className="mt-5 inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline">{t.home.emptyBusiness} <ArrowRight className="size-4" aria-hidden /></a>
                 </div>
               )}
             </div>
@@ -153,7 +154,7 @@ export default async function Home() {
           {categories.slice(0, 8).map((category) => (
             <a key={category.slug} href={`/categories/${category.slug}`} className="group flex min-w-0 items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-lg">
               <span className={cn('grid size-11 shrink-0 place-items-center rounded-xl', categoryColor(category.slug))}><CategoryIcon icon={category.icon} className="size-5" /></span>
-              <span className="min-w-0"><strong className="block truncate text-navy">{categoryName(category, locale)}</strong><small className="text-slate-500">{fmt(t.home.categoryCount, { count: counts.get(category.slug) ?? 0 })}</small></span>
+              <span className="min-w-0"><strong className="block truncate text-navy">{categoryName(category, locale)}</strong><small className="text-slate-500">{counts.get(category.slug) ? fmt(t.home.categoryCount, { count: counts.get(category.slug) ?? 0 }) : t.home.categorySoon}</small></span>
             </a>
           ))}
         </div>
@@ -189,6 +190,7 @@ export default async function Home() {
             <MapPin className="mx-auto size-10 text-slate-300" aria-hidden />
             <h3 className="mt-4 text-xl font-bold text-navy">{t.home.emptyTitle}</h3>
             <p className="mt-2 text-slate-500">{t.home.emptyText}</p>
+            <a href="/business" className="mt-5 inline-flex items-center gap-1 font-bold text-primary hover:underline">{t.home.emptyBusiness} <ArrowRight className="size-4" aria-hidden /></a>
           </div>
         )}
       </section>

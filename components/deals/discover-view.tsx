@@ -135,9 +135,9 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
         ) : (
           <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
             <MapPin className="mx-auto size-10 text-slate-300" aria-hidden />
-            <h2 className="mt-4 text-xl font-bold text-navy">{category ? t.categories.emptyTitle : t.discover.emptyTitle}</h2>
-            <p className="mt-2 text-slate-500">{category ? t.categories.emptyText : t.discover.emptyText}</p>
-            {hasFilters ? <a href={basePath} className="mt-5 inline-flex font-bold text-primary">{t.discover.clear}</a> : null}
+            <h2 className="mt-4 text-xl font-bold text-navy">{category ? t.categories.emptyTitle : hasFilters ? t.discover.emptyTitle : t.home.emptyTitle}</h2>
+            <p className="mt-2 text-slate-500">{category ? t.categories.emptyText : hasFilters ? t.discover.emptyText : t.home.emptyText}</p>
+            {hasFilters ? <a href={basePath} className="mt-5 inline-flex font-bold text-primary">{t.discover.clear}</a> : <a href="/business" className="mt-5 inline-flex font-bold text-primary hover:underline">{t.home.emptyBusiness}</a>}
           </div>
         )}
       </section>
