@@ -1039,4 +1039,10 @@ class LEn extends L {
 
   @override
   String get bizDiscard => 'Leave';
+
+  @override
+  String get bizJoinSoon => 'Adding a business in the app works once the server is updated. For now you can add it on the website.';
+
+  @override
+  String get bizOnSite => 'Add on the website';
 }

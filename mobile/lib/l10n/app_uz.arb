@@ -556,5 +556,7 @@
   "promoAction": "Biznesimni qo‘shish",
   "promoHide": "Yashirish",
   "bizDiscardAsk": "Kiritilgan ma’lumotlar saqlanmaydi. Chiqasizmi?",
-  "bizDiscard": "Chiqish"
+  "bizDiscard": "Chiqish",
+  "bizJoinSoon": "Ilovadan biznes qo‘shish server yangilangach ishlaydi. Hozircha saytda qo‘shishingiz mumkin.",
+  "bizOnSite": "Saytda qo‘shish"
 }

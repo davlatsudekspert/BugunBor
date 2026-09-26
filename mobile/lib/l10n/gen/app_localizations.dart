@@ -2012,6 +2012,18 @@ abstract class L {
   /// In uz, this message translates to:
   /// **'Chiqish'**
   String get bizDiscard;
+
+  /// No description provided for @bizJoinSoon.
+  ///
+  /// In uz, this message translates to:
+  /// **'Ilovadan biznes qo‘shish server yangilangach ishlaydi. Hozircha saytda qo‘shishingiz mumkin.'**
+  String get bizJoinSoon;
+
+  /// No description provided for @bizOnSite.
+  ///
+  /// In uz, this message translates to:
+  /// **'Saytda qo‘shish'**
+  String get bizOnSite;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

@@ -51,7 +51,17 @@ class WorkspaceView extends ConsumerWidget {
         if (me.memberships.length > 1) ...[_BusinessPicker(me: me, current: membership), const SizedBox(height: Gap.md)],
         switch (workspace) {
           AsyncValue(:final value?) => _Workspace(workspace: value, membership: membership),
-          AsyncValue(:final error?) => StatePanel.error(context, error, onRetry: () => ref.invalidate(workspaceProvider(membership.businessId))),
+          // The site's workspace is always there as a way out.
+          AsyncValue(:final error?) => Column(
+            children: [
+              StatePanel.error(context, error, onRetry: () => ref.invalidate(workspaceProvider(membership.businessId))),
+              TextButton.icon(
+                onPressed: () => openSite(workspacePath(membership.businessId, '/business/dashboard'), lang: ref.read(settingsProvider).locale),
+                icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                label: Text(L.of(context).profileBusiness),
+              ),
+            ],
+          ),
           _ => const Column(
             children: [
               Skeleton(height: 96),

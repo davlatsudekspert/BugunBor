@@ -58,6 +58,19 @@ class JoinScreen extends ConsumerWidget {
               ),
       );
     }
+    // A server without category ids (not yet updated) cannot take the form.
+    if (configValue.categories.isEmpty || configValue.categories.any((category) => category.id.isEmpty)) {
+      final locale = ref.watch(settingsProvider.select((settings) => settings.locale));
+      return Scaffold(
+        appBar: AppBar(title: Text(l.addBusiness)),
+        body: StatePanel(
+          icon: Icons.storefront_outlined,
+          title: l.bizJoinSoon,
+          actionLabel: l.bizOnSite,
+          onAction: () => openSite('/business/onboarding', lang: locale),
+        ),
+      );
+    }
     // The server's limit, said before the form is filled in.
     if (meValue.memberships.where((item) => item.role == 'OWNER').length >= maxOwnedBusinesses) {
       return Scaffold(

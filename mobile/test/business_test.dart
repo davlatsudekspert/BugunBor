@@ -205,6 +205,29 @@ void main() {
     expect(find.byType(JoinScreen), findsNothing);
   });
 
+  testWidgets('before the server is updated, the app says so and offers the site', (tester) async {
+    final server = memberServer(() => [owner]);
+    final config = contractMap('config')..['minAppBuild'] = 0;
+    config['categories'] = [
+      for (final category in (config['categories'] as List).cast<Map<String, dynamic>>()) {...category}..remove('id'),
+    ];
+    server.routes['GET /api/v1/config'] = (_) => {'data': config};
+    server.routes['GET /api/v1/business/:id'] = (_) => const Reply(404, {
+      'error': {'code': 'NOT_FOUND'},
+    });
+    await pumpApp(tester, server: server, token: 't');
+    await tester.tap(find.text('Profil'));
+    await settle(tester);
+    expect(find.text('Topilmadi yoki endi mavjud emas.'), findsOneWidget);
+    expect(find.text('Biznes kabineti'), findsOneWidget);
+    final container = ProviderScope.containerOf(tester.element(find.byType(MaterialApp)));
+    unawaited(container.read(routerProvider).push('/business/new'));
+    await settle(tester);
+    expect(find.textContaining('server yangilangach ishlaydi'), findsOneWidget);
+    expect(find.text('Saytda qo‘shish'), findsOneWidget);
+    expect(find.text('Tekshiruvga yuborish'), findsNothing);
+  });
+
   testWidgets('an owner of five businesses is told the limit before filling anything in', (tester) async {
     final server = memberServer(
       () => [

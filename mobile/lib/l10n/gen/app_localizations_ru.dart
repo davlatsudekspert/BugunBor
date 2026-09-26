@@ -1040,4 +1040,10 @@ class LRu extends L {
 
   @override
   String get bizDiscard => 'Выйти';
+
+  @override
+  String get bizJoinSoon => 'Добавление бизнеса в приложении заработает после обновления сервера. Пока его можно добавить на сайте.';
+
+  @override
+  String get bizOnSite => 'Добавить на сайте';
 }

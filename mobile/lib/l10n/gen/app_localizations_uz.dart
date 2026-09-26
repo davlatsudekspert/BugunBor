@@ -1041,4 +1041,10 @@ class LUz extends L {
 
   @override
   String get bizDiscard => 'Chiqish';
+
+  @override
+  String get bizJoinSoon => 'Ilovadan biznes qo‘shish server yangilangach ishlaydi. Hozircha saytda qo‘shishingiz mumkin.';
+
+  @override
+  String get bizOnSite => 'Saytda qo‘shish';
 }

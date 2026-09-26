@@ -319,5 +319,7 @@
   "promoAction": "Add my business",
   "promoHide": "Hide",
   "bizDiscardAsk": "What you entered will not be saved. Leave?",
-  "bizDiscard": "Leave"
+  "bizDiscard": "Leave",
+  "bizJoinSoon": "Adding a business in the app works once the server is updated. For now you can add it on the website.",
+  "bizOnSite": "Add on the website"
 }
