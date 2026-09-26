@@ -14,6 +14,7 @@ import { listAdminBusinesses, type AdminListFilter } from '@/modules/admin/servi
 import { requireModerator } from '@/modules/auth/current';
 import { getBillingSettings } from '@/modules/billing/service';
 import { flagText, parseFlags } from '@/modules/moderation/auto';
+import { firstValues } from '@/lib/search-params';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -23,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
 const statusTone: Record<string, string> = { PENDING: 'bg-amber-50 text-amber-700', VERIFIED: 'bg-emerald-50 text-emerald-700', REJECTED: 'bg-red-50 text-red-700' };
 
 export default async function AdminBusinessesPage({ searchParams }: { searchParams: Promise<{ f?: string; q?: string }> }) {
-  const { f, q } = await searchParams;
+  const { f, q } = firstValues(await searchParams);
   const user = await requireModerator('/admin/businesses');
   const [{ t, locale }, db] = await Promise.all([getI18n(), getDb()]);
   const filter: AdminListFilter = f === 'all' || f === 'auto' ? f : 'pending';

@@ -5,6 +5,7 @@ import { DiscoverView, type DiscoverParams } from '@/components/deals/discover-v
 import { getDb } from '@/db/client';
 import { getI18n } from '@/lib/i18n/server';
 import { categoryName, listCategories } from '@/modules/catalog/queries';
+import { firstValues } from '@/lib/search-params';
 
 async function findCategory(slug: string) {
   const categories = await listCategories(await getDb());
@@ -22,5 +23,5 @@ export default async function CategoryPage({ params, searchParams }: { params: P
   const { slug } = await params;
   const category = await findCategory(slug);
   if (!category) notFound();
-  return <DiscoverView params={await searchParams} basePath={`/categories/${category.slug}`} category={category} />;
+  return <DiscoverView params={firstValues(await searchParams)} basePath={`/categories/${category.slug}`} category={category} />;
 }

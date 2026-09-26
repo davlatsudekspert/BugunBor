@@ -8,6 +8,7 @@ import { formatClock, parseDbTime } from '@/lib/time';
 import { requireWorkspace } from '@/modules/businesses/current';
 import { redeemedToday } from '@/modules/businesses/service';
 import { normalizeRedemptionCode } from '@/modules/redemptions/codes';
+import { firstValues } from '@/lib/search-params';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -15,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RedeemPage({ searchParams }: { searchParams: Promise<{ code?: string }> }) {
-  const { code } = await searchParams;
+  const { code } = firstValues(await searchParams);
   const ws = await requireWorkspace(`/business/redeem${code ? `?code=${encodeURIComponent(code)}` : ''}`, 'redemption.validate');
   const { t, db, membership } = ws;
   const today = await redeemedToday(db, membership.businessId);

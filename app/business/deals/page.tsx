@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { requireWorkspace } from '@/modules/businesses/current';
 import { listBusinessDeals, type BusinessDealRow } from '@/modules/deals/service';
 import { flagText, ownerFlags } from '@/modules/moderation/auto';
+import { firstValues } from '@/lib/search-params';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -45,7 +46,7 @@ const tone: Record<string, string> = {
 };
 
 export default async function BusinessDealsPage({ searchParams }: { searchParams: Promise<{ f?: string }> }) {
-  const { f } = await searchParams;
+  const { f } = firstValues(await searchParams);
   const ws = await requireWorkspace('/business/deals', 'deal.write');
   const { t, locale, db, membership } = ws;
   const filter: Filter = FILTERS.includes(f as Filter) ? (f as Filter) : 'all';

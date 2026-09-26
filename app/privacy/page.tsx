@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { getI18n } from '@/lib/i18n/server';
 import { LANGUAGE_NAMES, PRIVACY_LOCALES, isPrivacyLocale, privacyPolicy, type PrivacyLocale } from '@/lib/privacy';
 import { cn } from '@/lib/utils';
+import { firstValues } from '@/lib/search-params';
 
 type Props = { searchParams: Promise<{ lang?: string }> };
 
@@ -10,7 +11,7 @@ const LANG_ATTR: Record<PrivacyLocale, string> = { uz: 'uz-Latn', ru: 'ru', en: 
 
 /** ?lang=uz|ru|en picks the language; otherwise the site's own language. */
 async function chosenLocale(searchParams: Props['searchParams']): Promise<PrivacyLocale> {
-  const { lang } = await searchParams;
+  const { lang } = firstValues(await searchParams);
   if (isPrivacyLocale(lang)) return lang;
   return (await getI18n()).locale;
 }

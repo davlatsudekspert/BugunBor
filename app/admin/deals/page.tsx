@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { listAdminDeals } from '@/modules/admin/service';
 import { requireModerator } from '@/modules/auth/current';
 import { flagText, parseFlags } from '@/modules/moderation/auto';
+import { firstValues } from '@/lib/search-params';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -21,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
 type Filter = 'pending' | 'auto' | 'live' | 'all';
 
 export default async function AdminDealsPage({ searchParams }: { searchParams: Promise<{ f?: string }> }) {
-  const { f } = await searchParams;
+  const { f } = firstValues(await searchParams);
   const user = await requireModerator('/admin/deals');
   const [{ t, locale }, db] = await Promise.all([getI18n(), getDb()]);
   const filter: Filter = f === 'live' || f === 'all' || f === 'auto' ? f : 'pending';
