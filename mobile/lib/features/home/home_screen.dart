@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -322,12 +324,21 @@ class _CategoryGrid extends StatelessWidget {
     child: LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth / 4;
+        final categories = config.categories.take(8).toList();
+        // One size for all names: the longest decides, so no single name looks smaller.
+        final widest = categories.fold(0.0, (most, category) => math.max(most, textWidth(context, category.name(locale), _CategoryTile.labelStyle)));
+        final fit = math.min(1.0, (width - 2 * Gap.xs) / math.max(widest, 1));
         return Wrap(
           children: [
-            for (final category in config.categories.take(8))
+            for (final category in categories)
               SizedBox(
                 width: width,
-                child: _CategoryTile(icon: iconFor(category.icon), label: category.name(locale), onTap: () => context.go('/search?category=${category.slug}')),
+                child: _CategoryTile(
+                  icon: iconFor(category.icon),
+                  label: category.name(locale),
+                  fit: fit,
+                  onTap: () => context.go('/search?category=${category.slug}'),
+                ),
               ),
           ],
         );
@@ -337,10 +348,15 @@ class _CategoryGrid extends StatelessWidget {
 }
 
 class _CategoryTile extends StatelessWidget {
-  const _CategoryTile({required this.icon, required this.label, required this.onTap});
+  const _CategoryTile({required this.icon, required this.label, required this.fit, required this.onTap});
   final IconData icon;
   final String label;
+
+  /// Below 1 when the longest name in the grid needs a smaller size.
+  final double fit;
   final VoidCallback onTap;
+
+  static const labelStyle = TextStyle(fontSize: 13, fontWeight: FontWeight.w600, height: 1.2);
 
   @override
   Widget build(BuildContext context) => Semantics(
@@ -365,10 +381,10 @@ class _CategoryTile extends StatelessWidget {
               child: Icon(icon, color: context.accentText, size: 26),
             ),
             const SizedBox(height: 6),
-            // A long name gets a little smaller rather than broken in two.
+            // A long name makes all names a little smaller rather than being broken in two.
             FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(label, maxLines: 1, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, height: 1.2)),
+              child: Text(label, maxLines: 1, style: labelStyle.copyWith(fontSize: labelStyle.fontSize! * fit)),
             ),
           ],
         ),

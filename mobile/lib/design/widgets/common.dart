@@ -27,6 +27,19 @@ String errorText(BuildContext context, Object error) {
 
 String money(BuildContext context, int amount) => L.of(context).sum(groupDigits(amount));
 
+/// How wide [text] is drawn here in [style], with the phone's text size.
+double textWidth(BuildContext context, String text, TextStyle style) {
+  final painter = TextPainter(
+    text: TextSpan(text: text, style: DefaultTextStyle.of(context).style.merge(style)),
+    textDirection: Directionality.of(context),
+    textScaler: MediaQuery.textScalerOf(context),
+    maxLines: 1,
+  )..layout();
+  final width = painter.width;
+  painter.dispose();
+  return width;
+}
+
 /// A photo from the site (relative path) with a calm placeholder.
 class AppImage extends StatelessWidget {
   const AppImage(this.path, {super.key, this.fit = BoxFit.cover, this.small = false, this.icon = Icons.local_offer_outlined});

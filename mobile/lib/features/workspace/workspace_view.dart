@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -519,9 +521,15 @@ class _Stats extends StatelessWidget {
       (groupDigits(stats.followers), l.statFollowers),
       (stats.reviewCount > 0 ? '★ ${(stats.ratingBp / 100).toStringAsFixed(1)}' : '—', l.statRating),
     ];
+    const labelStyle = TextStyle(fontSize: 12, height: 1.25);
+    final words = tiles.expand((tile) => tile.$2.split(' '));
+    final longestWord = words.fold(0.0, (most, word) => math.max(most, textWidth(context, word, labelStyle)));
     return LayoutBuilder(
       builder: (context, constraints) => _Grid(
-        columns: _columnsFor(context, constraints.maxWidth, 100, 3),
+        columns: math.min(
+          _columnsFor(context, constraints.maxWidth, 100, 3),
+          ((constraints.maxWidth + Gap.sm) / (longestWord + 2 * Gap.md + 2 + Gap.sm)).floor().clamp(1, 3),
+        ),
         gap: Gap.sm,
         children: [
           for (final (value, label) in tiles)
@@ -541,7 +549,7 @@ class _Stats extends StatelessWidget {
                     child: Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
                   ),
                   const SizedBox(height: 2),
-                  Text(label, style: TextStyle(color: context.mutedText, fontSize: 12, height: 1.25)),
+                  Text(label, style: labelStyle.copyWith(color: context.mutedText)),
                 ],
               ),
             ),

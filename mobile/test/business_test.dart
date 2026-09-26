@@ -8,6 +8,7 @@ import 'package:bugunbor/app/router.dart';
 import 'package:bugunbor/features/join/join_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -350,6 +351,18 @@ void main() {
     expect(find.text('Biznes profili'), findsOneWidget);
     expect(find.text('Ikkinchi'), findsWidgets);
     expect(find.text('Kafe'), findsNothing);
+  });
+
+  testWidgets('business numbers never cut a word in two (Russian, 390 px)', (tester) async {
+    await pumpApp(tester, server: memberServer(() => [owner]), token: 't', locale: 'ru');
+    await tester.tap(find.text('Профиль'));
+    await settle(tester);
+    await scrollTo(tester, find.text('Забронировано сегодня'));
+    final label = tester.renderObject<RenderParagraph>(find.text('Забронировано сегодня'));
+    final word = label.getBoxesForSelection(const TextSelection(baseOffset: 0, extentOffset: 'Забронировано'.length));
+    expect(word.map((box) => box.top).toSet(), hasLength(1));
+    // Two tiles per row: the first and third numbers are on different rows.
+    expect(tester.getTopLeft(find.text('Использовано сегодня')).dy, greaterThan(tester.getTopLeft(find.text('Активные акции')).dy));
   });
 
   for (final theme in ['light', 'dark']) {
