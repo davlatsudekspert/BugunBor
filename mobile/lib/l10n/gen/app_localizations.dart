@@ -2642,6 +2642,12 @@ abstract class L {
   /// In uz, this message translates to:
   /// **'Qachon'**
   String get dealWhen;
+
+  /// No description provided for @dealsNeedUpdate.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiyalarni ilovada ko‘rish va boshqarish server yangilangach ishlaydi. Hozircha saytdagi biznes kabinetidan foydalaning.'**
+  String get dealsNeedUpdate;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

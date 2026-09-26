@@ -727,5 +727,6 @@
   "bizDeals": "Aksiyalar",
   "bizSiteHint": "Filiallar, jamoa va profil rasmlari saytdagi kabinetda boshqariladi",
   "dealPhotoCameraDenied": "Kameraga ruxsat berilmadi — rasmni galereyadan tanlang yoki telefon sozlamalarida kameraga ruxsat bering.",
-  "dealWhen": "Qachon"
+  "dealWhen": "Qachon",
+  "dealsNeedUpdate": "Aksiyalarni ilovada ko‘rish va boshqarish server yangilangach ishlaydi. Hozircha saytdagi biznes kabinetidan foydalaning."
 }

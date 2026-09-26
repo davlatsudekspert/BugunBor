@@ -432,6 +432,11 @@ void main() {
     await go(tester, '/business/biz/deals/new');
     expect(find.textContaining('server yangilangach ishlaydi'), findsOneWidget);
     expect(find.text('Saytda qo‘shish'), findsOneWidget);
+    // Nor is the list asked for; the site's workspace is offered instead.
+    await go(tester, '/business/biz/deals');
+    expect(find.textContaining('boshqarish server yangilangach ishlaydi'), findsOneWidget);
+    expect(find.text('Biznes kabineti'), findsOneWidget);
+    expect(server.requests.where((request) => request.path == '/api/v1/business/biz/deals'), isEmpty);
   });
 
   for (final theme in ['light', 'dark']) {

@@ -1372,4 +1372,7 @@ class LEn extends L {
 
   @override
   String get dealWhen => 'When';
+
+  @override
+  String get dealsNeedUpdate => 'Viewing and running deals in the app works once the server is updated. For now, use the business workspace on the website.';
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/links.dart';
 import '../../app/providers.dart';
 import '../../core/time.dart';
 import '../../data/models.dart';
@@ -199,8 +200,23 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
+    final config = ref.watch(configProvider).value;
+    // A server without the deal rules (not yet updated) has no deals list
+    // either: the site's workspace still works.
+    if (config != null && config.deal.visuals.isEmpty) {
+      final locale = ref.watch(settingsProvider.select((settings) => settings.locale));
+      return Scaffold(
+        appBar: AppBar(title: Text(l.dealsTitle)),
+        body: StatePanel(
+          icon: Icons.local_offer_outlined,
+          title: l.dealsNeedUpdate,
+          actionLabel: l.profileBusiness,
+          onAction: () => openSite(workspacePath(widget.businessId, '/business/deals'), lang: locale),
+        ),
+      );
+    }
     final deals = ref.watch(businessDealsProvider(widget.businessId));
-    final visuals = ref.watch(configProvider).value?.deal ?? const DealRules();
+    final visuals = config?.deal ?? const DealRules();
     return Scaffold(
       appBar: AppBar(title: Text(l.dealsTitle)),
       floatingActionButton: FloatingActionButton.extended(

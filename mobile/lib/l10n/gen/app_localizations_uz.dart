@@ -1374,4 +1374,7 @@ class LUz extends L {
 
   @override
   String get dealWhen => 'Qachon';
+
+  @override
+  String get dealsNeedUpdate => 'Aksiyalarni ilovada ko‘rish va boshqarish server yangilangach ishlaydi. Hozircha saytdagi biznes kabinetidan foydalaning.';
 }

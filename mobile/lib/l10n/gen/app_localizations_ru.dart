@@ -1373,4 +1373,7 @@ class LRu extends L {
 
   @override
   String get dealWhen => 'Когда';
+
+  @override
+  String get dealsNeedUpdate => 'Просмотр и управление акциями в приложении заработают после обновления сервера. Пока пользуйтесь бизнес-кабинетом на сайте.';
 }

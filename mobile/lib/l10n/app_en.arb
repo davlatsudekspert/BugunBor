@@ -424,5 +424,6 @@
   "bizDeals": "Deals",
   "bizSiteHint": "Branches, team and profile photos are managed in the website workspace",
   "dealPhotoCameraDenied": "No camera access — pick a photo from the gallery or allow the camera in your phone settings.",
-  "dealWhen": "When"
+  "dealWhen": "When",
+  "dealsNeedUpdate": "Viewing and running deals in the app works once the server is updated. For now, use the business workspace on the website."
 }
