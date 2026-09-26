@@ -629,7 +629,7 @@ class LRu extends L {
   String get updateTitle => 'Обновите приложение';
 
   @override
-  String get updateText => 'Эта версия больше не поддерживается. Обновите в Play Маркете.';
+  String get updateText => 'Эта версия больше не поддерживается — установите новую версию приложения.';
 
   @override
   String get updateAction => 'Обновить';
@@ -1376,4 +1376,13 @@ class LRu extends L {
 
   @override
   String get dealsNeedUpdate => 'Просмотр и управление акциями в приложении заработают после обновления сервера. Пока пользуйтесь бизнес-кабинетом на сайте.';
+
+  @override
+  String get newVersionTitle => 'Есть новая версия';
+
+  @override
+  String get newVersionText => 'Вышла новая версия приложения — обновите его. Аккаунт и данные сохранятся.';
+
+  @override
+  String get newVersionAction => 'Обновить';
 }

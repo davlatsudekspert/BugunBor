@@ -250,7 +250,7 @@ export default async function Home() {
               <p className="mt-1 max-w-xl leading-7 text-slate-600">{t.appStores.text}</p>
             </div>
           </div>
-          <AppBadges android={stores.android} t={t} />
+          <AppBadges stores={stores} t={t} />
         </div>
       </section>
     </main>

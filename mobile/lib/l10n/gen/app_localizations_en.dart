@@ -628,7 +628,7 @@ class LEn extends L {
   String get updateTitle => 'Please update the app';
 
   @override
-  String get updateText => 'This version is no longer supported. Please update from Google Play.';
+  String get updateText => 'This version is no longer supported — please install the new version of the app.';
 
   @override
   String get updateAction => 'Update';
@@ -1375,4 +1375,13 @@ class LEn extends L {
 
   @override
   String get dealsNeedUpdate => 'Viewing and running deals in the app works once the server is updated. For now, use the business workspace on the website.';
+
+  @override
+  String get newVersionTitle => 'A new version is out';
+
+  @override
+  String get newVersionText => 'A new version of the app is out — update it. Your account and data stay.';
+
+  @override
+  String get newVersionAction => 'Update';
 }

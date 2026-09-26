@@ -300,7 +300,7 @@
   "cashierNext": "Keyingi mijoz",
   "cameraDenied": "Kameraga ruxsat berilmadi — kodni qo‘lda kiriting.",
   "updateTitle": "Ilovani yangilang",
-  "updateText": "Bu versiya endi qo‘llab-quvvatlanmaydi. Play Market’dan yangilang.",
+  "updateText": "Bu versiya endi qo‘llab-quvvatlanmaydi — ilovaning yangi versiyasini o‘rnating.",
   "updateAction": "Yangilash",
   "offline": "Internet yo‘q — oxirgi ma’lumot ko‘rsatilmoqda",
   "open": "Ochish",
@@ -728,5 +728,8 @@
   "bizSiteHint": "Filiallar, jamoa va profil rasmlari saytdagi kabinetda boshqariladi",
   "dealPhotoCameraDenied": "Kameraga ruxsat berilmadi — rasmni galereyadan tanlang yoki telefon sozlamalarida kameraga ruxsat bering.",
   "dealWhen": "Qachon",
-  "dealsNeedUpdate": "Aksiyalarni ilovada ko‘rish va boshqarish server yangilangach ishlaydi. Hozircha saytdagi biznes kabinetidan foydalaning."
+  "dealsNeedUpdate": "Aksiyalarni ilovada ko‘rish va boshqarish server yangilangach ishlaydi. Hozircha saytdagi biznes kabinetidan foydalaning.",
+  "newVersionTitle": "Yangi versiya bor",
+  "newVersionText": "Ilovaning yangi versiyasi chiqdi — yangilab oling. Hisobingiz va ma’lumotlaringiz saqlanadi.",
+  "newVersionAction": "Yangilash"
 }

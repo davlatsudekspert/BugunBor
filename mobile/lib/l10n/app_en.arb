@@ -195,7 +195,7 @@
   "cashierNext": "Next customer",
   "cameraDenied": "No camera access — enter the code manually.",
   "updateTitle": "Please update the app",
-  "updateText": "This version is no longer supported. Please update from Google Play.",
+  "updateText": "This version is no longer supported — please install the new version of the app.",
   "updateAction": "Update",
   "offline": "Offline — showing the latest data",
   "open": "Open",
@@ -425,5 +425,8 @@
   "bizSiteHint": "Branches, team and profile photos are managed in the website workspace",
   "dealPhotoCameraDenied": "No camera access — pick a photo from the gallery or allow the camera in your phone settings.",
   "dealWhen": "When",
-  "dealsNeedUpdate": "Viewing and running deals in the app works once the server is updated. For now, use the business workspace on the website."
+  "dealsNeedUpdate": "Viewing and running deals in the app works once the server is updated. For now, use the business workspace on the website.",
+  "newVersionTitle": "A new version is out",
+  "newVersionText": "A new version of the app is out — update it. Your account and data stay.",
+  "newVersionAction": "Update"
 }

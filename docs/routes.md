@@ -17,6 +17,8 @@
 | `/privacy` | Privacy policy in uz/ru/en (`?lang=`), text in `lib/privacy.ts` |
 | `/delete-account` | How to delete an account; signed-in visitors can delete right there |
 | `/oferta` | Public offer for business plans: prices, payment, refunds (`#qaytarish`), company details |
+| `/ilova` | The phone app: APK download with install steps, Google Play, or «Tez kunda» (Admin → Sozlamalar → «Mobil ilova») |
+| `/ilova/yuklash` | Download button: redirects to the newest GitHub release APK (`?v=32` for 32-bit phones) while the APK is served |
 | `/offline` | Shown by the service worker without a connection |
 | `/r/[code]` | QR target: opens the staff check page with the code filled in |
 | `/lang/[locale]` | Switches language (`uz`, `ru`) and returns |

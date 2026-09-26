@@ -1266,7 +1266,7 @@ abstract class L {
   /// No description provided for @updateText.
   ///
   /// In uz, this message translates to:
-  /// **'Bu versiya endi qo‘llab-quvvatlanmaydi. Play Market’dan yangilang.'**
+  /// **'Bu versiya endi qo‘llab-quvvatlanmaydi — ilovaning yangi versiyasini o‘rnating.'**
   String get updateText;
 
   /// No description provided for @updateAction.
@@ -2648,6 +2648,24 @@ abstract class L {
   /// In uz, this message translates to:
   /// **'Aksiyalarni ilovada ko‘rish va boshqarish server yangilangach ishlaydi. Hozircha saytdagi biznes kabinetidan foydalaning.'**
   String get dealsNeedUpdate;
+
+  /// No description provided for @newVersionTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yangi versiya bor'**
+  String get newVersionTitle;
+
+  /// No description provided for @newVersionText.
+  ///
+  /// In uz, this message translates to:
+  /// **'Ilovaning yangi versiyasi chiqdi — yangilab oling. Hisobingiz va ma’lumotlaringiz saqlanadi.'**
+  String get newVersionText;
+
+  /// No description provided for @newVersionAction.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yangilash'**
+  String get newVersionAction;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

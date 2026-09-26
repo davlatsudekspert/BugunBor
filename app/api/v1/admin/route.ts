@@ -11,7 +11,7 @@ import { cancelBillingRequest, confirmBillingRequest, grantPlan, grantTrial, set
 import { BILLING_PERIODS, TRIAL_MONTH_OPTIONS } from '@/modules/billing/pricing';
 import { setReviewHidden } from '@/modules/engagement/reviews';
 import { updateCompanyInfo } from '@/modules/company';
-import { ANDROID_STORE_SETTING, forgetAppStores } from '@/modules/app-stores';
+import { ANDROID_MODES, ANDROID_MODE_SETTING, forgetAppStores } from '@/modules/app-stores';
 import { DEMO_SETTING, forgetDemoSetting } from '@/modules/demo';
 import { DomainError } from '@/modules/errors';
 import { AUTO_SETTING_KEYS, autoModerateBusiness, autoModerateDeal, autoModeratePendingDeals } from '@/modules/moderation/auto';
@@ -63,7 +63,7 @@ const actionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('automation.update'), key: z.enum(['businesses', 'deals', 'reviews']), on: z.boolean() }),
   z.object({ type: z.literal('tariffs.update'), on: z.boolean().optional(), freePlan: planCode.optional() }),
   z.object({ type: z.literal('demo.update'), on: z.boolean() }),
-  z.object({ type: z.literal('app.android'), on: z.boolean() }),
+  z.object({ type: z.literal('app.android'), mode: z.enum(ANDROID_MODES) }),
   z.object({
     type: z.literal('company.update'),
     legalName: z.string().trim().max(160),
@@ -150,8 +150,8 @@ export const POST = route(async (request: Request) => {
       return json({ data: { ok: true } });
     }
     case 'app.android':
-      // The site's "Android ilova" button opens Google Play only while this is on.
-      await updateSettings(db, { actorId, values: { [ANDROID_STORE_SETTING]: action.on ? '1' : '0' } });
+      // Where the site's "Android ilova" button goes: nowhere yet, the APK page, or Google Play.
+      await updateSettings(db, { actorId, values: { [ANDROID_MODE_SETTING]: action.mode } });
       forgetAppStores(db);
       return json({ data: { ok: true } });
     case 'tariffs.update': {

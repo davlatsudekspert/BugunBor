@@ -8,7 +8,7 @@ export const PAGE_CACHE_SECONDS = 30;
 
 const PUBLIC_PAGES = [
   /^\/$/, /^\/discover$/, /^\/categories(?:\/[a-z0-9-]+)?$/, /^\/deals\/[^/]+$/, /^\/businesses\/[^/]+$/,
-  /^\/business$/, /^\/how-it-works$/, /^\/faq$/, /^\/terms$/, /^\/privacy$/, /^\/oferta$/, /^\/credits$/,
+  /^\/business$/, /^\/how-it-works$/, /^\/faq$/, /^\/terms$/, /^\/privacy$/, /^\/oferta$/, /^\/credits$/, /^\/ilova$/,
 ];
 
 /** Cookies that change what a guest sees; they are part of the cache key. */

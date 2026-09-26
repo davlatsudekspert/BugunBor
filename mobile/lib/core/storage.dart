@@ -61,6 +61,10 @@ class Prefs {
   String? get businessId => _prefs.getString('business_id');
   set businessId(String? value) => value == null ? _prefs.remove('business_id') : _prefs.setString('business_id', value);
 
+  /// The newest build whose "new version" card was closed (0: none).
+  int get dismissedUpdate => _prefs.getInt('dismissed_update') ?? 0;
+  set dismissedUpdate(int value) => _prefs.setInt('dismissed_update', value);
+
   /// When the home screen's "add your business" card was hidden.
   DateTime? get promoHiddenAt {
     final millis = _prefs.getInt('promo_hidden_at');

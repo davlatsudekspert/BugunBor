@@ -78,14 +78,20 @@ Reja: `docs/ILOVA-REJA.md`.
 - [x] **PR #7 `main`ga birlashtirildi** (2026-09-26): CI yashil (check, e2e, build, verify).
 - [x] **Saytda ilova bo'limi** (2026-09-26)
   - Bosh sahifada «BugunBor ilovasi» bo'limi va sayt pastida «Ilovani yuklab oling».
-  - «Android ilova» Google Play sahifasini (`uz.bugunbor.app`) ochadi, lekin faqat admin
-    Admin → Sozlamalar → «Mobil ilova»da «Google Play'da chiqdi» ni yoqqandan keyin.
-    Unga qadar «Tez kunda Google Play'da» deb turadi. App Store: «Tez kunda».
+  - `bugunbor.uz/ilova`: yuklab olish tugmasi va o'rnatish yo'riqnomasi (uz/ru).
+  - «Android ilova» tugmasi Admin → Sozlamalar → «Mobil ilova»da tanlanganiga qarab ishlaydi:
+    «Tez kunda» (standart), «Saytdan APK» (GitHub'dagi eng so'nggi reliz) yoki «Google Play».
+    App Store: «Tez kunda».
+  - APK'ni chiqarish: GitHub → Actions → «App» → Run workflow → `publish_apk`. Faqat egasi ishga
+    tushiradi; testlar, E2E va tekshirilgan build'dan keyin, faqat egasining upload kaliti bilan
+    (debug kalit bilan imzolangan APK hech qachon chiqmaydi). 64-bit va 32-bit APK, versionCode = run raqami.
 
 ## Navbatda
 
 - [ ] Egasi kalitlarni qo'ygach: imzolangan build, qo'lda APK sinovi, Internal testing qoralamasi.
-- [ ] Ilova Google Play'da chiqqach: Admin → Sozlamalar → «Mobil ilova» → «Google Play'da chiqdi».
+- [ ] Saytdan APK: egasi upload kalitini yaratib GitHub secret'lariga qo'yadi (pastda) → Actions → «App» →
+  `publish_apk` → Admin → Sozlamalar → «Mobil ilova» → «Saytdan APK».
+- [ ] Ilova Google Play'da chiqqach: Admin → Sozlamalar → «Mobil ilova» → «Google Play».
 - [ ] Qo'llanma videolari (ilovadan): ro'yxatdan o'tish, biznes qo'shish, aksiya qo'shish.
 
 ## Egasidan kerak
@@ -96,6 +102,23 @@ Reja: `docs/ILOVA-REJA.md`.
 - `REVIEW_LOGIN_CODE`: Google tekshiruvchisi uchun kod, 12+ belgi.
 - `ANDROID_CERT_SHA256`: Play Console → App signing'dagi SHA-256 barmoq izlari.
 - `MIN_APP_BUILD`: ixtiyoriy. Eski ilovani yangilashga majburlash uchun.
+
+### Upload kalitini yaratish (bir marta; kalit faqat sizda qoladi)
+
+Kalitsiz saytga APK chiqmaydi: boshqa kalit bilan imzolangan versiyani telefon yangilanish sifatida qabul qilmaydi.
+
+1. Kompyuterda Java bo'lsin (Android Studio yoki https://adoptium.net dan Temurin JDK).
+2. Kalitni yarating (parollarni o'zingiz o'ylab toping va saqlab qo'ying):
+   `keytool -genkeypair -v -keystore bugunbor-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias bugunbor`
+3. Faylni base64 qiling:
+   - Windows (PowerShell): `[Convert]::ToBase64String([IO.File]::ReadAllBytes("bugunbor-upload.jks")) | Set-Clipboard`
+   - macOS: `base64 -i bugunbor-upload.jks | pbcopy`
+4. GitHub → Settings → Secrets and variables → Actions → New repository secret: pastdagi 4 ta `ANDROID_UPLOAD_*`.
+5. `bugunbor-upload.jks` faylini va parollarni xavfsiz joyda saqlang (masalan, ikki joyda zaxira).
+   Yo'qolsa, ilovani yangilab bo'lmaydi. Hech kimga, chatga yoki repoga bermang.
+
+Google Play'ga chiqqanda: Play Console → App integrity → App signing'da **o'z kalitingizni yuklash**ni tanlang
+(«Export and upload a key from Java keystore»). Shunda saytdan o'rnatganlar ilovani Play orqali yangilay oladi.
 
 ### GitHub secret'lari (ilova, Settings → Secrets and variables → Actions)
 

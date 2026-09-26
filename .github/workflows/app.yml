@@ -16,6 +16,10 @@ on:
         description: Upload the signed bundle to Play Internal testing as a draft
         type: boolean
         default: false
+      publish_apk:
+        description: Publish the signed APKs as a GitHub release (bugunbor.uz/ilova gives the newest)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -187,3 +191,73 @@ jobs:
           track: internal
           status: draft
           whatsNewDirectory: whatsnew
+
+  apk-release:
+    # The site's download page (bugunbor.uz/ilova) serves the newest release of
+    # this public repository. Only when the owner asks for it, after the tests,
+    # E2E and the checked build, and only signed with the owner's upload key:
+    # a debug-signed APK is never published (it could never be updated).
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_apk
+    needs: [e2e, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: mobile
+    env:
+      UPLOAD_KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+      BUGUNBOR_UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
+      BUGUNBOR_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+      BUGUNBOR_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+      GOOGLE_SERVICES_JSON: ${{ secrets.ANDROID_GOOGLE_SERVICES_JSON }}
+      EXPECT_UPLOAD_KEY: 'true'
+    steps:
+      - name: The upload key is set
+        working-directory: .
+        run: |
+          [ -n "$UPLOAD_KEYSTORE_BASE64" ] || { echo "ANDROID_UPLOAD_KEYSTORE_BASE64 and the other ANDROID_UPLOAD_* secrets are missing (docs/ILOVA-HOLAT.md)"; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Upload key (from secrets only; never stored in the repository)
+        run: |
+          echo "$UPLOAD_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload.jks"
+          echo "BUGUNBOR_UPLOAD_KEYSTORE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+      - name: Firebase client settings for push (optional)
+        if: env.GOOGLE_SERVICES_JSON != ''
+        run: |
+          echo "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          echo "PUSH_ENABLED=true" >> "$GITHUB_ENV"
+      # One APK per CPU, each with versionCode = run number (no per-ABI offset),
+      # so a later Google Play version with a higher run number updates it.
+      - name: Build the 64-bit and 32-bit APKs
+        run: |
+          flags="--release --build-number=${{ github.run_number }} --build-name=$APP_VERSION \
+            --dart-define=APP_BUILD=${{ github.run_number }} --dart-define=APP_VERSION=$APP_VERSION \
+            --dart-define=PUSH_ENABLED=${PUSH_ENABLED:-false}"
+          mkdir -p out
+          flutter build apk $flags --target-platform android-arm64
+          ./tool/check_release.sh build/app/outputs/flutter-apk/app-release.apk
+          cp build/app/outputs/flutter-apk/app-release.apk out/BugunBor-arm64.apk
+          flutter build apk $flags --target-platform android-arm
+          ./tool/check_release.sh build/app/outputs/flutter-apk/app-release.apk
+          cp build/app/outputs/flutter-apk/app-release.apk out/BugunBor-armv7.apk
+          (cd out && sha256sum *.apk > SHA256SUMS.txt && cat SHA256SUMS.txt && ls -la)
+      - name: GitHub release (the newest is what the site gives)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="app-v$APP_VERSION-${{ github.run_number }}"
+          gh release create "$tag" out/BugunBor-arm64.apk out/BugunBor-armv7.apk out/SHA256SUMS.txt \
+            --target "${{ github.sha }}" --title "BugunBor $APP_VERSION (${{ github.run_number }})" \
+            --notes-file store/whatsnew/uz.txt --latest

@@ -629,7 +629,7 @@ class LUz extends L {
   String get updateTitle => 'Ilovani yangilang';
 
   @override
-  String get updateText => 'Bu versiya endi qo‘llab-quvvatlanmaydi. Play Market’dan yangilang.';
+  String get updateText => 'Bu versiya endi qo‘llab-quvvatlanmaydi — ilovaning yangi versiyasini o‘rnating.';
 
   @override
   String get updateAction => 'Yangilash';
@@ -1377,4 +1377,13 @@ class LUz extends L {
 
   @override
   String get dealsNeedUpdate => 'Aksiyalarni ilovada ko‘rish va boshqarish server yangilangach ishlaydi. Hozircha saytdagi biznes kabinetidan foydalaning.';
+
+  @override
+  String get newVersionTitle => 'Yangi versiya bor';
+
+  @override
+  String get newVersionText => 'Ilovaning yangi versiyasi chiqdi — yangilab oling. Hisobingiz va ma’lumotlaringiz saqlanadi.';
+
+  @override
+  String get newVersionAction => 'Yangilash';
 }

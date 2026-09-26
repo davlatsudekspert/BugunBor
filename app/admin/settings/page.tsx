@@ -8,7 +8,7 @@ import { getDb } from '@/db/client';
 import { DEFAULT_HASH_SECRET, getConfig, isTelegramConfigured } from '@/lib/env';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
-import { GOOGLE_PLAY_URL, appStores, forgetAppStores } from '@/modules/app-stores';
+import { ANDROID_MODES, APK_FILES, APK_RELEASE_BASE, GOOGLE_PLAY_URL, appStores, forgetAppStores } from '@/modules/app-stores';
 import { requireAdmin } from '@/modules/auth/current';
 import { companyComplete, getCompanyInfo } from '@/modules/company';
 import { demoEnabled } from '@/modules/demo';
@@ -147,16 +147,25 @@ export default async function AdminSettingsPage() {
 
       <section id="app" className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="flex items-center gap-2 text-lg font-black text-navy"><Smartphone className="size-5 text-primary" aria-hidden /> {s.appTitle}</h2>
-        <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-navy">
-          {stores.android ? <CheckCircle2 className="size-4 text-emerald-600" aria-hidden /> : <CircleAlert className="size-4 text-amber-600" aria-hidden />}
-          {stores.android ? s.appAndroidOn : s.appAndroidOff}
-        </p>
-        <p className="mt-1 text-sm leading-6 text-slate-600">{s.appAndroidHint}</p>
-        <p className="mt-1 break-all font-mono text-xs text-slate-600">{GOOGLE_PLAY_URL}</p>
-        <div className="mt-3">
-          <ActionButton payload={{ type: 'app.android', on: !stores.android }} label={stores.android ? s.appAndroidTurnOff : s.appAndroidTurnOn} tone={stores.android ? 'neutral' : 'success'} networkError={t.common.networkError} />
-        </div>
-        <p className="mt-3 text-xs text-slate-500">{s.appIosNote}</p>
+        <p className="mt-2 text-sm leading-6 text-slate-600">{s.appAndroidText}</p>
+        <ul className="mt-3 divide-y divide-slate-100">
+          {ANDROID_MODES.map((mode) => (
+            <li key={mode} className="flex flex-wrap items-center justify-between gap-3 py-3">
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-navy">{s.appModes[mode].title}</span>
+                <span className="block text-xs leading-5 text-slate-500">{s.appModes[mode].hint}</span>
+                {mode === 'apk' ? <span className="block break-all font-mono text-xs text-slate-500">{APK_RELEASE_BASE}/{APK_FILES.arm64}</span> : null}
+                {mode === 'play' ? <span className="block break-all font-mono text-xs text-slate-500">{GOOGLE_PLAY_URL}</span> : null}
+              </span>
+              {stores.mode === mode ? (
+                <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700"><CheckCircle2 className="size-3.5" aria-hidden /> {s.appModeCurrent}</span>
+              ) : (
+                <ActionButton payload={{ type: 'app.android', mode }} label={s.appModeChoose} tone="neutral" networkError={t.common.networkError} />
+              )}
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2 text-xs text-slate-500">{s.appIosNote}</p>
       </section>
     </AdminShell>
   );

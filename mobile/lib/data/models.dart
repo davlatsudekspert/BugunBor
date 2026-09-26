@@ -55,6 +55,21 @@ class City {
   String name(String locale) => locale == 'ru' ? nameRu : nameUz;
 }
 
+/// A newer app build and the page to get it from (the site's download page).
+class AppUpdate {
+  const AppUpdate({required this.build, required this.url});
+  final int build;
+  final String url;
+
+  static AppUpdate? fromJson(Object? json) {
+    if (json is! Map) return null;
+    final build = json['build'];
+    final url = json['url'];
+    if (build is! num || url is! String || url.isEmpty) return null;
+    return AppUpdate(build: build.toInt(), url: url);
+  }
+}
+
 class AppConfig {
   const AppConfig({
     required this.demo,
@@ -67,6 +82,7 @@ class AppConfig {
     required this.cities,
     required this.reportReasons,
     this.deal = const DealRules(),
+    this.update,
   });
 
   factory AppConfig.fromJson(Json json) => AppConfig(
@@ -80,6 +96,7 @@ class AppConfig {
     cities: _list(json['cities'], City.fromJson),
     reportReasons: (json['reportReasons'] as List?)?.map((reason) => '$reason').toList() ?? const [],
     deal: json['deal'] is Map ? DealRules.fromJson(_map(json['deal'])) : const DealRules(),
+    update: AppUpdate.fromJson(json['update']),
   );
 
   final bool demo;
@@ -94,6 +111,9 @@ class AppConfig {
 
   /// Rules and pictures for the deal form (empty visuals: an older server).
   final DealRules deal;
+
+  /// The newest app installed from the site (null: none, or Google Play updates it).
+  final AppUpdate? update;
 
   City? city(String? slug) => cities.where((city) => city.slug == slug).firstOrNull;
   Category? category(String? slug) => categories.where((category) => category.slug == slug).firstOrNull;

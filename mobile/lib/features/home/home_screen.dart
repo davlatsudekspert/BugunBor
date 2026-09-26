@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/links.dart';
 import '../../app/providers.dart';
+import '../../core/env.dart';
 import '../../data/models.dart';
 import '../../design/icons.dart';
 import '../../design/theme.dart';
@@ -27,11 +29,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   /// The "add your business" card, hidden for a month when closed.
   late bool _promoHidden;
 
+  /// The newest build whose "new version" card was closed.
+  late int _updateHidden;
+
   @override
   void initState() {
     super.initState();
     final hiddenAt = ref.read(prefsProvider).promoHiddenAt;
     _promoHidden = hiddenAt != null && DateTime.now().difference(hiddenAt) < const Duration(days: 30);
+    _updateHidden = ref.read(prefsProvider).dismissedUpdate;
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _refreshLocation());
   }
@@ -39,6 +45,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   void _hidePromo() {
     ref.read(prefsProvider).promoHiddenAt = DateTime.now();
     setState(() => _promoHidden = true);
+  }
+
+  /// Closed for this build only: a later one shows the card again.
+  void _hideUpdate(int build) {
+    ref.read(prefsProvider).dismissedUpdate = build;
+    setState(() => _updateHidden = build);
   }
 
   @override
@@ -115,6 +127,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                   child: _SearchEntry(hint: l.homeSearchHint, onTap: () => context.go('/search?focus=1')),
                 ),
               ),
+              // An app installed from the site hears about a newer build here.
+              if (config?.update case final update? when update.build > Env.build && update.build > _updateHidden)
+                SliverToBoxAdapter(
+                  child: _UpdateCard(onOpen: () => openExternal(Uri.parse(update.url)), onHide: () => _hideUpdate(update.build)),
+                ),
               if (config != null && config.categories.isNotEmpty)
                 SliverToBoxAdapter(
                   child: _CategoryRow(config: config, locale: settings.locale),
@@ -350,6 +367,50 @@ class _InterestsPrompt extends StatelessWidget {
                 alignment: AlignmentDirectional.centerEnd,
                 child: TextButton(onPressed: () => context.push('/interests'), child: Text(hasInterests ? l.homeChange : l.homeChooseInterests)),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UpdateCard extends StatelessWidget {
+  const _UpdateCard({required this.onOpen, required this.onHide});
+  final VoidCallback onOpen;
+  final VoidCallback onHide;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.md, Gap.gutter, 0),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(Gap.md, Gap.md, Gap.xs, Gap.md),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(color: Brand.primary.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(14)),
+                child: const Icon(Icons.system_update_rounded, color: Brand.primary),
+              ),
+              const SizedBox(width: Gap.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l.newVersionTitle, style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 2),
+                    Text(l.newVersionText, style: TextStyle(color: context.mutedText, height: 1.35)),
+                    const SizedBox(height: Gap.sm),
+                    FilledButton.icon(onPressed: onOpen, icon: const Icon(Icons.download_rounded, size: 18), label: Text(l.newVersionAction)),
+                  ],
+                ),
+              ),
+              IconButton(onPressed: onHide, tooltip: l.close, icon: const Icon(Icons.close_rounded)),
             ],
           ),
         ),

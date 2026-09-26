@@ -16,7 +16,7 @@ export async function SiteFooter() {
   const db = await getDb().catch(() => null);
   const [company, stores] = await Promise.all([
     db ? getCompanyInfo(db).catch(() => EMPTY_COMPANY) : EMPTY_COMPANY,
-    db ? appStores(db) : { android: null },
+    db ? appStores(db) : ({ mode: 'off', android: null } as const),
   ]);
   const columns = [
     { title: t.footer.product, links: [{ href: '/discover', label: t.nav.deals }, { href: '/categories', label: t.nav.categories }, { href: '/business', label: t.nav.forBusiness }] },
@@ -39,7 +39,7 @@ export async function SiteFooter() {
           <p className="mt-4 text-sm leading-6 text-slate-500">{t.footer.tagline}</p>
           <LanguageSwitch locale={locale} label={t.nav.switchTo} full className="mt-4 -ml-3" />
           <h2 className="mt-6 text-xs font-black uppercase tracking-[.14em] text-slate-400">{t.appStores.footerTitle}</h2>
-          <AppBadges android={stores.android} t={t} className="mt-3" />
+          <AppBadges stores={stores} t={t} className="mt-3" />
         </div>
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
           {columns.map((column) => (
