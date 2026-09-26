@@ -1,40 +1,59 @@
-# Route map
+# Routes
 
-## Public
+## Customer site
 
-| Route | Purpose |
+| Path | Purpose |
 | --- | --- |
-| `/` | Homepage and active nearby deals |
-| `/discover` | Search, filters, cursor pagination, map/list switch |
-| `/categories/[slug]` | Category discovery |
-| `/businesses/[slug]` | Public business profile and active deals |
-| `/deals/[slug]` | Deal terms, branch, countdown and claim |
-| `/map` | Geographic discovery |
-| `/pricing`, `/how-it-works`, `/nfcstore`, `/about`, `/faq`, `/contact` | Acquisition and trust content |
-| `/terms`, `/privacy` | Legal content |
-| `/login`, `/verify` | Authentication entry and OTP verification |
-| `/n/[token]` | NFC tap recording and safe redirect |
+| `/` | Hero, live stats for the selected city, categories, deals ending soon |
+| `/discover` | Search, city, category, sort (ending, discount, new, near me) |
+| `/categories`, `/categories/[slug]` | Category index and category listing |
+| `/deals/[slug]` | Deal page: photo, branches, terms, countdown, claim, follow the business |
+| `/businesses/[slug]` | Business page: cover, logo, rating, reviews, deals, branches, follow |
+| `/login` | Telegram login (plus demo accounts in development) |
+| `/account` | Savings, stats, notification settings, name, language, delete account |
+| `/account/codes` | Active codes with QR, history, rating of redeemed visits |
+| `/account/saved` | Saved deals and followed businesses |
+| `/how-it-works`, `/faq`, `/contact`, `/terms`, `/privacy` | Information pages (the contact page shows the company details) |
+| `/oferta` | Public offer for business plans: prices, payment, refunds (`#qaytarish`), company details |
+| `/offline` | Shown by the service worker without a connection |
+| `/r/[code]` | QR target: opens the staff check page with the code filled in |
+| `/lang/[locale]` | Switches language (`uz`, `ru`) and returns |
 
-## Customer
+## Business workspace (`/business`)
 
-`/account`, `/account/saved`, `/account/following`, `/account/redemptions`, `/account/wallet`, `/account/referrals`, `/account/notifications`, `/account/security`, `/account/settings`.
+`/business` (landing and tariffs), `/business/onboarding`, `/business/dashboard`, `/business/redeem`, `/business/deals`, `/business/deals/new`, `/business/deals/[id]`, `/business/branches`, `/business/team`, `/business/profile`, `/business/billing` (plans; Payme/Click buttons show «Tez kunda» while payments are off), `/business/billing/return/[order]` (back from Payme or Click), `/business/switch/[id]` (choose the active business).
+The dashboard shows a «Profilni to‘ldiring» checklist until the profile is complete.
 
-## Business
+## Admin panel (`/admin`)
 
-`/business/onboarding`, `/business/dashboard`, `/business/deals`, `/business/deals/new`, `/business/branches`, `/business/team`, `/business/profile`, `/business/media`, `/business/verification`, `/business/billing`, `/business/boosts`, `/business/nfcstore`, `/business/redemptions`, `/business/analytics`, `/business/audit`.
+Moderators: overview, businesses, deals, reviews, messages, audit. Admins also: billing, users, categories, settings.
 
-## Administration
+## API (`/api/v1`)
 
-`/admin`, `/admin/users`, `/admin/businesses`, `/admin/verifications`, `/admin/deals`, `/admin/categories`, `/admin/wallet`, `/admin/referrals`, `/admin/plans`, `/admin/subscriptions`, `/admin/boosts`, `/admin/integrations`, `/admin/webhooks`, `/admin/reports`, `/admin/content`, `/admin/flags`, `/admin/settings`, `/admin/fraud`, `/admin/audit`, `/admin/health`.
+All writes require a same-origin request; authenticated routes use the session cookie. Errors are `{ error: { code, message, fields? } }` with a localized message.
 
-## External API
+| Method and path | Purpose |
+| --- | --- |
+| `POST /auth/telegram/start`, `GET /auth/telegram/status` | Telegram login device flow |
+| `POST /auth/logout` | End the session |
+| `POST /auth/dev-login` | Demo login (development only) |
+| `POST /telegram/webhook` | Telegram updates (secret header required) |
+| `GET /deals` | Public live deals: `city`, `category`, `q`, `sort`, `lat`/`lng`, `limit`, `offset` |
+| `POST /deals/{id}/redemptions` | Claim a deal (`Idempotency-Key` header) |
+| `POST /deals/{id}/view` | Count a view (rate limited) |
+| `POST /redemptions/{id}/cancel` | Customer cancels an active code |
+| `PUT`/`DELETE /favorites/{dealId}` | Save or unsave a deal |
+| `PUT`/`DELETE /follows/{businessId}` | Follow or unfollow a business |
+| `POST /reviews` | Rate a redeemed visit |
+| `PATCH /me`, `DELETE /me` | Name and notification settings; delete account |
+| `POST /contact` | Contact form |
+| `POST /businesses` | Create a business (onboarding) |
+| `POST /business/{businessId}` | Workspace actions: profile, deals, branches, team, code check and completion, plan requests |
+| `POST /business/{businessId}/media` | Upload a photo (multipart `file`, `kind` = DEAL, LOGO or COVER) |
+| `POST /admin` | Moderation and admin actions (including automatic-moderation switches and company details) |
+| `POST /payments/payme` | Payme Merchant API (JSON-RPC, Basic auth) |
+| `POST /payments/click/prepare`, `POST /payments/click/complete` | Click SHOP API (MD5 signature) |
+| `GET /openapi.json` | Machine-readable summary of the public API |
+| `POST /dev/reset` | Restore demo data (development only) |
 
-- `GET /api/v1/deals`, `GET /api/v1/deals/:slug`
-- `POST /api/v1/deals/:id/redemptions`, `POST /api/v1/redemptions/:id/validate`
-- `POST /api/v1/auth/otp/request`, `POST /api/v1/auth/otp/verify`, `DELETE /api/v1/sessions/:id`
-- `POST /api/v1/businesses`, `POST /api/v1/businesses/:id/deals`
-- `POST /api/v1/moderation/deals/:id/decision`
-- `POST /api/v1/integrations/nfcstore/webhooks`, `GET /api/v1/integrations/nfcstore/status`
-- `GET /api/v1/openapi.json`
-
-All collection endpoints use cursor pagination. Write endpoints accept `Idempotency-Key`; private endpoints derive subject and tenant from the verified session rather than request JSON.
+Other handlers: `GET /media/{id}` (uploaded photos), `GET /manifest.webmanifest`, `GET /sitemap.xml`, `GET /robots.txt`.

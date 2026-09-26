@@ -1,53 +1,50 @@
-# Database model
+# Data model
 
-## Core relationship map
+Cloudflare D1 (SQLite). Migrations live in `db/migrations.ts`, are applied in order on the first request of each isolate and recorded in `_migrations`. Times are UTC text `YYYY-MM-DD HH:MM:SS`; money is integer so‘m; coordinates are integer micro-degrees (`latitude_e6`).
 
 ```mermaid
 erDiagram
-  USER ||--o{ SESSION : owns
-  USER ||--o{ BUSINESS_MEMBER : joins
-  BUSINESS ||--o{ BUSINESS_MEMBER : has
-  BUSINESS ||--o{ BRANCH : operates
-  BUSINESS ||--o{ DEAL : publishes
-  DEAL ||--o{ DEAL_BRANCH : available_at
-  BRANCH ||--o{ DEAL_BRANCH : offers
-  DEAL ||--o{ REDEMPTION : claimed_as
-  USER ||--o{ REDEMPTION : claims
-  REDEMPTION ||--o{ REDEMPTION_EVENT : records
-  USER ||--|| WALLET : owns
-  WALLET ||--o{ WALLET_LEDGER_ENTRY : contains
-  PLAN ||--o{ PLAN_ENTITLEMENT : grants
-  BUSINESS ||--o{ SUBSCRIPTION : subscribes
-  DEAL ||--o{ BOOST : receives
-  USER ||--o{ REFERRAL : invites
-  REFERRAL ||--o{ REFERRAL_REWARD : produces
-  BUSINESS ||--o{ EXTERNAL_ACCOUNT_MAPPING : maps
-  BUSINESS ||--o{ NFC_DEVICE_MAPPING : maps
-  NFC_DEVICE_MAPPING ||--o{ NFC_TAP_EVENT : records
+  USERS ||--o{ SESSIONS : has
+  USERS ||--o{ BUSINESS_MEMBERS : "works at"
+  BUSINESSES ||--o{ BUSINESS_MEMBERS : has
+  BUSINESSES ||--o{ BRANCHES : has
+  BUSINESSES ||--o{ DEALS : publishes
+  DEALS ||--o{ DEAL_BRANCHES : "valid at"
+  BRANCHES ||--o{ DEAL_BRANCHES : ""
+  DEALS ||--o{ REDEMPTIONS : claimed
+  USERS ||--o{ REDEMPTIONS : claims
+  REDEMPTIONS ||--o{ REDEMPTION_EVENTS : logs
+  REDEMPTIONS ||--o| REVIEWS : "rated by"
+  USERS ||--o{ FAVORITES : saves
+  USERS ||--o{ FOLLOWS : follows
+  BUSINESSES ||--o{ FOLLOWS : ""
+  USERS ||--o{ NOTIFICATIONS : receives
+  BUSINESSES ||--o{ MEDIA : uploads
+  BUSINESSES ||--o{ BILLING_REQUESTS : requests
+  PLANS ||--o{ BILLING_REQUESTS : ""
 ```
 
-## Normalized entity inventory
-
-- Identity: `User`, `Account`, `Session`, `VerificationToken`.
-- Tenancy: `Business`, `BusinessMember`, `Branch`, `WorkingHours`, `VerificationRequest`.
-- Marketplace: `Category`, `Deal`, `DealBranch`, `DealMedia`, `Favorite`, `Follow`.
-- Fulfilment: `Redemption`, `RedemptionEvent`.
-- Incentives: `Wallet`, `WalletLedgerEntry`, `BonusRule`, `Referral`, `ReferralReward`.
-- Commercial: `Plan`, `PlanEntitlement`, `Subscription`, `Boost`.
-- Integrations: `ExternalAccountMapping`, `NFCDeviceMapping`, `NFCTapEvent`, `IntegrationEvent`, `WebhookEvent`.
-- Trust/operations: `Notification`, `Report`, `ModerationAction`, `FeatureFlag`, `AuditLog`.
-
-## Critical constraints
-
-- Normalized phone and non-null email values are unique.
-- Business slug, category slug, deal `(business_id, slug)` and NFC public token hash are unique.
-- Business membership is unique on `(business_id, user_id)`.
-- One favorite exists per `(user_id, deal_id)` and one follow per `(user_id, business_id)`.
-- A redemption is unique by idempotency key and by `(deal_id, user_id, claim_sequence)`; its code hash is unique.
-- Ledger idempotency key is globally unique. Amount is non-zero and stored in integer BB units.
-- Webhook uniqueness is `(provider, external_event_id)`; raw secrets/tokens never persist.
-- Soft deletion uses `deleted_at`; financial, audit and redemption event rows are retained/append-only.
-
-## Transaction invariants
-
-Redemption claim locks or conditionally updates the deal row, checks state/time/customer limit, decrements remaining quantity, inserts redemption + event, and emits an outbox notification in one transaction. Wallet commands insert a ledger entry and derived balance snapshot atomically, reject negative results, and verify the ledger aggregate. Webhook processing inserts the unique event before side effects, making retries safe.
+| Table | Purpose and notable rules |
+| --- | --- |
+| `users` | Platform role (CUSTOMER, MODERATOR, ADMIN), status, Telegram id, phone (unique when set), locale, notification switches |
+| `sessions` | Hashed session tokens, 30-day expiry, revocation |
+| `login_requests` | Telegram device-flow logins: hashed token, match code, status, short expiry |
+| `businesses` | Profile, city, category, verification (PENDING, VERIFIED, REJECTED), suspension, free period (`trial_ends_at`), paid plan (`plan_code`, `paid_until`), rating aggregate, logo/cover media, `is_demo` |
+| `business_members` | Staff with role OWNER, MANAGER or CASHIER; revocation instead of deletion |
+| `branches` | Address, coordinates, working hours, optional phone |
+| `categories` | Slug, Uzbek and Russian names, icon, order, active flag |
+| `deals` | Prices, window, stock (`remaining_quantity`), per-customer limit, code lifetime, stored status, moderation fields, visual or photo, search text, views, `is_demo` |
+| `deal_branches` | Where a deal can be redeemed |
+| `redemptions` | One claim: status CLAIMED, COMPLETED, CANCELED or EXPIRED; hashed code; idempotency key; at most one active claim per customer and deal |
+| `redemption_events` | Claim and terminal events; one terminal event per redemption (unique index) |
+| `favorites` | Saved deals |
+| `follows` | Customer follows a business |
+| `reviews` | Rating 1–5 and optional comment for a completed redemption; one per redemption; VISIBLE or HIDDEN |
+| `notifications` | Telegram outbox: kind, dedupe key (unique), status PENDING, SENDING, SENT, SKIPPED or FAILED, retries |
+| `media` | Uploaded images (base64 WebP/JPEG/PNG) with size, dimensions and hash |
+| `plans` | Start, Biznes, Premium: monthly price and limits (branches, live deals, staff, top slots) |
+| `billing_requests` | Plan purchase requests confirmed by an admin |
+| `app_settings` | Free-period length and plan, payment instructions, demo seed version |
+| `contact_messages` | Contact form inbox |
+| `moderation_actions`, `audit_logs` | Who decided what, with reasons and before/after snapshots |
+| `rate_limits` | Fixed-window counters for login, claims, code checks, contact form, writes |
