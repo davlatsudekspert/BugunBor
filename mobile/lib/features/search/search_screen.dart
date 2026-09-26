@@ -197,7 +197,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.xs, Gap.gutter, 0),
                 children: [
                   for (final sort in _sorts)
-                    if (sort != 'near' || located) _chip(sortLabels[sort]!, _sort == sort, () => _setSort(sort), outlined: true),
+                    if (sort != 'near' || located) _chip(sortLabels[sort]!, _sort == sort, () => _setSort(sort)),
                 ],
               ),
             ),
@@ -208,16 +208,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
-  Widget _chip(String label, bool selected, VoidCallback onTap, {bool outlined = false}) => Padding(
+  Widget _chip(String label, bool selected, VoidCallback onTap) => Padding(
     padding: const EdgeInsets.only(right: Gap.sm),
-    child: ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      showCheckmark: false,
-      selectedColor: outlined ? Brand.navy : Brand.primary,
-      labelStyle: TextStyle(fontWeight: FontWeight.w700, color: selected ? Colors.white : null),
-      onSelected: (_) => onTap(),
-    ),
+    child: ChoiceChip(label: Text(label), selected: selected, showCheckmark: false, onSelected: (_) => onTap()),
   );
 
   void _setCategory(String? slug) {

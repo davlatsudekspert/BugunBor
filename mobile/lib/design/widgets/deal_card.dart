@@ -83,7 +83,7 @@ class DealTile extends StatelessWidget {
                           if (deal.discountPercent > 0)
                             Text(
                               l.percentOff('${deal.discountPercent}'),
-                              style: const TextStyle(color: Brand.primary, fontWeight: FontWeight.w900, fontSize: 13),
+                              style: TextStyle(color: context.accentText, fontWeight: FontWeight.w900, fontSize: 13),
                             ),
                           if (distance != null) _Meta(icon: Icons.near_me_outlined, text: distance),
                           if (!ended)

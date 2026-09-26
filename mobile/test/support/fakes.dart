@@ -136,11 +136,15 @@ Future<void> pumpApp(
   String locale = 'uz',
   Size size = const Size(390, 844),
   double textScale = 1,
+  String theme = 'light',
 }) async {
-  SharedPreferences.setMockInitialValues({'onboarded': onboarded, 'locale': locale, 'city': 'tashkent'});
+  SharedPreferences.setMockInitialValues({'onboarded': onboarded, 'locale': locale, 'city': 'tashkent', 'theme': theme});
   final prefs = Prefs(await SharedPreferences.getInstance());
   tester.view.physicalSize = size * 3;
   tester.view.devicePixelRatio = 3;
+  // A phone is used by touch: no keyboard-focus rings after a tap.
+  FocusManager.instance.highlightStrategy = FocusHighlightStrategy.alwaysTouch;
+  addTearDown(() => FocusManager.instance.highlightStrategy = FocusHighlightStrategy.automatic);
   tester.platformDispatcher.textScaleFactorTestValue = textScale;
   addTearDown(tester.view.reset);
   addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);

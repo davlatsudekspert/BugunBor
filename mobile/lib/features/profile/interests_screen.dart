@@ -39,8 +39,6 @@ class InterestPicker extends ConsumerWidget {
             label: Text(category.name(locale)),
             selected: selected.contains(category.slug),
             showCheckmark: false,
-            selectedColor: Brand.primary,
-            labelStyle: TextStyle(fontWeight: FontWeight.w700, color: selected.contains(category.slug) ? Colors.white : null),
             onSelected: (on) => onChanged(on ? {...selected, category.slug} : ({...selected}..remove(category.slug))),
           ),
       ],

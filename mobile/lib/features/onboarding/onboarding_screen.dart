@@ -189,7 +189,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   backgroundColor: Brand.primary.withValues(alpha: 0.12),
                   child: Text(
                     '${index + 1}',
-                    style: const TextStyle(color: Brand.primary, fontWeight: FontWeight.w900),
+                    style: TextStyle(color: context.accentText, fontWeight: FontWeight.w900),
                   ),
                 ),
                 const SizedBox(width: Gap.md),

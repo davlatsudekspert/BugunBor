@@ -29,9 +29,12 @@ Future<void> showDeal(WidgetTester tester) async {
   expect(find.text('Osh').hitTestable(), findsWidgets);
 }
 
+/// Every tappable thing is at least 48 px, and all text is readable
+/// against what is behind it (this caught chip labels painted white).
 Future<void> checkTapTargets(WidgetTester tester) async {
   final handle = tester.ensureSemantics();
   await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+  await expectLater(tester, meetsGuideline(textContrastGuideline));
   handle.dispose();
 }
 
@@ -299,4 +302,45 @@ void main() {
     expect(find.text('Band qilish'), findsNothing);
     expect(find.text('Band qilish uchun kiring'), findsNothing);
   });
+
+  testWidgets('profile: language and theme are chosen in a sheet', (tester) async {
+    await pumpApp(tester, server: FakeServer.standard());
+    await tester.tap(find.text('Profil'));
+    await settle(tester);
+    await tester.tap(find.text('Mavzu'));
+    await settle(tester);
+    await tester.tap(find.text('Qorong‘i'));
+    await settle(tester);
+    expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode, ThemeMode.dark);
+    await checkTapTargets(tester);
+    await tester.tap(find.text('Til'));
+    await settle(tester);
+    await tester.tap(find.text('Русский'));
+    await settle(tester);
+    expect(find.text('Профиль'), findsWidgets);
+    expect(find.text('Тёмная'), findsOneWidget);
+  });
+
+  for (final theme in ['light', 'dark']) {
+    testWidgets('$theme theme: chips, cards and the deal page are readable', (tester) async {
+      await pumpApp(tester, server: FakeServer.standard(), onboarded: false, theme: theme);
+      await tester.tap(find.text('Keyingi'));
+      await settle(tester);
+      await tester.tap(find.text('Kofe'));
+      await settle(tester);
+      await checkTapTargets(tester);
+      await tester.tap(find.text('O‘tkazib yuborish'));
+      await settle(tester);
+      await checkTapTargets(tester);
+      await showDeal(tester);
+      await tester.tap(find.text('Osh').hitTestable().first);
+      await settle(tester);
+      await checkTapTargets(tester);
+      await tester.binding.handlePopRoute();
+      await settle(tester);
+      await tester.tap(find.text('Qidiruv'));
+      await settle(tester);
+      await checkTapTargets(tester);
+    });
+  }
 }

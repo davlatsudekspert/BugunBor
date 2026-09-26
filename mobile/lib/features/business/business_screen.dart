@@ -11,6 +11,7 @@ import '../../data/models.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/common.dart';
 import '../../design/widgets/deal_card.dart';
+import '../../design/widgets/photo_app_bar.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../common/report_sheet.dart';
 
@@ -26,7 +27,46 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
   ({bool following, int followers})? _follow;
   bool _busy = false;
 
+  final _header = PhotoHeaderController(expandedHeight: 200);
+
+  @override
+  void initState() {
+    super.initState();
+    _header.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _header.dispose();
+    super.dispose();
+  }
+
   void _snack(String text) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+
+  List<Widget> _actions(BusinessPage business, bool blocked, bool onPhoto) {
+    final l = L.of(context);
+    return [
+      IconButton(
+        style: photoButtonStyle(onPhoto),
+        tooltip: l.share,
+        icon: const Icon(Icons.ios_share_rounded),
+        onPressed: () => SharePlus.instance.share(ShareParams(text: '${business.name}\n${siteUrl('/businesses/${business.slug}')}')),
+      ),
+      if (!business.isDemo)
+        PopupMenuButton<String>(
+          style: photoButtonStyle(onPhoto),
+          enabled: !_busy,
+          onSelected: (value) {
+            if (value == 'report') showReportSheet(context, ref, targetType: 'BUSINESS', targetId: business.id);
+            if (value == 'block') _toggleBlock(business, blocked);
+          },
+          itemBuilder: (context) => [
+            PopupMenuItem(value: 'report', child: Text(l.report)),
+            PopupMenuItem(value: 'block', child: Text(blocked ? l.unblock : l.block)),
+          ],
+        ),
+    ];
+  }
 
   Future<bool> _ensureSignedIn() async {
     if (ref.read(sessionProvider).signedIn) return true;
@@ -110,32 +150,21 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(businessProvider(widget.slug).future).then((_) {}, onError: (_) {}),
         child: CustomScrollView(
+          controller: _header.scroll,
           slivers: [
-            SliverAppBar(
-              pinned: true,
-              expandedHeight: business.cover == null ? null : 200,
-              title: Text(business.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-              actions: [
-                IconButton(
-                  tooltip: l.share,
-                  icon: const Icon(Icons.ios_share_rounded),
-                  onPressed: () => SharePlus.instance.share(ShareParams(text: '${business.name}\n${siteUrl('/businesses/${business.slug}')}')),
-                ),
-                if (!business.isDemo)
-                  PopupMenuButton<String>(
-                    enabled: !_busy,
-                    onSelected: (value) {
-                      if (value == 'report') showReportSheet(context, ref, targetType: 'BUSINESS', targetId: business.id);
-                      if (value == 'block') _toggleBlock(business, blocked);
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(value: 'report', child: Text(l.report)),
-                      PopupMenuItem(value: 'block', child: Text(blocked ? l.unblock : l.block)),
-                    ],
-                  ),
-              ],
-              flexibleSpace: business.cover == null ? null : FlexibleSpaceBar(background: AppImage(business.cover, icon: Icons.storefront_rounded)),
-            ),
+            if (business.cover != null)
+              PhotoSliverAppBar(
+                controller: _header,
+                title: business.name,
+                background: AppImage(business.cover, icon: Icons.storefront_rounded),
+                actions: (onPhoto) => _actions(business, blocked, onPhoto),
+              )
+            else
+              SliverAppBar(
+                pinned: true,
+                title: Text(business.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                actions: _actions(business, blocked, false),
+              ),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.lg, Gap.gutter, Gap.xl),
               sliver: SliverList.list(

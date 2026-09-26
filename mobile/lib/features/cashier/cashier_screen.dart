@@ -267,7 +267,7 @@ class _Result extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
-    final color = done ? Brand.success : Brand.primary;
+    final color = done ? context.successText : context.accentText;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(Gap.lg),

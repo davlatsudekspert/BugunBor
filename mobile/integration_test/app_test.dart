@@ -104,19 +104,27 @@ void main() {
     await waitFor(tester, find.text('Kirish uchun avval rozilik belgisini qo‘ying.'));
     await shot(binding, tester, '11-login');
     await tester.binding.handlePopRoute();
-    await waitFor(tester, find.text('Qorong‘i'));
 
-    // Dark theme and Russian on the home screen.
-    await tester.ensureVisible(find.text('Qorong‘i'));
+    // Dark theme and Russian, chosen in the profile.
+    await waitFor(tester, find.text('Mavzu'));
+    await tester.ensureVisible(find.text('Mavzu'));
     await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Mavzu'));
+    await waitFor(tester, find.text('Qorong‘i'));
     await tester.tap(find.text('Qorong‘i'));
-    await tester.pump(const Duration(milliseconds: 300));
-    await tester.ensureVisible(find.text('Русский'));
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.tap(find.text('Til'));
+    await waitFor(tester, find.text('Русский'));
     await tester.tap(find.text('Русский'));
     await waitFor(tester, find.text('Главная'));
+    await shot(binding, tester, '12-profile-ru-dark');
     await tester.tap(find.text('Главная'));
+    // Home keeps its scroll position; go back to the top.
+    for (var step = 0; step < 10 && find.text('Что есть сегодня?').evaluate().isEmpty; step++) {
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 600));
+      await tester.pump(const Duration(milliseconds: 300));
+    }
     await waitFor(tester, find.text('Что есть сегодня?'));
-    await shot(binding, tester, '12-home-ru-dark');
+    await shot(binding, tester, '13-home-ru-dark');
   });
 }

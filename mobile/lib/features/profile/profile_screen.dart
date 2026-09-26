@@ -160,7 +160,7 @@ class _AccountCard extends ConsumerWidget {
                   backgroundColor: Brand.primary.withValues(alpha: 0.12),
                   child: Text(
                     me.displayName.isEmpty ? '?' : me.displayName.characters.first.toUpperCase(),
-                    style: const TextStyle(color: Brand.primary, fontWeight: FontWeight.w900, fontSize: 22),
+                    style: TextStyle(color: context.accentText, fontWeight: FontWeight.w900, fontSize: 22),
                   ),
                 ),
                 const SizedBox(width: Gap.md),
@@ -211,11 +211,39 @@ class _Stat extends StatelessWidget {
           fit: BoxFit.scaleDown,
           child: Text(
             value,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Brand.primary),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: context.accentText),
           ),
         ),
         Text(label, style: TextStyle(color: context.mutedText, fontSize: 12.5)),
       ],
+    ),
+  );
+}
+
+/// A short list of options in a sheet (the labels never get cut).
+Future<String?> _choose(BuildContext context, String title, Map<String, String> options, String current) {
+  return showModalBottomSheet<String>(
+    context: context,
+    showDragHandle: true,
+    builder: (context) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.sm),
+            child: Text(title, style: Theme.of(context).textTheme.titleLarge),
+          ),
+          RadioGroup<String>(
+            groupValue: current,
+            onChanged: (value) => Navigator.pop(context, value),
+            child: Column(
+              children: [for (final entry in options.entries) RadioListTile<String>(value: entry.key, title: Text(entry.value))],
+            ),
+          ),
+          const SizedBox(height: Gap.sm),
+        ],
+      ),
     ),
   );
 }
@@ -231,67 +259,30 @@ class _Preferences extends ConsumerWidget {
     final interests = ref.watch(interestsProvider);
     final place = settings.useLocation ? l.homeUseLocation : (config?.city(settings.city)?.name(settings.locale) ?? l.chooseCity);
     final interestNames = interests.map((slug) => config?.category(slug)?.name(settings.locale)).nonNulls.join(', ');
+    final themes = {'system': l.themeSystem, 'light': l.themeLight, 'dark': l.themeDark};
     return _Section(
       title: l.profileSettings,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(Gap.lg, Gap.md, Gap.lg, Gap.xs),
-          child: Row(
-            children: [
-              const Icon(Icons.translate_rounded),
-              const SizedBox(width: Gap.lg),
-              Text(l.profileLanguage, style: const TextStyle(fontWeight: FontWeight.w600)),
-            ],
-          ),
+        ListTile(
+          leading: const Icon(Icons.translate_rounded),
+          title: Text(l.profileLanguage),
+          subtitle: Text(_languages[settings.locale] ?? settings.locale),
+          trailing: const Icon(Icons.chevron_right_rounded),
+          onTap: () async {
+            final locale = await _choose(context, l.profileLanguage, _languages, settings.locale);
+            if (locale != null) await ref.read(accountProvider).setLocale(locale);
+          },
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Gap.md, vertical: Gap.xs),
-          child: SegmentedButton<String>(
-            showSelectedIcon: false,
-            segments: [
-              for (final entry in _languages.entries)
-                ButtonSegment(
-                  value: entry.key,
-                  label: Text(entry.value, maxLines: 1, overflow: TextOverflow.ellipsis),
-                ),
-            ],
-            selected: {settings.locale},
-            onSelectionChanged: (value) => ref.read(accountProvider).setLocale(value.first),
-          ),
+        ListTile(
+          leading: const Icon(Icons.brightness_6_outlined),
+          title: Text(l.profileTheme),
+          subtitle: Text(themes[settings.theme] ?? l.themeSystem),
+          trailing: const Icon(Icons.chevron_right_rounded),
+          onTap: () async {
+            final theme = await _choose(context, l.profileTheme, themes, settings.theme);
+            if (theme != null) ref.read(settingsProvider.notifier).setTheme(theme);
+          },
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(Gap.lg, Gap.md, Gap.lg, Gap.xs),
-          child: Row(
-            children: [
-              const Icon(Icons.brightness_6_outlined),
-              const SizedBox(width: Gap.lg),
-              Text(l.profileTheme, style: const TextStyle(fontWeight: FontWeight.w600)),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Gap.md, vertical: Gap.xs),
-          child: SegmentedButton<String>(
-            showSelectedIcon: false,
-            segments: [
-              ButtonSegment(
-                value: 'system',
-                label: Text(l.themeSystem, maxLines: 1, overflow: TextOverflow.ellipsis),
-              ),
-              ButtonSegment(
-                value: 'light',
-                label: Text(l.themeLight, maxLines: 1, overflow: TextOverflow.ellipsis),
-              ),
-              ButtonSegment(
-                value: 'dark',
-                label: Text(l.themeDark, maxLines: 1, overflow: TextOverflow.ellipsis),
-              ),
-            ],
-            selected: {settings.theme},
-            onSelectionChanged: (value) => ref.read(settingsProvider.notifier).setTheme(value.first),
-          ),
-        ),
-        const SizedBox(height: Gap.sm),
         ListTile(
           leading: Icon(settings.useLocation ? Icons.my_location_rounded : Icons.place_outlined),
           title: Text(l.profileCity),

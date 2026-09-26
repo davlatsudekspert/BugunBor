@@ -150,7 +150,7 @@ class _CodeCard extends ConsumerWidget {
                         const SizedBox(height: 2),
                         Text(
                           money(context, code.price),
-                          style: const TextStyle(color: Brand.primary, fontWeight: FontWeight.w900),
+                          style: TextStyle(color: context.accentText, fontWeight: FontWeight.w900),
                         ),
                       ],
                     ),
@@ -206,7 +206,7 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (status) {
-      'CLAIMED' => Brand.success,
+      'CLAIMED' => context.successText,
       'COMPLETED' => Brand.navySoft,
       _ => context.mutedText,
     };

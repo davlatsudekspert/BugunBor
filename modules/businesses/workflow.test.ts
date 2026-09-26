@@ -83,6 +83,29 @@ describe('business workflow', () => {
     expect(status).toBe('COMPLETED');
   });
 
+  it('finds deals by the start of a word, not inside other words', async () => {
+    const { businessId, branchId } = await onboard();
+    await decideBusiness(db, { actorId: 'mod', businessId, decision: 'APPROVE', reason: '' }, NOW);
+    const osh = await createDeal(db, { businessId, userId: 'owner', input: dealInput([branchId]), submit: true }, NOW);
+    const coffee = await createDeal(db, {
+      businessId,
+      userId: 'owner',
+      input: dealInput([branchId], { title: 'Kofe va shirinlik', description: 'Toshkentdagi eng mazali kofe va desert.' }),
+      submit: true,
+    }, NOW);
+    await decideDeal(db, { actorId: 'mod', dealId: osh.id, decision: 'APPROVE', reason: '' }, NOW);
+    await decideDeal(db, { actorId: 'mod', dealId: coffee.id, decision: 'APPROVE', reason: '' }, NOW);
+    const search = async (query: string) => (await listLiveDeals(db, { demo: false, query, now: later(1) })).map((deal) => deal.id).sort();
+
+    // "Toshkent" contains "osh", but only the plov deal is about osh.
+    expect(await search('osh')).toEqual([osh.id]);
+    expect(await search('Ош')).toEqual([osh.id]);
+    expect(await search('kofe')).toEqual([coffee.id]);
+    // The business description ("…taomlari") matches both of its deals.
+    expect(await search('taom')).toEqual([osh.id, coffee.id].sort());
+    expect(await search('shkent')).toEqual([]);
+  });
+
   it('hides deals when the free period ends and restores them after payment', async () => {
     const { businessId, branchId } = await onboard();
     await decideBusiness(db, { actorId: 'mod', businessId, decision: 'APPROVE', reason: '' }, NOW);

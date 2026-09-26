@@ -15,6 +15,7 @@ import '../../design/icons.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/common.dart';
 import '../../design/widgets/deal_card.dart';
+import '../../design/widgets/photo_app_bar.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../common/report_sheet.dart';
 
@@ -41,6 +42,20 @@ class _DealScreenState extends ConsumerState<DealScreen> {
   String? _claimKey;
 
   bool get _signedIn => ref.read(sessionProvider).signedIn;
+
+  final _header = PhotoHeaderController(expandedHeight: 260);
+
+  @override
+  void initState() {
+    super.initState();
+    _header.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _header.dispose();
+    super.dispose();
+  }
 
   void _snack(String text) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
 
@@ -186,45 +201,40 @@ class _DealScreenState extends ConsumerState<DealScreen> {
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(dealProvider(widget.slug).future).then((_) {}, onError: (_) {}),
         child: CustomScrollView(
+          controller: _header.scroll,
           slivers: [
-            SliverAppBar(
-              pinned: true,
-              expandedHeight: 260,
-              title: Text(deal.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-              actions: [
+            PhotoSliverAppBar(
+              controller: _header,
+              title: deal.title,
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  AppImage(deal.photo, icon: categoryIcon(deal.categorySlug)),
+                  if (deal.discountPercent > 0) Positioned(left: Gap.gutter, bottom: Gap.md, child: DiscountBadge(deal.discountPercent)),
+                ],
+              ),
+              actions: (onPhoto) => [
                 IconButton(
+                  style: photoButtonStyle(onPhoto),
                   tooltip: l.share,
                   icon: const Icon(Icons.ios_share_rounded),
                   onPressed: () => SharePlus.instance.share(ShareParams(text: '${deal.title} — ${deal.business.name}\n${siteUrl('/deals/${deal.slug}')}')),
                 ),
                 if (!deal.isDemo)
                   IconButton(
+                    style: photoButtonStyle(onPhoto),
                     tooltip: deal.favorite ? l.dealSaved : l.dealSave,
                     icon: Icon(deal.favorite ? Icons.favorite_rounded : Icons.favorite_border_rounded, color: deal.favorite ? Brand.primary : null),
                     onPressed: () => _toggleFavorite(deal),
                   ),
                 PopupMenuButton<String>(
+                  style: photoButtonStyle(onPhoto),
                   onSelected: (value) {
                     if (value == 'report') showReportSheet(context, ref, targetType: 'DEAL', targetId: deal.id);
                   },
                   itemBuilder: (context) => [PopupMenuItem(value: 'report', child: Text(l.report))],
                 ),
               ],
-              flexibleSpace: FlexibleSpaceBar(
-                collapseMode: CollapseMode.parallax,
-                background: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    AppImage(deal.photo, icon: categoryIcon(deal.categorySlug)),
-                    const DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment(0, -0.2), colors: [Color(0x88000000), Color(0x00000000)]),
-                      ),
-                    ),
-                    if (deal.discountPercent > 0) Positioned(left: Gap.gutter, bottom: Gap.md, child: DiscountBadge(deal.discountPercent)),
-                  ],
-                ),
-              ),
             ),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.lg, Gap.gutter, Gap.xl),
@@ -250,7 +260,7 @@ class _DealScreenState extends ConsumerState<DealScreen> {
                     const SizedBox(height: Gap.xs),
                     Text(
                       l.dealYouSave(groupDigits(saving)),
-                      style: const TextStyle(color: Brand.success, fontWeight: FontWeight.w800),
+                      style: TextStyle(color: context.successText, fontWeight: FontWeight.w800),
                     ),
                   ],
                   const SizedBox(height: Gap.lg),
