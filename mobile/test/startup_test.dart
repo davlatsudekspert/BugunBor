@@ -71,6 +71,18 @@ void main() {
     expect(find.text('Qayta urinish'), findsNothing);
   });
 
+  testWidgets('a server error at start: the last Home stays, and the note does not blame the internet', (tester) async {
+    final server = FakeServer.standard();
+    server.routes['GET /api/v1/feed'] = (_) => const Reply(500, {
+      'error': {'code': 'SERVER'},
+    });
+    await pumpApp(tester, server: server, prefs: kept());
+
+    expect(find.text('Kechagi somsa', skipOffstage: false), findsOneWidget);
+    expect(find.text('Yangilab bo‘lmadi — oxirgi ma’lumot ko‘rsatilmoqda'), findsOneWidget);
+    expect(find.text('Internet yo‘q — oxirgi ma’lumot ko‘rsatilmoqda'), findsNothing);
+  });
+
   testWidgets('the first start without a kept Home waits for the server as before', (tester) async {
     final server = FakeServer.standard();
     server.routes['GET /api/v1/feed'] = (request) => throw DioException.connectionError(requestOptions: request, reason: 'offline');

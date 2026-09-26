@@ -445,5 +445,7 @@
   "timeEnded": "Завершилась",
   "codeUsedText": "Код принят. Как прошёл визит?",
   "deletedUser": "Удалённый пользователь",
-  "ratingLabel": "Оценка: {value} из 5"
+  "ratingLabel": "Оценка: {value} из 5",
+  "openSettings": "Настройки",
+  "staleNote": "Не удалось обновить — показаны последние данные"
 }

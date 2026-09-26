@@ -78,6 +78,17 @@ class _PlaceSheet extends ConsumerWidget {
   }
 }
 
+/// "Location not allowed — showing the city", with a button to the settings.
+void showLocationDenied(BuildContext context) {
+  final l = L.of(context);
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(l.homeLocationDenied),
+      action: SnackBarAction(label: l.openSettings, onPressed: openLocationSettings),
+    ),
+  );
+}
+
 /// Applies the choice. Returns false when the phone refused location
 /// (then the city stays as it was).
 Future<bool> applyPlaceChoice(WidgetRef ref, PlaceChoice choice) async {

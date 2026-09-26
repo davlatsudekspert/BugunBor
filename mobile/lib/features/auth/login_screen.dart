@@ -144,7 +144,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WidgetsBindingOb
       final token = await ref.read(apiProvider).reviewLogin(code);
       if (mounted) await _finish(token);
     } catch (error) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorText(context, error))));
+      if (mounted) showErrorSnack(context, error);
     }
   }
 

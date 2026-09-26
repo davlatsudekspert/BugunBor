@@ -45,7 +45,7 @@ class _CodeScreenState extends ConsumerState<CodeScreen> {
     super.dispose();
   }
 
-  Future<void> _reload() => ref.refresh(myCodesProvider.future).then((_) {}, onError: (_) {});
+  Future<void> _reload() => refreshing(context, ref.refresh(myCodesProvider.future));
 
   Future<void> _cancel(Redemption code) async {
     final l = L.of(context);
@@ -76,7 +76,7 @@ class _CodeScreenState extends ConsumerState<CodeScreen> {
     } catch (error) {
       if (!mounted) return;
       setState(() => _canceling = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorText(context, error))));
+      showErrorSnack(context, error);
     }
   }
 

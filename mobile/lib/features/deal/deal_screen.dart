@@ -76,7 +76,7 @@ class _DealScreenState extends ConsumerState<DealScreen> {
     } catch (error) {
       if (!mounted) return;
       setState(() => _local = deal);
-      _snack(errorText(context, error));
+      showErrorSnack(context, error);
     }
   }
 
@@ -87,11 +87,14 @@ class _DealScreenState extends ConsumerState<DealScreen> {
     try {
       final result = await ref.read(apiProvider).setFollowing(deal.business.id, want);
       if (mounted) setState(() => _local = deal.copyWith(following: result.following, followers: result.followers));
-      ref.invalidate(followsProvider);
+      // The business page (maybe open under this one) shows the same button.
+      ref
+        ..invalidate(followsProvider)
+        ..invalidate(businessProvider);
     } catch (error) {
       if (!mounted) return;
       setState(() => _local = deal);
-      _snack(errorText(context, error));
+      showErrorSnack(context, error);
     }
   }
 
@@ -131,7 +134,7 @@ class _DealScreenState extends ConsumerState<DealScreen> {
       if (!(error is ApiError && error.isNetwork)) _claimKey = null;
       if (!mounted) return;
       setState(() => _booking = false);
-      _snack(errorText(context, error));
+      showErrorSnack(context, error);
       if (error is ApiError && !error.isNetwork) ref.invalidate(dealProvider(widget.slug));
     }
   }
@@ -199,7 +202,7 @@ class _DealScreenState extends ConsumerState<DealScreen> {
 
     return Scaffold(
       body: RefreshIndicator(
-        onRefresh: () => ref.refresh(dealProvider(widget.slug).future).then((_) {}, onError: (_) {}),
+        onRefresh: () => refreshing(context, ref.refresh(dealProvider(widget.slug).future)),
         child: CustomScrollView(
           controller: _header.scroll,
           slivers: [

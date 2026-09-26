@@ -786,5 +786,7 @@
         "type": "String"
       }
     }
-  }
+  },
+  "openSettings": "Sozlamalar",
+  "staleNote": "Yangilab bo‘lmadi — oxirgi ma’lumot ko‘rsatilmoqda"
 }

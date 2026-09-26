@@ -151,7 +151,7 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
       // A copy is made to be changed: open it.
       if (copy != null) await context.push('$_base/$copy/edit');
     } catch (error) {
-      if (mounted) _snack(errorText(context, error));
+      if (mounted) showErrorSnack(context, error);
     } finally {
       if (mounted) setState(() => _busy = null);
     }
@@ -228,7 +228,7 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
       ),
       body: switch (deals) {
         AsyncValue(:final value?) => RefreshIndicator(
-          onRefresh: () => ref.refresh(businessDealsProvider(widget.businessId).future).then((_) {}, onError: (_) {}),
+          onRefresh: () => refreshing(context, ref.refresh(businessDealsProvider(widget.businessId).future)),
           child: _list(context, l, value, visuals),
         ),
         AsyncValue(:final error?) => StatePanel.error(context, error, onRetry: () => ref.invalidate(businessDealsProvider(widget.businessId))),

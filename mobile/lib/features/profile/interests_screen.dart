@@ -65,7 +65,7 @@ class _InterestsScreenState extends ConsumerState<InterestsScreen> {
     } catch (error) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorText(context, error))));
+      showErrorSnack(context, error);
     }
   }
 

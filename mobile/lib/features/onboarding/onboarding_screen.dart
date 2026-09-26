@@ -69,7 +69,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (granted) {
       _next();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(L.of(context).homeLocationDenied)));
+      showLocationDenied(context);
       await _chooseCity();
     }
   }

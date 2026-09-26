@@ -115,7 +115,7 @@ class _CodeList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    Future<void> reload() => ref.refresh(myCodesProvider.future).then((_) {}, onError: (_) {});
+    Future<void> reload() => refreshing(context, ref.refresh(myCodesProvider.future));
     if (items.isEmpty) {
       return RefreshIndicator(
         onRefresh: reload,
@@ -293,7 +293,11 @@ class _RateSheetState extends ConsumerState<_RateSheet> {
     });
     try {
       await ref.read(apiProvider).rate(widget.code.id, _rating, _comment.text);
-      ref.invalidate(myCodesProvider);
+      // The business's stars count this visit now.
+      ref
+        ..invalidate(myCodesProvider)
+        ..invalidate(businessProvider)
+        ..invalidate(dealProvider);
       if (mounted) Navigator.pop(context, true);
     } catch (error) {
       if (mounted) {

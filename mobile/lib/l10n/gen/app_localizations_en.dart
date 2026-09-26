@@ -1445,4 +1445,10 @@ class LEn extends L {
   String ratingLabel(String value) {
     return 'Rating: $value of 5';
   }
+
+  @override
+  String get openSettings => 'Settings';
+
+  @override
+  String get staleNote => 'Couldn’t refresh — showing the latest data';
 }

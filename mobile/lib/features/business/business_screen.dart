@@ -81,11 +81,14 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
     try {
       final result = await ref.read(apiProvider).setFollowing(business.id, want);
       if (mounted) setState(() => _follow = result);
-      ref.invalidate(followsProvider);
+      // Its deal pages (maybe open under this one) show the same button.
+      ref
+        ..invalidate(followsProvider)
+        ..invalidate(dealProvider);
     } catch (error) {
       if (!mounted) return;
       setState(() => _follow = (following: following, followers: followers));
-      _snack(errorText(context, error));
+      showErrorSnack(context, error);
     }
   }
 
@@ -112,6 +115,7 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
         ..invalidate(meProvider)
         ..invalidate(feedProvider)
         ..invalidate(followsProvider)
+        ..invalidate(favoritesProvider)
         ..invalidate(businessProvider(widget.slug));
       if (!mounted) return;
       setState(() {
@@ -122,7 +126,7 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
     } catch (error) {
       if (!mounted) return;
       setState(() => _busy = false);
-      _snack(errorText(context, error));
+      showErrorSnack(context, error);
     }
   }
 
@@ -148,7 +152,7 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
 
     return Scaffold(
       body: RefreshIndicator(
-        onRefresh: () => ref.refresh(businessProvider(widget.slug).future).then((_) {}, onError: (_) {}),
+        onRefresh: () => refreshing(context, ref.refresh(businessProvider(widget.slug).future)),
         child: CustomScrollView(
           controller: _header.scroll,
           slivers: [

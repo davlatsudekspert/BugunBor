@@ -60,7 +60,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ref.invalidate(configProvider);
           ref.invalidate(pushAllowedProvider);
           if (business) ref.invalidate(workspaceProvider);
-          if (signedIn) await ref.refresh(meProvider.future).then((_) {}, onError: (_) {});
+          if (signedIn) await refreshing(context, ref.refresh(meProvider.future));
         },
         child: ListView(
           padding: const EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.xl),
@@ -222,7 +222,7 @@ class _AccountCard extends ConsumerWidget {
       await ref.read(apiProvider).updateMe(displayName: name);
       ref.invalidate(meProvider);
     } catch (error) {
-      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorText(context, error))));
+      if (context.mounted) showErrorSnack(context, error);
     }
   }
 
@@ -491,7 +491,7 @@ class _Preferences extends ConsumerWidget {
             final choice = await showPlacePicker(context, ref);
             if (choice == null || !context.mounted) return;
             final ok = await applyPlaceChoice(ref, choice);
-            if (!ok && context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.homeLocationDenied)));
+            if (!ok && context.mounted) showLocationDenied(context);
           },
         ),
         ListTile(
@@ -532,14 +532,14 @@ class _NotificationsState extends ConsumerState<_Notifications> {
           // The area is only known while the app may use the location.
           if (value && !ref.read(settingsProvider).useLocation) {
             final granted = await applyPlaceChoice(ref, const LocationChoice());
-            if (!granted && mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(L.of(context).homeLocationDenied)));
+            if (!granted && mounted) showLocationDenied(context);
           }
           ref.invalidate(feedProvider);
       }
       ref.invalidate(meProvider);
       await ref.read(meProvider.future);
     } catch (error) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorText(context, error))));
+      if (mounted) showErrorSnack(context, error);
     } finally {
       if (mounted) setState(() => _pending.remove(key));
     }
@@ -708,7 +708,7 @@ class _AccountActionsState extends ConsumerState<_AccountActions> {
     } catch (error) {
       if (!mounted) return;
       setState(() => _running = null);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorText(context, error))));
+      showErrorSnack(context, error);
     }
   }
 

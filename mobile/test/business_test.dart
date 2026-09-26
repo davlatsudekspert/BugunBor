@@ -240,6 +240,27 @@ void main() {
     expect(find.text('Tekshiruvga yuborish'), findsNothing);
   });
 
+  testWidgets('the fifth business: its success is shown, not the limit', (tester) async {
+    var owned = 4;
+    final server = memberServer(
+      () => [
+        for (var index = 0; index < owned; index++) {...owner, 'businessId': 'biz$index', 'name': 'Kafe $index'},
+      ],
+    );
+    server.routes['POST /api/v1/businesses'] = (_) {
+      owned = 5;
+      return Reply(201, {'data': contract('business-create')});
+    };
+    await pumpApp(tester, server: server, token: 't');
+    final container = ProviderScope.containerOf(tester.element(find.byType(MaterialApp)));
+    unawaited(container.read(routerProvider).push('/business/new'));
+    await settle(tester);
+    await fillForm(tester);
+    await submit(tester);
+    expect(find.text('Biznesingiz tasdiqlandi!'), findsOneWidget);
+    expect(find.text('Bitta hisobdan ko‘pi bilan 5 ta biznes qo‘shish mumkin.'), findsNothing);
+  });
+
   testWidgets('an owner’s business profile: next steps, numbers, latest codes; the personal side is one tap away', (tester) async {
     await pumpApp(tester, server: memberServer(() => [owner]), token: 't');
     await tester.tap(find.text('Profil'));

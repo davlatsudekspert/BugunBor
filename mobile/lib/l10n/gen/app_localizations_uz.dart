@@ -1447,4 +1447,10 @@ class LUz extends L {
   String ratingLabel(String value) {
     return 'Baho: $value / 5';
   }
+
+  @override
+  String get openSettings => 'Sozlamalar';
+
+  @override
+  String get staleNote => 'Yangilab bo‘lmadi — oxirgi ma’lumot ko‘rsatilmoqda';
 }

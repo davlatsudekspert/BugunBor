@@ -2768,6 +2768,18 @@ abstract class L {
   /// In uz, this message translates to:
   /// **'Baho: {value} / 5'**
   String ratingLabel(String value);
+
+  /// No description provided for @openSettings.
+  ///
+  /// In uz, this message translates to:
+  /// **'Sozlamalar'**
+  String get openSettings;
+
+  /// No description provided for @staleNote.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yangilab bo‘lmadi — oxirgi ma’lumot ko‘rsatilmoqda'**
+  String get staleNote;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

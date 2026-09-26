@@ -35,6 +35,25 @@ String errorText(BuildContext context, Object error) {
 
 String money(BuildContext context, int amount) => L.of(context).sum(groupDigits(amount));
 
+/// Shows [error] in a snackbar, except a session that has just ended: the app
+/// says that once, with a sign-in button (see app.dart).
+void showErrorSnack(BuildContext context, Object error) {
+  if (error is ApiError && error.isUnauthenticated) return;
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(errorText(context, error))));
+}
+
+/// Pull to refresh: waits for the new answer and says so when it failed (the
+/// old one stays on screen, so otherwise nothing would tell).
+Future<void> refreshing(BuildContext context, Future<Object?> answer) async {
+  try {
+    await answer;
+  } catch (error) {
+    if (context.mounted) showErrorSnack(context, error);
+  }
+}
+
 /// How wide [text] is drawn here in [style], with the phone's text size.
 double textWidth(BuildContext context, String text, TextStyle style) {
   final painter = TextPainter(

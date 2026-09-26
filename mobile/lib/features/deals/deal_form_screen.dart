@@ -326,7 +326,7 @@ class _DealFormState extends ConsumerState<_DealForm> {
         _uploading = false;
         _photoBytes = null;
       });
-      _snack(errorText(context, error));
+      showErrorSnack(context, error);
     }
   }
 

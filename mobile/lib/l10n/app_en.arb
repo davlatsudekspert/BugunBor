@@ -445,5 +445,7 @@
   "timeEnded": "Ended",
   "codeUsedText": "The code was accepted. How was your visit?",
   "deletedUser": "Deleted user",
-  "ratingLabel": "Rating: {value} of 5"
+  "ratingLabel": "Rating: {value} of 5",
+  "openSettings": "Settings",
+  "staleNote": "Couldn’t refresh — showing the latest data"
 }

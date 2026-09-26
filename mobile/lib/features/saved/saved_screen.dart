@@ -69,7 +69,7 @@ class _SavedDeals extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = L.of(context);
     final favorites = ref.watch(favoritesProvider);
-    Future<void> reload() => ref.refresh(favoritesProvider.future).then((_) {}, onError: (_) {});
+    Future<void> reload() => refreshing(context, ref.refresh(favoritesProvider.future));
     return switch (favorites) {
       AsyncValue(:final value?) when value.live.isEmpty && value.ended.isEmpty => _Refreshable(
         onRefresh: reload,
@@ -121,7 +121,7 @@ class _Follows extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = L.of(context);
     final follows = ref.watch(followsProvider);
-    Future<void> reload() => ref.refresh(followsProvider.future).then((_) {}, onError: (_) {});
+    Future<void> reload() => refreshing(context, ref.refresh(followsProvider.future));
     return switch (follows) {
       AsyncValue(:final value?) when value.isEmpty => _Refreshable(
         onRefresh: reload,

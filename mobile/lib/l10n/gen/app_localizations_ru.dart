@@ -1446,4 +1446,10 @@ class LRu extends L {
   String ratingLabel(String value) {
     return 'Оценка: $value из 5';
   }
+
+  @override
+  String get openSettings => 'Настройки';
+
+  @override
+  String get staleNote => 'Не удалось обновить — показаны последние данные';
 }
