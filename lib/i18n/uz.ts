@@ -1048,7 +1048,7 @@ export const uz = {
     guides: 'Ilovadan qanday foydalanish — video qo‘llanmalar',
   },
   guides: {
-    metaTitle: 'Video qo‘llanmalar — BugunBor',
+    metaTitle: 'Video qo‘llanmalar',
     metaDescription: 'BugunBor’dan qanday foydalanish: ilovani yuklab olish, ro‘yxatdan o‘tish, biznes va aksiya qo‘shish — qisqa videolarda.',
     title: 'Video qo‘llanmalar',
     lead: 'BugunBor’dan qanday foydalanish — qisqa videolarda: ilovani yuklab olishdan birinchi aksiyangizgacha.',

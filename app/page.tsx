@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { ArrowRight, Clock3, LocateFixed, MapPin, Search, ShieldCheck, Smartphone, Sparkles, Store } from 'lucide-react';
 
 import { CategoryIcon, categoryColor } from '@/components/deals/category-icon';
@@ -23,6 +24,9 @@ import { getCurrentUser } from '@/modules/auth/current';
 import { categoryName, countByCategory, getFavoriteIds, listCategories, listLiveDeals, platformSavings } from '@/modules/catalog/queries';
 import { inBackground } from '@/modules/jobs';
 import { runMaintenance } from '@/modules/redemptions/service';
+
+// The home page is its own canonical address (the other pages set theirs).
+export const metadata: Metadata = { alternates: { canonical: '/' } };
 
 export default async function Home() {
   const [{ t, locale }, city, user, db] = await Promise.all([getI18n(), getPreferredCity(), getCurrentUser(), getDb()]);
