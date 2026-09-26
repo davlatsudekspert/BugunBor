@@ -18,8 +18,12 @@ Reja: `docs/ILOVA-REJA.md`.
   - Kontraktlar: `contracts/`.
 - [x] **1-bosqich: Flutter ilova** (`mobile/`, `uz.bugunbor.app`)
   - Birinchi ochilish: til → qiziqishlar → joylashuv (avval tushuntirish) → xabarnomalar.
-  - Asosiy: «Siz uchun» (qiziqishlar), «Yaqinimda»/shahar bo'yicha, «Tez tugaydi»,
-    «Namuna» karuseli; shahar yoki joylashuvni tanlash; bloklangan bizneslar ko'rinmaydi.
+  - Asosiy (tepadan pastga): qidiruv; yangi odamga «BugunBor qanday ishlaydi» (3 qadam,
+    ✕ bilan butunlay yopiladi, birinchi koddan keyin chiqmaydi); 8 ta kategoriya katakda
+    (nomlar bir xil o'lchamda); «Siz uchun» (qiziqishlar); «Yaqinimda»/shahar bo'yicha 4 ta
+    aksiya va «Barcha aksiyalar»; «Tez tugaydi»; «Namuna» karuseli. Vaqt «3 soat qoldi»
+    ko'rinishida, oxirgi soat ajralib turadi. Shahar yoki joylashuvni tanlash; bloklangan
+    bizneslar ko'rinmaydi.
   - Qidiruv: so'z, kategoriya, saralash, sahifalab yuklash.
   - Aksiya: band qilish (filial tanlash, takroriy so'rovdan himoya kaliti), saqlash,
     obuna, ulashish, yo'l ko'rsatish, shikoyat; namunada «Band qilish» yo'q.
@@ -55,7 +59,7 @@ Reja: `docs/ILOVA-REJA.md`.
     rad etilgan sababi bilan), tezkor amallar, statistika, profilni to'ldirish ro'yxati, so'nggi kodlar.
     Kassir faqat kod tekshirishni ko'radi. «Shaxsiy» tomoni bir bosishda.
   - «Biznes tasdiqlandi» xabarnomasi ilovada o'sha biznes profilini ochadi (to'lov sahifalari saytda qoladi).
-  - Asosiy ekranda biznes egalari uchun taklif kartochkasi (yopilsa 30 kun ko'rinmaydi, biznesi borlarga chiqmaydi).
+  - Asosiy ekran oxirida biznes egalari uchun kichik taklif kartochkasi (yopilsa 30 kun ko'rinmaydi, biznesi borlarga chiqmaydi).
   - iOS uslubidagi pastki menyu: ingichka to'q ikonkalar, tanlangani to'ldirilgan.
   - Server: `GET /api/v1/business/{id}`, `/config`da kategoriya `id`, `/me`da Telegram username va a'zolik holati.
   - Testlar: ilova 77, sayt 158. Emulyator E2E yangi ekranlarni ham suratga oladi.
