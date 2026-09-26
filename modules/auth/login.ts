@@ -1,14 +1,21 @@
 import { randomToken, sha256Hex } from '@/lib/crypto';
 import { safeReturnPath } from '@/lib/http';
+import { LOGIN_REQUEST_MINUTES, PRIVACY_VERSION } from '@/lib/privacy';
 import { addMinutes, toDbTime } from '@/lib/time';
+import { DomainError } from '@/modules/errors';
 import { getUserByTelegramId, upsertTelegramUser, type TelegramIdentity, type UserRecord } from './users';
 
 // Telegram "device flow": the browser starts a request and shows a 4-digit
 // match code; the user confirms the same code in the bot; the browser that
 // started the request (proved by a secret cookie) then receives the session.
+//
+// Consent: a request can only be started after the person ticks "I agree to
+// the privacy policy and terms" (the time and policy version are stored with
+// the request), and approval copies that consent onto the account. No session
+// is ever opened without a recorded consent.
 
 export const LOGIN_COOKIE = 'bb_login';
-export const LOGIN_TTL_MINUTES = 10;
+export const LOGIN_TTL_MINUTES = LOGIN_REQUEST_MINUTES;
 
 export type LoginStatus = 'PENDING' | 'WAITING' | 'APPROVED' | 'CONSUMED' | 'EXPIRED' | 'DENIED';
 
@@ -24,11 +31,13 @@ export type LoginRequestRow = {
   userId: string | null;
   expiresAt: string;
   browserHash: string;
+  consentAt: string | null;
+  consentVersion: string | null;
 };
 
 const COLUMNS = `id, status, match_code AS matchCode, return_to AS returnTo, locale, user_agent AS userAgent,
   telegram_user_id AS telegramUserId, telegram_chat_id AS telegramChatId, user_id AS userId,
-  expires_at AS expiresAt, browser_hash AS browserHash`;
+  expires_at AS expiresAt, browser_hash AS browserHash, consent_at AS consentAt, consent_version AS consentVersion`;
 
 function randomMatchCode() {
   const value = crypto.getRandomValues(new Uint32Array(1))[0] % 9000;
@@ -41,17 +50,18 @@ function isOpen(row: LoginRequestRow, now: Date) {
 
 export async function startLogin(
   db: D1Database,
-  input: { returnTo?: string | null; locale: 'uz' | 'ru'; userAgent?: string | null; ipHash?: string | null },
+  input: { returnTo?: string | null; locale: 'uz' | 'ru'; userAgent?: string | null; ipHash?: string | null; consent: true },
   now = new Date(),
 ) {
+  if (input.consent !== true) throw new DomainError('CONSENT_REQUIRED');
   const id = crypto.randomUUID();
   const token = randomToken(24);
   const browserSecret = randomToken(24);
   const matchCode = randomMatchCode();
   const expiresAt = addMinutes(now, LOGIN_TTL_MINUTES);
   await db
-    .prepare(`INSERT INTO login_requests(id, token_hash, browser_hash, match_code, status, return_to, locale, user_agent, ip_hash, created_at, expires_at)
-      VALUES (?1, ?2, ?3, ?4, 'PENDING', ?5, ?6, ?7, ?8, ?9, ?10)`)
+    .prepare(`INSERT INTO login_requests(id, token_hash, browser_hash, match_code, status, return_to, locale, user_agent, ip_hash, created_at, expires_at, consent_at, consent_version)
+      VALUES (?1, ?2, ?3, ?4, 'PENDING', ?5, ?6, ?7, ?8, ?9, ?10, ?9, ?11)`)
     .bind(
       id,
       await sha256Hex(token),
@@ -63,6 +73,7 @@ export async function startLogin(
       input.ipHash ?? null,
       toDbTime(now),
       toDbTime(expiresAt),
+      PRIVACY_VERSION,
     )
     .run();
   return { id, token, browserSecret, matchCode, expiresAt };
@@ -135,13 +146,20 @@ async function latestWaiting(db: D1Database, telegramUserId: string, now: Date) 
     .first<LoginRequestRow>();
 }
 
+/** Approves the request and records its privacy consent on the account, atomically. */
 async function approve(db: D1Database, requestId: string, userId: string, now: Date) {
-  const result = await db
-    .prepare(`UPDATE login_requests SET status = 'APPROVED', user_id = ?2, approved_at = ?3
-      WHERE id = ?1 AND status = 'WAITING' AND expires_at > ?3`)
-    .bind(requestId, userId, toDbTime(now))
-    .run();
-  return (result.meta.changes ?? 0) === 1;
+  const nowDb = toDbTime(now);
+  const [approved] = await db.batch([
+    db.prepare(`UPDATE login_requests SET status = 'APPROVED', user_id = ?2, approved_at = ?3
+      WHERE id = ?1 AND status = 'WAITING' AND expires_at > ?3 AND consent_at IS NOT NULL`)
+      .bind(requestId, userId, nowDb),
+    db.prepare(`UPDATE users SET
+        privacy_accepted_at = (SELECT consent_at FROM login_requests WHERE id = ?2),
+        privacy_version = (SELECT consent_version FROM login_requests WHERE id = ?2)
+      WHERE id = ?1 AND EXISTS (SELECT 1 FROM login_requests WHERE id = ?2 AND user_id = ?1 AND status = 'APPROVED' AND approved_at = ?3)`)
+      .bind(userId, requestId, nowDb),
+  ]);
+  return (approved.meta.changes ?? 0) === 1;
 }
 
 export type ApproveResult = { kind: 'approved'; user: UserRecord; request: LoginRequestRow } | { kind: 'expired' } | { kind: 'blocked'; request: LoginRequestRow };
@@ -154,7 +172,8 @@ export async function approveWithContact(
   now = new Date(),
 ): Promise<ApproveResult> {
   const request = await latestWaiting(db, identity.telegramUserId, now);
-  if (!request) return { kind: 'expired' };
+  // No account is created for a request started without consent.
+  if (!request?.consentAt) return { kind: 'expired' };
   const user = await upsertTelegramUser(db, { ...identity, locale: request.locale === 'ru' ? 'ru' : 'uz' }, adminPhones, now);
   if (user.status !== 'ACTIVE') return { kind: 'blocked', request };
   return (await approve(db, request.id, user.id, now)) ? { kind: 'approved', user, request } : { kind: 'expired' };
@@ -163,7 +182,7 @@ export async function approveWithContact(
 /** A returning user confirms with the inline button. */
 export async function approveKnown(db: D1Database, input: { requestId: string; telegramUserId: string }, now = new Date()): Promise<ApproveResult> {
   const request = await db.prepare(`SELECT ${COLUMNS} FROM login_requests WHERE id = ?1`).bind(input.requestId).first<LoginRequestRow>();
-  if (!request || request.telegramUserId !== input.telegramUserId || !isOpen(request, now)) return { kind: 'expired' };
+  if (!request?.consentAt || request.telegramUserId !== input.telegramUserId || !isOpen(request, now)) return { kind: 'expired' };
   const user = await getUserByTelegramId(db, input.telegramUserId);
   if (!user || !user.phone) return { kind: 'expired' };
   if (user.status !== 'ACTIVE') return { kind: 'blocked', request };

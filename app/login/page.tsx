@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { ShieldCheck } from 'lucide-react';
 
 import { DevLogin } from '@/components/account/dev-login';
 import { TelegramLogin } from '@/components/account/telegram-login';
@@ -29,8 +28,15 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const [{ t }, user] = await Promise.all([getI18n(), getCurrentUser()]);
   if (user) redirect(target);
 
-  const [before, after] = t.login.consent.split('{terms}');
-  const [middle, end] = (after ?? '').split('{privacy}');
+  // "{privacy} va {terms}ga roziman" → the two placeholders become links (opened in a new tab so the login is not lost).
+  const links = new Map([
+    ['{privacy}', { href: '/privacy', label: t.login.privacyLink }],
+    ['{terms}', { href: '/terms', label: t.login.termsLink }],
+  ]);
+  const consent = t.login.consent.split(/(\{privacy\}|\{terms\})/).map((part, index) => {
+    const link = links.get(part);
+    return link ? <a key={index} href={link.href} target="_blank" rel="noreferrer" className="font-semibold text-[#1b8cc2] underline underline-offset-2">{link.label}</a> : part;
+  });
 
   return (
     <main className="grid min-h-[calc(100dvh-4rem)] place-items-center bg-sand px-4 py-10">
@@ -46,6 +52,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           {isTelegramConfigured() ? (
             <TelegramLogin
               returnTo={target}
+              consent={consent}
               labels={{
                 button: t.login.button,
                 matchCode: t.login.matchCode,
@@ -58,18 +65,13 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
                 denied: t.login.denied,
                 restart: t.login.restart,
                 networkError: t.common.networkError,
+                consentHint: t.login.consentHint,
               }}
             />
           ) : (
             <p className="rounded-xl bg-amber-50 p-4 text-sm font-semibold text-amber-800">{t.login.notConfigured}</p>
           )}
         </div>
-        <p className="mt-5 flex items-start gap-2 text-xs leading-5 text-slate-500">
-          <ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
-          <span>
-            {before}<a href="/terms" className="underline">{t.login.termsLink}</a>{middle}<a href="/privacy" className="underline">{t.login.privacyLink}</a>{end}
-          </span>
-        </p>
         {import.meta.env.DEV ? (
           <DevLogin
             title={t.login.devTitle}

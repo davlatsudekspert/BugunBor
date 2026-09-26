@@ -436,4 +436,28 @@ const freeLaunch: Migration = {
   },
 };
 
-export const migrations: readonly Migration[] = [baseline, systemV1, billing, media, engagement, payments, autoModeration, freeLaunch];
+/**
+ * Explicit consent to the privacy policy: the login page's checkbox is stored
+ * with the login request and copied to the account when Telegram approves it
+ * (time and policy version). The created_at indexes keep the long-horizon
+ * retention cleanup (audit trail, moderation history, contact messages) cheap.
+ */
+const privacyConsent: Migration = {
+  id: '0009_privacy_consent',
+  async build({ db, columns }) {
+    const statements: D1PreparedStatement[] = [];
+    const users = await columns('users');
+    if (!users.has('privacy_accepted_at')) statements.push(db.prepare(`ALTER TABLE users ADD COLUMN privacy_accepted_at TEXT`));
+    if (!users.has('privacy_version')) statements.push(db.prepare(`ALTER TABLE users ADD COLUMN privacy_version TEXT`));
+    const requests = await columns('login_requests');
+    if (!requests.has('consent_at')) statements.push(db.prepare(`ALTER TABLE login_requests ADD COLUMN consent_at TEXT`));
+    if (!requests.has('consent_version')) statements.push(db.prepare(`ALTER TABLE login_requests ADD COLUMN consent_version TEXT`));
+    statements.push(...sql(db, [
+      `CREATE INDEX IF NOT EXISTS idx_moderation_created ON moderation_actions(created_at)`,
+      `CREATE INDEX IF NOT EXISTS idx_contact_created ON contact_messages(created_at)`,
+    ]));
+    return statements;
+  },
+};
+
+export const migrations: readonly Migration[] = [baseline, systemV1, billing, media, engagement, payments, autoModeration, freeLaunch, privacyConsent];

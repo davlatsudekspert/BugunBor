@@ -9,13 +9,15 @@ import { DomainError } from '@/modules/errors';
 import { loginBotUsername } from '@/modules/telegram/setup';
 import { RATE_RULES, enforceRateLimit, hashIp } from '@/modules/rate-limit';
 
-const bodySchema = z.object({ returnTo: z.string().max(500).optional() });
+// `consent` is the login page's required "I agree to the privacy policy and terms" box.
+const bodySchema = z.object({ returnTo: z.string().max(500).optional(), consent: z.boolean().optional() });
 
 export const POST = route(async (request) => {
   assertSameOrigin(request);
   const config = getConfig();
   if (!isTelegramConfigured(config)) throw new DomainError('TELEGRAM_NOT_CONFIGURED');
   const body = await readJson(request, bodySchema);
+  if (body.consent !== true) throw new DomainError('CONSENT_REQUIRED');
   const db = await getDb();
   const ipHash = await hashIp(clientIp(request), config.hashSecret);
   await enforceRateLimit(db, `login-start:${ipHash}`, RATE_RULES.loginStart);
@@ -25,6 +27,7 @@ export const POST = route(async (request) => {
     locale: requestLocale(request),
     userAgent: request.headers.get('user-agent'),
     ipHash,
+    consent: true,
   });
 
   const cookie = serializeCookie(LOGIN_COOKIE, loginCookieValue(login.id, login.browserSecret), {

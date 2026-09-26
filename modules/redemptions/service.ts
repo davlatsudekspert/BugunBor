@@ -1,4 +1,5 @@
 import { dealPhotoUrl } from '@/lib/photos';
+import { RETENTION, yearsBefore } from '@/lib/retention';
 import { addMinutes, parseDbTime, toDbTime } from '@/lib/time';
 import { auditStatementIf } from '@/modules/audit';
 import { subscriptionActiveSql } from '@/modules/deals/status';
@@ -183,13 +184,18 @@ export async function runMaintenance(db: D1Database, now = new Date(), force = f
   if (!force && now.getTime() - lastMaintenance < 60_000) return;
   lastMaintenance = now.getTime();
   await expireStaleRedemptions(db, now);
-  const dayAgo = toDbTime(addMinutes(now, -24 * 60));
+  const dayAgo = toDbTime(addMinutes(now, -RETENTION.shortLivedHours * 60));
+  // The privacy policy promises these periods (lib/retention.ts); every prune below is an index range scan.
+  const logsBefore = toDbTime(yearsBefore(now, RETENTION.logYears));
   await db.batch([
     db.prepare(`UPDATE login_requests SET status = 'EXPIRED' WHERE status IN ('PENDING', 'WAITING') AND expires_at <= ?1`).bind(toDbTime(now)),
     db.prepare(`DELETE FROM login_requests WHERE expires_at < ?1`).bind(dayAgo),
-    db.prepare(`DELETE FROM rate_limits WHERE window_start < ?1`).bind(Math.floor(now.getTime() / 1000) - 86_400),
+    db.prepare(`DELETE FROM rate_limits WHERE window_start < ?1`).bind(Math.floor(now.getTime() / 1000) - RETENTION.shortLivedHours * 3600),
     db.prepare(`DELETE FROM sessions WHERE expires_at < ?1 OR (revoked_at IS NOT NULL AND revoked_at < ?1)`).bind(dayAgo),
     pruneOrphanMediaStatement(db, now),
+    db.prepare(`DELETE FROM audit_logs WHERE created_at < ?1`).bind(logsBefore),
+    db.prepare(`DELETE FROM moderation_actions WHERE created_at < ?1`).bind(logsBefore),
+    db.prepare(`DELETE FROM contact_messages WHERE created_at < ?1`).bind(logsBefore),
   ]);
 }
 

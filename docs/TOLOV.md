@@ -88,11 +88,12 @@ Qaysi holatda nima ishlaydi:
 | --- | --- | --- |
 | Ommaviy oferta | `/oferta` | tayyor |
 | Qaytarish va bekor qilish shartlari | `/oferta#qaytarish` | tayyor |
-| Maxfiylik siyosati | `/privacy` | tayyor |
+| Maxfiylik siyosati | `/privacy` (uz/ru/en) | tayyor; operator ma’lumotlari kiritilishi kerak |
+| Hisobni o‘chirish | `/delete-account` | tayyor |
 | Foydalanish shartlari | `/terms` | tayyor |
 | Narxlar so‘mda | `/business` (tariflar), `/oferta#tariflar`, kabinetdagi «Tarif» | tayyor (bazadan olinadi) |
 | Xizmat tavsifi | `/business`, `/how-it-works` | tayyor |
-| Yuridik nom va STIR | futer, `/contact`, `/oferta#rekvizitlar` | **admin kiritishi kerak** |
+| Yuridik nom (STIR — Payme/Click so‘rasa) | futer, `/contact`, `/oferta#rekvizitlar` | **admin kiritishi kerak** |
 | Aloqa: telefon, manzil | futer, `/contact` | **admin kiritishi kerak** |
 | Fiskal MXIK (IKPU) | `PAYME_IKPU` secret | kassa talab qilsa |
 

@@ -17,6 +17,7 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
   const details = [
     { label: t.contact.legalName, value: company.legalName },
     { label: t.contact.tin, value: company.tin },
+    { label: t.contact.registration, value: company.registration },
     { label: t.contact.address, value: company.address },
     { label: t.contact.phone, value: company.phone ? formatPhone(company.phone) : '', href: company.phone ? `tel:${company.phone}` : undefined },
     { label: 'E-mail', value: company.email, href: company.email ? `mailto:${company.email}` : undefined },

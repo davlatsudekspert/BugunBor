@@ -63,8 +63,10 @@ const actionSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('company.update'),
     legalName: z.string().trim().max(160),
-    // STIR: 9 digits; a sole trader's PINFL: 14.
-    tin: z.string().trim().regex(/^(?:\d{9}|\d{14})?$/),
+    // STIR: 9 digits, companies only. A sole trader gives the registration
+    // certificate instead; a 14-digit personal number is refused (it would be public).
+    tin: z.string().trim().regex(/^(?:\d{9})?$/),
+    registration: z.string().trim().max(120).default(''),
     address: z.string().trim().max(240),
     phone: z.string().trim().max(30),
     email: z.string().trim().max(120).refine((value) => !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)),
@@ -148,7 +150,7 @@ export const POST = route(async (request: Request) => {
     case 'company.update': {
       const phone = action.phone ? tryNormalizeUzbekPhone(action.phone) : '';
       if (phone === null) throw new DomainError('VALIDATION');
-      await updateCompanyInfo(db, { actorId, info: { legalName: action.legalName, tin: action.tin, address: action.address, phone, email: action.email } });
+      await updateCompanyInfo(db, { actorId, info: { legalName: action.legalName, tin: action.tin, registration: action.registration, address: action.address, phone, email: action.email } });
       return json({ data: { ok: true } });
     }
     case 'automation.update': {

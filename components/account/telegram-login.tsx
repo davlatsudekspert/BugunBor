@@ -1,7 +1,7 @@
 'use client';
 
 import { CheckCircle2, LoaderCircle, RefreshCw, Send } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 
 import { QrCode } from '@/components/deals/qr-code';
 
@@ -17,13 +17,20 @@ type Labels = {
   denied: string;
   restart: string;
   networkError: string;
+  consentHint: string;
 };
 
 type Started = { matchCode: string; deepLink: string; expiresAt: string };
 type Phase = 'idle' | 'starting' | 'waiting' | 'approved' | 'expired' | 'denied' | 'error';
 
-export function TelegramLogin({ returnTo, labels }: { returnTo: string; labels: Labels }) {
+/**
+ * `consent` is the label of the required "I agree to the privacy policy and
+ * terms" box; the server refuses to start a login without it.
+ */
+export function TelegramLogin({ returnTo, consent, labels }: { returnTo: string; consent: ReactNode; labels: Labels }) {
   const [phase, setPhase] = useState<Phase>('idle');
+  const [agreed, setAgreed] = useState(false);
+  const hintId = useId();
   const [started, setStarted] = useState<Started | null>(null);
   const [error, setError] = useState('');
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,6 +64,7 @@ export function TelegramLogin({ returnTo, labels }: { returnTo: string; labels: 
   }
 
   async function start() {
+    if (!agreed) return;
     if (timer.current) clearTimeout(timer.current);
     setPhase('starting');
     setError('');
@@ -64,7 +72,7 @@ export function TelegramLogin({ returnTo, labels }: { returnTo: string; labels: 
       const response = await fetch('/api/v1/auth/telegram/start', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ returnTo }),
+        body: JSON.stringify({ returnTo, consent: agreed }),
       });
       const payload = (await response.json()) as { data?: Started; error?: { message: string } };
       if (!response.ok || !payload.data) {
@@ -84,10 +92,22 @@ export function TelegramLogin({ returnTo, labels }: { returnTo: string; labels: 
   if (phase === 'idle' || phase === 'starting' || phase === 'error') {
     return (
       <div>
-        <button type="button" onClick={start} disabled={phase === 'starting'} className="flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-[#229ED9] px-5 font-bold text-white shadow-[0_10px_25px_rgba(34,158,217,.28)] transition hover:bg-[#1b8cc2] disabled:opacity-70">
+        <label className="mb-4 flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm leading-6 text-slate-700">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(event) => setAgreed(event.target.checked)}
+            required
+            aria-describedby={agreed ? undefined : hintId}
+            className="mt-0.5 size-5 shrink-0 cursor-pointer accent-[#229ED9]"
+          />
+          <span>{consent}</span>
+        </label>
+        <button type="button" onClick={start} disabled={!agreed || phase === 'starting'} className="flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-[#229ED9] px-5 font-bold text-white shadow-[0_10px_25px_rgba(34,158,217,.28)] transition hover:bg-[#1b8cc2] disabled:cursor-not-allowed disabled:opacity-50">
           {phase === 'starting' ? <LoaderCircle className="size-5 animate-spin" aria-hidden /> : <Send className="size-5" aria-hidden />}
           {labels.button}
         </button>
+        {agreed ? null : <p id={hintId} className="mt-2 text-center text-xs text-slate-500">{labels.consentHint}</p>}
         {error ? <p role="alert" className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{error}</p> : null}
       </div>
     );

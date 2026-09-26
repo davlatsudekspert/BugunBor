@@ -119,7 +119,7 @@ export default async function AdminSettingsPage() {
         <p className={companyComplete(company) ? 'mt-2 text-sm font-semibold text-emerald-700' : 'mt-2 text-sm font-semibold text-amber-700'}>{companyComplete(company) ? s.companyComplete : s.companyIncomplete}</p>
         <CompanyForm
           initial={company}
-          labels={{ legalName: s.legalName, tin: s.tin, tinHint: s.tinHint, address: s.address, phone: s.phone, email: s.email, save: s.saveCompany, saved: t.common.saved, networkError: t.common.networkError }}
+          labels={{ legalName: s.legalName, tin: s.tin, tinHint: s.tinHint, registration: s.registration, registrationHint: s.registrationHint, address: s.address, addressHint: s.addressHint, phone: s.phone, email: s.email, save: s.saveCompany, saved: t.common.saved, networkError: t.common.networkError }}
         />
       </section>
 
