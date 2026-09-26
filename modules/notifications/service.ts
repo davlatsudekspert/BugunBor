@@ -7,7 +7,9 @@ import type { BotSender } from '@/modules/telegram/api';
 // rows (inside its own transaction, deduplicated by key), and a background
 // job sends them later. A failed send never breaks a claim or a decision.
 
-export type NotificationKind = 'NEW_DEAL' | 'CODE_REMINDER' | 'REDEEMED' | 'DEAL_APPROVED' | 'DEAL_REJECTED' | 'BUSINESS_APPROVED' | 'BUSINESS_REJECTED';
+export type NotificationKind =
+  | 'NEW_DEAL' | 'CODE_REMINDER' | 'REDEEMED' | 'DEAL_APPROVED' | 'DEAL_REJECTED' | 'BUSINESS_APPROVED' | 'BUSINESS_REJECTED' | 'PAYMENT_RECEIVED'
+  | 'REVIEW_NEEDED' | 'PAYMENT_REQUEST';
 
 const RETRY_LIMIT = 3;
 const REMINDER_BEFORE_MINUTES = 30;
@@ -55,6 +57,20 @@ export function teamStatement(db: D1Database, input: { businessId: string; kind:
     .bind(input.businessId, input.kind, input.key, JSON.stringify(input.payload), input.nowDb);
 }
 
+/**
+ * Work that waits for a person, so nobody has to watch the admin panel: items
+ * the automatic checks held back go to moderators and admins, manual payment
+ * requests to admins. Once per key.
+ */
+export function staffAlertStatement(db: D1Database, input: { kind: 'REVIEW_NEEDED' | 'PAYMENT_REQUEST'; key: string; payload: Record<string, string>; nowDb: string }) {
+  return db
+    .prepare(`INSERT OR IGNORE INTO notifications(id, user_id, kind, dedupe_key, payload_json, send_after, created_at)
+      SELECT lower(hex(randomblob(16))), u.id, ?1, ?1 || ':' || ?2 || ':' || u.id, ?3, ?4, ?4
+      FROM users u WHERE u.status = 'ACTIVE' AND u.telegram_user_id IS NOT NULL
+        AND (u.role = 'ADMIN' OR (u.role = 'MODERATOR' AND ?1 = 'REVIEW_NEEDED'))`)
+    .bind(input.kind, input.key, JSON.stringify(input.payload), input.nowDb);
+}
+
 type Rendered = { text: string; button: string; path: string };
 type Row = { id: string; userId: string; kind: NotificationKind; payload: string; attempts: number };
 
@@ -65,7 +81,7 @@ function until(value: string, now: Date) {
   return isSameTashkentDay(date, now) ? formatClock(date) : `${formatNumericDate(date)} ${formatClock(date)}`;
 }
 
-async function render(db: D1Database, row: Row, t: Dictionary, now: Date): Promise<Rendered | null> {
+async function render(db: D1Database, row: Row, t: Dictionary, now: Date, locale: 'uz' | 'ru' = 'uz'): Promise<Rendered | null> {
   const payload = JSON.parse(row.payload) as Record<string, string>;
   const n = t.notify;
   const nowDb = toDbTime(now);
@@ -121,6 +137,50 @@ async function render(db: D1Database, row: Row, t: Dictionary, now: Date): Promi
         : fmt(n.businessRejected, { business: escapeHtml(business.name), reason: escapeHtml(payload.reason ?? '') });
       return { text, button: n.businessButton, path: `/business/switch/${business.id}?next=${encodeURIComponent('/business/dashboard')}` };
     }
+    case 'PAYMENT_RECEIVED': {
+      const paid = await db
+        .prepare(`SELECT r.months, r.amount_uzs AS amount, p.name_uz AS planUz, p.name_ru AS planRu, b.id AS businessId, b.paid_until AS paidUntil
+          FROM billing_requests r JOIN plans p ON p.code = r.plan_code JOIN businesses b ON b.id = r.business_id
+          WHERE r.id = ?1 AND r.status = 'PAID'`)
+        .bind(payload.requestId)
+        .first<{ months: number; amount: number; planUz: string; planRu: string | null; businessId: string; paidUntil: string | null }>();
+      if (!paid?.paidUntil) return null;
+      return {
+        text: fmt(n.paymentReceived, { plan: escapeHtml((locale === 'ru' ? paid.planRu : null) ?? paid.planUz), months: paid.months, amount: formatNumber(paid.amount), date: formatNumericDate(parseDbTime(paid.paidUntil)) }),
+        button: n.paymentButton,
+        path: `/business/switch/${paid.businessId}?next=${encodeURIComponent('/business/billing')}`,
+      };
+    }
+    case 'REVIEW_NEEDED': {
+      // Skipped when someone has already decided.
+      const item =
+        payload.target === 'Business'
+          ? await db.prepare(`SELECT name AS title, NULL AS business FROM businesses WHERE id = ?1 AND verification_status = 'PENDING' AND deleted_at IS NULL`)
+              .bind(payload.id).first<{ title: string; business: string | null }>()
+          : await db.prepare(`SELECT d.title, b.name AS business FROM deals d JOIN businesses b ON b.id = d.business_id WHERE d.id = ?1 AND d.status = 'PENDING_REVIEW' AND d.deleted_at IS NULL`)
+              .bind(payload.id).first<{ title: string; business: string | null }>();
+      if (!item) return null;
+      const flags = t.moderation.flags as Record<string, string>;
+      const reasons = (payload.flags ?? '').split(',').filter(Boolean).map((flag) => flags[flag] ?? flag).join('; ') || n.reviewSwitchedOff;
+      const values = { title: escapeHtml(item.title), business: escapeHtml(item.business ?? ''), reasons: escapeHtml(reasons) };
+      return payload.target === 'Business'
+        ? { text: fmt(n.reviewBusiness, values), button: n.reviewButton, path: '/admin/businesses' }
+        : { text: fmt(n.reviewDeal, values), button: n.reviewButton, path: '/admin/deals' };
+    }
+    case 'PAYMENT_REQUEST': {
+      const request = await db
+        .prepare(`SELECT r.months, r.amount_uzs AS amount, p.name_uz AS planUz, p.name_ru AS planRu, b.name AS business
+          FROM billing_requests r JOIN plans p ON p.code = r.plan_code JOIN businesses b ON b.id = r.business_id
+          WHERE r.id = ?1 AND r.status = 'PENDING'`)
+        .bind(payload.requestId)
+        .first<{ months: number; amount: number; planUz: string; planRu: string | null; business: string }>();
+      if (!request) return null;
+      return {
+        text: fmt(n.paymentRequest, { business: escapeHtml(request.business), plan: escapeHtml((locale === 'ru' ? request.planRu : null) ?? request.planUz), months: request.months, amount: formatNumber(request.amount) }),
+        button: n.paymentRequestButton,
+        path: '/admin/billing',
+      };
+    }
     default:
       return null;
   }
@@ -164,10 +224,11 @@ export async function processNotifications(db: D1Database, sender: Pick<BotSende
       summary.skipped += 1;
       continue;
     }
-    const t = getDictionary(isLocale(user.locale) ? user.locale : 'uz');
+    const locale = isLocale(user.locale) ? user.locale : 'uz';
+    const t = getDictionary(locale);
     let message: Rendered | null;
     try {
-      message = await render(db, row, t, now);
+      message = await render(db, row, t, now, locale);
     } catch (error) {
       message = null;
       console.error('Notification render failed', row.id, error);

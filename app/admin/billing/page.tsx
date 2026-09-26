@@ -17,7 +17,10 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t.admin.billing.title, robots: { index: false, follow: false } };
 }
 
-const tone: Record<string, string> = { PENDING: 'bg-amber-50 text-amber-700', PAID: 'bg-emerald-50 text-emerald-700', CANCELED: 'bg-slate-100 text-slate-500' };
+const tone: Record<string, string> = { PENDING: 'bg-amber-50 text-amber-700', PAID: 'bg-emerald-50 text-emerald-700', CANCELED: 'bg-slate-100 text-slate-500', REFUNDED: 'bg-slate-100 text-slate-500' };
+
+/** How a request was paid: the provider name the payment wrote into the note, else by hand. */
+const method = (note: string | null) => (note?.startsWith('PAYME ') ? 'Payme' : note?.startsWith('CLICK ') ? 'Click' : null);
 
 export default async function AdminBillingPage() {
   const user = await requireAdmin('/admin/billing');
@@ -43,6 +46,7 @@ export default async function AdminBillingPage() {
                   <p className="font-black text-navy">{request.businessName}</p>
                   <p className="text-sm text-slate-600">{planName(request.planCode)} · {fmt(b.months, { count: request.months })} · <strong className="text-primary">{formatSum(request.amount, t)}</strong></p>
                   <p className="text-xs text-slate-500">{request.requesterName} {request.requesterPhone ? `· ${formatPhone(request.requesterPhone)}` : ''} · {formatMoment(parseDbTime(request.createdAt), t, locale)}</p>
+                  {request.paying ? <p className="mt-1 text-xs font-bold text-sky-700">{b.paying}</p> : null}
                 </div>
                 <div className="flex gap-2">
                   <ActionButton payload={{ type: 'billing.confirm', requestId: request.id }} label={b.confirm} confirmText={`${b.confirm}: ${request.businessName} — ${formatSum(request.amount, t)}?`} tone="success" networkError={t.common.networkError} />
@@ -59,7 +63,10 @@ export default async function AdminBillingPage() {
             {handled.map((request) => (
               <li key={request.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
                 <span className="min-w-0 truncate text-navy">{request.businessName} · {planName(request.planCode)} · {fmt(b.months, { count: request.months })} · {formatSum(request.amount, t)}</span>
-                <span className={cn('shrink-0 rounded-full px-2.5 py-1 text-xs font-bold', tone[request.status])}>{t.billing.requestStatus[request.status as keyof typeof t.billing.requestStatus]}</span>
+                <span className="flex shrink-0 items-center gap-1.5">
+                  {method(request.note) ? <span className="rounded-full bg-sky-50 px-2 py-1 text-xs font-bold text-sky-700">{method(request.note)}</span> : null}
+                  <span className={cn('rounded-full px-2.5 py-1 text-xs font-bold', tone[request.status])}>{t.billing.requestStatus[request.status as keyof typeof t.billing.requestStatus]}</span>
+                </span>
               </li>
             ))}
           </ul>

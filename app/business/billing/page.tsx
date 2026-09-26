@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
-import { CreditCard, Info } from 'lucide-react';
+import { CheckCircle2, CreditCard, Info, LoaderCircle } from 'lucide-react';
 
+import { AutoRefresh } from '@/components/business/auto-refresh';
 import { BillingPlans } from '@/components/business/billing-plans';
 import { WorkspaceShell } from '@/components/business/workspace-shell';
+import { getConfig } from '@/lib/env';
 import { formatDay, formatSum } from '@/lib/format';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
@@ -10,17 +12,24 @@ import { formatNumericDate, parseDbTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { getBillingSettings, listPlans } from '@/modules/billing/service';
 import { requireWorkspace } from '@/modules/businesses/current';
+import { checkoutAvailable } from '@/modules/payments/service';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
   return { title: t.billing.title, robots: { index: false, follow: false } };
 }
 
-const requestTone: Record<string, string> = { PENDING: 'bg-amber-50 text-amber-700', PAID: 'bg-emerald-50 text-emerald-700', CANCELED: 'bg-slate-100 text-slate-600' };
+const requestTone: Record<string, string> = { PENDING: 'bg-amber-50 text-amber-700', PAID: 'bg-emerald-50 text-emerald-700', CANCELED: 'bg-slate-100 text-slate-600', REFUNDED: 'bg-slate-100 text-slate-600' };
 
-export default async function BillingPage() {
+export default async function BillingPage({ searchParams }: { searchParams: Promise<{ order?: string }> }) {
   const ws = await requireWorkspace('/business/billing', 'business.edit');
   const { t, locale, db, membership, subscription } = ws;
+  const { order: orderId } = await searchParams;
+  const payments = getConfig().payments;
+  // Coming back from Payme or Click: this business's order, as the provider's server left it.
+  const returned = orderId
+    ? await db.prepare(`SELECT status FROM billing_requests WHERE id = ?1 AND business_id = ?2`).bind(orderId.slice(0, 100), membership.businessId).first<{ status: string }>()
+    : null;
   const [plans, settings, requests] = await Promise.all([
     listPlans(db),
     getBillingSettings(db),
@@ -53,6 +62,16 @@ export default async function BillingPage() {
         <p className="mt-2 max-w-2xl text-lg font-semibold leading-7">{statusText}</p>
       </section>
 
+      {returned ? (
+        returned.status === 'PAID' ? (
+          <output className="mt-4 flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800"><CheckCircle2 className="size-5 shrink-0" aria-hidden /> {b.orderPaid}</output>
+        ) : returned.status === 'PENDING' ? (
+          <output className="mt-4 flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800"><LoaderCircle className="size-5 shrink-0 animate-spin" aria-hidden /> {b.orderPending}<AutoRefresh /></output>
+        ) : (
+          <output className="mt-4 block rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600">{b.orderClosed}</output>
+        )
+      ) : null}
+
       {pending ? (
         <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
           {fmt(b.pending, { plan: planName(pending.planCode), months: pending.months, amount: formatSum(pending.amount, t) })}
@@ -65,6 +84,7 @@ export default async function BillingPage() {
           businessId={membership.businessId}
           currentPlan={subscription.status === 'ACTIVE' ? (subscription.plan?.code ?? null) : null}
           canRequest={membership.role === 'OWNER'}
+          online={{ payme: checkoutAvailable(payments, 'PAYME'), click: checkoutAvailable(payments, 'CLICK'), paymeSandbox: Boolean(payments.payme?.sandbox) }}
           plans={plans.map((plan) => ({
             code: plan.code,
             name: locale === 'ru' ? plan.nameRu : plan.nameUz,
@@ -80,6 +100,9 @@ export default async function BillingPage() {
           t={{ billing: t.billing, common: t.common }}
         />
         {membership.role !== 'OWNER' ? <p className="mt-3 text-sm text-slate-500">{b.ownerOnly}</p> : null}
+        <p className="mt-4 text-xs text-slate-500">
+          {b.offerNote.split('{offer}')[0]}<a href="/oferta" className="font-semibold text-primary underline-offset-2 hover:underline">{b.offerLink}</a>{b.offerNote.split('{offer}')[1]}
+        </p>
       </section>
 
       <section className="mt-8 grid gap-5 lg:grid-cols-2">

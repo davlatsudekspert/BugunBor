@@ -46,7 +46,7 @@ export async function createBusiness(db: D1Database, input: { userId: string; da
     db.prepare(`INSERT INTO branches(id, business_id, name, city, address, latitude_e6, longitude_e6, phone, working_hours_json, created_at, updated_at)
       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?10)`)
       .bind(branchId, id, input.locale === 'ru' ? 'Основной филиал' : 'Asosiy filial', data.city, data.address, point.lat, point.lon, data.phone,
-        serializeHours({ open: '09:00', close: '21:00' }), nowDb),
+        serializeHours({ open: data.open ?? '09:00', close: data.close ?? '21:00' }), nowDb),
     db.prepare(`INSERT INTO business_members(business_id, user_id, role, created_at) VALUES (?1, ?2, 'OWNER', ?3)`).bind(id, input.userId, nowDb),
     auditStatement(db, { actorUserId: input.userId, businessId: id, action: 'business.submitted', targetType: 'Business', targetId: id, after: { name: data.name, status: 'PENDING' } }, nowDb),
   ]);
@@ -189,6 +189,37 @@ export async function removeMember(db: D1Database, input: { businessId: string; 
     auditStatement(db, { actorUserId: input.userId, businessId: input.businessId, action: 'team.removed', targetType: 'User', targetId: input.memberId }, nowDb),
   ]);
   if ((results[0].meta.changes ?? 0) !== 1) throw new DomainError('NOT_FOUND');
+}
+
+export type SetupItem = { key: 'logo' | 'cover' | 'description' | 'contacts' | 'location' | 'deal'; done: boolean; href: string };
+
+/** What a new business still lacks, for the "fill in your profile" card on the dashboard. */
+export async function profileChecklist(db: D1Database, businessId: string): Promise<SetupItem[]> {
+  const [row, branches] = await Promise.all([
+    db.prepare(`SELECT logo_id AS logoId, cover_id AS coverId, length(trim(description)) AS descriptionLength,
+        (telegram IS NOT NULL OR instagram IS NOT NULL OR website IS NOT NULL) AS contacts,
+        (SELECT COUNT(*) FROM deals d WHERE d.business_id = businesses.id AND d.deleted_at IS NULL) AS deals
+      FROM businesses WHERE id = ?1`)
+      .bind(businessId)
+      .first<{ logoId: string | null; coverId: string | null; descriptionLength: number; contacts: number; deals: number }>(),
+    db.prepare(`SELECT city, latitude_e6 AS lat, longitude_e6 AS lon FROM branches WHERE business_id = ?1 AND deleted_at IS NULL`)
+      .bind(businessId)
+      .all<{ city: string; lat: number; lon: number }>(),
+  ]);
+  if (!row) return [];
+  // A branch saved without a point sits exactly on its city's centre.
+  const pinned = branches.results.some((branch) => {
+    const center = coordinates(branch.city);
+    return center.lat !== branch.lat || center.lon !== branch.lon;
+  });
+  return [
+    { key: 'logo', done: Boolean(row.logoId), href: '/business/profile' },
+    { key: 'cover', done: Boolean(row.coverId), href: '/business/profile' },
+    { key: 'description', done: row.descriptionLength >= 80, href: '/business/profile' },
+    { key: 'contacts', done: Boolean(row.contacts), href: '/business/profile' },
+    { key: 'location', done: pinned, href: '/business/branches' },
+    { key: 'deal', done: row.deals > 0, href: '/business/deals/new' },
+  ];
 }
 
 export type DashboardData = {

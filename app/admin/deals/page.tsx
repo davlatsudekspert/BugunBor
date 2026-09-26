@@ -11,27 +11,28 @@ import { parseDbTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { listAdminDeals } from '@/modules/admin/service';
 import { requireModerator } from '@/modules/auth/current';
+import { flagText, parseFlags } from '@/modules/moderation/auto';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
   return { title: t.admin.deals.title, robots: { index: false, follow: false } };
 }
 
-type Filter = 'pending' | 'live' | 'all';
+type Filter = 'pending' | 'auto' | 'live' | 'all';
 
 export default async function AdminDealsPage({ searchParams }: { searchParams: Promise<{ f?: string }> }) {
   const { f } = await searchParams;
   const user = await requireModerator('/admin/deals');
   const [{ t, locale }, db] = await Promise.all([getI18n(), getDb()]);
-  const filter: Filter = f === 'live' || f === 'all' ? f : 'pending';
+  const filter: Filter = f === 'live' || f === 'all' || f === 'auto' ? f : 'pending';
   const deals = await listAdminDeals(db, filter);
   const a = t.admin;
-  const labels: Record<Filter, string> = { pending: a.filters.pending, live: t.biz.deals.filters.live, all: a.filters.all };
+  const labels: Record<Filter, string> = { pending: a.filters.pending, auto: a.auto.filter, live: t.biz.deals.filters.live, all: a.filters.all };
 
   return (
     <AdminShell t={t} role={user.role} active="deals">
       <div className="flex gap-2">
-        {(['pending', 'live', 'all'] as const).map((key) => (
+        {(['pending', 'auto', 'live', 'all'] as const).map((key) => (
           <a key={key} href={key === 'pending' ? '/admin/deals' : `/admin/deals?f=${key}`} className={cn('inline-flex h-9 items-center rounded-full border px-4 text-xs font-bold', filter === key ? 'border-navy bg-navy text-white' : 'border-slate-200 bg-white text-slate-600')}>{labels[key]}</a>
         ))}
       </div>
@@ -42,7 +43,10 @@ export default async function AdminDealsPage({ searchParams }: { searchParams: P
               <div className="flex gap-4">
                 <DealVisual visual={deal.visual} categorySlug={deal.categorySlug} photo={deal.photo} sizes="80px" className="size-20 shrink-0 rounded-xl" emojiClassName="-bottom-3 -right-2 text-5xl" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-slate-500">{deal.businessName} · {deal.categoryName}{deal.isDemo ? ` · ${t.common.demo}` : ''}</p>
+                  <p className="text-xs font-bold text-slate-500">
+                    {deal.businessName} · {deal.categoryName}{deal.isDemo ? ` · ${t.common.demo}` : ''}
+                    {deal.autoDecided && deal.status !== 'PENDING_REVIEW' ? <span title={a.auto.badgeHint} className="ml-2 rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-bold text-sky-700">{a.auto.badge}</span> : null}
+                  </p>
                   <p className="mt-1 text-lg font-black leading-snug text-navy">{deal.title}</p>
                   <p className="mt-1 text-sm"><strong className="text-primary">{formatSum(deal.price, t)}</strong> {deal.originalPrice ? <span className="text-slate-400 line-through">{formatSum(deal.originalPrice, t)}</span> : null} <span className="font-bold text-emerald-700">−{deal.discountPercent}%</span></p>
                 </div>
@@ -59,6 +63,11 @@ export default async function AdminDealsPage({ searchParams }: { searchParams: P
               {deal.status === 'PENDING_REVIEW' ? (
                 <>
                   {deal.businessStatus !== 'VERIFIED' ? <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">{a.deals.businessNotVerified}</p> : null}
+                  {parseFlags(deal.autoNote).length ? (
+                    <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">{fmt(a.auto.held, { reasons: flagText(parseFlags(deal.autoNote), t) })}</p>
+                  ) : deal.autoNote === '' && deal.businessStatus === 'VERIFIED' ? (
+                    <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">{a.auto.clean}</p>
+                  ) : null}
                   <DecisionForm kind="deal" targetId={deal.id} labels={{ approve: a.approve, reject: a.reject, reason: a.reason, placeholder: a.reasonPlaceholder, hint: a.reasonHint, networkError: t.common.networkError }} />
                 </>
               ) : (

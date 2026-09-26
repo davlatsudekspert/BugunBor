@@ -12,9 +12,17 @@ import { FormMessage } from './form-controls';
 
 export type PlanCard = { code: string; name: string; priceMonthlyUzs: number; features: string[] };
 
+/** Which online checkouts work right now; the others show "coming soon". */
+export type OnlinePayments = { payme: boolean; click: boolean; paymeSandbox: boolean };
+
+const PROVIDERS = [
+  { code: 'PAYME', key: 'payme', name: 'Payme', logo: '/payments/payme.svg' },
+  { code: 'CLICK', key: 'click', name: 'Click', logo: '/payments/click.svg' },
+] as const;
+
 const money = (value: number, sum: string) => `${value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} ${sum}`;
 
-export function BillingPlans({ businessId, plans, currentPlan, canRequest, t }: { businessId: string; plans: PlanCard[]; currentPlan: string | null; canRequest: boolean; t: Pick<Dictionary, 'billing' | 'common'> }) {
+export function BillingPlans({ businessId, plans, currentPlan, canRequest, online, t }: { businessId: string; plans: PlanCard[]; currentPlan: string | null; canRequest: boolean; online: OnlinePayments; t: Pick<Dictionary, 'billing' | 'common'> }) {
   const [months, setMonths] = useState(1);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<{ tone: 'error' | 'success'; text: string } | null>(null);
@@ -31,6 +39,20 @@ export function BillingPlans({ businessId, plans, currentPlan, canRequest, t }: 
     }
     setMessage({ tone: 'success', text: b.requested });
     setTimeout(() => window.location.reload(), 1200);
+  }
+
+  // Opens the provider's checkout; the plan switches on only when the provider's server confirms the payment.
+  async function checkout(planCode: string, provider: 'PAYME' | 'CLICK') {
+    setBusy(`${planCode}:${provider}`);
+    setMessage(null);
+    const result = await apiRequest<{ url: string }>(`/api/v1/business/${businessId}`, { type: 'billing.checkout', planCode, months, provider }, { networkError: t.common.networkError });
+    if (!result.ok) {
+      setBusy(null);
+      setMessage({ tone: 'error', text: result.message });
+      return;
+    }
+    setMessage({ tone: 'success', text: b.redirecting });
+    window.location.assign(result.data.url);
   }
 
   return (
@@ -65,6 +87,32 @@ export function BillingPlans({ businessId, plans, currentPlan, canRequest, t }: 
                 {busy === plan.code ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : null}
                 {busy === plan.code ? b.requesting : b.request}
               </button>
+              <p className="mt-4 text-xs font-bold text-slate-500">{b.payOnline}</p>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {PROVIDERS.map((provider) => {
+                  const live = online[provider.key];
+                  const label = live ? fmt(b.payWith, { provider: provider.name }) : fmt(b.soonHint, { provider: provider.name });
+                  return (
+                    <button
+                      key={provider.code}
+                      type="button"
+                      disabled={!live || !canRequest || busy !== null}
+                      onClick={() => void checkout(plan.code, provider.code)}
+                      aria-label={label}
+                      title={label}
+                      className="relative flex h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 transition hover:border-primary/40 disabled:cursor-not-allowed disabled:hover:border-slate-200"
+                    >
+                      {busy === `${plan.code}:${provider.code}` ? (
+                        <LoaderCircle className="size-4 animate-spin text-slate-500" aria-hidden />
+                      ) : (
+                        <img src={provider.logo} alt={provider.name} className={cn('h-5 w-auto', !live && 'opacity-45 grayscale')} />
+                      )}
+                      {!live ? <span className="absolute -top-2.5 right-2 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-navy shadow-sm">{b.soon}</span> : null}
+                    </button>
+                  );
+                })}
+              </div>
+              {online.payme && online.paymeSandbox ? <p className="mt-2 text-[11px] font-semibold text-amber-700">Payme · {b.sandbox}</p> : null}
             </div>
           );
         })}

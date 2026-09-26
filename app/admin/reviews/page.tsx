@@ -5,11 +5,13 @@ import { AdminShell } from '@/components/admin/admin-shell';
 import { RatingStars } from '@/components/deals/rating-stars';
 import { getDb } from '@/db/client';
 import { formatMoment } from '@/lib/format';
+import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
 import { parseDbTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { requireModerator } from '@/modules/auth/current';
-import { listAdminReviews } from '@/modules/engagement/reviews';
+import { AUTO_HIDDEN_PREFIX, listAdminReviews } from '@/modules/engagement/reviews';
+import { flagText, parseFlags } from '@/modules/moderation/auto';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -35,7 +37,7 @@ export default async function AdminReviewsPage() {
                 <RatingStars value={review.rating} />
               </div>
               {review.comment ? <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-700">{review.comment}</p> : null}
-              {review.status === 'HIDDEN' ? <p className="mt-2 text-xs font-bold text-red-600">{r.hidden}{review.hiddenReason ? ` · ${review.hiddenReason}` : ''}</p> : null}
+              {review.status === 'HIDDEN' ? <p className="mt-2 text-xs font-bold text-red-600">{r.hidden}{review.hiddenReason ? ` · ${review.hiddenReason.startsWith(AUTO_HIDDEN_PREFIX) ? fmt(t.admin.auto.autoHidden, { reasons: flagText(parseFlags(review.hiddenReason.slice(AUTO_HIDDEN_PREFIX.length)), t) }) : review.hiddenReason}` : ''}</p> : null}
               <div className="mt-3">
                 {review.status === 'HIDDEN' ? (
                   <ActionButton payload={{ type: 'review.visibility', reviewId: review.id, hidden: false, reason: '' }} label={r.show} networkError={t.common.networkError} />

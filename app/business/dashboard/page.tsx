@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Activity, BellRing, Clock3, Eye, Plus, Printer, QrCode, Star, TicketCheck } from 'lucide-react';
+import { Activity, BellRing, CheckCircle2, Circle, Clock3, Eye, Plus, Printer, QrCode, Star, TicketCheck } from 'lucide-react';
 
 import { WorkspaceShell } from '@/components/business/workspace-shell';
 import { RatingStars, ratingText } from '@/components/deals/rating-stars';
@@ -10,7 +10,7 @@ import { formatNumericDate, parseDbTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { roleCan } from '@/modules/auth/authorization';
 import { requireWorkspace } from '@/modules/businesses/current';
-import { businessDashboard } from '@/modules/businesses/service';
+import { businessDashboard, profileChecklist } from '@/modules/businesses/service';
 import { listBusinessReviews } from '@/modules/engagement/reviews';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -28,7 +28,14 @@ const statusTone: Record<string, string> = {
 export default async function BusinessDashboardPage() {
   const ws = await requireWorkspace('/business/dashboard', 'analytics.read');
   const { t, locale, db, membership, subscription } = ws;
-  const [data, reviews] = await Promise.all([businessDashboard(db, membership.businessId), listBusinessReviews(db, membership.businessId, 5)]);
+  const canEdit = roleCan(membership.role, 'business.edit');
+  const [data, reviews, checklist] = await Promise.all([
+    businessDashboard(db, membership.businessId),
+    listBusinessReviews(db, membership.businessId, 5),
+    canEdit ? profileChecklist(db, membership.businessId) : Promise.resolve([]),
+  ]);
+  const setup = t.biz.dashboard.setup;
+  const done = checklist.filter((item) => item.done).length;
   const planName = subscription.plan ? (locale === 'ru' ? subscription.plan.nameRu : subscription.plan.nameUz) : '';
   const cards = [
     { label: t.biz.dashboard.stats.live, value: data.live, icon: Activity },
@@ -41,6 +48,29 @@ export default async function BusinessDashboardPage() {
 
   return (
     <WorkspaceShell ws={ws} active="dashboard">
+      {checklist.length && done < checklist.length ? (
+        <section className="mb-5 rounded-2xl border border-primary/30 bg-white p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-black text-navy">{setup.title}</h2>
+            <span className="text-sm font-bold text-primary">{fmt(setup.progress, { done, total: checklist.length })}</span>
+          </div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100" aria-hidden>
+            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.round((done / checklist.length) * 100)}%` }} />
+          </div>
+          <p className="mt-3 text-sm text-slate-600">{setup.hint}</p>
+          <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+            {checklist.map((item) => (
+              <li key={item.key}>
+                {item.done ? (
+                  <span className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-400 line-through"><CheckCircle2 className="size-4 shrink-0 text-emerald-600" aria-hidden /> {setup.items[item.key]}</span>
+                ) : (
+                  <a href={item.href} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-navy hover:border-primary/40"><Circle className="size-4 shrink-0 text-primary" aria-hidden /> {setup.items[item.key]}</a>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
         {cards.map(({ label, value, icon: Icon }) => (
           <div key={label} className="rounded-2xl border border-slate-200 bg-white p-5">

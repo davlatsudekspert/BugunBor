@@ -7,6 +7,8 @@
 3. Set the variables from `.env.example` (at least `APP_URL`, `HASH_SECRET`, the three `TELEGRAM_*` values and `ADMIN_PHONES`).
 4. Open the site once: the first request connects the Telegram bot (webhook) by itself, and again whenever the token, secret or `APP_URL` changes. Then log in with an admin phone through Telegram. **Admin → Sozlamalar** shows which bot the token belongs to and any connection error; **Webhook’ni o‘rnatish** reconnects by hand.
 5. In **Admin → Tariflar** check prices, the free-period length (1–3 months) and the payment instructions shown to businesses.
+6. In **Admin → Sozlamalar** fill in the company details (legal name, STIR, address, phone): the footer, the contact page and the public offer (`/oferta`) show them.
+7. Online payments stay off until `PAYMENTS_ENABLED=true`; the keys go in as Worker secrets. Step by step: `docs/TOLOV.md`.
 
 Deploying straight to Cloudflare Workers Builds: set the build variables `D1_DATABASE_ID` and `D1_DATABASE_NAME`, so the built `wrangler.json` binds the real database (without them it carries a placeholder id).
 
@@ -21,8 +23,14 @@ Migrations run automatically on the first request after a deploy. They are addit
 
 ## Daily work
 
-- **Moderation:** Admin → Bizneslar / Aksiyalar (queues first), Sharhlar for reviews, Murojaatlar for the contact form.
-- **Payments:** a business requests a plan in its Tarif page and pays by the instructions; confirm it in Admin → Tariflar. Admins can also grant 1–3 free months or a plan directly on a business.
+- **Moderation is automatic.** Every new business and deal is checked at once. Clean ones are approved on the spot; the system moderator (`usr_system`) signs the decision.
+  Anything suspicious stays in the queue with its reasons, and moderators and admins get a Telegram message. The reasons include a link, a forbidden topic, alcohol or tobacco, a card number, an odd price, a duplicate name, or an earlier rejection.
+  The system never rejects; people do.
+  Obscene, link or card-number reviews are hidden automatically and can be shown again.
+  Each switch is in Admin → Sozlamalar → Avtomatik moderatsiya. Admin → Bizneslar / Aksiyalar → «Avto tasdiqlangan» lists last week's automatic approvals for a second look.
+- **Payments:** Payme and Click switch a plan on by themselves once the payment system confirms (see `docs/TOLOV.md`).
+  A manual request (bank transfer) still works: admins get a Telegram message, then confirm it in Admin → Tariflar.
+  Admins can also grant 1–3 free months or a plan directly on a business.
 - **Audit:** Admin → Audit lists every decision with reasons.
 
 ## Demo mode

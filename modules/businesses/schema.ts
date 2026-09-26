@@ -63,13 +63,16 @@ export const businessProfileSchema = z.object({
   coverId: z.string().regex(/^[0-9a-f-]{36}$/, 'invalid').nullable().optional(),
 });
 
+const time = z.string().refine(isTime, 'time');
+
 export const onboardingSchema = businessProfileSchema.extend({
   address: text(5, 240),
   latitude: coordinate(90),
   longitude: coordinate(180),
+  /** Working hours of the first branch; 09:00–21:00 when left out. */
+  open: time.optional(),
+  close: time.optional(),
 });
-
-const time = z.string().refine(isTime, 'time');
 
 export const branchSchema = z.object({
   name: text(2, 80),

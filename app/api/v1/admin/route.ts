@@ -5,10 +5,13 @@ import { getConfig, isTelegramConfigured } from '@/lib/env';
 import { assertSameOrigin, json, readJson, route } from '@/lib/http';
 import { saveCategory, setMessageStatus, updatePlan, updateSettings, updateUser } from '@/modules/admin/service';
 import { apiModerator } from '@/modules/auth/current';
+import { tryNormalizeUzbekPhone } from '@/modules/auth/phone';
 import { cancelBillingRequest, confirmBillingRequest, grantPlan, grantTrial } from '@/modules/billing/service';
 import { BILLING_PERIODS, TRIAL_MONTH_OPTIONS } from '@/modules/billing/pricing';
 import { setReviewHidden } from '@/modules/engagement/reviews';
+import { updateCompanyInfo } from '@/modules/company';
 import { DomainError } from '@/modules/errors';
+import { AUTO_SETTING_KEYS, autoModerateBusiness, autoModerateDeal, autoModeratePendingDeals } from '@/modules/moderation/auto';
 import { archiveDealByModerator, decideBusiness, decideDeal, removeImagesByModerator, setBusinessSuspended } from '@/modules/moderation/service';
 import { createTelegramApi } from '@/modules/telegram/api';
 import { ensureTelegramWebhook } from '@/modules/telegram/setup';
@@ -52,6 +55,16 @@ const actionSchema = z.discriminatedUnion('type', [
     isActive: z.boolean(),
   }),
   z.object({ type: z.literal('telegram.webhook') }),
+  z.object({ type: z.literal('automation.update'), key: z.enum(['businesses', 'deals', 'reviews']), on: z.boolean() }),
+  z.object({
+    type: z.literal('company.update'),
+    legalName: z.string().trim().max(160),
+    // STIR: 9 digits; a sole trader's PINFL: 14.
+    tin: z.string().trim().regex(/^(?:\d{9}|\d{14})?$/),
+    address: z.string().trim().max(240),
+    phone: z.string().trim().max(30),
+    email: z.string().trim().max(120).refine((value) => !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)),
+  }),
 ]);
 
 const moderatorActions = new Set(['deal.decide', 'deal.archive', 'business.decide', 'message.status', 'images.remove', 'review.visibility']);
@@ -70,8 +83,12 @@ export const POST = route(async (request: Request) => {
     case 'deal.archive':
       await archiveDealByModerator(db, { actorId, dealId: action.dealId, reason: action.reason });
       return json({ data: { ok: true } });
-    case 'business.decide':
-      return json({ data: await decideBusiness(db, { actorId, businessId: action.businessId, decision: action.decision, reason: action.reason }) });
+    case 'business.decide': {
+      const result = await decideBusiness(db, { actorId, businessId: action.businessId, decision: action.decision, reason: action.reason });
+      // Deals sent while the business was in review get checked now.
+      if (result.status === 'VERIFIED') await autoModeratePendingDeals(db, action.businessId);
+      return json({ data: result });
+    }
     case 'message.status':
       await setMessageStatus(db, { messageId: action.messageId, status: action.status });
       return json({ data: { ok: true } });
@@ -112,6 +129,25 @@ export const POST = route(async (request: Request) => {
       return json({ data: { ok: true } });
     case 'category.save':
       return json({ data: await saveCategory(db, { ...action, id: action.id ?? null, actorId }) });
+    case 'company.update': {
+      const phone = action.phone ? tryNormalizeUzbekPhone(action.phone) : '';
+      if (phone === null) throw new DomainError('VALIDATION');
+      await updateCompanyInfo(db, { actorId, info: { legalName: action.legalName, tin: action.tin, address: action.address, phone, email: action.email } });
+      return json({ data: { ok: true } });
+    }
+    case 'automation.update': {
+      await updateSettings(db, { actorId, values: { [AUTO_SETTING_KEYS[action.key]]: action.on ? '1' : '0' } });
+      // Switching it on also clears what is already waiting and passes the checks.
+      if (action.on && action.key !== 'reviews') {
+        const table = action.key === 'businesses' ? `businesses WHERE verification_status = 'PENDING'` : `deals WHERE status = 'PENDING_REVIEW'`;
+        const waiting = await db.prepare(`SELECT id FROM ${table} AND deleted_at IS NULL ORDER BY submitted_at LIMIT 50`).all<{ id: string }>();
+        for (const item of waiting.results) {
+          if (action.key === 'businesses') await autoModerateBusiness(db, item.id);
+          else await autoModerateDeal(db, item.id);
+        }
+      }
+      return json({ data: { ok: true } });
+    }
     case 'telegram.webhook': {
       const config = getConfig();
       if (!isTelegramConfigured(config)) throw new DomainError('TELEGRAM_NOT_CONFIGURED');

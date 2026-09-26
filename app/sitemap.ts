@@ -8,7 +8,7 @@ import { PUBLIC_BUSINESS_SQL, liveDealSql } from '@/modules/deals/status';
 const BASE = 'https://bugunbor.uz';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const staticPages: MetadataRoute.Sitemap = ['/', '/discover', '/categories', '/business', '/how-it-works', '/faq', '/contact', '/terms', '/privacy'].map((path) => ({
+  const staticPages: MetadataRoute.Sitemap = ['/', '/discover', '/categories', '/business', '/how-it-works', '/faq', '/contact', '/terms', '/privacy', '/oferta'].map((path) => ({
     url: `${BASE}${path}`,
     changeFrequency: path === '/' || path === '/discover' ? 'hourly' : 'weekly',
     priority: path === '/' ? 1 : 0.6,

@@ -4,6 +4,7 @@ import { fmt } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { roleCan, type BusinessAction } from '@/modules/auth/authorization';
 import type { Workspace } from '@/modules/businesses/current';
+import { flagText, ownerFlags } from '@/modules/moderation/auto';
 
 export type WorkspaceTab = 'dashboard' | 'redeem' | 'deals' | 'branches' | 'team' | 'profile' | 'billing';
 
@@ -82,7 +83,18 @@ export function WorkspaceShell({ ws, active, children }: { ws: Workspace; active
         {membership.suspendedAt ? (
           <Banner tone="red">{fmt(t.biz.banner.SUSPENDED, { reason: membership.suspendedReason ?? '' })}</Banner>
         ) : null}
-        {membership.verificationStatus === 'PENDING' ? <Banner tone="amber">{t.biz.banner.PENDING}</Banner> : null}
+        {membership.verificationStatus === 'PENDING' ? (
+          <Banner tone="amber">
+            {ownerFlags(membership.autoReviewNote).length ? (
+              <>
+                {fmt(t.moderation.ownerFix, { reasons: flagText(ownerFlags(membership.autoReviewNote), t) })}{' '}
+                {canBill ? <a href="/business/profile" className="font-black underline">{t.biz.nav.profile}</a> : null}
+              </>
+            ) : (
+              t.biz.banner.PENDING
+            )}
+          </Banner>
+        ) : null}
         {membership.verificationStatus === 'REJECTED' ? (
           <Banner tone="red">
             {fmt(t.biz.banner.REJECTED, { reason: membership.rejectionReason ?? '' })}{' '}

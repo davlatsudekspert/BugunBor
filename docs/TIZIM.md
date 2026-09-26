@@ -124,10 +124,18 @@ Istalgan bosqichda: 10 daqiqa o‘tsa ▶ Muddati o‘tgan (EXPIRED); botda «Me
 
 ### 4.3. Biznes: ro‘yxatdan o‘tish va aksiya
 
-1. Foydalanuvchi «Biznes qo‘shish» formasini to‘ldiradi: nom, kategoriya, shahar, telefon, asosiy filial manzili, tavsif. Biznes **Tekshiruvda** holatiga tushadi va foydalanuvchi uning **Egasi** bo‘ladi.
-2. Moderator biznesni tasdiqlaydi yoki sabab bilan rad etadi.
+1. Foydalanuvchi «Biznes qo‘shish» formasini to‘ldiradi:
+   - nom va kategoriya (belgili tugmalar);
+   - shahar («Joylashuvimni aniqlash» eng yaqin shaharni o‘zi tanlaydi);
+   - telefon (Telegram’dagi raqam oldindan yozilgan);
+   - asosiy filial manzili (mo‘ljal bilan) va ish vaqti;
+   - tavsif (kategoriyaga mos «Namuna matn» bor).
+
+   Biznes **Tekshiruvda** holatiga tushadi va foydalanuvchi uning **Egasi** bo‘ladi.
+2. Tizim arizani darhol **avtomatik tekshiradi** (4.6). Toza ariza o‘sha zahoti tasdiqlanadi va bepul davr boshlanadi. Shubhali ariza moderatorga qoladi, moderator uni tasdiqlaydi yoki sabab bilan rad etadi.
+   Kabinetda «Profilni to‘ldiring» ro‘yxati turadi: logotip, muqova, batafsil tavsif, Telegram/Instagram, xaritadagi nuqta, birinchi aksiya.
 3. Egasi yoki menejer aksiya yaratadi (qoralama) va tekshiruvga yuboradi.
-4. Moderator aksiyani tasdiqlaydi. Boshlanish vaqti kelganda aksiya saytda **Faol** bo‘ladi. Yangi aksiyaning boshlanish vaqti standart bo‘yicha «hozir», ya’ni aksiya tasdiqlanishi bilan saytda chiqadi. Egasi keyinroq vaqtni ham tanlashi mumkin.
+4. Aksiya ham avtomatik tekshiriladi: toza bo‘lsa darhol tasdiqlanadi, shubhali bo‘lsa moderator tasdiqlaydi. Boshlanish vaqti kelganda aksiya saytda **Faol** bo‘ladi. Yangi aksiyaning boshlanish vaqti standart bo‘yicha «hozir», ya’ni aksiya tasdiqlanishi bilan saytda chiqadi. Egasi keyinroq vaqtni ham tanlashi mumkin.
 5. Kassir «Kodni tekshirish» sahifasida kodni yozadi yoki QR-kodni kamera bilan skanerlaydi. Mijoz, aksiya va filial ma’lumotini ko‘rib «Tasdiqlash» ni bosadi.
 6. Biznes aksiyaga o‘z mahsulotining **haqiqiy fotosuratini**, profiliga esa logotip va muqova rasmini yuklaydi. Rasm telefonda siqiladi (WebP, 1280 px gacha). Rasm bo‘lmasa, chiroyli belgi (emoji + rang) ko‘rsatiladi.
    Demo aksiyalarda o‘sha turdagi erkin litsenziyali haqiqiy foto chiqadi (Wikimedia Commons). Mualliflar «Rasm mualliflari» sahifasida ko‘rsatiladi (batafsil: `docs/RASMLAR.md`).
@@ -148,6 +156,38 @@ Istalgan bosqichda: 10 daqiqa o‘tsa ▶ Muddati o‘tgan (EXPIRED); botda «Me
 - Admin foydalanuvchini bloklashi mumkin: sessiyalari yopiladi va kira olmaydi. Admin rol berishi, biznesni to‘xtatishi, kategoriyalarni boshqarishi, murojaatlarni o‘qishi va audit jurnalini ko‘rishi mumkin.
 - Moderator nomaqbul rasmni (logotip, muqova, aksiya rasmi) va haqoratli sharhni olib tashlaydi yoki yashiradi — sabab bilan.
 - Admin tariflarni (narx va limitlar), bepul davr uzunligini (1–3 oy) va to‘lov ko‘rsatmalarini boshqaradi, to‘lov so‘rovlarini tasdiqlaydi yoki biznesga qo‘lda bepul oy/tarif beradi.
+- Admin kompaniya rekvizitlarini kiritadi: yuridik nom, STIR, manzil, telefon. Ular futer, «Bog‘lanish» va oferta sahifalarida chiqadi.
+- Odam kerak bo‘lganda moderator va adminlarga Telegram xabari boradi: tekshiruvni kutayotgan ariza yoki aksiya (sababi bilan). Qo‘lda to‘lov so‘rovi kelganda esa adminlarga xabar boradi.
+
+### 4.6. Avtomatik moderatsiya
+
+Har bir yangi (yoki qayta yuborilgan) biznes va aksiya yuborilgan zahoti tekshiriladi.
+Hech narsa topilmasa, tizim moderatori (`usr_system`) tasdiqlaydi va bu audit jurnaliga yoziladi.
+Biror belgi topilsa, ariza navbatda qoladi, sababi yoziladi va moderatorlarga xabar boradi.
+**Tizim hech narsani rad etmaydi — rad etishni faqat odam qiladi.**
+
+| Belgi | Biznes | Aksiya |
+| --- | --- | --- |
+| Matnda havola yoki sayt manzili | ✓ | ✓ |
+| Taqiqlangan mavzu: qurol, giyohvandlik, qimor, 18+, «tez boyish» | ✓ | ✓ |
+| Alkogol, tamaki, vape, kalyan (reklamasi cheklangan) | ✓ | ✓ |
+| Karta raqami yoki kartaga pul o‘tkazish so‘rovi | ✓ | ✓ |
+| Matn juda qisqa yoki tushunarsiz | ✓ | ✓ |
+| Shu shaharda shu nomli biznes bor | ✓ | |
+| Egasining boshqa biznesi rad etilgan yoki to‘xtatilgan | ✓ | |
+| Xaritadagi nuqta O‘zbekistondan tashqarida | ✓ | |
+| Oldin moderator rad etgan (qayta yuborilgan) | ✓ | ✓ |
+| Chegirma 80% dan katta, narx 1 000 so‘mdan past yoki asl narx 50 mln so‘mdan yuqori | | ✓ |
+| Biznesning 30 kun ichida rad etilgan yoki to‘xtatilgan aksiyasi bor | | ✓ |
+
+- So‘zlar o‘zbek (lotin va kirill) va rus tilida qidiriladi.
+- Oddiy matnlarga xato bilan tegmaydi: «sport seksiyasi», «alkogolsiz», «shisha idish», «travmatolog» va hokazo. Demo katalogdagi barcha 136 biznes va 272 aksiya tekshiruvdan o‘tadi.
+- Egasi o‘zi tuzata oladigan sabablarni (havola, karta raqami, narx, qisqa matn, xarita) kabinetda ko‘radi.
+- Tuzatib saqlasa, ariza darhol qayta tekshiriladi.
+- Haqoratli so‘z, havola yoki karta raqami bor sharh avtomatik yashiriladi, moderator uni qaytarishi mumkin.
+- Uchala avtomatik funksiya **Admin → Sozlamalar → Avtomatik moderatsiya** da alohida yoqiladi yoki o‘chiriladi.
+- Avtomatik tasdiqlash o‘chiq bo‘lsa ham tekshiruv ishlaydi, moderatorga natijasi ko‘rsatiladi.
+- «Avto tasdiqlangan» filtri oxirgi 7 kunda avtomatik tasdiqlanganlarni qayta ko‘rish uchun.
 
 ---
 
@@ -171,7 +211,7 @@ Istalgan bosqichda: 10 daqiqa o‘tsa ▶ Muddati o‘tgan (EXPIRED); botda «Me
 | Vaqt zonasi | Hamma vaqt Toshkent vaqtida ko‘rsatiladi (UTC+5), bazada UTC saqlanadi |
 | Demo aksiyalar | Faqat namuna uchun: production’da (`DEMO_SEED=true`) ko‘rinadi, lekin band qilib bo‘lmaydi. Band qilish faqat ishlab chiqish muhitida ishlaydi |
 
-**To‘lov:** mijoz biznesga joyida to‘laydi. BugunBor mijozdan pul olmaydi.
+**To‘lov:** mijoz biznesga joyida to‘laydi. BugunBor mijozdan pul olmaydi. Bizneslar tarifni Payme yoki Click orqali yoki bank o‘tkazmasi bilan to‘laydi (`docs/TOLOV.md`).
 
 ### 5.1. Bizneslar uchun tariflar
 
@@ -184,7 +224,11 @@ Istalgan bosqichda: 10 daqiqa o‘tsa ▶ Muddati o‘tgan (EXPIRED); botda «Me
 | «Top» (yuqorida ko‘rsatish) | — | 1 | 3 |
 
 - Biznes tasdiqlangan kuni **bepul davr** boshlanadi (standart 3 oy, admin 1–3 oy qilib o‘zgartiradi). Bepul davrda «Biznes» tarifi imkoniyatlari ishlaydi.
-- 3, 6 va 12 oylik to‘lovga mos ravishda 5%, 10% va 15% chegirma bor. Biznes tarifni «Tarif» sahifasida tanlaydi, ko‘rsatmaga ko‘ra to‘laydi, admin to‘lovni tasdiqlaydi.
+- 3, 6 va 12 oylik to‘lovga mos ravishda 5%, 10% va 15% chegirma bor. Biznes tarifni «Tarif» sahifasida tanlaydi.
+- **Onlayn to‘lov (Payme, Click):** to‘lov tizimi serverga tasdiq yuborganda tarif o‘zi yoqiladi. «To‘landi» holatini faqat server qo‘yadi.
+  `PAYMENTS_ENABLED=true` bo‘lmaguncha tugmalar ustida «Tez kunda» turadi.
+- **Bank o‘tkazmasi:** biznes ko‘rsatmaga ko‘ra to‘laydi, admin to‘lovni tasdiqlaydi.
+- To‘lov, qaytarish va bekor qilish shartlari ommaviy ofertada: `/oferta`.
 - Bepul davr yoki tarif tugasa, biznes aksiyalari saytda ko‘rinmaydi va yangi kod berilmaydi; ma’lumotlar saqlanadi. Tarif tanlangach, hammasi qayta ishlaydi.
 - Narx va limitlar admin panelda o‘zgartiriladi.
 
@@ -192,7 +236,7 @@ Istalgan bosqichda: 10 daqiqa o‘tsa ▶ Muddati o‘tgan (EXPIRED); botda «Me
 
 ## 6. Sahifalar
 
-**Ommaviy:** `/` bosh sahifa · `/discover` aksiyalar (qidiruv, filtr, saralash) · `/categories` va `/categories/[slug]` · `/businesses/[slug]` biznes sahifasi · `/deals/[slug]` aksiya sahifasi · `/business` bizneslar uchun · `/how-it-works` · `/faq` · `/contact` · `/terms` · `/privacy` · `/login`
+**Ommaviy:** `/` bosh sahifa · `/discover` aksiyalar (qidiruv, filtr, saralash) · `/categories` va `/categories/[slug]` · `/businesses/[slug]` biznes sahifasi · `/deals/[slug]` aksiya sahifasi · `/business` bizneslar uchun · `/how-it-works` · `/faq` · `/contact` · `/terms` · `/privacy` · `/oferta` ommaviy oferta · `/login`
 
 **Mijoz:** `/account` profil (tejalgan summa, xabarnomalar) · `/account/codes` kodlarim va baholash · `/account/saved` saqlanganlar va obunalar
 
@@ -227,4 +271,4 @@ Sayt o‘zbek (lotin) va rus tillarida ishlaydi. Til tepadagi UZ/RU tugmasi bila
 
 1. **Android ilova (APK)** — sayt PWA sifatida tayyor (manifest, ikonkalar, oflayn sahifa). Ilova Trusted Web Activity bo‘ladi: saytning o‘zi, lekin Play Market’dan o‘rnatiladi.
 2. **iOS ilova** — xuddi shu asosda.
-3. **Onlayn to‘lov (Payme, Click)** — tarif to‘lovi avtomatik tasdiqlanishi uchun.
+3. **Onlayn to‘lovni yoqish** — kod tayyor. Kalitlar kiritilib sandbox’da tekshirilgach, `PAYMENTS_ENABLED=true` qilinadi (`docs/TOLOV.md`).

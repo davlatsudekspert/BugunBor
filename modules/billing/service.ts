@@ -1,6 +1,7 @@
 import { addMinutes, parseDbTime, toDbTime } from '@/lib/time';
 import { auditStatement } from '@/modules/audit';
 import { DomainError } from '@/modules/errors';
+import { staffAlertStatement } from '@/modules/notifications/service';
 import { TRIAL_MONTH_OPTIONS, periodPrice as pricePeriod } from './pricing';
 
 export type PlanCode = 'START' | 'BIZNES' | 'PREMIUM';
@@ -138,10 +139,13 @@ export async function requestPlan(db: D1Database, input: { businessId: string; u
   const id = crypto.randomUUID();
   await db.batch([
     db.prepare(`UPDATE billing_requests SET status = 'CANCELED', handled_at = ?2, note = 'Replaced by a newer request'
-      WHERE business_id = ?1 AND status = 'PENDING'`).bind(input.businessId, nowDb),
+      WHERE business_id = ?1 AND status = 'PENDING'
+        AND NOT EXISTS (SELECT 1 FROM payments p WHERE p.billing_request_id = billing_requests.id AND p.state = 1)`).bind(input.businessId, nowDb),
     db.prepare(`INSERT INTO billing_requests(id, business_id, plan_code, months, amount_uzs, status, requested_by, created_at)
       VALUES (?1, ?2, ?3, ?4, ?5, 'PENDING', ?6, ?7)`).bind(id, input.businessId, plan.code, input.months, amount, input.userId, nowDb),
     auditStatement(db, { actorUserId: input.userId, businessId: input.businessId, action: 'billing.requested', targetType: 'BillingRequest', targetId: id, after: { plan: plan.code, months: input.months, amount } }, nowDb),
+    // The admins hear about it in Telegram instead of watching the panel.
+    staffAlertStatement(db, { kind: 'PAYMENT_REQUEST', key: id, payload: { requestId: id }, nowDb }),
   ]);
   return { id, amount };
 }
@@ -172,7 +176,8 @@ export async function confirmBillingRequest(db: D1Database, input: { requestId: 
 export async function cancelBillingRequest(db: D1Database, input: { requestId: string; adminId: string; note?: string | null }, now = new Date()) {
   const nowDb = toDbTime(now);
   const result = await db
-    .prepare(`UPDATE billing_requests SET status = 'CANCELED', handled_by = ?2, handled_at = ?3, note = ?4 WHERE id = ?1 AND status = 'PENDING'`)
+    .prepare(`UPDATE billing_requests SET status = 'CANCELED', handled_by = ?2, handled_at = ?3, note = ?4 WHERE id = ?1 AND status = 'PENDING'
+      AND NOT EXISTS (SELECT 1 FROM payments p WHERE p.billing_request_id = billing_requests.id AND p.state = 1)`)
     .bind(input.requestId, input.adminId, nowDb, input.note ?? null)
     .run();
   if ((result.meta.changes ?? 0) !== 1) throw new DomainError('INVALID_TRANSITION');

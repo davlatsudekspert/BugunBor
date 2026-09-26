@@ -1,11 +1,14 @@
 import type { Metadata } from 'next';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 
 import { AdminShell } from '@/components/admin/admin-shell';
 import { getDb } from '@/db/client';
+import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
-import { adminOverview } from '@/modules/admin/service';
+import { cn } from '@/lib/utils';
+import { adminOverview, automationSummary } from '@/modules/admin/service';
 import { requireModerator } from '@/modules/auth/current';
+import { getAutoModerationSettings } from '@/modules/moderation/auto';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -15,7 +18,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function AdminOverviewPage() {
   const user = await requireModerator('/admin');
   const [{ t }, db] = await Promise.all([getI18n(), getDb()]);
-  const stats = await adminOverview(db);
+  const [stats, automation, switches] = await Promise.all([adminOverview(db), automationSummary(db), getAutoModerationSettings(db)]);
+  const auto = t.admin.auto;
   const cards = [
     { label: t.admin.stats.pendingBusinesses, value: stats.pendingBusinesses, href: '/admin/businesses', urgent: stats.pendingBusinesses > 0 },
     { label: t.admin.stats.pendingDeals, value: stats.pendingDeals, href: '/admin/deals', urgent: stats.pendingDeals > 0 },
@@ -37,6 +41,16 @@ export default async function AdminOverviewPage() {
           </a>
         ))}
       </div>
+      <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 className="flex items-center gap-2 text-lg font-black text-navy"><Sparkles className="size-5 text-primary" aria-hidden /> {auto.title}</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600">{fmt(auto.summary, automation)}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-bold">
+          {(['businesses', 'deals', 'reviews'] as const).map((key) => (
+            <span key={key} className={cn('rounded-full px-2.5 py-1', switches[key] ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600')}>{auto[key]}: {switches[key] ? auto.on : auto.off}</span>
+          ))}
+          {user.role === 'ADMIN' ? <a href="/admin/settings#automation" className="ml-1 text-primary underline-offset-2 hover:underline">{t.admin.nav.settings}</a> : null}
+        </div>
+      </section>
     </AdminShell>
   );
 }

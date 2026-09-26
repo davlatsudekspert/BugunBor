@@ -11,6 +11,7 @@ import { parseDbTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { requireWorkspace } from '@/modules/businesses/current';
 import { listBusinessDeals, type BusinessDealRow } from '@/modules/deals/service';
+import { flagText, ownerFlags } from '@/modules/moderation/auto';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -90,6 +91,7 @@ export default async function BusinessDealsPage({ searchParams }: { searchParams
                     <div className="flex gap-1"><dt>{d.views}:</dt><dd className="font-bold text-navy">{deal.viewCount}</dd></div>
                   </dl>
                   {deal.status === 'REJECTED' && deal.rejectionReason ? <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{fmt(d.rejectedReason, { reason: deal.rejectionReason })}</p> : null}
+                  {deal.status === 'PENDING_REVIEW' && ownerFlags(deal.autoNote).length ? <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">{fmt(t.moderation.ownerFixDeal, { reasons: flagText(ownerFlags(deal.autoNote), t) })}</p> : null}
                   <div className="mt-3">
                     <DealActions
                       businessId={membership.businessId}

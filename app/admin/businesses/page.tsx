@@ -10,8 +10,9 @@ import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
 import { formatNumericDate, parseDbTime, toDbTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
-import { listAdminBusinesses } from '@/modules/admin/service';
+import { listAdminBusinesses, type AdminListFilter } from '@/modules/admin/service';
 import { requireModerator } from '@/modules/auth/current';
+import { flagText, parseFlags } from '@/modules/moderation/auto';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -24,8 +25,8 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
   const { f, q } = await searchParams;
   const user = await requireModerator('/admin/businesses');
   const [{ t, locale }, db] = await Promise.all([getI18n(), getDb()]);
-  const filter = f === 'all' ? 'all' : 'pending';
-  const businesses = await listAdminBusinesses(db, { status: filter === 'pending' ? 'PENDING' : null, query: q });
+  const filter: AdminListFilter = f === 'all' || f === 'auto' ? f : 'pending';
+  const businesses = await listAdminBusinesses(db, { list: filter, query: q });
   const isAdmin = user.role === 'ADMIN';
   const a = t.admin;
   const nowDb = toDbTime(new Date());
@@ -34,8 +35,8 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
     <AdminShell t={t} role={user.role} active="businesses">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-2">
-          {(['pending', 'all'] as const).map((key) => (
-            <a key={key} href={key === 'pending' ? '/admin/businesses' : '/admin/businesses?f=all'} className={cn('inline-flex h-9 items-center rounded-full border px-4 text-xs font-bold', filter === key ? 'border-navy bg-navy text-white' : 'border-slate-200 bg-white text-slate-600')}>{a.filters[key]}</a>
+          {(['pending', 'auto', 'all'] as const).map((key) => (
+            <a key={key} href={key === 'pending' ? '/admin/businesses' : `/admin/businesses?f=${key}`} className={cn('inline-flex h-9 items-center rounded-full border px-4 text-xs font-bold', filter === key ? 'border-navy bg-navy text-white' : 'border-slate-200 bg-white text-slate-600')}>{key === 'auto' ? a.auto.filter : a.filters[key]}</a>
           ))}
         </div>
         <form className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3">
@@ -58,6 +59,7 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
                     <span className={cn('rounded-full px-2.5 py-1 text-xs font-bold', statusTone[business.verificationStatus] ?? 'bg-slate-100 text-slate-600')}>{a.businesses.status[business.verificationStatus as keyof typeof a.businesses.status] ?? business.verificationStatus}</span>
+                    {business.autoDecided && business.verificationStatus === 'VERIFIED' ? <span title={a.auto.badgeHint} className="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-bold text-sky-700">{a.auto.badge}</span> : null}
                     {business.suspendedAt ? <span className="rounded-full bg-red-600 px-2.5 py-1 text-xs font-bold text-white">{a.businesses.suspended}</span> : null}
                     {business.isDemo ? <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">{t.common.demo}</span> : null}
                   </div>
@@ -87,6 +89,11 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
                 {business.rejectionReason && business.verificationStatus === 'REJECTED' ? <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{business.rejectionReason}</p> : null}
                 {business.suspendedReason ? <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{business.suspendedReason}</p> : null}
 
+                {business.verificationStatus === 'PENDING' && parseFlags(business.autoNote).length ? (
+                  <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">{fmt(a.auto.held, { reasons: flagText(parseFlags(business.autoNote), t) })}</p>
+                ) : business.verificationStatus === 'PENDING' && business.autoNote === '' ? (
+                  <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">{a.auto.clean}</p>
+                ) : null}
                 {business.verificationStatus === 'PENDING' ? (
                   <DecisionForm kind="business" targetId={business.id} labels={{ approve: a.approve, reject: a.reject, reason: a.reason, placeholder: a.reasonPlaceholder, hint: a.reasonHint, networkError: t.common.networkError }} />
                 ) : null}

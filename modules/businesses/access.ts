@@ -12,10 +12,13 @@ export type Membership = {
   suspendedAt: string | null;
   suspendedReason: string | null;
   isDemo: boolean;
+  /** Why the automatic check held the application back, if it did. */
+  autoReviewNote: string | null;
 };
 
 const COLUMNS = `m.business_id AS businessId, m.role, b.name, b.slug, b.city, b.verification_status AS verificationStatus,
-  b.rejection_reason AS rejectionReason, b.suspended_at AS suspendedAt, b.suspended_reason AS suspendedReason, b.is_demo AS isDemo`;
+  b.rejection_reason AS rejectionReason, b.suspended_at AS suspendedAt, b.suspended_reason AS suspendedReason, b.is_demo AS isDemo,
+  b.auto_review_note AS autoReviewNote`;
 
 export async function listMemberships(db: D1Database, userId: string): Promise<Membership[]> {
   const rows = await db

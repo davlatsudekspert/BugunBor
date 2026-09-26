@@ -13,13 +13,14 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function BusinessProfilePage() {
   const ws = await requireWorkspace('/business/profile', 'business.edit');
-  const { t, locale, db, membership } = ws;
-  const [categories, business] = await Promise.all([
+  const { t, locale, db, membership, user } = ws;
+  const [categories, business, account] = await Promise.all([
     listCategories(db, { includeInactive: true }),
     db.prepare(`SELECT name, description, category_id AS categoryId, city, phone, telegram, instagram, website, logo_id AS logoId, cover_id AS coverId
         FROM businesses WHERE id = ?1`)
       .bind(membership.businessId)
       .first<{ name: string; description: string; categoryId: string; city: string; phone: string; telegram: string | null; instagram: string | null; website: string | null; logoId: string | null; coverId: string | null }>(),
+    db.prepare(`SELECT telegram_username AS telegramUsername FROM users WHERE id = ?1`).bind(user.id).first<{ telegramUsername: string | null }>(),
   ]);
   return (
     <WorkspaceShell ws={ws} active="profile">
@@ -30,8 +31,10 @@ export default async function BusinessProfilePage() {
           mode="edit"
           businessId={membership.businessId}
           canResubmit={membership.verificationStatus === 'REJECTED'}
-          categories={categories.map((category) => ({ id: category.id, name: categoryName(category, locale) }))}
+          pending={membership.verificationStatus === 'PENDING'}
+          categories={categories.map((category) => ({ id: category.id, name: categoryName(category, locale), slug: category.slug, icon: category.icon }))}
           initial={business ?? {}}
+          telegramUsername={account?.telegramUsername ?? null}
           locale={locale}
           t={{ businessForm: t.businessForm, validation: t.validation, onboarding: t.onboarding, common: t.common, biz: t.biz, errors: t.errors }}
         />

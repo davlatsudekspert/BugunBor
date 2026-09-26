@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getDb } from '@/db/client';
 import { getConfig } from '@/lib/env';
 import { maskPhone } from '@/lib/format';
-import { assertSameOrigin, json, readJson, route } from '@/lib/http';
+import { assertSameOrigin, json, readJson, requestLocale, route } from '@/lib/http';
 import type { BusinessAction } from '@/modules/auth/authorization';
 import { apiUser } from '@/modules/auth/current';
 import { BILLING_PERIODS, requestPlan } from '@/modules/billing/service';
@@ -13,6 +13,8 @@ import { addMember, changeMemberRole, createBranch, deleteBranch, removeMember, 
 import { dealInputSchema } from '@/modules/deals/schema';
 import { createDeal, duplicateDeal, setDealTop, transitionDeal, updateDeal } from '@/modules/deals/service';
 import { DomainError } from '@/modules/errors';
+import { autoModerateBusiness, autoModerateDeal } from '@/modules/moderation/auto';
+import { checkoutAvailable, clickCheckoutUrl, createOrder, paymeCheckoutUrl } from '@/modules/payments/service';
 import { RATE_RULES, enforceRateLimit } from '@/modules/rate-limit';
 import { codeFromScan } from '@/modules/redemptions/codes';
 import { completeRedemption, lookupRedemption, runMaintenance } from '@/modules/redemptions/service';
@@ -36,6 +38,7 @@ const actionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('redeem.lookup'), code: z.string().max(200) }),
   z.object({ type: z.literal('redeem.complete'), redemptionId: id }),
   z.object({ type: z.literal('billing.request'), planCode: z.string().max(20), months: z.number().int().refine((value) => BILLING_PERIODS.some((period) => period.months === value)) }),
+  z.object({ type: z.literal('billing.checkout'), planCode: z.string().max(20), months: z.number().int().refine((value) => BILLING_PERIODS.some((period) => period.months === value)), provider: z.enum(['PAYME', 'CLICK']) }),
 ]);
 
 type Action = z.infer<typeof actionSchema>;
@@ -56,10 +59,18 @@ const permission: Record<Action['type'], BusinessAction> = {
   'redeem.lookup': 'redemption.validate',
   'redeem.complete': 'redemption.validate',
   'billing.request': 'business.edit',
+  'billing.checkout': 'business.edit',
 };
 
 // Everything that changes what customers can see or claim is blocked while suspended.
 const blockedWhenSuspended = new Set<Action['type']>(['deal.create', 'deal.update', 'deal.transition', 'deal.duplicate', 'deal.top', 'branch.create']);
+
+/** A submitted deal goes through the automatic checks; a clean one is live at once. */
+async function checked<T extends { id: string; status: string }>(db: D1Database, deal: T) {
+  if (deal.status !== 'PENDING_REVIEW') return deal;
+  const result = await autoModerateDeal(db, deal.id);
+  return { ...deal, status: result?.status ?? deal.status };
+}
 
 export const POST = route(async (request: Request, context: { params: Promise<{ businessId: string }> }) => {
   assertSameOrigin(request);
@@ -74,14 +85,18 @@ export const POST = route(async (request: Request, context: { params: Promise<{ 
   switch (action.type) {
     case 'profile.update':
       await updateBusinessProfile(db, { ...actor, data: action.data, resubmit: action.resubmit });
+      // Still in review (or sent again): the fixed profile is checked again right away.
+      await autoModerateBusiness(db, businessId);
       return json({ data: { ok: true } });
     case 'deal.create':
-      return json({ data: await createDeal(db, { ...actor, input: action.input, submit: action.submit }) }, { status: 201 });
+      return json({ data: await checked(db, await createDeal(db, { ...actor, input: action.input, submit: action.submit })) }, { status: 201 });
     case 'deal.update':
-      return json({ data: await updateDeal(db, { ...actor, dealId: action.dealId, input: action.input, submit: action.submit }) });
-    case 'deal.transition':
+      return json({ data: await checked(db, await updateDeal(db, { ...actor, dealId: action.dealId, input: action.input, submit: action.submit })) });
+    case 'deal.transition': {
       if (action.action === 'resume' || action.action === 'submit') assertNotSuspended(membership);
-      return json({ data: await transitionDeal(db, { ...actor, dealId: action.dealId, action: action.action }) });
+      const result = await transitionDeal(db, { ...actor, dealId: action.dealId, action: action.action });
+      return json({ data: action.action === 'submit' ? await checked(db, { id: action.dealId, status: result.status }) : result });
+    }
     case 'deal.duplicate':
       return json({ data: await duplicateDeal(db, { ...actor, dealId: action.dealId }) }, { status: 201 });
     case 'deal.top':
@@ -115,5 +130,17 @@ export const POST = route(async (request: Request, context: { params: Promise<{ 
       return json({ data: await completeRedemption(db, { businessId, redemptionId: action.redemptionId, staffUserId: user.id }) });
     case 'billing.request':
       return json({ data: await requestPlan(db, { businessId, userId: user.id, planCode: action.planCode, months: action.months }) }, { status: 201 });
+    case 'billing.checkout': {
+      // Only a link to the provider's checkout; the order turns PAID when the provider's server confirms.
+      const config = getConfig();
+      if (!checkoutAvailable(config.payments, action.provider)) throw new DomainError('PAYMENTS_DISABLED');
+      const order = await createOrder(db, { businessId, userId: user.id, planCode: action.planCode, months: action.months });
+      const returnUrl = `${config.appUrl ?? new URL(request.url).origin}/business/billing/return/${order.id}`;
+      const target = { id: order.id, amountUzs: order.amount };
+      const url = action.provider === 'PAYME'
+        ? paymeCheckoutUrl(config.payments.payme!, target, returnUrl, requestLocale(request))
+        : clickCheckoutUrl(config.payments.click!, target, returnUrl);
+      return json({ data: { url, orderId: order.id } }, { status: 201 });
+    }
   }
 });

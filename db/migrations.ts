@@ -381,4 +381,46 @@ const engagement: Migration = {
   },
 };
 
-export const migrations: readonly Migration[] = [baseline, systemV1, billing, media, engagement];
+/** Online payments for plans: Payme (Merchant API) and Click (SHOP API). */
+const payments: Migration = {
+  id: '0006_payments',
+  async build({ db }) {
+    return sql(db, [
+      `CREATE TABLE IF NOT EXISTS payments (
+        id TEXT PRIMARY KEY, billing_request_id TEXT NOT NULL, provider TEXT NOT NULL,
+        provider_transaction_id TEXT NOT NULL, amount_uzs INTEGER NOT NULL,
+        state INTEGER NOT NULL, reason INTEGER, provider_time INTEGER,
+        create_time INTEGER NOT NULL, perform_time INTEGER, cancel_time INTEGER, meta_json TEXT,
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+        UNIQUE(provider, provider_transaction_id),
+        FOREIGN KEY(billing_request_id) REFERENCES billing_requests(id)
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_payments_request ON payments(billing_request_id, state)`,
+      `CREATE INDEX IF NOT EXISTS idx_payments_statement ON payments(provider, provider_time)`,
+    ]);
+  },
+};
+
+/**
+ * Automatic moderation: a system moderator account (it cannot log in: no phone,
+ * no Telegram) signs automatic decisions, and items the checks hold back keep
+ * the reasons for the human moderator. Auto-approval (and hiding abusive
+ * reviews) starts switched on; admins can turn each off.
+ */
+const autoModeration: Migration = {
+  id: '0007_auto_moderation',
+  async build({ db, columns }) {
+    const statements: D1PreparedStatement[] = [];
+    if (!(await columns('businesses')).has('auto_review_note')) statements.push(db.prepare(`ALTER TABLE businesses ADD COLUMN auto_review_note TEXT`));
+    if (!(await columns('deals')).has('auto_review_note')) statements.push(db.prepare(`ALTER TABLE deals ADD COLUMN auto_review_note TEXT`));
+    statements.push(...sql(db, [
+      `INSERT OR IGNORE INTO users(id, role, display_name, locale, status) VALUES ('usr_system', 'MODERATOR', 'BugunBor avtomoderator', 'uz', 'ACTIVE')`,
+      `INSERT OR IGNORE INTO app_settings(key, value) VALUES ('auto_approve_businesses', '1'), ('auto_approve_deals', '1'), ('auto_hide_reviews', '1')`,
+      `CREATE INDEX IF NOT EXISTS idx_moderation_target ON moderation_actions(target_type, target_id, created_at)`,
+      `CREATE INDEX IF NOT EXISTS idx_moderation_actor ON moderation_actions(actor_user_id, created_at)`,
+    ]));
+    return statements;
+  },
+};
+
+export const migrations: readonly Migration[] = [baseline, systemV1, billing, media, engagement, payments, autoModeration];

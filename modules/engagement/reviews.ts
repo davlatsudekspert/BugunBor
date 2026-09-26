@@ -1,11 +1,15 @@
 import { toDbTime } from '@/lib/time';
 import { auditStatement } from '@/modules/audit';
 import { DomainError } from '@/modules/errors';
+import { getAutoModerationSettings, reviewFlags, SYSTEM_MODERATOR_ID } from '@/modules/moderation/auto';
 
 // Only customers whose code was actually redeemed can rate the business,
 // once per redemption and within a month, so ratings reflect real visits.
 
 export const REVIEW_RULES = { windowDays: 30, maxComment: 500 } as const;
+
+/** hidden_reason of a review the automatic check hid, followed by its flags. */
+export const AUTO_HIDDEN_PREFIX = 'auto:';
 
 function recomputeRating(db: D1Database, businessId: string) {
   return db
@@ -37,7 +41,13 @@ export async function createReview(db: D1Database, input: { userId: string; rede
     recomputeRating(db, redemption.businessId),
   ]);
   if ((results[0].meta.changes ?? 0) !== 1) throw new DomainError('ALREADY_REVIEWED');
-  return { id };
+  // Obscene words, links and card numbers are hidden at once; a moderator can show the review again.
+  const flags = reviewFlags(comment);
+  if (flags.length && (await getAutoModerationSettings(db)).reviews) {
+    await setReviewHidden(db, { actorId: SYSTEM_MODERATOR_ID, reviewId: id, hidden: true, reason: `${AUTO_HIDDEN_PREFIX}${flags.join(',')}` }, now);
+    return { id, hidden: true };
+  }
+  return { id, hidden: false };
 }
 
 /** Moderators hide abusive reviews (or show them again); ratings follow. */

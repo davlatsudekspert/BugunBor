@@ -17,7 +17,10 @@ const icons = [Building2, MapPin, BadgeCheck, ShieldCheck];
 export default async function OnboardingPage() {
   const user = await requireUser('/business/onboarding');
   const [{ t, locale }, db] = await Promise.all([getI18n(), getDb()]);
-  const categories = await listCategories(db);
+  const [categories, account] = await Promise.all([
+    listCategories(db),
+    db.prepare(`SELECT telegram_username AS telegramUsername FROM users WHERE id = ?1`).bind(user.id).first<{ telegramUsername: string | null }>(),
+  ]);
   return (
     <main className="bg-cream">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[.75fr_1.25fr]">
@@ -34,8 +37,9 @@ export default async function OnboardingPage() {
         </aside>
         <BusinessForm
           mode="create"
-          categories={categories.map((category) => ({ id: category.id, name: categoryName(category, locale) }))}
+          categories={categories.map((category) => ({ id: category.id, name: categoryName(category, locale), slug: category.slug, icon: category.icon }))}
           initial={{ phone: user.phone ?? '+998' }}
+          telegramUsername={account?.telegramUsername ?? null}
           locale={locale}
           t={{ businessForm: t.businessForm, validation: t.validation, onboarding: t.onboarding, common: t.common, biz: t.biz, errors: t.errors }}
         />

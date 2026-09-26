@@ -15,6 +15,8 @@ export type BusinessDealRow = {
   originalPrice: number | null; price: number; discountPercent: number; total: number | null; remaining: number | null;
   visual: string | null; photo: string | null; categorySlug: string; viewCount: number; isSponsored: boolean; rejectionReason: string | null;
   claims: number; redeemed: number; effective: EffectiveDealStatus;
+  /** Why the automatic check held it back, if it did. */
+  autoNote: string | null;
 };
 
 export async function listBusinessDeals(db: D1Database, businessId: string, now = new Date()): Promise<BusinessDealRow[]> {
@@ -23,7 +25,7 @@ export async function listBusinessDeals(db: D1Database, businessId: string, now 
         d.original_price_uzs AS originalPrice, d.discounted_price_uzs AS price, d.discount_percent AS discountPercent,
         d.total_quantity AS total, d.remaining_quantity AS remaining, d.visual, c.slug AS categorySlug,
         d.view_count AS viewCount, d.is_sponsored AS isSponsored, d.rejection_reason AS rejectionReason,
-        d.photo_id AS photoId, d.is_demo AS isDemo,
+        d.photo_id AS photoId, d.is_demo AS isDemo, d.auto_review_note AS autoNote,
         (SELECT COUNT(*) FROM redemptions r WHERE r.deal_id = d.id) AS claims,
         (SELECT COUNT(*) FROM redemptions r WHERE r.deal_id = d.id AND r.status = 'COMPLETED') AS redeemed
       FROM deals d JOIN categories c ON c.id = d.category_id
