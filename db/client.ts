@@ -1,7 +1,8 @@
 import { env } from 'cloudflare:workers';
 
 import { getConfig } from '@/lib/env';
-import { tickBackgroundJobs } from '@/modules/jobs';
+import { demoEnabled } from '@/modules/demo';
+import { inBackground, tickBackgroundJobs } from '@/modules/jobs';
 import { applyMigrations } from './migrate';
 import { refreshDemoData, seedDemoData } from './seed';
 
@@ -19,10 +20,10 @@ function binding(): D1Database {
 /** The D1 database with all migrations applied (once per isolate). */
 export async function getDb(): Promise<D1Database> {
   const db = binding();
-  const demo = getConfig().demoMode;
+  const seedOnStart = getConfig().demoMode;
   ready ??= (async () => {
     await applyMigrations(db);
-    if (demo) {
+    if (seedOnStart) {
       // Demo content must never take the real site down with it.
       await seedDemoData(db).catch((error: unknown) => console.error('Demo seed failed', error));
       lastDemoRefresh = Date.now();
@@ -32,9 +33,10 @@ export async function getDb(): Promise<D1Database> {
     throw error;
   });
   await ready;
-  if (demo && Date.now() - lastDemoRefresh > DEMO_REFRESH_MS) {
+  if (Date.now() - lastDemoRefresh > DEMO_REFRESH_MS && (await demoEnabled(db))) {
     lastDemoRefresh = Date.now();
-    await refreshDemoData(db).catch((error: unknown) => console.error('Demo refresh failed', error));
+    // Restarting ended demo deals never holds up a page.
+    inBackground(refreshDemoData(db), 'Demo refresh failed');
   }
   tickBackgroundJobs(db);
   return db;

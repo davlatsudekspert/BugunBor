@@ -9,6 +9,7 @@ import { FollowButton } from '@/components/deals/follow-button';
 import { RatingStars, ratingText } from '@/components/deals/rating-stars';
 import { JsonLd } from '@/components/site/json-ld';
 import { getDb } from '@/db/client';
+import { demoEnabled } from '@/modules/demo';
 import { cityName } from '@/lib/cities';
 import { getConfig } from '@/lib/env';
 import { formatDay, formatPhone, formatWorkingHours } from '@/lib/format';
@@ -33,7 +34,8 @@ function safeHost(url: string | null) {
 }
 
 async function load(slug: string) {
-  return getPublicBusiness(await getDb(), slug, { demo: getConfig().demoMode });
+  const db = await getDb();
+  return getPublicBusiness(db, slug, { demo: await demoEnabled(db) });
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

@@ -10,6 +10,7 @@ import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
 import { requireAdmin } from '@/modules/auth/current';
 import { companyComplete, getCompanyInfo } from '@/modules/company';
+import { demoEnabled } from '@/modules/demo';
 import { getAutoModerationSettings } from '@/modules/moderation/auto';
 import { notificationStats } from '@/modules/notifications/service';
 import { createTelegramApi, type WebhookInfo } from '@/modules/telegram/api';
@@ -23,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function AdminSettingsPage() {
   const user = await requireAdmin('/admin/settings');
   const [{ t }, db] = await Promise.all([getI18n(), getDb()]);
-  const [queue, switches, company] = await Promise.all([notificationStats(db), getAutoModerationSettings(db), getCompanyInfo(db, { fresh: true })]);
+  const [queue, switches, company, demo] = await Promise.all([notificationStats(db), getAutoModerationSettings(db), getCompanyInfo(db, { fresh: true }), demoEnabled(db)]);
   const auto = t.admin.auto;
   const config = getConfig();
   const siteUrl = config.appUrl ?? 'https://bugunbor.uz';
@@ -124,7 +125,15 @@ export default async function AdminSettingsPage() {
 
       <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="flex items-center gap-2 text-lg font-black text-navy"><FlaskConical className="size-5 text-amber-600" aria-hidden /> {s.demoMode}</h2>
-        <p className="mt-2 text-sm text-slate-600">{config.demoMode ? s.demoOn : s.demoOff}</p>
+        <p className="mt-2 text-sm font-semibold text-navy">{demo ? s.demoOn : s.demoOff}</p>
+        <p className="mt-1 text-sm leading-6 text-slate-600">{s.demoHint}</p>
+        <div className="mt-3">
+          {config.demoMode ? (
+            <p className="text-xs text-slate-500">{s.demoFromEnv}</p>
+          ) : (
+            <ActionButton payload={{ type: 'demo.update', on: !demo }} label={demo ? s.demoTurnOff : s.demoTurnOn} tone={demo ? 'neutral' : 'success'} networkError={t.common.networkError} />
+          )}
+        </div>
       </section>
     </AdminShell>
   );

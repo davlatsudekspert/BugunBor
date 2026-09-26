@@ -28,8 +28,13 @@ function context(db: D1Database) {
  * on the tracking row and is treated as applied once the winner's row exists.
  */
 export async function applyMigrations(db: D1Database, list: readonly Migration[] = migrations) {
-  await db.prepare(TRACKING_TABLE).run();
-  let applied = await appliedIds(db);
+  // One query on an up-to-date database (every cold isolate runs this); the
+  // tracking table is created only when it is missing.
+  let applied = await appliedIds(db).catch(async () => {
+    await db.prepare(TRACKING_TABLE).run();
+    return appliedIds(db);
+  });
+  if (list.every((migration) => applied.has(migration.id))) return;
   for (const migration of list) {
     if (applied.has(migration.id)) continue;
     const statements = await migration.build(context(db));

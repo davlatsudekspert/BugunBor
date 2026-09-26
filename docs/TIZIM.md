@@ -209,7 +209,7 @@ Biror belgi topilsa, ariza navbatda qoladi, sababi yoziladi va moderatorlarga xa
 | Murojaat formasi | Bitta IP dan 10 daqiqada 5 ta |
 | Rad etish sababi | Kamida 10 belgi |
 | Vaqt zonasi | Hamma vaqt Toshkent vaqtida ko‘rsatiladi (UTC+5), bazada UTC saqlanadi |
-| Demo aksiyalar | Faqat namuna uchun: production’da (`DEMO_SEED=true`) ko‘rinadi, lekin band qilib bo‘lmaydi. Band qilish faqat ishlab chiqish muhitida ishlaydi |
+| Demo aksiyalar | Faqat namuna uchun: production’da `DEMO_SEED=true` bilan yoki Admin → Sozlamalar’dagi «Namuna bizneslarni ko‘rsatish» tugmasi bilan ko‘rinadi. Band qilib bo‘lmaydi; band qilish faqat ishlab chiqish muhitida ishlaydi |
 
 **To‘lov:** mijoz biznesga joyida to‘laydi. BugunBor mijozdan pul olmaydi. Bizneslar tarifni Payme yoki Click orqali yoki bank o‘tkazmasi bilan to‘laydi (`docs/TOLOV.md`).
 

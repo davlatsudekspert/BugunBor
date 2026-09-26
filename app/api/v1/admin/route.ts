@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { getDb } from '@/db/client';
+import { seedDemoData } from '@/db/seed';
 import { getConfig, isTelegramConfigured } from '@/lib/env';
 import { assertSameOrigin, json, readJson, route } from '@/lib/http';
 import { saveCategory, setMessageStatus, updatePlan, updateSettings, updateUser } from '@/modules/admin/service';
@@ -10,6 +11,7 @@ import { cancelBillingRequest, confirmBillingRequest, grantPlan, grantTrial, set
 import { BILLING_PERIODS, TRIAL_MONTH_OPTIONS } from '@/modules/billing/pricing';
 import { setReviewHidden } from '@/modules/engagement/reviews';
 import { updateCompanyInfo } from '@/modules/company';
+import { DEMO_SETTING, forgetDemoSetting } from '@/modules/demo';
 import { DomainError } from '@/modules/errors';
 import { AUTO_SETTING_KEYS, autoModerateBusiness, autoModerateDeal, autoModeratePendingDeals } from '@/modules/moderation/auto';
 import { archiveDealByModerator, decideBusiness, decideDeal, removeImagesByModerator, setBusinessSuspended } from '@/modules/moderation/service';
@@ -57,6 +59,7 @@ const actionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('telegram.webhook') }),
   z.object({ type: z.literal('automation.update'), key: z.enum(['businesses', 'deals', 'reviews']), on: z.boolean() }),
   z.object({ type: z.literal('tariffs.update'), on: z.boolean().optional(), freePlan: planCode.optional() }),
+  z.object({ type: z.literal('demo.update'), on: z.boolean() }),
   z.object({
     type: z.literal('company.update'),
     legalName: z.string().trim().max(160),
@@ -130,6 +133,13 @@ export const POST = route(async (request: Request) => {
       return json({ data: { ok: true } });
     case 'category.save':
       return json({ data: await saveCategory(db, { ...action, id: action.id ?? null, actorId }) });
+    case 'demo.update': {
+      // The catalogue is written once (and refreshed later); hiding it only filters it out.
+      if (action.on) await seedDemoData(db);
+      await updateSettings(db, { actorId, values: { [DEMO_SETTING]: action.on ? '1' : '0' } });
+      forgetDemoSetting(db);
+      return json({ data: { ok: true } });
+    }
     case 'tariffs.update': {
       if (action.freePlan) await updateSettings(db, { actorId, values: { free_plan: action.freePlan } });
       const result = action.on === undefined ? null : await setTariffsEnabled(db, { actorId, on: action.on });

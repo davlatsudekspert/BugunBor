@@ -13,6 +13,16 @@ import { ensureTelegramWebhook } from '@/modules/telegram/setup';
 const INTERVAL_MS = 60_000;
 let lastRun = 0;
 
+/** Runs work after the response has been sent, so visitors never wait for it. */
+export function inBackground(task: Promise<unknown>, label: string) {
+  const settled = task.catch((error: unknown) => console.error(label, error instanceof Error ? error.message : error));
+  try {
+    waitUntil(settled);
+  } catch {
+    // Outside a request context; the promise still runs.
+  }
+}
+
 export function tickBackgroundJobs(db: D1Database, now = Date.now()) {
   if (now - lastRun < INTERVAL_MS) return;
   lastRun = now;

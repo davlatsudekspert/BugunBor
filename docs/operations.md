@@ -37,7 +37,13 @@ Migrations run automatically on the first request after a deploy. They are addit
 
 ## Demo mode
 
-Development always shows the demo catalogue; production shows it only with `DEMO_SEED=true`. Demo businesses and deals carry `is_demo = 1`, never have phone numbers, and are hidden again as soon as the flag is off. Ended demo deals restart automatically every few minutes.
+Development always shows the demo catalogue. Production shows it with `DEMO_SEED=true`, or when an admin presses «Namuna bizneslarni ko‘rsatish» in Admin → Sozlamalar (no redeploy; «yashirish» hides it again). Demo businesses and deals carry `is_demo = 1`, never have phone numbers, and are hidden again as soon as the flag is off. Ended demo deals restart automatically every few minutes.
+
+## Speed
+
+- Guests' public pages (home, deals, categories, business pages, FAQ, offer) are kept in the edge cache for 30 seconds (`worker.ts`, `lib/page-cache.ts`); the `x-page-cache: HIT|MISS` header shows it. Signed-in visitors, responses that set cookies and client navigation payloads are never cached.
+- Smart Placement (`placement` in `vite.config.ts`) runs the Worker next to D1 when that is faster, because pages make several queries in a row.
+- Releasing expired codes on list pages and restarting demo deals run after the response is sent. Photos and icons are cached for a day in browsers (`public/_headers`).
 
 ## Backups and recovery
 
