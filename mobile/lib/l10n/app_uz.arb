@@ -778,5 +778,13 @@
   },
   "timeEnded": "Tugagan",
   "codeUsedText": "Kod qabul qilindi. Tashrif qanday o‘tdi?",
-  "deletedUser": "O‘chirilgan foydalanuvchi"
+  "deletedUser": "O‘chirilgan foydalanuvchi",
+  "ratingLabel": "Baho: {value} / 5",
+  "@ratingLabel": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  }
 }

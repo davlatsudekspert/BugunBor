@@ -324,7 +324,7 @@ class _RateSheetState extends ConsumerState<_RateSheet> {
               children: [
                 for (var star = 1; star <= 5; star++)
                   IconButton(
-                    tooltip: '$star',
+                    tooltip: l.ratingLabel('$star'),
                     iconSize: 36,
                     onPressed: () => setState(() => _rating = star),
                     icon: Icon(star <= _rating ? Icons.star_rounded : Icons.star_outline_rounded, color: const Color(0xFFF59E0B)),
@@ -340,7 +340,7 @@ class _RateSheetState extends ConsumerState<_RateSheet> {
               textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(labelText: l.rateComment),
             ),
-            if (_error != null) ...[Text(errorText(context, _error!), style: const TextStyle(color: Colors.red)), const SizedBox(height: Gap.sm)],
+            if (_error != null) ...[Text(errorText(context, _error!), style: TextStyle(color: context.dangerText)), const SizedBox(height: Gap.sm)],
             FilledButton(
               onPressed: _rating == 0 || _sending ? null : _send,
               child: _sending ? const SizedBox.square(dimension: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white)) : Text(l.save),

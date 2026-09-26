@@ -165,4 +165,8 @@ extension ThemeX on BuildContext {
 
   /// "You save" and other good-news text, readable in both themes.
   Color get successText => isDark ? const Color(0xFF34D399) : Brand.success;
+
+  /// Errors and "delete" / "cancel" actions, readable in both themes (plain
+  /// red is too light on white and too dark on the dark surface).
+  Color get dangerText => isDark ? const Color(0xFFFF8A80) : const Color(0xFFB3261E);
 }

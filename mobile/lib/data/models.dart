@@ -16,6 +16,38 @@ Json _map(Object? value) => value is Map ? value.cast<String, dynamic>() : const
 List<T> _list<T>(Object? value, T Function(Json) parse) =>
     value is List ? value.whereType<Map<dynamic, dynamic>>().map((item) => parse(item.cast<String, dynamic>())).toList() : <T>[];
 
+/// English names for the app in English (the server knows Uzbek and Russian).
+const _englishCategories = {
+  'taomlar': 'Food',
+  'kofe': 'Coffee',
+  'xaridlar': 'Shopping',
+  'gozallik': 'Beauty',
+  'sport': 'Sport',
+  'kongilochar': 'Fun',
+  'xizmatlar': 'Services',
+  'yetkazish': 'Delivery',
+};
+
+const _englishCities = {
+  'tashkent': 'Tashkent',
+  'samarkand': 'Samarkand',
+  'bukhara': 'Bukhara',
+  'andijan': 'Andijan',
+  'fergana': 'Fergana',
+  'namangan': 'Namangan',
+  'kokand': 'Kokand',
+  'margilan': 'Margilan',
+  'nurafshon': 'Nurafshon',
+  'chirchiq': 'Chirchiq',
+  'navoi': 'Navoi',
+  'jizzakh': 'Jizzakh',
+  'gulistan': 'Gulistan',
+  'karshi': 'Karshi',
+  'termez': 'Termez',
+  'urgench': 'Urgench',
+  'nukus': 'Nukus',
+};
+
 class Category {
   const Category({this.id = '', required this.slug, required this.nameUz, required this.nameRu, this.icon});
   factory Category.fromJson(Json json) => Category(
@@ -33,7 +65,11 @@ class Category {
   final String? nameRu;
   final String? icon;
 
-  String name(String locale) => locale == 'ru' ? (nameRu ?? nameUz) : nameUz;
+  String name(String locale) => switch (locale) {
+    'ru' => nameRu ?? nameUz,
+    'en' => _englishCategories[slug] ?? nameUz,
+    _ => nameUz,
+  };
 }
 
 class City {
@@ -52,7 +88,11 @@ class City {
   final double latitude;
   final double longitude;
 
-  String name(String locale) => locale == 'ru' ? nameRu : nameUz;
+  String name(String locale) => switch (locale) {
+    'ru' => nameRu,
+    'en' => _englishCities[slug] ?? nameUz,
+    _ => nameUz,
+  };
 }
 
 /// A newer app build and the page to get it from (the site's download page).

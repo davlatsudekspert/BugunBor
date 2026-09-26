@@ -208,10 +208,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WidgetsBindingOb
         const SizedBox(height: Gap.sm),
         Text(
           l.loginConsentHint,
-          style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
+          style: TextStyle(color: context.dangerText, fontWeight: FontWeight.w600),
         ),
       ],
-      if (_error != null) ...[const SizedBox(height: Gap.sm), Text(errorText(context, _error!), style: const TextStyle(color: Colors.red))],
+      if (_error != null) ...[const SizedBox(height: Gap.sm), Text(errorText(context, _error!), style: TextStyle(color: context.dangerText))],
       const SizedBox(height: Gap.lg),
       FilledButton.icon(
         style: FilledButton.styleFrom(backgroundColor: Brand.telegram),

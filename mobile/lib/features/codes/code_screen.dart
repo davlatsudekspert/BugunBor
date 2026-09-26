@@ -194,7 +194,7 @@ class _CodeScreenState extends ConsumerState<CodeScreen> {
                 const SizedBox(height: Gap.sm),
                 TextButton(
                   onPressed: _canceling ? null : () => _cancel(code),
-                  style: TextButton.styleFrom(foregroundColor: Colors.red.shade700),
+                  style: TextButton.styleFrom(foregroundColor: context.dangerText),
                   child: Text(l.codeCancel),
                 ),
               ],

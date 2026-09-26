@@ -1441,4 +1441,9 @@ class LRu extends L {
 
   @override
   String get deletedUser => 'Удалённый пользователь';
+
+  @override
+  String ratingLabel(String value) {
+    return 'Оценка: $value из 5';
+  }
 }

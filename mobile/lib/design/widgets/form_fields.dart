@@ -5,7 +5,7 @@ import '../theme.dart';
 // Small pieces shared by the app's forms (business registration, deals).
 
 /// Error text that stays readable in both themes.
-Color errorColor(BuildContext context) => context.isDark ? const Color(0xFFFF8A80) : const Color(0xFFB3261E);
+Color errorColor(BuildContext context) => context.dangerText;
 
 /// A field's error under something that is not a text field (chips, lists).
 class FieldError extends StatelessWidget {

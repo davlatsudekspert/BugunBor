@@ -419,9 +419,9 @@ class _BusinessCard extends StatelessWidget {
                             spacing: 4,
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              RatingStars(business.rating!.average, size: 14),
+                              RatingStars(business.rating!.average, size: 14, announce: false),
                               Text(
-                                '${business.rating!.average.toStringAsFixed(1)} (${business.rating!.count})',
+                                '${ratingValue(context, business.rating!.average)} (${business.rating!.count})',
                                 style: TextStyle(color: context.mutedText, fontSize: 12.5),
                               ),
                             ],

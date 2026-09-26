@@ -118,7 +118,7 @@ class _Tab extends StatelessWidget {
                 child: Text(
                   tab.label,
                   maxLines: 1,
-                  style: TextStyle(fontSize: 11, fontWeight: selected ? FontWeight.w700 : FontWeight.w600, color: color, letterSpacing: 0.1),
+                  style: TextStyle(fontSize: 12, fontWeight: selected ? FontWeight.w700 : FontWeight.w600, color: color, letterSpacing: 0.1),
                 ),
               ),
             ),

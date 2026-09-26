@@ -113,7 +113,7 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
               textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(labelText: l.reportComment),
             ),
-            if (_error != null) ...[Text(errorText(context, _error!), style: const TextStyle(color: Colors.red)), const SizedBox(height: Gap.sm)],
+            if (_error != null) ...[Text(errorText(context, _error!), style: TextStyle(color: context.dangerText)), const SizedBox(height: Gap.sm)],
             FilledButton(
               onPressed: _reason == null || _sending ? null : _send,
               child: _sending

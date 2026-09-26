@@ -253,7 +253,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
             const SizedBox(height: Gap.md),
             Text(
               _error is String ? _error! as String : errorText(context, _error!),
-              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
+              style: TextStyle(color: context.dangerText, fontWeight: FontWeight.w600),
             ),
           ],
         ],

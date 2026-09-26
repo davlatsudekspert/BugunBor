@@ -444,5 +444,6 @@
   "timeLeftHoursMinutes": "Осталось {hours} ч {minutes} мин",
   "timeEnded": "Завершилась",
   "codeUsedText": "Код принят. Как прошёл визит?",
-  "deletedUser": "Удалённый пользователь"
+  "deletedUser": "Удалённый пользователь",
+  "ratingLabel": "Оценка: {value} из 5"
 }

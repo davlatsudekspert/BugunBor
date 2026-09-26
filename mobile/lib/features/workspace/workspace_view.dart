@@ -520,7 +520,7 @@ class _Stats extends StatelessWidget {
       (groupDigits(stats.redeemedToday), l.statRedeemedToday),
       (groupDigits(stats.views), l.statViews),
       (groupDigits(stats.followers), l.statFollowers),
-      (stats.reviewCount > 0 ? '★ ${(stats.ratingBp / 100).toStringAsFixed(1)}' : '—', l.statRating),
+      (stats.reviewCount > 0 ? '★ ${ratingValue(context, stats.ratingBp / 100)}' : '—', l.statRating),
     ];
     const labelStyle = TextStyle(fontSize: 12, height: 1.25);
     final words = tiles.expand((tile) => tile.$2.split(' '));

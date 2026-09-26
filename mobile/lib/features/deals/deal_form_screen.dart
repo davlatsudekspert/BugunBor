@@ -810,7 +810,8 @@ class _DealFormState extends ConsumerState<_DealForm> {
             return Semantics(
               button: true,
               selected: selected,
-              label: visual.key,
+              // The phone reads the picture's name in its own language (not the key, "gift").
+              label: visual.emoji,
               excludeSemantics: true,
               child: InkResponse(
                 onTap: () => _edit(['visual'], () {

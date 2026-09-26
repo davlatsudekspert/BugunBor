@@ -191,10 +191,10 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
                             if (business.rating != null && business.rating!.count > 0)
                               Row(
                                 children: [
-                                  RatingStars(business.rating!.average),
+                                  RatingStars(business.rating!.average, announce: false),
                                   const SizedBox(width: 4),
                                   Text(
-                                    '${business.rating!.average.toStringAsFixed(1)} (${business.rating!.count})',
+                                    '${ratingValue(context, business.rating!.average)} (${business.rating!.count})',
                                     style: TextStyle(color: context.mutedText),
                                   ),
                                 ],

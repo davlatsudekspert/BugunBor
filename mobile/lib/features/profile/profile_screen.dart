@@ -666,7 +666,7 @@ class _AccountActionsState extends ConsumerState<_AccountActions> {
               TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l.cancel)),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
-                style: danger ? TextButton.styleFrom(foregroundColor: Colors.red.shade700) : null,
+                style: danger ? TextButton.styleFrom(foregroundColor: context.dangerText) : null,
                 child: Text(action),
               ),
             ],
@@ -714,8 +714,8 @@ class _AccountActionsState extends ConsumerState<_AccountActions> {
         children: [
           ListTile(leading: const Icon(Icons.logout_rounded), title: Text(l.profileLogout), enabled: !_busy, onTap: _logout),
           ListTile(
-            leading: Icon(Icons.delete_outline_rounded, color: Colors.red.shade700),
-            title: Text(l.profileDelete, style: TextStyle(color: Colors.red.shade700)),
+            leading: Icon(Icons.delete_outline_rounded, color: context.dangerText),
+            title: Text(l.profileDelete, style: TextStyle(color: context.dangerText)),
             enabled: !_busy,
             onTap: _delete,
           ),

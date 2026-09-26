@@ -1442,4 +1442,9 @@ class LUz extends L {
 
   @override
   String get deletedUser => 'O‘chirilgan foydalanuvchi';
+
+  @override
+  String ratingLabel(String value) {
+    return 'Baho: $value / 5';
+  }
 }

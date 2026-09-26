@@ -465,7 +465,7 @@ class LEn extends L {
 
   @override
   String liveDeals(String count) {
-    return '$count live deals';
+    return 'Live deals: $count';
   }
 
   @override
@@ -475,7 +475,7 @@ class LEn extends L {
   String get profileGuestText => 'Sign in for your codes, saved deals and notifications.';
 
   @override
-  String get profileSaved => 'Saved';
+  String get profileSaved => 'Money saved';
 
   @override
   String get profileRedeemed => 'Codes used';
@@ -667,7 +667,7 @@ class LEn extends L {
 
   @override
   String followers(String count) {
-    return '$count followers';
+    return 'Followers: $count';
   }
 
   @override
@@ -1440,4 +1440,9 @@ class LEn extends L {
 
   @override
   String get deletedUser => 'Deleted user';
+
+  @override
+  String ratingLabel(String value) {
+    return 'Rating: $value of 5';
+  }
 }

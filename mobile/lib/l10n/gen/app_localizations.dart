@@ -2762,6 +2762,12 @@ abstract class L {
   /// In uz, this message translates to:
   /// **'O‘chirilgan foydalanuvchi'**
   String get deletedUser;
+
+  /// No description provided for @ratingLabel.
+  ///
+  /// In uz, this message translates to:
+  /// **'Baho: {value} / 5'**
+  String ratingLabel(String value);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

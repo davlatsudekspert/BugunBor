@@ -142,10 +142,10 @@
   "savedEmptyText": "Tap ♡ on a deal to keep it here.",
   "followsEmpty": "Not following anyone",
   "followsEmptyText": "Tap “Follow” on a business page and we’ll tell you about its new deals.",
-  "liveDeals": "{count} live deals",
+  "liveDeals": "Live deals: {count}",
   "endedDeals": "Ended",
   "profileGuestText": "Sign in for your codes, saved deals and notifications.",
-  "profileSaved": "Saved",
+  "profileSaved": "Money saved",
   "profileRedeemed": "Codes used",
   "profileName": "Your name",
   "profileLanguage": "Language",
@@ -207,7 +207,7 @@
   "dealNotStarted": "This deal hasn’t started yet",
   "endsInLabel": "Ends in:",
   "unblocked": "Business unblocked",
-  "followers": "{count} followers",
+  "followers": "Followers: {count}",
   "blockedNote": "You blocked this business — its deals are hidden from you.",
   "website": "Website",
   "codeOpenDeal": "Open the deal",
@@ -444,5 +444,6 @@
   "timeLeftHoursMinutes": "{hours} h {minutes} min left",
   "timeEnded": "Ended",
   "codeUsedText": "The code was accepted. How was your visit?",
-  "deletedUser": "Deleted user"
+  "deletedUser": "Deleted user",
+  "ratingLabel": "Rating: {value} of 5"
 }

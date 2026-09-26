@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/api_error.dart';
+import '../../core/errors_en.dart';
 import '../../core/format.dart';
 import '../../core/media.dart';
 import '../../core/time.dart';
@@ -11,7 +12,8 @@ import '../../l10n/gen/app_localizations.dart';
 import '../theme.dart';
 
 /// The text for any error: the server's own (localized) message when it has
-/// one and the app speaks Uzbek or Russian, otherwise the app's wording.
+/// one and the app speaks Uzbek or Russian, the app's English one for its
+/// code in English, otherwise the app's general wording.
 String errorText(BuildContext context, Object error) {
   final l = L.of(context);
   if (error is ApiError) {
@@ -20,7 +22,12 @@ String errorText(BuildContext context, Object error) {
     if (error.code == 'RATE_LIMITED') return l.errorRateLimited;
     if (error.isNotFound) return l.errorNotFound;
     final language = Localizations.localeOf(context).languageCode;
-    if (error.message != null && language != 'en') return error.message!;
+    if (language == 'en') {
+      final english = englishErrors[error.code];
+      if (english != null) return english;
+    } else if (error.message != null) {
+      return error.message!;
+    }
     if (error.code == 'SERVER') return l.errorServer;
   }
   return l.errorGeneric;
@@ -210,7 +217,7 @@ class DemoBadge extends StatelessWidget {
     ),
     child: Text(
       L.of(context).demoBadge,
-      style: const TextStyle(color: Color(0xFF92400E), fontSize: 11, fontWeight: FontWeight.w800),
+      style: const TextStyle(color: Color(0xFF92400E), fontSize: 12, fontWeight: FontWeight.w800),
     ),
   );
 }
@@ -366,21 +373,35 @@ class _TimeLeftState extends State<TimeLeft> {
   }
 }
 
+/// 4.7 → "4,7" as the site writes ratings (a dot in English).
+String ratingValue(BuildContext context, double value) {
+  final text = value.toStringAsFixed(1);
+  return Localizations.localeOf(context).languageCode == 'en' ? text : text.replaceAll('.', ',');
+}
+
+/// Read-only stars. Screen readers hear "Baho: 4,7 / 5", unless the number is
+/// written right next to them (`announce: false`).
 class RatingStars extends StatelessWidget {
-  const RatingStars(this.value, {super.key, this.size = 16});
+  const RatingStars(this.value, {super.key, this.size = 16, this.announce = true});
   final double value;
   final double size;
+  final bool announce;
 
   @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      for (var index = 1; index <= 5; index++)
-        Icon(
-          value >= index - 0.25 ? Icons.star_rounded : (value >= index - 0.75 ? Icons.star_half_rounded : Icons.star_outline_rounded),
-          size: size,
-          color: const Color(0xFFF59E0B),
-        ),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final stars = ExcludeSemantics(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var index = 1; index <= 5; index++)
+            Icon(
+              value >= index - 0.25 ? Icons.star_rounded : (value >= index - 0.75 ? Icons.star_half_rounded : Icons.star_outline_rounded),
+              size: size,
+              color: const Color(0xFFF59E0B),
+            ),
+        ],
+      ),
+    );
+    return announce ? Semantics(label: L.of(context).ratingLabel(ratingValue(context, value)), child: stars) : stars;
+  }
 }
