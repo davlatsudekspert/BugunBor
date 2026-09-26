@@ -34,7 +34,7 @@ export async function SiteFooter() {
   ];
   return (
     <footer className="border-t border-slate-200 bg-white print:hidden">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.3fr_2fr] lg:px-8">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.3fr_2fr] lg:px-8">
         <div className="max-w-sm">
           <Logo label={t.nav.homeAria} />
           <p className="mt-4 text-sm leading-6 text-slate-500">{t.footer.tagline}</p>
@@ -48,7 +48,7 @@ export async function SiteFooter() {
               <h2 className="text-xs font-black uppercase tracking-[.14em] text-slate-400">{column.title}</h2>
               <ul className="mt-4 space-y-2.5">
                 {column.links.map((link) => (
-                  <li key={link.href}><a href={link.href} className="text-sm font-semibold text-slate-600 transition hover:text-primary">{link.label}</a></li>
+                  <li key={link.href} className="break-words"><a href={link.href} className="text-sm font-semibold text-slate-600 transition hover:text-primary">{link.label}</a></li>
                 ))}
               </ul>
             </div>
