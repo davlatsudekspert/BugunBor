@@ -45,7 +45,7 @@ jobs:
       - run: flutter pub get
       - name: Generated texts are up to date
         run: flutter gen-l10n && git diff --exit-code -- lib/l10n/gen
-      - run: dart format --output=none --set-exit-if-changed lib test integration_test
+      - run: dart format --output=none --set-exit-if-changed lib test integration_test test_driver
       - run: flutter analyze
       - run: flutter test
       - name: Play "What's new" texts are 1–500 characters
@@ -88,7 +88,15 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
           working-directory: mobile
-          script: flutter test integration_test --dart-define=E2E=true --dart-define=APP_BUILD=${{ github.run_number }}
+          script: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/app_test.dart --dart-define=E2E=true --dart-define=APP_BUILD=${{ github.run_number }}
+      - name: Keep the emulator screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screenshots-${{ github.run_number }}
+          path: mobile/build/screenshots
+          if-no-files-found: warn
+          retention-days: 14
 
   build:
     needs: check
