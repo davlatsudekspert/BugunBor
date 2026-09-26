@@ -20,6 +20,10 @@ export type Plan = {
 };
 
 export type BillingSettings = {
+  /** Off during the free launch: no prices anywhere, every verified business on air. */
+  tariffsEnabled: boolean;
+  /** The plan whose features are gifted during the free launch. */
+  freePlan: PlanCode;
   trialMonths: number;
   trialPlan: PlanCode;
   paymentInstructionsUz: string;
@@ -49,7 +53,10 @@ export async function getBillingSettings(db: D1Database): Promise<BillingSetting
   const map = new Map(rows.results.map((row) => [row.key, row.value]));
   const months = Number(map.get('trial_months'));
   const plan = map.get('trial_plan');
+  const freePlan = map.get('free_plan');
   return {
+    tariffsEnabled: map.get('tariffs_enabled') === '1',
+    freePlan: freePlan === 'START' || freePlan === 'BIZNES' || freePlan === 'PREMIUM' ? freePlan : 'PREMIUM',
     trialMonths: TRIAL_MONTH_OPTIONS.includes(months as 1 | 2 | 3) ? months : 3,
     trialPlan: plan === 'START' || plan === 'BIZNES' || plan === 'PREMIUM' ? plan : 'BIZNES',
     paymentInstructionsUz: map.get('payment_instructions_uz') ?? '',
@@ -57,36 +64,46 @@ export async function getBillingSettings(db: D1Database): Promise<BillingSetting
   };
 }
 
-export type SubscriptionStatus = 'NOT_STARTED' | 'TRIAL' | 'ACTIVE' | 'EXPIRED';
+export type SubscriptionStatus = 'NOT_STARTED' | 'FREE' | 'TRIAL' | 'ACTIVE' | 'EXPIRED';
 
 export type Subscription = {
   status: SubscriptionStatus;
   plan: Plan | null;
   endsAt: string | null;
   daysLeft: number;
+  /** Whether tariffs are shown at all (false during the free launch). */
+  tariffs: boolean;
+  /** Free months everyone gets when the tariffs open (the promise shown during the free launch). */
+  trialMonths: number;
 };
 
 type BusinessBilling = { verificationStatus: string; planCode: string | null; trialEndsAt: string | null; paidUntil: string | null };
 
 /**
  * NOT_STARTED — awaiting verification (drafts only, trial limits apply);
+ * FREE — the free launch (tariffs switched off): on air with the gifted plan's features, no end date;
  * TRIAL — the free period runs with the trial plan's limits;
  * ACTIVE — a paid period runs; EXPIRED — deals are hidden until payment.
  */
 export function subscriptionState(business: BusinessBilling, plans: Plan[], settings: BillingSettings, now = new Date()): Subscription {
   const nowDb = toDbTime(now);
+  const common = { tariffs: settings.tariffsEnabled, trialMonths: settings.trialMonths };
+  const tariffs = settings.tariffsEnabled;
   const find = (code: string | null) => plans.find((plan) => plan.code === code) ?? null;
   const daysLeft = (end: string) => Math.max(0, Math.ceil((parseDbTime(end).getTime() - now.getTime()) / 86_400_000));
   if (business.paidUntil && business.paidUntil > nowDb) {
-    return { status: 'ACTIVE', plan: find(business.planCode) ?? find('START'), endsAt: business.paidUntil, daysLeft: daysLeft(business.paidUntil) };
+    return { status: 'ACTIVE', plan: find(business.planCode) ?? find('START'), endsAt: business.paidUntil, daysLeft: daysLeft(business.paidUntil), ...common };
+  }
+  if (!tariffs && business.verificationStatus === 'VERIFIED') {
+    return { status: 'FREE', plan: find(settings.freePlan), endsAt: null, daysLeft: 0, ...common };
   }
   if (business.trialEndsAt && business.trialEndsAt > nowDb) {
-    return { status: 'TRIAL', plan: find(settings.trialPlan), endsAt: business.trialEndsAt, daysLeft: daysLeft(business.trialEndsAt) };
+    return { status: 'TRIAL', plan: find(settings.trialPlan), endsAt: business.trialEndsAt, daysLeft: daysLeft(business.trialEndsAt), ...common };
   }
   if (!business.trialEndsAt && !business.paidUntil && business.verificationStatus !== 'VERIFIED') {
-    return { status: 'NOT_STARTED', plan: find(settings.trialPlan), endsAt: null, daysLeft: 0 };
+    return { status: 'NOT_STARTED', plan: find(tariffs ? settings.trialPlan : settings.freePlan), endsAt: null, daysLeft: 0, ...common };
   }
-  return { status: 'EXPIRED', plan: null, endsAt: business.paidUntil ?? business.trialEndsAt, daysLeft: 0 };
+  return { status: 'EXPIRED', plan: null, endsAt: business.paidUntil ?? business.trialEndsAt, daysLeft: 0, ...common };
 }
 
 export async function loadSubscription(db: D1Database, businessId: string, now = new Date()) {
@@ -130,7 +147,34 @@ const monthsLater = (fromDb: string, months: number) => {
   return toDbTime(target);
 };
 
+/** Plans can be requested or bought only once the tariffs are open. */
+export async function assertTariffsOpen(db: D1Database) {
+  if (!(await getBillingSettings(db)).tariffsEnabled) throw new DomainError('TARIFFS_OFF');
+}
+
+/**
+ * Opens or hides the tariffs. Opening them gives every verified business that
+ * has not paid a fresh free period from today, so nobody drops off the site
+ * the moment prices appear.
+ */
+export async function setTariffsEnabled(db: D1Database, input: { actorId: string; on: boolean }, now = new Date()) {
+  const settings = await getBillingSettings(db);
+  const nowDb = toDbTime(now);
+  const trialEndsAt = monthsLater(nowDb, settings.trialMonths);
+  const results = await db.batch([
+    db.prepare(`INSERT INTO app_settings(key, value, updated_at, updated_by) VALUES ('tariffs_enabled', ?1, ?2, ?3)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at, updated_by = excluded.updated_by`)
+      .bind(input.on ? '1' : '0', nowDb, input.actorId),
+    db.prepare(`UPDATE businesses SET trial_ends_at = CASE WHEN trial_ends_at > ?1 THEN trial_ends_at ELSE ?1 END, updated_at = ?2
+      WHERE ?3 = 1 AND verification_status = 'VERIFIED' AND deleted_at IS NULL AND is_demo = 0 AND (paid_until IS NULL OR paid_until <= ?2)`)
+      .bind(trialEndsAt, nowDb, input.on && !settings.tariffsEnabled ? 1 : 0),
+    auditStatement(db, { actorUserId: input.actorId, action: input.on ? 'billing.tariffs_opened' : 'billing.tariffs_hidden', targetType: 'Settings', targetId: 'tariffs', after: { on: input.on, trialEndsAt: input.on ? trialEndsAt : null } }, nowDb),
+  ]);
+  return { trialsGranted: results[1].meta.changes ?? 0, trialEndsAt };
+}
+
 export async function requestPlan(db: D1Database, input: { businessId: string; userId: string; planCode: string; months: number }, now = new Date()) {
+  await assertTariffsOpen(db);
   const plans = await listPlans(db);
   const plan = plans.find((item) => item.code === input.planCode);
   if (!plan) throw new DomainError('VALIDATION');

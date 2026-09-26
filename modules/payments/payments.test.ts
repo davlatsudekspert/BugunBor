@@ -16,6 +16,7 @@ const later = (ms: number) => new Date(NOW.getTime() + ms);
 
 async function setup() {
   const db = await marketplace();
+  await db.prepare(`UPDATE app_settings SET value = '1' WHERE key = 'tariffs_enabled'`).run();
   const order = await createOrder(db, { businessId: 'biz', userId: 'owner', planCode: 'BIZNES', months: 3 }, NOW);
   return { db, order, tiyin: order.amount * 100 };
 }

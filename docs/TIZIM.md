@@ -215,6 +215,15 @@ Biror belgi topilsa, ariza navbatda qoladi, sababi yoziladi va moderatorlarga xa
 
 ### 5.1. Bizneslar uchun tariflar
 
+**Hozir: bepul ishga tushirish.** Tariflar yopiq (`tariffs_enabled = 0`), ya’ni saytning hech qayerida narx ko‘rinmaydi.
+- Tasdiqlangan har bir biznes muddatsiz saytda turadi va **Premium sovg‘a** oladi: sovg‘a tarifining imkoniyatlari (admin tanlaydi, standart — Premium).
+- «Biznes uchun» sahifasi va savol-javoblarda «Premium — sizga sovg‘a, ro‘yxatdan o‘tish bepul» deb yoziladi.
+- Kabinetda «Tarif» bo‘limi va muddat ogohlantirishlari ko‘rinmaydi. Tarif so‘rovi va onlayn to‘lov qabul qilinmaydi.
+- Admin **Admin → Tariflar → «Tariflarni ochish»** tugmasini bosganda:
+  - har bir tasdiqlangan va to‘lamagan biznesga bugundan boshlab bepul davr beriladi (standart 3 oy);
+  - saytdagi va’da ham shu: «tariflar joriy etilsa ham, sizga yana 3 oy bepul beriladi»;
+  - shundan keyingina quyidagi tariflar amal qiladi. Yopish ham bir tugma bilan.
+
 | | Start | Biznes | Premium |
 | --- | --- | --- | --- |
 | Oylik narx | 149 000 so‘m | 299 000 so‘m | 599 000 so‘m |

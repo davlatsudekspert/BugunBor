@@ -423,4 +423,17 @@ const autoModeration: Migration = {
   },
 };
 
-export const migrations: readonly Migration[] = [baseline, systemV1, billing, media, engagement, payments, autoModeration];
+/**
+ * Free launch: tariffs start hidden, so no business sees a price while the
+ * platform grows. Every verified business stays on air with a gifted plan's
+ * features (Premium); an admin opens the tariffs later (Admin → Tariflar),
+ * which gives everyone a fresh free period first.
+ */
+const freeLaunch: Migration = {
+  id: '0008_free_launch',
+  async build({ db }) {
+    return sql(db, [`INSERT OR IGNORE INTO app_settings(key, value) VALUES ('tariffs_enabled', '0'), ('free_plan', 'PREMIUM')`]);
+  },
+};
+
+export const migrations: readonly Migration[] = [baseline, systemV1, billing, media, engagement, payments, autoModeration, freeLaunch];

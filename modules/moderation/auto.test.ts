@@ -268,6 +268,7 @@ describe('automatic moderation', () => {
   });
 
   it('tells the admins about a manual payment request', async () => {
+    await db.prepare(`UPDATE app_settings SET value = '1' WHERE key = 'tariffs_enabled'`).run();
     const { businessId } = await onboard();
     await autoModerateBusiness(db, businessId, NOW);
     await requestPlan(db, { businessId, userId: 'owner', planCode: 'BIZNES', months: 1 }, later(5));

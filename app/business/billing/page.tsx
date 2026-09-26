@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { CheckCircle2, CreditCard, Info, LoaderCircle } from 'lucide-react';
 
 import { AutoRefresh } from '@/components/business/auto-refresh';
@@ -24,6 +25,8 @@ const requestTone: Record<string, string> = { PENDING: 'bg-amber-50 text-amber-7
 export default async function BillingPage({ searchParams }: { searchParams: Promise<{ order?: string }> }) {
   const ws = await requireWorkspace('/business/billing', 'business.edit');
   const { t, locale, db, membership, subscription } = ws;
+  // During the free launch there is nothing to buy.
+  if (!subscription.tariffs) redirect('/business/dashboard');
   const { order: orderId } = await searchParams;
   const payments = getConfig().payments;
   // Coming back from Payme or Click: this business's order, as the provider's server left it.

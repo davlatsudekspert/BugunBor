@@ -12,6 +12,7 @@ import { formatNumericDate, parseDbTime, toDbTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { listAdminBusinesses, type AdminListFilter } from '@/modules/admin/service';
 import { requireModerator } from '@/modules/auth/current';
+import { getBillingSettings } from '@/modules/billing/service';
 import { flagText, parseFlags } from '@/modules/moderation/auto';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -26,7 +27,7 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
   const user = await requireModerator('/admin/businesses');
   const [{ t, locale }, db] = await Promise.all([getI18n(), getDb()]);
   const filter: AdminListFilter = f === 'all' || f === 'auto' ? f : 'pending';
-  const businesses = await listAdminBusinesses(db, { list: filter, query: q });
+  const [businesses, billing] = await Promise.all([listAdminBusinesses(db, { list: filter, query: q }), getBillingSettings(db)]);
   const isAdmin = user.role === 'ADMIN';
   const a = t.admin;
   const nowDb = toDbTime(new Date());
@@ -77,8 +78,10 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
                   <div><dt className="text-slate-400">{t.biz.nav.branches} / {t.biz.nav.deals}</dt><dd className="font-semibold text-navy">{business.branchCount} / {business.dealCount}</dd></div>
                   <div>
                     <dt className="text-slate-400">{a.billing.subscription}</dt>
-                    <dd className={cn('font-semibold', onAir ? 'text-emerald-700' : 'text-slate-500')}>
-                      {business.paidUntil && business.paidUntil > nowDb
+                    <dd className={cn('font-semibold', onAir || (!billing.tariffsEnabled && business.verificationStatus === 'VERIFIED') ? 'text-emerald-700' : 'text-slate-500')}>
+                      {!billing.tariffsEnabled && business.verificationStatus === 'VERIFIED' && !(business.paidUntil && business.paidUntil > nowDb)
+                        ? t.billing.status.FREE
+                        : business.paidUntil && business.paidUntil > nowDb
                         ? `${business.planCode} · ${fmt(a.billing.until, { date: formatNumericDate(parseDbTime(business.paidUntil)) })}`
                         : business.trialEndsAt
                           ? `${t.billing.status.TRIAL} · ${fmt(a.billing.until, { date: formatNumericDate(parseDbTime(business.trialEndsAt)) })}`

@@ -46,9 +46,13 @@ export function liveDealSql(nowParam: string) {
   AND ${subscriptionActiveSql(nowParam)}`;
 }
 
-/** A business is on air during its free trial or a paid period (aliases b = businesses). */
+/**
+ * A business is on air during its free trial or a paid period — and always
+ * while the tariffs are switched off (the free launch). Aliases b = businesses.
+ */
 export function subscriptionActiveSql(nowParam: string) {
-  return `(b.trial_ends_at > ${nowParam} OR b.paid_until > ${nowParam})`;
+  return `(b.trial_ends_at > ${nowParam} OR b.paid_until > ${nowParam}
+    OR NOT EXISTS (SELECT 1 FROM app_settings WHERE key = 'tariffs_enabled' AND value = '1'))`;
 }
 
 /** Businesses customers may see (aliases b = businesses). */

@@ -1,6 +1,7 @@
 import { dealPhotoUrl } from '@/lib/photos';
 import { addMinutes, parseDbTime, toDbTime } from '@/lib/time';
 import { auditStatementIf } from '@/modules/audit';
+import { subscriptionActiveSql } from '@/modules/deals/status';
 import { DomainError } from '@/modules/errors';
 import { pruneOrphanMediaStatement } from '@/modules/media/service';
 import { codeReminderStatement, redeemedStatement } from '@/modules/notifications/service';
@@ -42,7 +43,7 @@ async function diagnoseClaim(db: D1Database, input: ClaimInput, now: Date): Prom
     .prepare(`SELECT d.status, d.starts_at AS startsAt, d.ends_at AS endsAt, d.remaining_quantity AS remainingQuantity,
         d.per_customer_limit AS perCustomerLimit, d.deleted_at AS deletedAt, (d.is_demo OR b.is_demo) AS isDemo,
         b.verification_status AS verificationStatus, b.suspended_at AS suspendedAt, b.deleted_at AS businessDeletedAt,
-        (b.trial_ends_at > ?4 OR b.paid_until > ?4) AS onAir,
+        ${subscriptionActiveSql('?4')} AS onAir,
         (SELECT COUNT(*) FROM redemptions r WHERE r.deal_id = d.id AND r.user_id = ?2 AND r.status IN ('CLAIMED', 'COMPLETED')) AS existingClaims,
         EXISTS (SELECT 1 FROM deal_branches db JOIN branches br ON br.id = db.branch_id
           WHERE db.deal_id = d.id AND db.branch_id = ?3 AND br.deleted_at IS NULL) AS branchOk
@@ -97,7 +98,7 @@ export async function claimDeal(db: D1Database, input: ClaimInput): Promise<Clai
             AND d.status = 'ACTIVE' AND d.deleted_at IS NULL AND d.starts_at <= ?2 AND d.ends_at > ?2
             AND (d.remaining_quantity IS NULL OR d.remaining_quantity > 0)
             AND b.verification_status = 'VERIFIED' AND b.suspended_at IS NULL AND b.deleted_at IS NULL
-            AND (b.trial_ends_at > ?2 OR b.paid_until > ?2)
+            AND ${subscriptionActiveSql('?2')}
             AND ((d.is_demo = 0 AND b.is_demo = 0) OR ?9 = 1)
             AND EXISTS (SELECT 1 FROM deal_branches db JOIN branches br ON br.id = db.branch_id
               WHERE db.deal_id = d.id AND db.branch_id = ?3 AND br.deleted_at IS NULL)
