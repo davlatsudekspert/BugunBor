@@ -94,6 +94,25 @@ void main() {
     expect(find.text('Maxfiylik siyosati va foydalanish shartlariga roziman'), findsOneWidget);
   });
 
+  testWidgets('deals come first on the home screen; the card follows the first few', (tester) async {
+    final server = FakeServer.standard();
+    final feed = contractMap('feed');
+    final deal = ((feed['nearby'] as List).first as Map).cast<String, dynamic>();
+    final nearby = [
+      for (var index = 0; index < 6; index++) {...deal, 'id': 'd$index', 'slug': 'osh-$index', 'title': 'Osh $index'},
+    ];
+    server.routes['GET /api/v1/feed'] = (_) => {
+      'data': {...feed, 'forYou': <Object>[], 'nearby': nearby, 'total': nearby.length},
+    };
+    await pumpApp(tester, server: server, size: phoneSizes['360']!);
+    // Nothing chosen for "Siz uchun", yet deals are on the first screen.
+    expect(find.text('Osh 0'), findsOneWidget);
+    await scrollTo(tester, find.text('Biznesingiz bormi? Ko‘proq soting'));
+    final card = tester.getTopLeft(find.text('Biznesingiz bormi? Ko‘proq soting')).dy;
+    expect(tester.getTopLeft(find.text('Osh 2', skipOffstage: false)).dy, lessThan(card));
+    expect(tester.getTopLeft(find.text('Osh 3', skipOffstage: false)).dy, greaterThan(card));
+  });
+
   testWidgets('the home card can be closed for a month', (tester) async {
     await pumpApp(tester, server: FakeServer.standard());
     await scrollTo(tester, find.byTooltip('Yashirish'));

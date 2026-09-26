@@ -194,7 +194,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
       SliverToBoxAdapter(
         child: forYou.isEmpty ? _InterestsPrompt(hasInterests: interests.isNotEmpty) : _DealRow(deals: forYou),
       ),
-      ?promo,
       SliverToBoxAdapter(
         child: SectionTitle(
           located ? l.homeNearby : l.homeInCity(cityName ?? ''),
@@ -202,14 +201,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
           onAction: () => context.go('/search?sort=${located ? 'near' : 'ending'}'),
         ),
       ),
-      SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: Gap.gutter),
-        sliver: SliverList.separated(
-          itemCount: nearby.length.clamp(0, 8),
-          separatorBuilder: (_, _) => const SizedBox(height: Gap.md),
-          itemBuilder: (context, index) => DealTile(nearby[index]),
-        ),
-      ),
+      // Deals come first on the screen; the business card follows the first few.
+      _tiles(nearby.take(3).toList()),
+      ?promo,
+      if (nearby.length > 3) _tiles(nearby.skip(3).take(5).toList(), top: promo == null ? Gap.md : Gap.xl),
       if (ending.length > 3 && data.total > 4) ...[
         SliverToBoxAdapter(
           child: SectionTitle(l.homeEnding, action: l.homeAll, onAction: () => context.go('/search?sort=ending')),
@@ -230,6 +225,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     ];
   }
 }
+
+Widget _tiles(List<DealCard> deals, {double top = 0}) => SliverPadding(
+  padding: EdgeInsets.fromLTRB(Gap.gutter, top, Gap.gutter, 0),
+  sliver: SliverList.separated(
+    itemCount: deals.length,
+    separatorBuilder: (_, _) => const SizedBox(height: Gap.md),
+    itemBuilder: (context, index) => DealTile(deals[index]),
+  ),
+);
 
 class _SearchEntry extends StatelessWidget {
   const _SearchEntry({required this.hint, required this.onTap});
