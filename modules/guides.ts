@@ -38,7 +38,7 @@ const VIDEO_PATH = /^\/qollanma\/video\/([a-z0-9-]+)\.mp4$/;
  * CDN, at the commit that added it. Visitors only ever talk to bugunbor.uz.
  * Change the commit when the videos change.
  */
-export const GUIDE_SOURCE = 'https://cdn.jsdelivr.net/gh/davlatsudekspert/BugunBor@ee940ac/public';
+export const GUIDE_SOURCE = 'https://cdn.jsdelivr.net/gh/davlatsudekspert/BugunBor@ed294ec/public';
 const SLUGS = new Set<string>([PROMO.slug, ...GUIDES.map((guide) => guide.slug)]);
 
 /**
