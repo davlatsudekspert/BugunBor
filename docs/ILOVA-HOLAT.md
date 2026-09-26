@@ -90,6 +90,14 @@ Reja: `docs/ILOVA-REJA.md`.
   (sayt → o'rnatish → birinchi ochilish), 2/4 ro'yxatdan o'tish, 3/4 biznesni qo'shish, 4/4 aksiya qo'shish
   va «Nima uchun BugunBor?» promo. Egasiga yuborildi (Instagram uchun).
 
+- [x] **Saytda video qo'llanmalar** (2026-09-26): `bugunbor.uz/qollanma` — promo va 1–4 qo'llanmalar, posterlar,
+  o'zbekcha subtitrlar (WebVTT). iPhone (Safari) uchun videolar Worker orqali qismlab beriladi (`/qollanma/video/…`).
+  Ilovada: Profil → «Video qo'llanma».
+- [x] **Profil rasmi** (2026-09-26): saytdagi kabinetda va ilovadagi Profil'da rasm qo'yish/almashtirish/olib tashlash.
+  Rasm faqat egasiga ko'rinadi (alohida `user_avatars` jadvali), hisob o'chirilganda o'chadi; maxfiylik siyosatiga yozildi.
+- [x] **Namuna belgilari** (2026-09-26): tepadagi «Demo rejim» yozuvi olib tashlandi; har bir namuna aksiya kartochkasi,
+  aksiya va biznes sahifasida «Namuna» belgisi, namuna biznesda «Tasdiqlangan» belgisi yo'q.
+
 ## Navbatda
 
 - [ ] Egasi kalitlarni qo'ygach: imzolangan build, qo'lda APK sinovi, Internal testing qoralamasi.
