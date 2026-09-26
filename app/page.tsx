@@ -100,7 +100,7 @@ export default async function Home() {
             </a>
 
             <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-500">
-              <a href="/discover?sort=near" className="flex items-center gap-1.5 font-semibold text-navy hover:text-primary"><LocateFixed className="size-4 text-primary" aria-hidden /> {t.discover.nearMe}</a>
+              <a href="/discover?sort=near" className="-my-2 flex items-center gap-1.5 py-2 font-semibold text-navy hover:text-primary"><LocateFixed className="size-4 text-primary" aria-hidden /> {t.discover.nearMe}</a>
               <span className="flex items-center gap-1.5"><ShieldCheck className="size-4 text-emerald-600" aria-hidden /> {t.home.trustVerified}</span>
               <span className="flex items-center gap-1.5"><Sparkles className="size-4 text-amber-500" aria-hidden /> {t.home.trustFree}</span>
             </div>
@@ -237,7 +237,7 @@ export default async function Home() {
               </li>
             ))}
           </ol>
-          <a href="/how-it-works" className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-primary">{t.home.howMore} <ArrowRight className="size-4" aria-hidden /></a>
+          <a href="/how-it-works" className="mt-4 inline-flex items-center gap-2 py-2 text-sm font-bold text-primary">{t.home.howMore} <ArrowRight className="size-4" aria-hidden /></a>
         </div>
       </section>
 

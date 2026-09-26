@@ -49,7 +49,7 @@ export default async function AppPage() {
               <span className="text-lg">{p.download}</span>
             </a>
             <p className="mt-3 text-sm text-slate-600">{p.downloadNote}</p>
-            <a href={`${APP_PAGE}/yuklash?v=32`} className="mt-2 inline-block text-sm font-bold text-primary hover:underline">{p.old}</a>
+            <a href={`${APP_PAGE}/yuklash?v=32`} className="inline-block py-2 text-sm font-bold text-primary hover:underline">{p.old}</a>
           </>
         ) : stores.mode === 'play' && stores.android ? (
           <a href={stores.android} target="_blank" rel="noopener" className={button}>

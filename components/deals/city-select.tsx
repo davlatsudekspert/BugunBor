@@ -17,7 +17,7 @@ export function CitySelect({ value, locale, label, className, name = 'city', aut
       name={name}
       defaultValue={value}
       aria-label={label}
-      className={cn('bg-transparent outline-none', className)}
+      className={cn('h-full min-w-0 flex-1 cursor-pointer bg-transparent outline-none', className)}
       onChange={(event) => {
         document.cookie = `bb_city=${event.target.value}; Path=/; Max-Age=31536000; SameSite=Lax`;
         if (autoSubmit) event.target.form?.requestSubmit();

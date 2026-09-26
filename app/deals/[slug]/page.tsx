@@ -116,7 +116,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
         </div>
       ) : null}
       <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6">
-        <a href="/discover" className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-primary"><ArrowLeft className="size-4" aria-hidden /> {t.deal.backToDeals}</a>
+        <a href="/discover" className="-my-2 inline-flex items-center gap-2 py-2 text-sm font-bold text-slate-600 hover:text-primary"><ArrowLeft className="size-4" aria-hidden /> {t.deal.backToDeals}</a>
       </div>
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[1.15fr_.85fr]">
         <section className="min-w-0">
@@ -156,7 +156,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
                   <p className="mt-2 text-sm leading-6 text-slate-500">{branch.address}, {cityName(branch.city, locale)}</p>
                   {hours ? <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500"><CalendarClock className="size-4" aria-hidden /> {hours}</p> : null}
                   <OpenBadge hoursJson={branch.hoursJson} t={t} now={now} className="mt-1.5" />
-                  <a href={directionsUrl(branch)} target="_blank" rel="noreferrer" className="mt-3 flex items-center gap-1.5 text-sm font-bold text-primary"><Navigation className="size-4" aria-hidden /> {t.common.directions}</a>
+                  <a href={directionsUrl(branch)} target="_blank" rel="noreferrer" className="-mb-2 mt-1 flex w-fit items-center gap-1.5 py-2 text-sm font-bold text-primary"><Navigation className="size-4" aria-hidden /> {t.common.directions}</a>
                 </div>
               );
             })}
@@ -186,7 +186,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
             <ShareButton url={`/deals/${deal.slug}`} text={fmt(t.deal.shareText, { title: deal.title, percent: deal.discountPercent })} labels={{ share: t.common.share, copied: t.common.copied }} />
             <FavoriteButton dealId={deal.id} initial={favorites.has(deal.id)} loggedIn={Boolean(user)} labels={{ save: fmt(t.deal.saveAria, { title: deal.title }), unsave: fmt(t.deal.unsaveAria, { title: deal.title }) }} withText={{ save: t.deal.save, saved: t.deal.saved }} />
           </div>
-          <a href={`/contact?subject=${encodeURIComponent(fmt(t.deal.reportSubject, { title: deal.title }))}`} className="mt-7 inline-flex items-center gap-2 text-sm text-slate-500 underline-offset-4 hover:underline">
+          <a href={`/contact?subject=${encodeURIComponent(fmt(t.deal.reportSubject, { title: deal.title }))}`} className="mt-5 inline-flex items-center gap-2 py-2 text-sm text-slate-500 underline-offset-4 hover:underline">
             <TriangleAlert className="size-4" aria-hidden /> {t.deal.report}
           </a>
         </section>

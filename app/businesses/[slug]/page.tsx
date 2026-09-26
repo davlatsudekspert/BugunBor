@@ -172,9 +172,9 @@ export default async function BusinessPage({ params }: { params: Promise<{ slug:
                 <p className="flex items-center gap-2 font-bold text-navy"><MapPin className="size-4 text-primary" aria-hidden /> {branch.name}</p>
                 <p className="mt-2 text-sm leading-6 text-slate-500">{branch.address}, {cityName(branch.city, locale)}</p>
                 {hours ? <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500"><CalendarClock className="size-4" aria-hidden /> {hours}</p> : null}
-                <div className="mt-3 flex flex-wrap gap-3">
-                  <a href={directionsUrl(branch)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-bold text-primary"><Navigation className="size-4" aria-hidden /> {t.common.directions}</a>
-                  {branch.phone ? <a href={`tel:${branch.phone}`} className="inline-flex items-center gap-1.5 text-sm font-bold text-navy"><Phone className="size-4" aria-hidden /> {formatPhone(branch.phone)}</a> : null}
+                <div className="-mb-2 mt-1 flex flex-wrap gap-x-4">
+                  <a href={directionsUrl(branch)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 py-2 text-sm font-bold text-primary"><Navigation className="size-4" aria-hidden /> {t.common.directions}</a>
+                  {branch.phone ? <a href={`tel:${branch.phone}`} className="inline-flex items-center gap-1.5 py-2 text-sm font-bold text-navy"><Phone className="size-4" aria-hidden /> {formatPhone(branch.phone)}</a> : null}
                 </div>
               </div>
             );

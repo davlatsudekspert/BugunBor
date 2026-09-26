@@ -78,8 +78,8 @@ export function AvatarEditor({ avatar, initials, labels, children }: { avatar: s
       <div className="min-w-0">
         {children}
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-bold">
-          <button type="button" disabled={busy} onClick={() => input.current?.click()} className="text-primary hover:underline disabled:opacity-50">{src ? labels.change : labels.add}</button>
-          {src ? <button type="button" disabled={busy} onClick={() => void remove()} className="text-slate-500 hover:underline disabled:opacity-50">{labels.remove}</button> : null}
+          <button type="button" disabled={busy} onClick={() => input.current?.click()} className="-my-2 py-2 text-primary hover:underline disabled:opacity-50">{src ? labels.change : labels.add}</button>
+          {src ? <button type="button" disabled={busy} onClick={() => void remove()} className="-my-2 py-2 text-slate-500 hover:underline disabled:opacity-50">{labels.remove}</button> : null}
           <span className="text-xs font-semibold text-slate-400">{labels.hint}</span>
         </div>
         {error ? <p role="alert" className="mt-1 text-sm font-semibold text-red-600">{error}</p> : null}

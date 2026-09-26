@@ -39,7 +39,7 @@ export default async function AccountPage() {
         initials={initials(user.displayName) || 'B'}
         labels={{ ...t.account.photo, tooBig: t.biz.photo.tooBig, networkError: t.common.networkError }}
       >
-        <h1 className="truncate text-3xl font-black tracking-[-.04em] text-navy">{fmt(t.account.hello, { name: user.displayName })}</h1>
+        <h1 className="break-words text-3xl font-black tracking-[-.04em] text-navy">{fmt(t.account.hello, { name: user.displayName })}</h1>
         {user.phone ? <p className="mt-1 text-sm text-slate-500">{t.account.phone}: {formatPhone(user.phone)}</p> : null}
       </AvatarEditor>
 
