@@ -4,6 +4,7 @@ import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
 import { appStores } from '@/modules/app-stores';
 import { EMPTY_COMPANY, companyIdentifier, getCompanyInfo } from '@/modules/company';
+import { GUIDES_PAGE } from '@/modules/guides';
 import { AppBadges } from './app-badges';
 import { LanguageSwitch } from './language-switch';
 import { Logo } from './logo';
@@ -20,7 +21,7 @@ export async function SiteFooter() {
   ]);
   const columns = [
     { title: t.footer.product, links: [{ href: '/discover', label: t.nav.deals }, { href: '/categories', label: t.nav.categories }, { href: '/business', label: t.nav.forBusiness }] },
-    { title: t.footer.help, links: [{ href: '/how-it-works', label: t.footer.howItWorks }, { href: '/faq', label: t.footer.faq }, { href: '/contact', label: t.footer.contact }] },
+    { title: t.footer.help, links: [{ href: '/how-it-works', label: t.footer.howItWorks }, { href: GUIDES_PAGE, label: t.footer.guides }, { href: '/faq', label: t.footer.faq }, { href: '/contact', label: t.footer.contact }] },
     {
       title: t.footer.legal,
       links: [

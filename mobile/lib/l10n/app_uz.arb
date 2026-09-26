@@ -731,5 +731,6 @@
   "dealsNeedUpdate": "Aksiyalarni ilovada ko‘rish va boshqarish server yangilangach ishlaydi. Hozircha saytdagi biznes kabinetidan foydalaning.",
   "newVersionTitle": "Yangi versiya bor",
   "newVersionText": "Ilovaning yangi versiyasi chiqdi — yangilab oling. Hisobingiz va ma’lumotlaringiz saqlanadi.",
-  "newVersionAction": "Yangilash"
+  "newVersionAction": "Yangilash",
+  "profileGuides": "Video qo‘llanma"
 }

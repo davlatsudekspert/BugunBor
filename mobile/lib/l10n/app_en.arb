@@ -428,5 +428,6 @@
   "dealsNeedUpdate": "Viewing and running deals in the app works once the server is updated. For now, use the business workspace on the website.",
   "newVersionTitle": "A new version is out",
   "newVersionText": "A new version of the app is out — update it. Your account and data stay.",
-  "newVersionAction": "Update"
+  "newVersionAction": "Update",
+  "profileGuides": "Video guides"
 }

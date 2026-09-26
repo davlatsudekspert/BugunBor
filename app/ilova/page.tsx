@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
-import { AlertTriangle, Clock3, Download, Play, RefreshCw, Smartphone } from 'lucide-react';
+import { AlertTriangle, Clock3, Download, Play, PlayCircle, RefreshCw, Smartphone } from 'lucide-react';
 
 import { getDb } from '@/db/client';
 import { getConfig } from '@/lib/env';
 import { getI18n } from '@/lib/i18n/server';
 import { APP_PAGE, appStores, type AppStores } from '@/modules/app-stores';
+import { APK_GUIDE, GUIDES_PAGE } from '@/modules/guides';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -60,6 +61,9 @@ export default async function AppPage() {
             <Smartphone className="mt-1 size-5 shrink-0 text-primary" aria-hidden /> {p.soon}
           </p>
         )}
+        <a href={stores.mode === 'apk' ? `${GUIDES_PAGE}#${APK_GUIDE}` : GUIDES_PAGE} className="mt-5 flex w-fit items-center gap-2 text-sm font-bold text-primary hover:underline">
+          <PlayCircle className="size-5" aria-hidden /> {p.guides}
+        </a>
         <p className="mt-6 flex items-start gap-3 border-t border-slate-100 pt-5 text-sm leading-6 text-slate-600">
           <Clock3 className="mt-0.5 size-5 shrink-0 text-slate-400" aria-hidden />
           <span><strong className="text-navy">{p.iphoneTitle}.</strong> {p.iphoneText}</span>

@@ -519,6 +519,7 @@ class _Links extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right_rounded),
             onTap: () => context.push('/business/new'),
           ),
+        link(Icons.ondemand_video_rounded, l.profileGuides, '/qollanma'),
         link(Icons.privacy_tip_outlined, l.privacyPolicy, '/privacy'),
         link(Icons.description_outlined, l.terms, '/terms'),
         link(Icons.support_agent_rounded, l.profileContact, '/contact'),

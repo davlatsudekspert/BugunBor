@@ -19,6 +19,7 @@
 | `/oferta` | Public offer for business plans: prices, payment, refunds (`#qaytarish`), company details |
 | `/ilova` | The phone app: APK download with install steps, Google Play, or «Tez kunda» (Admin → Sozlamalar → «Mobil ilova») |
 | `/ilova/yuklash` | Download button: redirects to the newest GitHub release APK (`?v=32` for 32-bit phones) while the APK is served |
+| `/qollanma` | Video guides: «Nima uchun BugunBor?» and the 1–4 series (the APK guide only while the site serves the APK); files in `public/qollanma` |
 | `/offline` | Shown by the service worker without a connection |
 | `/r/[code]` | QR target: opens the staff check page with the code filled in |
 | `/lang/[locale]` | Switches language (`uz`, `ru`) and returns |

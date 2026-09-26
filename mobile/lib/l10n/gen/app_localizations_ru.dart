@@ -1385,4 +1385,7 @@ class LRu extends L {
 
   @override
   String get newVersionAction => 'Обновить';
+
+  @override
+  String get profileGuides => 'Видеоинструкции';
 }

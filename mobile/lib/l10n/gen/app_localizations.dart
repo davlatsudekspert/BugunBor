@@ -2666,6 +2666,12 @@ abstract class L {
   /// In uz, this message translates to:
   /// **'Yangilash'**
   String get newVersionAction;
+
+  /// No description provided for @profileGuides.
+  ///
+  /// In uz, this message translates to:
+  /// **'Video qo‘llanma'**
+  String get profileGuides;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

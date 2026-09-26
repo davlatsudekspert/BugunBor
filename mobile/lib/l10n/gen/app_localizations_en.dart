@@ -1384,4 +1384,7 @@ class LEn extends L {
 
   @override
   String get newVersionAction => 'Update';
+
+  @override
+  String get profileGuides => 'Video guides';
 }

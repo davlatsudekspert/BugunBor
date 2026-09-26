@@ -1386,4 +1386,7 @@ class LUz extends L {
 
   @override
   String get newVersionAction => 'Yangilash';
+
+  @override
+  String get profileGuides => 'Video qo‘llanma';
 }
