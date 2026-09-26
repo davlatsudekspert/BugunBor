@@ -71,8 +71,15 @@ describe('video guides', () => {
     expect((await ask('/qollanma/video/boshqa.mp4'))!.status).toBe(404);
     expect((await ask(guideVideo(PROMO.slug), { method: 'POST' }))!.status).toBe(404);
     expect(await ask('/qollanma')).toBeNull();
-    // Without the static files binding the whole file is still reachable.
-    const plain = (await serveGuideVideo(new Request(`https://bugunbor.uz${guideVideo(PROMO.slug)}`), undefined))!;
+    // Without the binding the file is read from the site itself; if that fails, the player gets the whole file.
+    const fromSite = (async (input: string | URL | Request) => {
+      requested.push(new URL(input instanceof Request ? input.url : input).pathname);
+      return new Response(bytes, { headers: { 'content-type': 'video/mp4' } });
+    }) as typeof fetch;
+    const viaSite = (await serveGuideVideo(new Request(`https://bugunbor.uz${guideVideo(PROMO.slug)}`, { headers: { range: 'bytes=0-1' } }), undefined, fromSite))!;
+    expect([viaSite.status, viaSite.headers.get('content-length')]).toEqual([206, '2']);
+    const down = (async () => new Response('Not found', { status: 404, headers: { 'content-type': 'text/plain' } })) as typeof fetch;
+    const plain = (await serveGuideVideo(new Request(`https://bugunbor.uz${guideVideo(PROMO.slug)}`), undefined, down))!;
     expect([plain.status, plain.headers.get('location')]).toEqual([302, 'https://bugunbor.uz/qollanma/nima-uchun-bugunbor.mp4']);
   });
 });

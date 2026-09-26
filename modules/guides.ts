@@ -36,14 +36,17 @@ const SLUGS = new Set<string>([PROMO.slug, ...GUIDES.map((guide) => guide.slug)]
 
 /**
  * A guide video for a player, in parts when asked (the Worker's route for
- * guideVideo). Without the static files binding it points to the whole file.
+ * guideVideo). The whole file comes from the static files binding or, without
+ * it, from the site itself (static files are answered before the Worker, so
+ * this does not come back here). If that fails, the player gets the whole file.
  */
-export async function serveGuideVideo(request: Request, assets: Fetcher | undefined): Promise<Response | null> {
+export async function serveGuideVideo(request: Request, assets: Fetcher | undefined, fetcher: typeof fetch = fetch): Promise<Response | null> {
   const url = new URL(request.url);
   const slug = VIDEO_PATH.exec(url.pathname)?.[1];
   if (!slug) return null;
   if (!SLUGS.has(slug) || !['GET', 'HEAD'].includes(request.method)) return new Response('Not found', { status: 404 });
   const file = new URL(guideFile(slug), url);
-  if (!assets) return Response.redirect(file.toString(), 302);
-  return rangeResponse(request, await assets.fetch(new Request(file)), 'public, max-age=86400, stale-while-revalidate=604800');
+  const whole = await (assets ? assets.fetch(new Request(file)) : fetcher(file)).catch(() => null);
+  if (!whole?.ok || !(whole.headers.get('content-type') ?? '').startsWith('video/')) return Response.redirect(file.toString(), 302);
+  return rangeResponse(request, whole, 'public, max-age=86400, stale-while-revalidate=604800');
 }
