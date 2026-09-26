@@ -1,0 +1,181 @@
+name: App
+# The Android app (mobile/). Every change: format, analyze, tests (incl. the
+# server contracts), E2E on an emulator against the live site, and a release
+# build checked for package id, permissions and signature. A Play upload only
+# happens when the owner starts this workflow by hand with "play_draft", and
+# only as an Internal-testing DRAFT: publishing stays a manual click in Play.
+on:
+  pull_request:
+    paths: ['mobile/**', 'contracts/**', '.github/workflows/app.yml']
+  push:
+    branches: [main]
+    paths: ['mobile/**', 'contracts/**', '.github/workflows/app.yml']
+  workflow_dispatch:
+    inputs:
+      play_draft:
+        description: Upload the signed bundle to Play Internal testing as a draft
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: 3.47.5
+  APP_VERSION: 1.0.0
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Generated texts are up to date
+        run: flutter gen-l10n && git diff --exit-code -- lib/l10n/gen
+      - run: dart format --output=none --set-exit-if-changed lib test integration_test
+      - run: flutter analyze
+      - run: flutter test
+      - name: Play "What's new" texts are 1–500 characters
+        run: |
+          for file in store/whatsnew/*.txt; do
+            length=$(python3 -c "import sys; print(len(open(sys.argv[1], encoding='utf-8').read().strip()))" "$file")
+            echo "$file: $length"
+            if [ "$length" -eq 0 ] || [ "$length" -gt 500 ]; then exit 1; fi
+          done
+
+  e2e:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+        working-directory: mobile
+      - name: E2E on an Android emulator (live site, read-only)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
+          working-directory: mobile
+          script: flutter test integration_test --dart-define=E2E=true --dart-define=APP_BUILD=${{ github.run_number }}
+
+  build:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: mobile
+    env:
+      UPLOAD_KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+      BUGUNBOR_UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
+      BUGUNBOR_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+      BUGUNBOR_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+      GOOGLE_SERVICES_JSON: ${{ secrets.ANDROID_GOOGLE_SERVICES_JSON }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Upload key (from secrets only; never stored in the repository)
+        if: env.UPLOAD_KEYSTORE_BASE64 != ''
+        run: |
+          echo "$UPLOAD_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload.jks"
+          echo "BUGUNBOR_UPLOAD_KEYSTORE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+          echo "EXPECT_UPLOAD_KEY=true" >> "$GITHUB_ENV"
+      - name: Firebase client settings for push (optional)
+        if: env.GOOGLE_SERVICES_JSON != ''
+        run: |
+          echo "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          echo "PUSH_ENABLED=true" >> "$GITHUB_ENV"
+      - name: Build the bundle and APK (versionCode = run number)
+        run: |
+          flags="--release --build-number=${{ github.run_number }} --build-name=$APP_VERSION \
+            --dart-define=APP_BUILD=${{ github.run_number }} --dart-define=APP_VERSION=$APP_VERSION \
+            --dart-define=PUSH_ENABLED=${PUSH_ENABLED:-false}"
+          flutter build appbundle $flags
+          flutter build apk $flags
+      - name: Check package id, permissions and signature
+        run: ./tool/check_release.sh build/app/outputs/flutter-apk/app-release.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bugunbor-${{ github.run_number }}
+          path: |
+            mobile/build/app/outputs/bundle/release/app-release.aab
+            mobile/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 14
+
+  play-draft:
+    # Only when the owner asks for it, after E2E and the checked build.
+    if: github.event_name == 'workflow_dispatch' && inputs.play_draft
+    needs: [e2e, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+      UPLOAD_KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+      # Play listing languages to fill (Uzbek is added once the listing has it).
+      WHATSNEW_LOCALES: ${{ vars.PLAY_WHATSNEW_LOCALES || 'ru-RU en-US' }}
+    steps:
+      - name: Secrets are set
+        run: |
+          [ -n "$PLAY_SERVICE_ACCOUNT_JSON" ] || { echo "PLAY_SERVICE_ACCOUNT_JSON secret is missing"; exit 1; }
+          [ -n "$UPLOAD_KEYSTORE_BASE64" ] || { echo "The upload key secrets are missing; Play only accepts a bundle signed with it"; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: bugunbor-${{ github.run_number }}
+          path: out
+      - name: Play "What's new" per listing language
+        run: |
+          mkdir -p whatsnew
+          for locale in $WHATSNEW_LOCALES; do
+            cp "mobile/store/whatsnew/${locale%%-*}.txt" "whatsnew/whatsnew-$locale"
+          done
+          ls whatsnew
+      - uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: uz.bugunbor.app
+          releaseFiles: out/bundle/release/app-release.aab
+          track: internal
+          status: draft
+          whatsNewDirectory: whatsnew

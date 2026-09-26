@@ -1,0 +1,340 @@
+{
+  "@@locale": "uz",
+  "appTitle": "BugunBor",
+  "navHome": "Asosiy",
+  "navSearch": "Qidiruv",
+  "navSaved": "Saqlangan",
+  "navCodes": "Kodlarim",
+  "navProfile": "Profil",
+  "retry": "Qayta urinish",
+  "errorGeneric": "Nimadir xato ketdi. Qayta urinib ko‘ring.",
+  "errorNetwork": "Internet bilan aloqa yo‘q. Tarmoqni tekshirib, qayta urinib ko‘ring.",
+  "errorServer": "Serverda xatolik. Birozdan keyin qayta urinib ko‘ring.",
+  "errorSessionExpired": "Sessiya tugadi — qaytadan kiring.",
+  "errorRateLimited": "Juda ko‘p urinish. Birozdan keyin qayta urinib ko‘ring.",
+  "errorNotFound": "Topilmadi yoki endi mavjud emas.",
+  "cancel": "Bekor qilish",
+  "save": "Saqlash",
+  "close": "Yopish",
+  "next": "Keyingi",
+  "skip": "O‘tkazib yuborish",
+  "ok": "Tushunarli",
+  "yes": "Ha",
+  "sum": "{amount} so‘m",
+  "@sum": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "percentOff": "−{percent}%",
+  "@percentOff": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "distanceKm": "{distance} km",
+  "@distanceKm": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      }
+    }
+  },
+  "distanceM": "{distance} m",
+  "@distanceM": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      }
+    }
+  },
+  "endsIn": "Tugashiga {time}",
+  "@endsIn": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "daysShort": "{days} kun",
+  "@daysShort": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "left": "{count} ta qoldi",
+  "@left": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "demoBadge": "Namuna",
+  "demoNotice": "Bu namuna aksiya: u ilova qanday ishlashini ko‘rsatadi, bunday biznes aslida yo‘q. Haqiqiy aksiyalarda shu yerda «Band qilish» tugmasi bo‘ladi.",
+  "demoCarouselTitle": "Biznesingiz ham shunday ko‘rinadi",
+  "demoCarouselText": "Biznesingiz bormi? Aksiyangizni bepul joylang — mijozlar uni shu yerda ko‘radi.",
+  "addBusiness": "Biznes qo‘shish",
+  "onbWelcomeTitle": "BugunBor’ga xush kelibsiz",
+  "onbWelcomeText": "Shahringizdagi kafe, do‘kon, salon va xizmatlarning chegirmalari bir joyda. Aksiyani tanlang, bepul kod oling va kassada ko‘rsatib, arzonroq to‘lang.",
+  "onbStep1": "Aksiyani toping",
+  "onbStep2": "Bepul kod oling",
+  "onbStep3": "Kassada ko‘rsating",
+  "onbLanguage": "Tilni tanlang",
+  "onbInterestsTitle": "Sizga nima yoqadi?",
+  "onbInterestsText": "Tanlaganlaringiz «Asosiy» bo‘limida birinchi chiqadi. Keyin Profilda o‘zgartirishingiz mumkin.",
+  "onbLocationTitle": "Yaqin aksiyalarni ko‘rsataylikmi?",
+  "onbLocationText": "Joylashuvingiz faqat ilova ochiq turganda, aksiyalarni masofa bo‘yicha saralash uchun ishlatiladi. Fonda olinmaydi.",
+  "onbLocationAllow": "Joylashuvga ruxsat berish",
+  "onbLocationCity": "Shaharni o‘zim tanlayman",
+  "onbNotifyTitle": "Yangi aksiyalardan xabardor bo‘ling",
+  "onbNotifyText": "Obuna bo‘lgan bizneslarning yangi aksiyalari, kod muddati tugashi va yaqin atrofdagi qiziqishingizga mos aksiyalar haqida xabar beramiz. Kuniga ko‘pi bilan 3 ta, kechasi — hech qachon.",
+  "onbNotifyAllow": "Xabarnomalarni yoqish",
+  "onbLater": "Keyinroq",
+  "onbStart": "Boshlash",
+  "homeTitle": "Bugun nima bor?",
+  "homeSearchHint": "Osh, kofe, soch turmagi…",
+  "homeForYou": "Siz uchun",
+  "homeForYouEmpty": "Qiziqishlaringizni tanlang — mos aksiyalar shu yerda chiqadi.",
+  "homeChooseInterests": "Qiziqishlarni tanlash",
+  "homeNearby": "Yaqinimda",
+  "homeInCity": "{city} bo‘yicha",
+  "@homeInCity": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "homeEnding": "Tez tugaydi",
+  "homeAll": "Barchasi",
+  "homeEmptyTitle": "Hozircha aksiya yo‘q",
+  "homeEmptyText": "Tez orada yangi takliflar paydo bo‘ladi. Boshqa shaharni tanlab ko‘ring.",
+  "homeUseLocation": "Joylashuvim bo‘yicha",
+  "homeLocationDenied": "Joylashuvga ruxsat berilmadi — shahar bo‘yicha ko‘rsatyapmiz.",
+  "chooseCity": "Shaharni tanlang",
+  "searchHint": "Aksiya yoki biznes qidiring",
+  "sortEnding": "Tez tugaydi",
+  "sortDiscount": "Katta chegirma",
+  "sortNew": "Yangi",
+  "sortNear": "Yaqin",
+  "allCategories": "Hammasi",
+  "searchEmpty": "Hech narsa topilmadi. Boshqa so‘z bilan qidirib ko‘ring.",
+  "dealBook": "Band qilish",
+  "dealLoginToBook": "Band qilish uchun kiring",
+  "dealUnavailable": "Hozir band qilib bo‘lmaydi",
+  "dealHaveCode": "Sizda bu aksiya uchun faol kod bor",
+  "dealViewCode": "Kodni ko‘rish",
+  "dealLimitReached": "Bu aksiyadan foydalanish chegarasiga yetdingiz",
+  "dealChooseBranch": "Filialni tanlang",
+  "dealBranches": "Filiallar",
+  "dealTerms": "Shartlar",
+  "dealPerCustomer": "Bir mijozga: {count} ta",
+  "@dealPerCustomer": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "dealCodeValid": "Kod {minutes} daqiqa amal qiladi. To‘lov joyida.",
+  "@dealCodeValid": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "dealDirections": "Yo‘l ko‘rsatish",
+  "share": "Ulashish",
+  "dealSave": "Saqlash",
+  "dealSaved": "Saqlangan",
+  "report": "Shikoyat qilish",
+  "dealYouSave": "{amount} so‘m tejaysiz",
+  "@dealYouSave": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "dealBooked": "Aksiya band qilindi!",
+  "follow": "Obuna bo‘lish",
+  "followingLabel": "Obuna bo‘lingan",
+  "businessDeals": "Aksiyalar",
+  "businessUpcoming": "Tez orada",
+  "businessReviews": "Sharhlar",
+  "businessNoDeals": "Hozir faol aksiya yo‘q",
+  "block": "Bloklash",
+  "unblock": "Blokdan chiqarish",
+  "blockAsk": "Bu biznesning aksiyalari sizga ko‘rsatilmaydi va obuna bekor bo‘ladi. Davom etasizmi?",
+  "blocked": "Biznes bloklandi",
+  "call": "Qo‘ng‘iroq qilish",
+  "loginTitle": "Kirish",
+  "loginText": "BugunBor’ga Telegram orqali kiring — parol va SMS kerak emas.",
+  "loginConsent": "Maxfiylik siyosati va foydalanish shartlariga roziman",
+  "loginButton": "Telegram orqali kirish",
+  "loginConsentHint": "Kirish uchun avval rozilik belgisini qo‘ying.",
+  "loginMatchCode": "Moslik kodi",
+  "loginMatchHint": "Telegram’dagi botda shu kodni ko‘rasiz — bir xil bo‘lsa, tasdiqlang.",
+  "loginOpenTelegram": "Telegram’ni ochish",
+  "loginWaiting": "Telegram’dagi tasdiqni kutyapmiz…",
+  "loginExpired": "So‘rov muddati tugadi.",
+  "loginDenied": "So‘rov rad etildi.",
+  "loginRestart": "Qaytadan boshlash",
+  "loginDone": "Kirdingiz!",
+  "loginReviewer": "Tekshiruvchi kodi",
+  "privacyPolicy": "Maxfiylik siyosati",
+  "terms": "Foydalanish shartlari",
+  "codesActive": "Faol",
+  "codesHistory": "Tarix",
+  "codesEmpty": "Hali faol kod yo‘q",
+  "codesEmptyText": "Aksiyani band qiling — kod shu yerda saqlanadi.",
+  "historyEmpty": "Tarix bo‘sh",
+  "codeShow": "Kodni kassirga ko‘rsating",
+  "codeValidUntil": "{time} gacha amal qiladi",
+  "@codeValidUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "codeCancel": "Kodni bekor qilish",
+  "codeCancelAsk": "Kodni bekor qilasizmi? Joy boshqalarga qaytadi.",
+  "statusClaimed": "Faol",
+  "statusCompleted": "Ishlatilgan",
+  "statusExpired": "Muddati o‘tgan",
+  "statusCanceled": "Bekor qilingan",
+  "rateVisit": "Baholash",
+  "rateTitle": "Tashrif qanday o‘tdi?",
+  "rateComment": "Fikringiz (ixtiyoriy)",
+  "rateThanks": "Rahmat! Bahoingiz qabul qilindi.",
+  "yourRating": "Bahoingiz: {rating}",
+  "@yourRating": {
+    "placeholders": {
+      "rating": {
+        "type": "String"
+      }
+    }
+  },
+  "loginRequiredTitle": "Kirish kerak",
+  "loginRequiredText": "Bu bo‘lim uchun Telegram orqali kiring.",
+  "loginAction": "Kirish",
+  "savedDeals": "Aksiyalar",
+  "savedBusinesses": "Bizneslar",
+  "savedEmpty": "Saqlangan aksiya yo‘q",
+  "savedEmptyText": "Aksiyadagi ♡ ni bosing — u shu yerda saqlanadi.",
+  "followsEmpty": "Obunalar yo‘q",
+  "followsEmptyText": "Biznes sahifasida «Obuna bo‘lish»ni bosing — yangi aksiyalari haqida xabar beramiz.",
+  "liveDeals": "{count} ta faol aksiya",
+  "@liveDeals": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "endedDeals": "Tugaganlar",
+  "profileGuestText": "Kodlaringiz, saqlanganlar va xabarnomalar uchun kiring.",
+  "profileSaved": "Tejalgan summa",
+  "profileRedeemed": "Ishlatilgan kodlar",
+  "profileName": "Ismingiz",
+  "profileLanguage": "Til",
+  "profileCity": "Shahar",
+  "profileTheme": "Mavzu",
+  "themeSystem": "Telefon bo‘yicha",
+  "themeLight": "Yorug‘",
+  "themeDark": "Qorong‘i",
+  "profileInterests": "Qiziqishlar",
+  "profileNotifications": "Xabarnomalar",
+  "notifyDeals": "Obuna bo‘lgan bizneslarning yangi aksiyalari",
+  "notifyReminders": "Kod muddati tugashidan oldin eslatma",
+  "notifyNearby": "Yaqin atrofda qiziqishimga mos yangi aksiya",
+  "notifyNearbyHint": "Buning uchun ilovani ochgan paytingizdagi taxminiy hudud (≈1 km) saqlanadi. O‘chirsangiz, darhol o‘chiriladi.",
+  "notifyPermissionOff": "Telefon sozlamalarida xabarnomalar o‘chiq.",
+  "profileCashier": "Kodni tekshirish (kassa)",
+  "profileBusiness": "Biznes kabineti",
+  "profileContact": "Bog‘lanish",
+  "profileLogout": "Chiqish",
+  "profileDelete": "Hisobni o‘chirish",
+  "deleteAsk": "Hisobingizni butunlay o‘chirasizmi? Buni qaytarib bo‘lmaydi.",
+  "deleteSoleOwner": "Siz biznesning yagona egasisiz. Biznes saytdan olinadi, aksiyalari to‘xtaydi va faol kodlar bekor qilinadi. Biznesni yopib, hisobni o‘chirasizmi?",
+  "deleteCloseAndDelete": "Biznesni yopib, o‘chirish",
+  "deleted": "Hisob o‘chirildi",
+  "appVersion": "Versiya {version}",
+  "@appVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "reportTitle": "Shikoyat",
+  "reportReason": "Sababni tanlang",
+  "reportComment": "Izoh (ixtiyoriy)",
+  "reportSend": "Yuborish",
+  "reportThanks": "Rahmat! Moderator ko‘rib chiqadi.",
+  "reasonWrongInfo": "Noto‘g‘ri ma’lumot",
+  "reasonScam": "Firibgarlik",
+  "reasonOffensive": "Haqorat yoki nomaqbul kontent",
+  "reasonProhibited": "Taqiqlangan mahsulot yoki xizmat",
+  "reasonSpam": "Spam",
+  "reasonOther": "Boshqa",
+  "cashierTitle": "Kodni tekshirish",
+  "cashierChooseBusiness": "Biznesni tanlang",
+  "cashierScanHint": "Mijozning QR-kodini ramkaga to‘g‘rilang",
+  "cashierManual": "Kodni qo‘lda kiriting",
+  "cashierCodeHint": "Masalan, K7P 2QX",
+  "cashierCheck": "Tekshirish",
+  "cashierValid": "Kod haqiqiy",
+  "cashierCustomer": "Mijoz",
+  "cashierConfirm": "Tasdiqlash — kod ishlatildi",
+  "cashierDone": "Kod ishlatildi",
+  "cashierNext": "Keyingi mijoz",
+  "cameraDenied": "Kameraga ruxsat berilmadi — kodni qo‘lda kiriting.",
+  "updateTitle": "Ilovani yangilang",
+  "updateText": "Bu versiya endi qo‘llab-quvvatlanmaydi. Play Market’dan yangilang.",
+  "updateAction": "Yangilash",
+  "offline": "Internet yo‘q — oxirgi ma’lumot ko‘rsatilmoqda",
+  "open": "Ochish",
+  "homeForYouNone": "Qiziqishlaringiz bo‘yicha hozircha aksiya yo‘q.",
+  "homeChange": "O‘zgartirish",
+  "dealStartsAt": "{time} dan boshlanadi",
+  "@dealStartsAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "dealSoldOut": "Hammasi band qilindi",
+  "dealEnded": "Aksiya tugagan",
+  "dealNotStarted": "Aksiya hali boshlanmagan",
+  "endsInLabel": "Tugashiga:",
+  "unblocked": "Biznes blokdan chiqarildi",
+  "followers": "{count} obunachi",
+  "@followers": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "blockedNote": "Siz bu biznesni bloklagansiz — uning aksiyalari sizga ko‘rsatilmaydi.",
+  "website": "Sayt",
+  "codeOpenDeal": "Aksiyani ochish",
+  "profileSettings": "Sozlamalar",
+  "notifyTurnOn": "Yoqish",
+  "profileForBusiness": "Biznes uchun",
+  "profileBusinessHint": "Aksiyalar, filiallar va jamoa saytda boshqariladi",
+  "profileAbout": "Ma’lumot",
+  "cashierBadCode": "Kod noto‘g‘ri. 6 ta belgini tekshiring.",
+  "cashierNoBusiness": "Kodlarni faqat tasdiqlangan biznes xodimlari tekshira oladi."
+}
