@@ -40,7 +40,7 @@ export default async function AdminDealsPage({ searchParams }: { searchParams: P
           {deals.map((deal) => (
             <article key={deal.id} className="rounded-2xl border border-slate-200 bg-white p-5">
               <div className="flex gap-4">
-                <DealVisual visual={deal.visual} categorySlug={deal.categorySlug} photo={deal.photo} className="size-20 shrink-0 rounded-xl" emojiClassName="-bottom-3 -right-2 text-5xl" />
+                <DealVisual visual={deal.visual} categorySlug={deal.categorySlug} photo={deal.photo} sizes="80px" className="size-20 shrink-0 rounded-xl" emojiClassName="-bottom-3 -right-2 text-5xl" />
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold text-slate-500">{deal.businessName} · {deal.categoryName}{deal.isDemo ? ` · ${t.common.demo}` : ''}</p>
                   <p className="mt-1 text-lg font-black leading-snug text-navy">{deal.title}</p>

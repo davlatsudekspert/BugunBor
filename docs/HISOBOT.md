@@ -4,7 +4,7 @@
 
 | Tekshiruv | Natija |
 | --- | --- |
-| Avtomatik testlar | **72 / 72** o‘tdi (band qilish, kod, to‘lov davri, rasmlar, obuna, xabarnoma, baho, demo katalog) |
+| Avtomatik testlar | **78 / 78** o‘tdi (band qilish, kod, to‘lov davri, rasmlar, obuna, xabarnoma, baho, demo katalog, demo fotolar) |
 | Sahifalar | 38 ta sahifa × 2 til (o‘zbek, rus) × 2 o‘lcham (telefon, kompyuter): **xato yo‘q**, ekrandan chiqib ketish yo‘q |
 | To‘liq ssenariylar (brauzerda) | 5 ta: mijoz → kod → kassir; obuna → baho; rasm yuklash → moderatsiya; biznes ro‘yxatdan o‘tishi → tarif; admin panel — **hammasi ishladi** |
 | Production build | Yig‘iladi va ishga tushadi. Demo login production’da o‘chiq (tekshirildi) |
@@ -23,7 +23,9 @@
 ### Original fotolar
 - Bizneslar aksiyaga **o‘z mahsulotining haqiqiy fotosini**, profiliga esa logotip va muqova rasmini yuklaydi. Rasm telefonning o‘zida siqiladi, sayt tez ochiladi.
 - Server faqat haqiqiy rasm fayllarini (JPG, PNG, WebP) qabul qiladi. Moderator nomaqbul rasmni olib tashlay oladi.
-- Demo uchun haqiqiy fotolarni olish skripti tayyor (quyida 3-bo‘lim).
+- **Demo katalogda 85 ta haqiqiy foto bor** (Wikimedia Commons, erkin litsenziya). Har bir aksiyaning fotosi o‘z turiga mos: osh, somsa, tandir non, navvot, Siyob bozori, Chust do‘ppisi, Xiva o‘ymakorligi, so‘zana, kurash va boshqalar. Mashhur taomlarda 2–3 xil foto bor, shuning uchun katalogda bir xil rasm takrorlanavermaydi. Mualliflar «Rasm mualliflari» sahifasida ko‘rsatilgan.
+- Harbiy mavzu umuman yo‘q: qurol, harbiy forma va harbiy texnika tushgan fotolar olinmaydi. Rasm skriptlari bunday fotolarni o‘zi chiqarib tashlaydi. Lazertag o‘rniga bilyard qo‘yildi.
+- Telefonga fotoning kichik (720 px) nusxasi boradi, shuning uchun ro‘yxat tez ochiladi.
 
 ### Odamlarga qiziq bo‘ladigan yangi funksiyalar
 - **Obuna:** mijoz yoqqan biznesga obuna bo‘ladi va uning yangi aksiyasi haqida **Telegram’da birinchi bo‘lib** xabar oladi.
@@ -69,9 +71,7 @@
    - `ADMIN_PHONES`: sizning telefon raqamingiz. Shu raqam bilan kirsangiz, avtomatik admin bo‘lasiz.
 
    So‘ng Admin → Sozlamalar → «Webhook o‘rnatish» tugmasini bosasiz.
-3. **Original fotolar** (ikki yo‘ldan biri):
-   - **A.** Environment → Edit → Network access’ga `commons.wikimedia.org` va `upload.wikimedia.org` ni qo‘shing. Keyin bitta buyruq (`npm run photos:fetch`) har bir tur uchun erkin litsenziyali haqiqiy fotoni oladi; mualliflar `/credits` sahifasida ko‘rsatiladi.
-   - **B.** Fotolarni Google Drive’dagi «BugunBor rasmlar» papkasiga tashlang, nomi taom yoki xizmat nomi bo‘lsin (`osh.jpg`, `somsa.jpg`, `manikyur.jpg`…). Men ularni olib saytga qo‘yaman (`npm run photos:import`).
+3. **Original fotolar** tayyor, sizdan hech narsa kerak emas. Yana foto qo‘shmoqchi bo‘lsangiz, ularni Google Drive’dagi «BugunBor rasmlar» papkasiga tashlang. Yo‘riqnoma va yordamchi uchun promt `docs/RASMLAR.md` faylida.
 
 ---
 

@@ -9,7 +9,7 @@ import type { DealVisualKey } from '@/lib/visuals';
 // Everything here is is_demo = 1 and only ever shown in demo mode.
 
 /** Bump when the catalog content changes so existing databases pick it up. */
-export const DEMO_CATALOG_VERSION = '2026-09-25.3';
+export const DEMO_CATALOG_VERSION = '2026-09-26.3';
 
 export const DEMO_CATEGORIES = ['food', 'coffee', 'shop', 'beauty', 'sport', 'fun', 'services', 'delivery'] as const;
 export type DemoCategory = (typeof DEMO_CATEGORIES)[number];
@@ -37,7 +37,7 @@ const food: Template[] = [
   { key: 'lagmon-choy', title: 'Qo‘lda cho‘zilgan lag‘mon + choy', description: 'Katta porsiya lag‘mon, ko‘k choy va non.', price: 45000, discount: 20, visual: 'noodles' },
   { key: 'shashlik-seti', title: 'Shashlik seti: 5 six + non + piyoz', description: 'Mol go‘shtidan besh six shashlik, tandir non va sirkali piyoz.', price: 120000, discount: 20, visual: 'shashlik' },
   { key: 'manti-5', title: 'Bug‘da pishgan manti (5 dona)', description: 'Qo‘y go‘shti va piyozli yirik manti, qatiq bilan.', price: 40000, discount: 25, visual: 'dumplings' },
-  { key: 'somsa-choy', title: '3 ta tandir somsa + ko‘k choy', description: 'Go‘shtli tandir somsa, tandirdan yangi uzilgan.', price: 42000, discount: 30, visual: 'bread' },
+  { key: 'somsa-choy', title: '3 ta tandir somsa + ko‘k choy', description: 'Go‘shtli tandir somsa, tandirdan yangi uzilgan.', price: 42000, discount: 30, visual: 'samsa' },
   { key: 'biznes-lanch', title: 'Biznes-lanch: sho‘rva + ikkinchi taom + choy', description: 'Kunning sho‘rvasi, ikkinchi taom, salat va choy.', price: 55000, discount: 30, visual: 'lunch' },
   { key: 'qozon-kabob', title: 'Qozon kabob (1 porsiya)', description: 'Qozonda qovurilgan go‘sht va kartoshka, ko‘kat bilan.', price: 80000, discount: 20, visual: 'meat' },
   { key: 'tandir-tovuq', title: 'Butun tandir tovuq + non', description: 'Tandirda pishgan butun tovuq, 2–3 kishiga yetadi.', price: 110000, discount: 25, visual: 'chicken' },
@@ -54,7 +54,7 @@ const food: Template[] = [
   { key: 'andijon-oshi', title: 'Andijoncha devzira oshi', description: 'Devzira guruchidan, qazi va bedana tuxumi bilan.', price: 52000, discount: 20, visual: 'plov' },
   { key: 'fargona-oshi', title: 'Farg‘ona oshi + achchiq-chuchuk', description: 'Vodiy uslubidagi osh, yangi salat bilan.', price: 52000, discount: 25, visual: 'plov' },
   { key: 'namangan-kabobi', title: 'Jigar va qiyma kabob seti', description: 'Namangancha jigar kabob, qiyma kabob va tandir non.', price: 90000, discount: 25, visual: 'shashlik' },
-  { key: 'jizzax-somsasi', title: 'Jizzax somsasi (2 dona) + choy', description: 'Mashhur katta Jizzax somsasi, tandirdan yangi uzilgan.', price: 50000, discount: 25, visual: 'bread' },
+  { key: 'jizzax-somsasi', title: 'Jizzax somsasi (2 dona) + choy', description: 'Mashhur katta Jizzax somsasi, tandirdan yangi uzilgan.', price: 50000, discount: 25, visual: 'samsa' },
   { key: 'tandir-gosht', title: 'Tandir go‘sht (500 g) + non', description: 'Archa shoxida dimlangan tandir go‘sht, issiq non bilan.', price: 140000, discount: 20, visual: 'meat' },
   { key: 'tuxum-barak', title: 'Tuxum barak (10 dona) + choy', description: 'Xorazmcha tuxum barak, sariyog‘ bilan.', price: 40000, discount: 25, visual: 'dumplings' },
   { key: 'shivit-oshi', title: 'Shivit oshi', description: 'Ukropli yashil xamirdan Xorazm oshi, qatiq bilan.', price: 42000, discount: 20, visual: 'noodles' },
@@ -81,20 +81,20 @@ const shop: Template[] = [
   { key: 'biznes-kitoblar', title: 'Biznes kitoblar to‘plami (3 kitob)', description: 'O‘zbek tilidagi uchta mashhur biznes kitobi.', price: 255000, discount: 30, visual: 'books' },
   { key: 'bolalar-kitoblari', title: 'Bolalar ertaklari to‘plami (5 kitob)', description: 'Rasmli ertak kitoblari, 3–8 yosh uchun.', price: 175000, discount: 25, visual: 'books' },
   { key: 'erkaklar-koylagi', title: 'Erkaklar klassik ko‘ylagi', description: 'Paxta matodan klassik ko‘ylak, barcha o‘lchamlar.', price: 290000, discount: 40, visual: 'clothes' },
-  { key: 'ipak-romol', title: 'Ipak ro‘mol', description: 'Tabiiy ipakdan milliy naqshli ro‘mol.', price: 180000, discount: 30, visual: 'clothes' },
+  { key: 'ipak-romol', title: 'Ipak ro‘mol', description: 'Tabiiy ipakdan milliy naqshli ro‘mol.', price: 180000, discount: 30, visual: 'fabric' },
   { key: 'atirgul-guldasta', title: 'Guldasta: 15 ta atirgul', description: 'Yangi uzilgan atirgullar, chiroyli o‘ram bilan.', price: 240000, discount: 25, visual: 'flowers' },
   { key: 'telefon-aksessuar', title: 'G‘ilof + himoya oynasi', description: 'Telefoningiz uchun g‘ilof va himoya oynasi, o‘rnatib beramiz.', price: 130000, discount: 40, visual: 'phone' },
-  { key: 'quruq-mevalar', title: 'Quruq mevalar sovg‘a qutisi (1 kg)', description: 'Mayiz, o‘rik, yong‘oq va bodom — sovg‘a qutisida.', price: 190000, discount: 20, visual: 'gift' },
-  { key: 'maktab-ryukzagi', title: 'Maktab ryukzagi', description: 'Ortopedik orqa qismli, yengil maktab ryukzagi.', price: 380000, discount: 35, visual: 'shopping' },
+  { key: 'quruq-mevalar', title: 'Quruq mevalar sovg‘a qutisi (1 kg)', description: 'Mayiz, o‘rik, yong‘oq va bodom — sovg‘a qutisida.', price: 190000, discount: 20, visual: 'nuts' },
+  { key: 'maktab-ryukzagi', title: 'Maktab ryukzagi', description: 'Ortopedik orqa qismli, yengil maktab ryukzagi.', price: 380000, discount: 35, visual: 'backpack' },
   { key: 'oila-savati', title: 'Oila savati: yog‘, un, guruch, shakar', description: 'Kundalik mahsulotlar to‘plami — bir haftaga yetadi.', price: 260000, discount: 15, visual: 'shopping' },
-  { key: 'krossovka', title: 'Sport krossovkasi', description: 'Yengil va qulay krossovka, 36–45 o‘lchamlar.', price: 520000, discount: 40, visual: 'clothes' },
-  { key: 'oshxona-idishlari', title: 'Oshxona idishlari to‘plami', description: 'Qopqoqli kastryulkalar va tova to‘plami.', price: 450000, discount: 30, visual: 'gift' },
-  { key: 'samarqand-qogozi', title: 'Samarqand qog‘ozidan daftar', description: 'Qo‘lda tayyorlangan ipak qog‘oz, charm muqovada.', price: 150000, discount: 20, visual: 'crafts' },
-  { key: 'buxoro-suzanasi', title: 'Buxoro so‘zanasi (kichik)', description: 'Qo‘lda tikilgan so‘zana, 60×60 sm.', price: 650000, discount: 20, visual: 'fabric' },
+  { key: 'krossovka', title: 'Sport krossovkasi', description: 'Yengil va qulay krossovka, 36–45 o‘lchamlar.', price: 520000, discount: 40, visual: 'sneakers' },
+  { key: 'oshxona-idishlari', title: 'Oshxona idishlari to‘plami', description: 'Qopqoqli kastryulkalar va tova to‘plami.', price: 450000, discount: 30, visual: 'kitchen' },
+  { key: 'milliy-qogirchoq', title: 'Milliy libosdagi qo‘g‘irchoq', description: 'Konigil hunarmandlari qo‘lda yasagan, naqshli to‘nli qo‘g‘irchoq.', price: 240000, discount: 20, visual: 'doll' },
+  { key: 'buxoro-suzanasi', title: 'Buxoro so‘zanasi (kichik)', description: 'Qo‘lda tikilgan so‘zana, 60×60 sm.', price: 650000, discount: 20, visual: 'suzani' },
   { key: 'rishton-kosalari', title: 'Rishton kosalari (6 dona)', description: 'Ishqorli sirda qo‘lda chizilgan kosalar to‘plami.', price: 320000, discount: 25, visual: 'crafts' },
-  { key: 'chust-doppisi', title: 'Chust do‘ppisi', description: 'Oq-qora naqshli klassik Chust do‘ppisi.', price: 180000, discount: 20, visual: 'crafts' },
+  { key: 'chust-doppisi', title: 'Chust do‘ppisi', description: 'Oq-qora naqshli klassik Chust do‘ppisi.', price: 180000, discount: 20, visual: 'doppi' },
   { key: 'atlas-mato', title: 'Marg‘ilon atlasi (3 metr)', description: 'Qo‘lda to‘qilgan tabiiy ipak atlas.', price: 420000, discount: 20, visual: 'fabric' },
-  { key: 'xiva-oymakor', title: 'Xiva yog‘och o‘ymakorligi: laux', description: 'Kitob uchun o‘yma yog‘och laux — xivalik ustadan.', price: 250000, discount: 20, visual: 'crafts' },
+  { key: 'xiva-oymakor', title: 'Xiva yog‘och o‘ymakorligi: laux', description: 'Kitob uchun o‘yma yog‘och laux — xivalik ustadan.', price: 250000, discount: 20, visual: 'woodcarving' },
   { key: 'qoraqalpoq-sovgasi', title: 'Qoraqalpoq sovg‘alar to‘plami', description: 'Kashta tikilgan sumka, magnit va milliy bezaklar.', price: 200000, discount: 25, visual: 'gift' },
 ];
 
@@ -104,10 +104,10 @@ const beauty: Template[] = [
   { key: 'erkaklar-soch', title: 'Erkaklar soch turmagi', description: 'Soch turmagi, yuvish va ukladka.', price: 90000, discount: 30, visual: 'barber' },
   { key: 'soch-soqol', title: 'Soch turmagi + soqolni shakllantirish', description: 'Barber xizmati: soch va soqol, issiq sochiq bilan.', price: 140000, discount: 30, visual: 'barber' },
   { key: 'soch-ukladka', title: 'Soch kesish + ukladka', description: 'Ayollar soch turmagi va fen bilan ukladka.', price: 190000, discount: 30, visual: 'hair' },
-  { key: 'yuz-tozalash', title: 'Yuzni kompleks tozalash', description: 'Kosmetolog tomonidan tozalash va niqob.', price: 320000, discount: 35, visual: 'spa' },
+  { key: 'yuz-tozalash', title: 'Yuzni kompleks tozalash', description: 'Kosmetolog tomonidan tozalash va niqob.', price: 320000, discount: 35, visual: 'facial' },
   { key: 'massaj-60', title: 'Klassik massaj (60 daqiqa)', description: 'Butun tana massaji, tajribali mutaxassis.', price: 260000, discount: 30, visual: 'spa' },
-  { key: 'kiprik', title: 'Kipriklarni uzaytirish (klassik)', description: 'Klassik usulda kiprik uzaytirish.', price: 250000, discount: 30, visual: 'beauty' },
-  { key: 'qosh-dizayn', title: 'Qosh dizayni + bo‘yash', description: 'Qosh shaklini to‘g‘rilash va bo‘yash.', price: 90000, discount: 30, visual: 'beauty' },
+  { key: 'kiprik', title: 'Kipriklarni uzaytirish (klassik)', description: 'Klassik usulda kiprik uzaytirish.', price: 250000, discount: 30, visual: 'makeup' },
+  { key: 'qosh-dizayn', title: 'Qosh dizayni + bo‘yash', description: 'Qosh shaklini to‘g‘rilash va bo‘yash.', price: 90000, discount: 30, visual: 'makeup' },
   { key: 'soch-boyash', title: 'Soch bo‘yash (bir tusda)', description: 'Professional bo‘yoq, o‘rta uzunlikdagi soch.', price: 420000, discount: 25, visual: 'hair' },
 ];
 
@@ -121,7 +121,7 @@ const sport: Template[] = [
   { key: 'tennis-kort', title: 'Tennis korti (1 soat)', description: 'Yopiq kort, raketkalar ijarasi mumkin.', price: 260000, discount: 25, visual: 'tennis' },
   { key: 'shaxsiy-murabbiy', title: 'Shaxsiy murabbiy bilan mashg‘ulot', description: 'Bir soatlik individual mashg‘ulot va reja.', price: 220000, discount: 35, visual: 'fitness' },
   { key: 'bolalar-sport', title: 'Bolalar sport seksiyasi (1 oy)', description: 'Haftada uch marta, 6–14 yoshli bolalar uchun.', price: 380000, discount: 25, visual: 'football' },
-  { key: 'kurash-sinov', title: 'Kurash: sinov darsi', description: 'Milliy kurash bo‘yicha birinchi dars.', price: 80000, discount: 50, visual: 'boxing' },
+  { key: 'kurash-sinov', title: 'Kurash: sinov darsi', description: 'Milliy kurash bo‘yicha birinchi dars.', price: 80000, discount: 50, visual: 'kurash' },
 ];
 
 const fun: Template[] = [
@@ -132,7 +132,7 @@ const fun: Template[] = [
   { key: 'karaoke', title: 'Karaoke xona (1 soat)', description: '8 kishigacha, o‘zbek va xorijiy qo‘shiqlar.', price: 260000, discount: 30, visual: 'karaoke' },
   { key: 'playstation', title: 'PlayStation 5 klub (2 soat)', description: 'Katta ekran, ikki joystik, yangi o‘yinlar.', price: 70000, discount: 30, visual: 'game' },
   { key: 'batut', title: 'Batut markazi (1 soat)', description: 'Bolalar va kattalar uchun batut zali.', price: 65000, discount: 30, visual: 'kids' },
-  { key: 'lazertag', title: 'Lazertag: 1 o‘yin (4 kishi)', description: 'Yopiq arenada 30 daqiqalik o‘yin.', price: 240000, discount: 30, visual: 'game' },
+  { key: 'bilyard', title: 'Bilyard: 1 soat', description: 'Professional stol, kiy va sharlar beriladi. 4 kishigacha.', price: 90000, discount: 30, visual: 'billiards' },
   { key: 'teatr', title: 'Teatr chiptasi', description: 'Bugungi spektaklga partere chipta.', price: 90000, discount: 25, visual: 'theater' },
   { key: 'ot-minish', title: 'Ot minish (30 daqiqa)', description: 'Instruktor bilan sayr, boshlovchilar uchun.', price: 120000, discount: 30, visual: 'horse' },
 ];
@@ -140,15 +140,15 @@ const fun: Template[] = [
 const services: Template[] = [
   { key: 'avtoyuvish', title: 'Kompleks avtoyuvish (ichki + tashqi)', description: 'Kuzov, salon, gilamchalar va shisha tozalash.', price: 110000, discount: 30, visual: 'car' },
   { key: 'kimyoviy-tozalash', title: 'Kostyumni kimyoviy tozalash', description: 'Ikki qismli kostyum, 24 soatda tayyor.', price: 130000, discount: 30, visual: 'laundry' },
-  { key: 'noutbuk-profilaktika', title: 'Noutbuk profilaktikasi va tozalash', description: 'Changdan tozalash va termopasta almashtirish.', price: 170000, discount: 30, visual: 'repair' },
-  { key: 'poyabzal-tamiri', title: 'Poyabzal ta’miri va tozalash', description: 'Taglik, tikuv va chuqur tozalash.', price: 80000, discount: 25, visual: 'repair' },
-  { key: 'kiyim-tamiri', title: 'Kiyim tikish va ta’mirlash', description: 'Qisqartirish, zamok almashtirish va tikish.', price: 60000, discount: 25, visual: 'fabric' },
+  { key: 'noutbuk-profilaktika', title: 'Noutbuk profilaktikasi va tozalash', description: 'Changdan tozalash va termopasta almashtirish.', price: 170000, discount: 30, visual: 'laptop' },
+  { key: 'poyabzal-tamiri', title: 'Poyabzal ta’miri va tozalash', description: 'Taglik, tikuv va chuqur tozalash.', price: 80000, discount: 25, visual: 'shoes' },
+  { key: 'kiyim-tamiri', title: 'Kiyim tikish va ta’mirlash', description: 'Qisqartirish, zamok almashtirish va tikish.', price: 60000, discount: 25, visual: 'sewing' },
   { key: 'uy-tozalash', title: 'Uyni tozalash (2 xonali)', description: 'Ikki kishilik brigada, o‘z vositalari bilan.', price: 550000, discount: 25, visual: 'cleaning' },
   { key: 'konditsioner', title: 'Konditsionerni tozalash va gaz tekshiruvi', description: 'Ichki va tashqi blokni tozalash.', price: 230000, discount: 30, visual: 'repair' },
   { key: 'fotosessiya', title: 'Studiyada fotosessiya (30 daqiqa)', description: '20 ta ishlangan surat, fon tanlash mumkin.', price: 450000, discount: 35, visual: 'camera' },
-  { key: 'shina-almashtirish', title: 'Shinalarni almashtirish (4 ta)', description: 'Yechish, o‘rnatish va balansirovka.', price: 140000, discount: 25, visual: 'car' },
+  { key: 'shina-almashtirish', title: 'Shinalarni almashtirish (4 ta)', description: 'Yechish, o‘rnatish va balansirovka.', price: 140000, discount: 25, visual: 'tires' },
   { key: 'ingliz-tili', title: 'Ingliz tili: 1 oylik kurs', description: 'Haftada uch dars, kichik guruhlarda.', price: 650000, discount: 30, visual: 'education' },
-  { key: 'kompyuter-kursi', title: 'Kompyuter savodxonligi kursi (1 oy)', description: 'Word, Excel va internet — noldan, amaliy mashg‘ulotlarda.', price: 450000, discount: 30, visual: 'education' },
+  { key: 'kompyuter-kursi', title: 'Kompyuter savodxonligi kursi (1 oy)', description: 'Word, Excel va internet — noldan, amaliy mashg‘ulotlarda.', price: 450000, discount: 30, visual: 'computer' },
 ];
 
 const delivery: Template[] = [
@@ -157,7 +157,7 @@ const delivery: Template[] = [
   { key: 'lavash-2', title: 'Ikkita lavash + fri', description: 'Tovuqli yoki go‘shtli lavash, fri bilan.', price: 95000, discount: 30, visual: 'wrap' },
   { key: 'oilaviy-set', title: 'Oilaviy set (4 kishi)', description: 'Shashlik, salatlar, non va ichimliklar.', price: 290000, discount: 25, visual: 'delivery' },
   { key: 'sushi-yetkazish', title: 'Sushi set (32 dona) yetkazish', description: 'To‘rt xil roll, soya sousi va imbir bilan.', price: 270000, discount: 30, visual: 'sushi' },
-  { key: 'somsa-10', title: '10 ta somsa yetkazish', description: 'Go‘shtli tandir somsa, issiq holda.', price: 130000, discount: 25, visual: 'bread' },
+  { key: 'somsa-10', title: '10 ta somsa yetkazish', description: 'Go‘shtli tandir somsa, issiq holda.', price: 130000, discount: 25, visual: 'samsa' },
   { key: 'mevalar-savati', title: 'Mevalar savati (5 kg)', description: 'Mavsumiy mevalar — olma, uzum, anor.', price: 160000, discount: 20, visual: 'fruit' },
   { key: 'gul-yetkazish', title: 'Gul yetkazish: 11 ta atirgul', description: 'Guldasta va tabriknoma bilan.', price: 200000, discount: 25, visual: 'flowers' },
   { key: 'suv-19l', title: 'Ichimlik suvi: 2 ta 19 l', description: 'Tozalangan ichimlik suvi, qavatgacha olib chiqamiz.', price: 50000, discount: 20, visual: 'water', limit: 2 },
@@ -170,7 +170,7 @@ const TEMPLATES: Record<DemoCategory, Template[]> = { food, coffee, shop, beauty
 const REGIONAL = new Set([
   'samarqand-oshi', 'oshi-sofi', 'andijon-oshi', 'fargona-oshi', 'namangan-kabobi', 'jizzax-somsasi', 'tandir-gosht',
   'tuxum-barak', 'shivit-oshi', 'beshbarmoq', 'samarqand-noni', 'buxoro-shirinliklari', 'qoqon-halvosi',
-  'samarqand-qogozi', 'buxoro-suzanasi', 'rishton-kosalari', 'chust-doppisi', 'atlas-mato', 'xiva-oymakor', 'qoraqalpoq-sovgasi',
+  'milliy-qogirchoq', 'buxoro-suzanasi', 'rishton-kosalari', 'chust-doppisi', 'atlas-mato', 'xiva-oymakor', 'qoraqalpoq-sovgasi',
 ]);
 
 const TERMS: Record<DemoCategory, string[]> = {
@@ -220,7 +220,7 @@ const CITY_SPECS: Record<string, CitySpec> = {
     businesses: {
       food: { name: 'Registon Oshxonasi', picks: ['samarqand-oshi', 'shashlik-seti'] },
       coffee: { name: 'Siyob Novvoyxonasi', description: 'Samarqand noni, patir va shirinliklar — tandirdan yangi.', picks: ['samarqand-noni', 'choy-seti'] },
-      shop: { name: 'Afrosiyob Sovg‘alari', description: 'Samarqand qog‘ozi, sopol va hunarmandlar sovg‘alari.', picks: ['samarqand-qogozi', 'ipak-romol'] },
+      shop: { name: 'Afrosiyob Sovg‘alari', description: 'Milliy qo‘g‘irchoqlar, sopol va hunarmandlar sovg‘alari.', picks: ['milliy-qogirchoq', 'ipak-romol'] },
       beauty: { name: 'Bibixonim Salon' },
       sport: { name: 'Temir Iroda Fitnes' },
       fun: { name: 'Zarafshon Kinozali', picks: ['kino-2', 'playstation'] },
@@ -237,7 +237,7 @@ const CITY_SPECS: Record<string, CitySpec> = {
       shop: { name: 'Hunarmand Rastasi', description: 'So‘zana, zardo‘zi va misgarlik buyumlari.', picks: ['buxoro-suzanasi', 'quruq-mevalar'] },
       beauty: { name: 'Sitora Salon' },
       sport: { name: 'Buxoro Sport Majmuasi' },
-      fun: { name: 'Ark Kvest Xonalari', picks: ['kvest-xona', 'lazertag'] },
+      fun: { name: 'Ark Kvest Xonalari', picks: ['kvest-xona', 'bilyard'] },
       services: { name: 'Usta Xizmat' },
       delivery: { name: 'Buxoro Yetkazish' },
     },
@@ -405,7 +405,7 @@ const CITY_SPECS: Record<string, CitySpec> = {
       shop: { name: 'Termiz Kitob Uyi', picks: ['bolalar-kitoblari', 'biznes-kitoblar'] },
       beauty: { name: 'Shahnoza Salon' },
       sport: { name: 'Alpomish Sport' },
-      fun: { name: 'Sirli Kalit Kvest', picks: ['kvest-xona', 'lazertag'] },
+      fun: { name: 'Sirli Kalit Kvest', picks: ['kvest-xona', 'bilyard'] },
       services: { name: 'Suratchi Studiya', description: 'Fotosessiya, hujjat uchun surat va chop etish.', picks: ['fotosessiya', 'kiyim-tamiri'] },
       delivery: { name: 'Surxon Yetkazish' },
     },

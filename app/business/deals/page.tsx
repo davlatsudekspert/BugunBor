@@ -74,7 +74,7 @@ export default async function BusinessDealsPage({ searchParams }: { searchParams
           {visible.map((deal) => (
             <li key={deal.id} className="rounded-2xl border border-slate-200 bg-white p-4">
               <div className="flex gap-4">
-                <DealVisual visual={deal.visual} categorySlug={deal.categorySlug} photo={deal.photo} className="hidden size-20 shrink-0 rounded-xl sm:block" emojiClassName="-bottom-3 -right-2 text-5xl" />
+                <DealVisual visual={deal.visual} categorySlug={deal.categorySlug} photo={deal.photo} sizes="80px" className="hidden size-20 shrink-0 rounded-xl sm:block" emojiClassName="-bottom-3 -right-2 text-5xl" />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className={cn('rounded-full px-2.5 py-1 text-xs font-bold', tone[deal.effective] ?? 'bg-slate-100 text-slate-600')}>{t.deal.status[deal.effective]}</span>

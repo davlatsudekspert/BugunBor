@@ -102,7 +102,7 @@ export default async function CodesPage() {
               return (
                 <li key={item.id} id={`review-${item.id}`} className="scroll-mt-24 p-4">
                   <div className="flex items-center gap-4">
-                    <DealVisual visual={item.visual} categorySlug={item.categorySlug} photo={item.photo} className="size-14 shrink-0 rounded-xl" emojiClassName="-bottom-2 -right-1 text-4xl" />
+                    <DealVisual visual={item.visual} categorySlug={item.categorySlug} photo={item.photo} sizes="56px" className="size-14 shrink-0 rounded-xl" emojiClassName="-bottom-2 -right-1 text-4xl" />
                     <div className="min-w-0 flex-1">
                       <a href={`/deals/${item.dealSlug}`} className="block truncate font-bold text-navy hover:text-primary">{item.dealTitle}</a>
                       <p className="truncate text-sm text-slate-500">{item.businessName} · {formatMoment(parseDbTime(item.completedAt ?? item.createdAt), t, locale)}</p>

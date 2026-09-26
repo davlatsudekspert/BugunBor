@@ -34,7 +34,7 @@ export async function listBusinessDeals(db: D1Database, businessId: string, now 
     .all<Omit<BusinessDealRow, 'effective' | 'isSponsored' | 'photo'> & { isSponsored: number; photoId: string | null; isDemo: number }>();
   return rows.results.map(({ photoId, isDemo, ...row }) => ({
     ...row,
-    photo: dealPhotoUrl({ photoId, isDemo, visual: row.visual }),
+    photo: dealPhotoUrl({ photoId, isDemo, visual: row.visual, slug: row.slug }),
     isSponsored: Boolean(row.isSponsored),
     effective: effectiveDealStatus({ status: row.status, startsAt: row.startsAt, endsAt: row.endsAt, remainingQuantity: row.remaining }, now),
   }));

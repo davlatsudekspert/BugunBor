@@ -36,3 +36,8 @@ Development always shows the demo catalogue; production shows it only with `DEMO
 ## Photos
 
 Uploaded photos live in D1 (`media`) and are served from `/media/:id` with a one-year cache. If storage grows past a few GB, move `modules/media/service.ts` to R2; the URLs stay the same.
+
+Demo photos are static files in `public/photos` with authors in `lib/stock-photos.ts` (see `docs/RASMLAR.md`):
+
+- `npm run photos:fetch` downloads the curated Commons picks again (needs access to `commons.wikimedia.org` and `upload.wikimedia.org`); `npm run photos:fetch -- --search "Chust doppi"` lists candidates.
+- `npm run photos:import -- <folder>` adds photos named by visual (`plov.jpg`, `osh-2.jpg`), with authors from `mualliflar.csv` (`fayl,muallif,litsenziya,manba_url`). Licences with NC or ND are refused.

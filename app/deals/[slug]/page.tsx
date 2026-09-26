@@ -116,7 +116,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
       </div>
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[1.15fr_.85fr]">
         <section className="min-w-0">
-          <DealVisual visual={deal.visual} categorySlug={deal.category.slug} photo={deal.photo} priority className="min-h-64 rounded-[28px] p-5 shadow-[0_20px_60px_rgba(245,89,55,.18)] sm:min-h-80" emojiClassName="-bottom-6 right-6 text-[9rem] sm:text-[11rem]">
+          <DealVisual visual={deal.visual} categorySlug={deal.category.slug} photo={deal.photo} priority sizes="(min-width: 1024px) 50vw, 100vw" className="min-h-64 rounded-[28px] p-5 shadow-[0_20px_60px_rgba(245,89,55,.18)] sm:min-h-80" emojiClassName="-bottom-6 right-6 text-[9rem] sm:text-[11rem]">
             <span className="relative inline-flex h-10 items-center rounded-full bg-white px-4 text-lg font-black text-navy shadow-sm">-{deal.discountPercent}%</span>
             <span className={cn('relative ml-2 inline-flex h-8 items-center rounded-full px-3 text-xs font-bold', statusTone)}>{t.deal.status[deal.effective]}</span>
           </DealVisual>

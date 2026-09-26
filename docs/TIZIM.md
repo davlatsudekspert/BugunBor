@@ -130,6 +130,7 @@ Istalgan bosqichda: 10 daqiqa o‘tsa ▶ Muddati o‘tgan (EXPIRED); botda «Me
 4. Moderator aksiyani tasdiqlaydi. Boshlanish vaqti kelganda aksiya saytda **Faol** bo‘ladi.
 5. Kassir «Kodni tekshirish» sahifasida kodni yozadi yoki QR-kodni kamera bilan skanerlaydi. Mijoz, aksiya va filial ma’lumotini ko‘rib «Tasdiqlash» ni bosadi.
 6. Biznes aksiyaga o‘z mahsulotining **haqiqiy fotosuratini**, profiliga esa logotip va muqova rasmini yuklaydi. Rasm telefonda siqiladi (WebP, 1280 px gacha). Rasm bo‘lmasa, chiroyli belgi (emoji + rang) ko‘rsatiladi.
+   Demo aksiyalarda o‘sha turdagi erkin litsenziyali haqiqiy foto chiqadi (Wikimedia Commons). Mualliflar «Rasm mualliflari» sahifasida ko‘rsatiladi (batafsil: `docs/RASMLAR.md`).
 
 ### 4.4. Mijoz bilan aloqa: obuna, xabarnoma, baho
 
@@ -226,4 +227,3 @@ Sayt o‘zbek (lotin) va rus tillarida ishlaydi. Til tepadagi UZ/RU tugmasi bila
 1. **Android ilova (APK)** — sayt PWA sifatida tayyor (manifest, ikonkalar, oflayn sahifa). Ilova Trusted Web Activity bo‘ladi: saytning o‘zi, lekin Play Market’dan o‘rnatiladi.
 2. **iOS ilova** — xuddi shu asosda.
 3. **Onlayn to‘lov (Payme, Click)** — tarif to‘lovi avtomatik tasdiqlanishi uchun.
-4. **Demo uchun haqiqiy fotosuratlar** — tarmoq ruxsati berilgach (Wikimedia/Canva) yoki Google Drive orqali.

@@ -81,7 +81,7 @@ export async function listAdminDeals(db: D1Database, filter: 'pending' | 'live' 
       ORDER BY COALESCE(d.submitted_at, d.created_at) ${filter === 'pending' ? 'ASC' : 'DESC'} LIMIT 200`)
     .bind(nowDb)
     .all<Omit<AdminDeal, 'photo' | 'ownPhoto'> & { photoId: string | null }>();
-  return rows.results.map(({ photoId, ...row }) => ({ ...row, photo: dealPhotoUrl({ photoId, isDemo: row.isDemo, visual: row.visual }), ownPhoto: Boolean(photoId) }));
+  return rows.results.map(({ photoId, ...row }) => ({ ...row, photo: dealPhotoUrl({ photoId, isDemo: row.isDemo, visual: row.visual, slug: row.slug }), ownPhoto: Boolean(photoId) }));
 }
 
 export type AdminUser = { id: string; displayName: string; phone: string | null; role: PlatformRole; status: UserStatus; createdAt: string; lastLoginAt: string | null; businesses: number };

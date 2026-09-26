@@ -73,3 +73,4 @@ npm run build
 - [docs/database-model.md](docs/database-model.md) — tables
 - [docs/security-checklist.md](docs/security-checklist.md) — security controls
 - [docs/operations.md](docs/operations.md) — deploy, configure, operate
+- [docs/RASMLAR.md](docs/RASMLAR.md) — demo photos: sources, adding new ones (Uzbek)

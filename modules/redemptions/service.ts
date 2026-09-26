@@ -212,7 +212,7 @@ export async function listCustomerRedemptions(db: D1Database, userId: string, se
       const status = row.status === 'CLAIMED' && row.expiresAt <= nowDb ? 'EXPIRED' : row.status;
       return {
         ...row,
-        photo: dealPhotoUrl({ photoId, isDemo, visual: row.visual }),
+        photo: dealPhotoUrl({ photoId, isDemo, visual: row.visual, slug: row.dealSlug }),
         status,
         latitude: lat / 1e6,
         longitude: lon / 1e6,

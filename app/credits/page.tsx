@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import { getI18n } from '@/lib/i18n/server';
+import { photoSrcSet } from '@/lib/photos';
 import { STOCK_PHOTOS } from '@/lib/stock-photos';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -20,7 +21,7 @@ export default async function CreditsPage() {
         <ul className="mt-8 grid gap-3 sm:grid-cols-2">
           {photos.map(([key, photo]) => (
             <li key={key} className="flex gap-3 rounded-2xl border border-slate-200 bg-white p-3">
-              <img src={photo.src} alt="" loading="lazy" className="size-20 shrink-0 rounded-xl object-cover" />
+              <img src={photo.src} srcSet={photoSrcSet(photo.src)} sizes="80px" alt="" loading="lazy" decoding="async" className="size-20 shrink-0 rounded-xl object-cover" />
               <div className="min-w-0 text-sm">
                 <p className="truncate font-bold text-navy">{photo.title}</p>
                 <p className="truncate text-slate-600">{t.credits.author}: {photo.author}</p>
