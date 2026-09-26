@@ -57,11 +57,21 @@ export class ShimD1 {
 
   execute(statement: ShimStatement) {
     const before = this.totalChanges();
-    const prepared = this.sqlite.prepare(statement.query);
-    const rows = (prepared.all(...(statement.params.map(toSqlValue) as never[])) as Row[]).map((row) => ({ ...row }));
+    const rows = (this.run(statement) as Row[]).map((row) => ({ ...row }));
     const changes = this.totalChanges() - before;
     const lastRowId = Number((this.sqlite.prepare('SELECT last_insert_rowid() AS id').get() as { id: number }).id);
     return { rows, result: { results: rows, success: true as const, meta: { changes, last_row_id: lastRowId, duration: 0 } } };
+  }
+
+  /**
+   * D1 binds values to numbered parameters (?1, ?2) by position. Older
+   * node:sqlite releases (22.14) cannot, so those become named parameters.
+   */
+  private run(statement: ShimStatement) {
+    const numbers = [...new Set([...statement.query.matchAll(/\?(\d+)/g)].map((match) => Number(match[1])))];
+    if (!numbers.length) return this.sqlite.prepare(statement.query).all(...(statement.params.map(toSqlValue) as never[]));
+    const named = Object.fromEntries(numbers.map((number) => [`:p${number}`, toSqlValue(statement.params[number - 1])]));
+    return this.sqlite.prepare(statement.query.replace(/\?(\d+)/g, ':p$1')).all(named as never);
   }
 
   private totalChanges() {
