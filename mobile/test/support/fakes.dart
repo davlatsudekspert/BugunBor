@@ -33,6 +33,13 @@ class Reply {
   final Object? body;
 }
 
+/// A reply that is not JSON, such as an image.
+class Bytes {
+  const Bytes(this.bytes, {this.contentType = 'image/png'});
+  final List<int> bytes;
+  final String contentType;
+}
+
 /// Serves requests from a route table like `GET /api/v1/deals/:slug`.
 class FakeServer implements HttpClientAdapter {
   FakeServer([Map<String, Handler>? routes]) : routes = {...?routes};
@@ -129,6 +136,15 @@ class FakeServer implements HttpClientAdapter {
             'error': {'code': 'NOT_FOUND'},
           })
         : handler(options);
+    if (result is Bytes) {
+      return ResponseBody.fromBytes(
+        result.bytes,
+        200,
+        headers: {
+          Headers.contentTypeHeader: [result.contentType],
+        },
+      );
+    }
     final reply = result is Reply ? result : Reply(200, result);
     return ResponseBody.fromString(
       jsonEncode(reply.body),
@@ -174,7 +190,7 @@ Future<void> pumpApp(
   String theme = 'light',
   Pin? pin,
   Uint8List? photo,
-  Future<Uint8List?> Function({required bool camera})? picker,
+  Future<Uint8List?> Function({required bool camera, PhotoUse use})? picker,
   Map<String, Object> prefs = const {},
 }) async {
   SharedPreferences.setMockInitialValues({'onboarded': onboarded, 'locale': locale, 'city': 'tashkent', 'theme': theme, ...prefs});
@@ -196,7 +212,7 @@ Future<void> pumpApp(
         // Where "use my location" finds the phone (never the real GPS).
         pinLocatorProvider.overrideWithValue(() async => pin),
         // What the camera or gallery "returns" (never the real picker).
-        photoPickerProvider.overrideWithValue(picker ?? ({required camera}) async => photo),
+        photoPickerProvider.overrideWithValue(picker ?? ({required camera, use = PhotoUse.deal}) async => photo),
         initialTokenProvider.overrideWithValue(token),
         sessionStoreProvider.overrideWithValue(MemorySessionStore()..token = token),
         apiProvider.overrideWith(

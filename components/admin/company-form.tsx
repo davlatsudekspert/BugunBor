@@ -19,7 +19,7 @@ export function CompanyForm({ initial, labels }: { initial: Company; labels: Lab
     <label className="block">
       <span className="mb-1 block text-xs font-bold text-slate-500">{label}</span>
       <input value={values[key]} onChange={(event) => { setValues({ ...values, [key]: event.target.value }); setState('idle'); }} className={input} {...extra} />
-      {hint ? <span className="mt-1 block text-[11px] text-slate-400">{hint}</span> : null}
+      {hint ? <span className="mt-1 block text-xs text-slate-500">{hint}</span> : null}
     </label>
   );
   return (

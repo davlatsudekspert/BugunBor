@@ -41,13 +41,60 @@ class PromoPoints extends StatelessWidget {
 
 /// Home: invites people who have a business to add it.
 class BusinessPromoCard extends StatelessWidget {
-  const BusinessPromoCard({super.key, required this.onOpen, this.onHide});
+  const BusinessPromoCard({super.key, required this.onOpen, this.onHide, this.compact = false});
   final VoidCallback onOpen;
   final VoidCallback? onHide;
+
+  /// A calm card after the deals: one line and one button.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
+    if (compact) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(Gap.lg, Gap.md, Gap.xs, Gap.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    margin: const EdgeInsets.only(top: Gap.xs),
+                    decoration: BoxDecoration(color: Brand.primary.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(14)),
+                    child: Icon(Icons.storefront_rounded, color: context.accentText),
+                  ),
+                  const SizedBox(width: Gap.md),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: Gap.xs),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(l.promoTitle, style: Theme.of(context).textTheme.titleMedium),
+                          const SizedBox(height: 2),
+                          Text(l.homePromoText, style: TextStyle(color: context.mutedText, height: 1.35)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (onHide != null) IconButton(tooltip: l.promoHide, onPressed: onHide, icon: const Icon(Icons.close_rounded)),
+                ],
+              ),
+              const SizedBox(height: Gap.md),
+              Padding(
+                padding: const EdgeInsets.only(right: Gap.md),
+                child: OutlinedButton.icon(onPressed: onOpen, icon: const Icon(Icons.add_business_rounded), label: Text(l.promoAction)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     final radius = BorderRadius.circular(Gap.radius + 4);
     return DecoratedBox(
       decoration: BoxDecoration(

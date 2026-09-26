@@ -44,6 +44,7 @@ describe('Telegram login flow', () => {
     await handleTelegramUpdate(db, message(501, { text: `/start ${login.token}` }), { sender, adminPhones: [], siteUrl: 'https://bugunbor.uz', now });
     expect(sent.at(-1)?.text).toContain(login.matchCode);
     expect(sent.at(-1)?.text).toContain('Chrome · Android');
+    expect(sent.at(-1)?.text).toContain('Saytdagi moslik kodi');
     expect(sent.at(-1)?.markup).toMatchObject({ keyboard: [[{ request_contact: true }], [{}]] });
     expect(await pollLogin(db, cookie, now)).toMatchObject({ status: 'WAITING' });
 

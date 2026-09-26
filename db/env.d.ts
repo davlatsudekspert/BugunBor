@@ -1,6 +1,8 @@
 declare namespace Cloudflare {
   interface Env {
     DB: D1Database;
+    /** The site's static files (public/), when the Worker has the binding; guide videos are sent in parts from it. */
+    ASSETS?: Fetcher;
     /** Public site origin, e.g. https://bugunbor.uz — used for Telegram links and webhook setup. */
     APP_URL?: string;
     /** "true" seeds fictional demo businesses and deals outside development. */

@@ -35,7 +35,7 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
   return (
     <AdminShell t={t} role={user.role} active="businesses">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {(['pending', 'auto', 'all'] as const).map((key) => (
             <a key={key} href={key === 'pending' ? '/admin/businesses' : `/admin/businesses?f=${key}`} className={cn('inline-flex h-9 items-center rounded-full border px-4 text-xs font-bold', filter === key ? 'border-navy bg-navy text-white' : 'border-slate-200 bg-white text-slate-600')}>{key === 'auto' ? a.auto.filter : a.filters[key]}</a>
           ))}
@@ -43,7 +43,7 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
         <form className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3">
           <Search className="size-4 text-slate-400" aria-hidden />
           <input type="hidden" name="f" value={filter} />
-          <input name="q" defaultValue={q} placeholder={t.common.search} className="w-48 bg-transparent text-sm outline-none" />
+          <input name="q" defaultValue={q} placeholder={t.common.search} aria-label={t.common.search} className="w-48 bg-transparent text-sm outline-none" />
         </form>
       </div>
 

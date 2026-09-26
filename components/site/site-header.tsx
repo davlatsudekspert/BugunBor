@@ -20,7 +20,7 @@ export async function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:gap-3 sm:px-6 lg:px-8">
         <Logo label={t.nav.homeAria} />
 
-        <nav className="hidden items-center gap-7 text-sm font-semibold text-slate-600 md:flex" aria-label={t.nav.main}>
+        <nav className="hidden items-center gap-5 whitespace-nowrap text-sm font-semibold text-slate-600 md:flex lg:gap-7" aria-label={t.nav.main}>
           <a className="transition-colors hover:text-primary" href="/discover">{t.nav.deals}</a>
           <a className="transition-colors hover:text-primary" href="/categories">{t.nav.categories}</a>
           <a className="transition-colors hover:text-primary" href="/business">{t.nav.forBusiness}</a>
@@ -40,8 +40,12 @@ export async function SiteHeader() {
           ) : null}
           {user ? (
             <a href="/account" className="hidden items-center gap-2 rounded-xl py-1 pl-1 pr-3 text-sm font-bold text-navy hover:bg-slate-100 sm:inline-flex" aria-label={t.nav.account}>
-              <span className="grid size-8 place-items-center rounded-full bg-navy text-xs font-black text-white">{initials(user.displayName) || 'B'}</span>
-              <span className="hidden max-w-32 truncate md:inline">{user.displayName}</span>
+              {user.avatar ? (
+                <img src={user.avatar} alt="" className="size-8 rounded-full object-cover" />
+              ) : (
+                <span className="grid size-8 place-items-center rounded-full bg-navy text-xs font-black text-white">{initials(user.displayName) || 'B'}</span>
+              )}
+              <span className="hidden max-w-32 truncate lg:inline">{user.displayName}</span>
             </a>
           ) : (
             <a className={cn(buttonVariants({ variant: 'ghost' }), 'hidden h-10 sm:inline-flex')} href="/login">{t.nav.login}</a>

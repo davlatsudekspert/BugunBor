@@ -31,7 +31,7 @@ export default async function AdminDealsPage({ searchParams }: { searchParams: P
 
   return (
     <AdminShell t={t} role={user.role} active="deals">
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {(['pending', 'auto', 'live', 'all'] as const).map((key) => (
           <a key={key} href={key === 'pending' ? '/admin/deals' : `/admin/deals?f=${key}`} className={cn('inline-flex h-9 items-center rounded-full border px-4 text-xs font-bold', filter === key ? 'border-navy bg-navy text-white' : 'border-slate-200 bg-white text-slate-600')}>{labels[key]}</a>
         ))}
@@ -45,7 +45,7 @@ export default async function AdminDealsPage({ searchParams }: { searchParams: P
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold text-slate-500">
                     {deal.businessName} · {deal.categoryName}{deal.isDemo ? ` · ${t.common.demo}` : ''}
-                    {deal.autoDecided && deal.status !== 'PENDING_REVIEW' ? <span title={a.auto.badgeHint} className="ml-2 rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-bold text-sky-700">{a.auto.badge}</span> : null}
+                    {deal.autoDecided && deal.status !== 'PENDING_REVIEW' ? <span title={a.auto.badgeHint} className="ml-2 rounded-full bg-sky-50 px-2 py-0.5 text-xs font-bold text-sky-700">{a.auto.badge}</span> : null}
                   </p>
                   <p className="mt-1 text-lg font-black leading-snug text-navy">{deal.title}</p>
                   <p className="mt-1 text-sm"><strong className="text-primary">{formatSum(deal.price, t)}</strong> {deal.originalPrice ? <span className="text-slate-400 line-through">{formatSum(deal.originalPrice, t)}</span> : null} <span className="font-bold text-emerald-700">−{deal.discountPercent}%</span></p>

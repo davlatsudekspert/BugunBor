@@ -48,6 +48,7 @@ class DealTile extends StatelessWidget {
                       children: [
                         AppImage(deal.photo, small: true, icon: categoryIcon(deal.categorySlug)),
                         if (ended) ColoredBox(color: Colors.black.withValues(alpha: 0.35)),
+                        if (deal.discountPercent > 0 && !ended) Positioned(left: 6, top: 6, child: DiscountBadge(deal.discountPercent, small: true)),
                       ],
                     ),
                   ),
@@ -64,7 +65,7 @@ class DealTile extends StatelessWidget {
                               deal.business.name,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: context.mutedText, fontSize: 13, fontWeight: FontWeight.w600),
+                              style: TextStyle(color: context.mutedText, fontSize: 13.5, fontWeight: FontWeight.w600),
                             ),
                           ),
                           if (deal.isDemo) const DemoBadge(),
@@ -74,22 +75,17 @@ class DealTile extends StatelessWidget {
                       Text(deal.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium),
                       const SizedBox(height: Gap.xs),
                       PriceLine(price: deal.price, original: deal.originalPrice),
-                      const SizedBox(height: Gap.xs),
+                      const SizedBox(height: 6),
                       Wrap(
-                        spacing: Gap.sm,
-                        runSpacing: 2,
+                        spacing: Gap.md,
+                        runSpacing: 4,
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          if (deal.discountPercent > 0)
-                            Text(
-                              l.percentOff('${deal.discountPercent}'),
-                              style: TextStyle(color: context.accentText, fontWeight: FontWeight.w900, fontSize: 13),
-                            ),
                           if (distance != null) _Meta(icon: Icons.near_me_outlined, text: distance),
                           if (!ended)
                             _Meta(
                               icon: Icons.schedule_rounded,
-                              child: Countdown(deal.endsAt, style: _metaStyle(context)),
+                              child: TimeLeft(deal.endsAt, style: _metaStyle(context)),
                             ),
                           if (deal.remaining != null && deal.remaining! <= 5 && !ended)
                             _Meta(icon: Icons.local_fire_department_outlined, text: l.left('${deal.remaining}')),
@@ -108,7 +104,7 @@ class DealTile extends StatelessWidget {
 }
 
 TextStyle _metaStyle(BuildContext context) =>
-    TextStyle(color: context.mutedText, fontSize: 12.5, fontWeight: FontWeight.w600, fontFeatures: const [FontFeature.tabularFigures()]);
+    TextStyle(color: context.mutedText, fontSize: 13, fontWeight: FontWeight.w600, fontFeatures: const [FontFeature.tabularFigures()]);
 
 class _Meta extends StatelessWidget {
   const _Meta({required this.icon, this.text, this.child});
@@ -120,8 +116,8 @@ class _Meta extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Icon(icon, size: 14, color: context.mutedText),
-      const SizedBox(width: 3),
+      Icon(icon, size: 15, color: context.mutedText),
+      const SizedBox(width: 4),
       child ?? Text(text ?? '', style: _metaStyle(context)),
     ],
   );
@@ -169,7 +165,7 @@ class DealCompactCard extends StatelessWidget {
                         [deal.business.name, ?distance].join(' · '),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: context.mutedText, fontSize: 13),
+                        style: TextStyle(color: context.mutedText, fontSize: 13.5),
                       ),
                       const SizedBox(height: Gap.xs),
                       Row(
@@ -182,7 +178,7 @@ class DealCompactCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       _Meta(
                         icon: Icons.schedule_rounded,
-                        child: Countdown(deal.endsAt, style: _metaStyle(context)),
+                        child: TimeLeft(deal.endsAt, style: _metaStyle(context)),
                       ),
                     ],
                   ),

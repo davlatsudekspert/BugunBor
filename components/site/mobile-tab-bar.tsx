@@ -23,7 +23,7 @@ export function MobileTabBar({ labels }: { labels: Labels }) {
         {items.map(({ href, key, icon: Icon, match }) => {
           const active = match(pathname);
           return (
-            <a key={key} href={href} aria-current={active ? 'page' : undefined} className={cn('flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl text-[10.5px] font-bold transition', active ? 'text-primary' : 'text-slate-500 hover:text-navy')}>
+            <a key={key} href={href} aria-current={active ? 'page' : undefined} className={cn('flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl text-[10.5px] font-bold transition min-[360px]:text-xs', active ? 'text-primary' : 'text-slate-500 hover:text-navy')}>
               <Icon className={cn('size-5', active && 'fill-primary/15')} aria-hidden />
               {labels[key]}
             </a>

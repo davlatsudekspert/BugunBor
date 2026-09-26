@@ -2,6 +2,7 @@
   "demo": false,
   "tariffsEnabled": false,
   "minAppBuild": 3,
+  "update": null,
   "privacyVersion": "2026-09-26",
   "links": {
     "privacy": "/privacy",

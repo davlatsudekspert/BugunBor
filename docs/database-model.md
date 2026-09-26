@@ -42,6 +42,7 @@ erDiagram
 | `reviews` | Rating 1–5 and optional comment for a completed redemption; one per redemption; VISIBLE or HIDDEN |
 | `notifications` | Telegram outbox: kind, dedupe key (unique), status PENDING, SENDING, SENT, SKIPPED or FAILED, retries |
 | `media` | Uploaded images (base64 WebP/JPEG/PNG) with size, dimensions and hash |
+| `user_avatars` | One optional profile photo per person (base64, size, dimensions, hash); seen only by that person, never public; deleted with the account |
 | `plans` | Start, Biznes, Premium: monthly price and limits (branches, live deals, staff, top slots) |
 | `billing_requests` | Plan purchase requests confirmed by an admin |
 | `app_settings` | Free-period length and plan, payment instructions, demo seed version |

@@ -4,6 +4,7 @@ import { getConfig } from '@/lib/env';
 import { json, route } from '@/lib/http';
 import { PRIVACY_VERSION } from '@/lib/privacy';
 import { DEAL_VISUALS, DEAL_VISUAL_KEYS, dealVisual } from '@/lib/visuals';
+import { APP_PAGE, appStores, latestApkBuild } from '@/modules/app-stores';
 import { getBillingSettings } from '@/modules/billing/service';
 import { listCategories } from '@/modules/catalog/queries';
 import { DEAL_RULES } from '@/modules/deals/status';
@@ -17,18 +18,23 @@ import { loginBotUsername } from '@/modules/telegram/setup';
 export const GET = route(async () => {
   const config = getConfig();
   const db = await getDb();
-  const [demo, billing, categories, bot] = await Promise.all([
+  const [demo, billing, categories, bot, stores] = await Promise.all([
     demoEnabled(db),
     getBillingSettings(db),
     listCategories(db),
     loginBotUsername(db, config).catch(() => config.telegram.botUsername),
+    appStores(db),
   ]);
+  // An app installed from the site does not update itself: it is told about a
+  // newer build and where to get it. (Google Play updates its own installs.)
+  const newest = stores.mode === 'apk' ? await latestApkBuild() : null;
   return json(
     {
       data: {
         demo,
         tariffsEnabled: billing.tariffsEnabled,
         minAppBuild: config.app.minBuild,
+        update: newest ? { build: newest, url: `${config.appUrl ?? 'https://bugunbor.uz'}${APP_PAGE}` } : null,
         privacyVersion: PRIVACY_VERSION,
         links: { privacy: '/privacy', terms: '/terms', deleteAccount: '/delete-account', contact: '/contact' },
         telegramBot: bot,

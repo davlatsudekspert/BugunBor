@@ -62,6 +62,11 @@ const spec = {
       patch: { summary: 'Update name or notification settings', security: [{ session: [] }], responses: { '200': { description: 'Updated' } } },
       delete: { summary: 'Delete the account', security: [{ session: [] }], responses: { '200': { description: 'Deleted' } } },
     },
+    '/me/avatar': {
+      get: { summary: 'Your own profile photo (only its owner can load it)', security: [{ session: [] }], responses: { '200': { description: 'The image' }, '404': { description: 'No photo' } } },
+      post: { summary: 'Upload a profile photo (multipart `file`, at most 300 KB); replaces the old one', security: [{ session: [] }], responses: { '201': { description: '{ data: { avatar } }' }, '413': error, '415': error } },
+      delete: { summary: 'Remove the profile photo', security: [{ session: [] }], responses: { '200': { description: 'Removed' } } },
+    },
     '/auth/telegram/start': { post: { summary: 'Start a Telegram login', responses: { '201': { description: '{ data: { deepLink, matchCode, expiresAt } }; sets a short-lived login cookie' } } } },
     '/auth/telegram/status': { get: { summary: 'Poll the Telegram login', responses: { '200': { description: '{ data: { status } }; sets the session cookie once approved' } } } },
   },

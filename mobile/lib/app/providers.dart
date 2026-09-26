@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -155,6 +157,16 @@ final meProvider = FutureProvider<Me?>((ref) async {
   final token = ref.watch(sessionProvider.select((session) => session.token));
   if (token == null) return null;
   return ref.watch(apiProvider).me();
+});
+
+/// The person's own profile photo by its address (which changes with every
+/// new photo); null when it cannot be loaded, so the initial shows instead.
+final avatarImageProvider = FutureProvider.family<Uint8List?, String>((ref, path) async {
+  try {
+    return await ref.watch(apiProvider).avatar(path);
+  } catch (_) {
+    return null;
+  }
 });
 
 /// Interests in effect: the account's once signed in, the phone's before that.

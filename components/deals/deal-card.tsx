@@ -34,6 +34,7 @@ export function DealCard({ deal, t, locale, favorite, loggedIn, showCity = false
     <article className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-[0_10px_40px_rgba(25,45,60,.08)] ring-1 ring-slate-200/70 transition hover:-translate-y-1 hover:shadow-[0_18px_55px_rgba(25,45,60,.14)]">
       <DealVisual visual={deal.visual} categorySlug={deal.categorySlug} photo={deal.photo} priority={priority} className="h-44 p-4">
         <span className="relative inline-flex h-8 items-center rounded-full bg-white px-3 text-base font-black text-navy shadow-sm">-{deal.discountPercent}%</span>
+        {deal.isDemo ? <span className="relative ml-2 inline-flex h-8 items-center rounded-full bg-amber-100 px-3 text-xs font-black text-amber-900 shadow-sm">{t.common.sample}</span> : null}
         <div className="absolute right-4 top-4 z-10">
           <FavoriteButton dealId={deal.id} initial={favorite} loggedIn={loggedIn} labels={{ save: fmt(t.deal.saveAria, { title: deal.title }), unsave: fmt(t.deal.unsaveAria, { title: deal.title }) }} />
         </div>
@@ -51,7 +52,7 @@ export function DealCard({ deal, t, locale, favorite, loggedIn, showCity = false
         <p className="flex items-center gap-2.5 text-sm font-bold text-slate-700">
           <BusinessAvatar name={deal.business.name} logo={deal.business.logo} className="size-8 rounded-full bg-slate-100 text-[11px] text-navy" />
           <span className="truncate">{deal.business.name}</span>
-          <BadgeCheck className="size-4 shrink-0 fill-emerald-500 text-white" aria-label={t.common.verified} />
+          {deal.isDemo ? null : <BadgeCheck className="size-4 shrink-0 fill-emerald-500 text-white" aria-label={t.common.verified} />}
           {deal.business.rating ? (
             <span className="ml-auto flex shrink-0 items-center gap-1 text-xs font-bold text-navy" title={fmt(t.business.ratingCount, { count: deal.business.rating.count })}>
               <Star className="size-3.5 fill-amber-400 text-amber-400" aria-hidden /> {ratingText(deal.business.rating.basisPoints)}

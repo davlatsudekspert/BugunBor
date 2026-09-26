@@ -265,7 +265,7 @@ void main() {
   testWidgets('a photo that cannot be taken or read says why; the upload is not tried', (tester) async {
     final server = ownerServer();
     Object failure = const CameraDenied();
-    await pumpApp(tester, server: server, token: 't', picker: ({required camera}) async => throw failure);
+    await pumpApp(tester, server: server, token: 't', picker: ({required camera, use = PhotoUse.deal}) async => throw failure);
     await go(tester, '/business/biz/deals/new');
     await tester.tap(find.text('Rasm qo‘shish'));
     await settle(tester);

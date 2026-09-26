@@ -88,7 +88,11 @@ export default async function BusinessPage({ params }: { params: Promise<{ slug:
           <div className="flex flex-wrap items-start gap-5">
             <BusinessAvatar name={business.name} logo={business.logo} className={cn('size-20 rounded-3xl bg-navy text-2xl font-black text-white shadow-[0_12px_30px_rgba(21,42,59,.25)]', business.cover && '-mt-10 ring-4 ring-white')} />
             <div className="min-w-0 flex-1">
-              <p className="flex items-center gap-1.5 text-sm font-bold text-emerald-700"><BadgeCheck className="size-4 fill-emerald-500 text-white" aria-hidden /> {t.business.verified}</p>
+              {business.isDemo ? (
+                <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-900">{t.common.sample}</span>
+              ) : (
+                <p className="flex items-center gap-1.5 text-sm font-bold text-emerald-700"><BadgeCheck className="size-4 fill-emerald-500 text-white" aria-hidden /> {t.business.verified}</p>
+              )}
               <h1 className="mt-1 text-4xl font-black tracking-[-.05em] text-navy">{business.name}</h1>
               {business.rating ? (
                 <a href="#reviews" className="mt-2 inline-flex items-center gap-2 text-sm font-bold text-navy">
@@ -168,9 +172,9 @@ export default async function BusinessPage({ params }: { params: Promise<{ slug:
                 <p className="flex items-center gap-2 font-bold text-navy"><MapPin className="size-4 text-primary" aria-hidden /> {branch.name}</p>
                 <p className="mt-2 text-sm leading-6 text-slate-500">{branch.address}, {cityName(branch.city, locale)}</p>
                 {hours ? <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500"><CalendarClock className="size-4" aria-hidden /> {hours}</p> : null}
-                <div className="mt-3 flex flex-wrap gap-3">
-                  <a href={directionsUrl(branch)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-bold text-primary"><Navigation className="size-4" aria-hidden /> {t.common.directions}</a>
-                  {branch.phone ? <a href={`tel:${branch.phone}`} className="inline-flex items-center gap-1.5 text-sm font-bold text-navy"><Phone className="size-4" aria-hidden /> {formatPhone(branch.phone)}</a> : null}
+                <div className="-mb-2 mt-1 flex flex-wrap gap-x-4">
+                  <a href={directionsUrl(branch)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 py-2 text-sm font-bold text-primary"><Navigation className="size-4" aria-hidden /> {t.common.directions}</a>
+                  {branch.phone ? <a href={`tel:${branch.phone}`} className="inline-flex items-center gap-1.5 py-2 text-sm font-bold text-navy"><Phone className="size-4" aria-hidden /> {formatPhone(branch.phone)}</a> : null}
                 </div>
               </div>
             );

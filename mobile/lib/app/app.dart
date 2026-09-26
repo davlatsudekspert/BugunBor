@@ -109,7 +109,8 @@ class _UpdateGate extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final minimum = ref.watch(configProvider).value?.minAppBuild ?? 0;
+    final config = ref.watch(configProvider).value;
+    final minimum = config?.minAppBuild ?? 0;
     if (minimum <= Env.build) return child;
     final l = L.of(context);
     return Scaffold(
@@ -119,7 +120,8 @@ class _UpdateGate extends ConsumerWidget {
           title: l.updateTitle,
           text: l.updateText,
           actionLabel: l.updateAction,
-          onAction: () => openExternal(Uri.parse(Env.playStoreUrl)),
+          // An app from the site is updated from the site; otherwise from Google Play.
+          onAction: () => openExternal(Uri.parse(config?.update?.url ?? Env.playStoreUrl)),
         ),
       ),
     );

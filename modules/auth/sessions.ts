@@ -1,6 +1,7 @@
 import { serializeCookie } from '@/lib/cookies';
 import { randomToken, sha256Hex } from '@/lib/crypto';
 import { addMinutes, parseDbTime, toDbTime } from '@/lib/time';
+import { avatarUrl } from './avatar';
 import type { PlatformRole, UserStatus } from './users';
 
 export const SESSION_COOKIE = 'bb_session';
@@ -15,6 +16,8 @@ export type SessionUser = {
   phone: string | null;
   locale: string;
   status: UserStatus;
+  /** The person's own profile photo (only they see it), or null. */
+  avatar: string | null;
 };
 
 export async function createSession(db: D1Database, userId: string, meta: { userAgent?: string | null; ipHash?: string | null; client?: 'web' | 'app'; appBuild?: string | null }, now = new Date()) {
@@ -33,17 +36,17 @@ export async function createSession(db: D1Database, userId: string, meta: { user
 export async function getSessionUser(db: D1Database, token: string | null | undefined, now = new Date()): Promise<SessionUser | null> {
   if (!token || token.length < 20 || token.length > 100) return null;
   const row = await db
-    .prepare(`SELECT s.id AS sessionId, s.last_seen_at AS lastSeenAt, u.id, u.role, u.display_name AS displayName, u.phone, u.locale, u.status
-      FROM sessions s JOIN users u ON u.id = s.user_id
+    .prepare(`SELECT s.id AS sessionId, s.last_seen_at AS lastSeenAt, u.id, u.role, u.display_name AS displayName, u.phone, u.locale, u.status, a.sha256 AS avatarSha
+      FROM sessions s JOIN users u ON u.id = s.user_id LEFT JOIN user_avatars a ON a.user_id = u.id
       WHERE s.token_hash = ?1 AND s.revoked_at IS NULL AND s.expires_at > ?2`)
     .bind(await sha256Hex(token), toDbTime(now))
-    .first<SessionUser & { lastSeenAt: string }>();
+    .first<Omit<SessionUser, 'avatar'> & { lastSeenAt: string; avatarSha: string | null }>();
   if (!row || row.status !== 'ACTIVE') return null;
   if (now.getTime() - parseDbTime(row.lastSeenAt).getTime() > TOUCH_INTERVAL_MS) {
     await db.prepare(`UPDATE sessions SET last_seen_at = ?2 WHERE id = ?1`).bind(row.sessionId, toDbTime(now)).run();
   }
-  const { lastSeenAt: _lastSeenAt, ...user } = row;
-  return user;
+  const { lastSeenAt: _lastSeenAt, avatarSha, ...user } = row;
+  return { ...user, avatar: avatarSha ? avatarUrl(avatarSha) : null };
 }
 
 export async function revokeSessionByToken(db: D1Database, token: string, now = new Date()) {

@@ -11,7 +11,7 @@ export type PhotoLabels = {
 
 type Kind = 'DEAL' | 'LOGO' | 'COVER';
 
-const MAX_INPUT_BYTES = 30 * 1024 * 1024;
+export const MAX_INPUT_BYTES = 30 * 1024 * 1024;
 const MAX_UPLOAD_BYTES = 650_000;
 const MAX_SIDE: Record<Kind, number> = { DEAL: 1280, COVER: 1600, LOGO: 512 };
 
@@ -32,7 +32,7 @@ function loadImage(file: File) {
 }
 
 /** Resizes on the phone and re-encodes to WebP (JPEG where WebP encoding is missing). */
-async function compress(file: File, maxSide: number): Promise<Blob> {
+export async function compress(file: File, maxSide: number, maxBytes = MAX_UPLOAD_BYTES): Promise<Blob> {
   const image = await loadImage(file);
   const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
   const canvas = document.createElement('canvas');
@@ -49,10 +49,10 @@ async function compress(file: File, maxSide: number): Promise<Blob> {
     type = 'image/jpeg';
     blob = await encode(type, 0.85);
   }
-  for (let quality = 0.7; blob && blob.size > MAX_UPLOAD_BYTES && quality >= 0.4; quality -= 0.1) {
+  for (let quality = 0.7; blob && blob.size > maxBytes && quality >= 0.4; quality -= 0.1) {
     blob = await encode(type, quality);
   }
-  if (!blob || blob.size > MAX_UPLOAD_BYTES) throw new Error('encode');
+  if (!blob || blob.size > maxBytes) throw new Error('encode');
   return blob;
 }
 

@@ -26,7 +26,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
     <AdminShell t={t} role={user.role} active="users">
       <form className="flex h-11 max-w-md items-center gap-2 rounded-xl border border-slate-200 bg-white px-3">
         <Search className="size-4 text-slate-400" aria-hidden />
-        <input name="q" defaultValue={q} placeholder={u.search} className="flex-1 bg-transparent text-sm outline-none" />
+        <input name="q" defaultValue={q} placeholder={u.search} aria-label={u.search} className="flex-1 bg-transparent text-sm outline-none" />
       </form>
       <ul className="mt-5 divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white">
         {users.map((item) => (
@@ -38,8 +38,8 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                 {item.businesses ? ` · ${t.nav.myBusiness}: ${item.businesses}` : ''}
               </p>
               <p className="mt-1 flex gap-1.5">
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-600">{u.roles[item.role]}</span>
-                <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-bold', item.status === 'BLOCKED' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700')}>{u.status[item.status]}</span>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">{u.roles[item.role]}</span>
+                <span className={cn('rounded-full px-2 py-0.5 text-xs font-bold', item.status === 'BLOCKED' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700')}>{u.status[item.status]}</span>
               </p>
             </div>
             {item.id !== user.id ? (

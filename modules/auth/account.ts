@@ -3,6 +3,7 @@ import { auditStatement } from '@/modules/audit';
 import { DomainError } from '@/modules/errors';
 import { cancelRedemption } from '@/modules/redemptions/service';
 import { revokeAllSessionsStatement } from './sessions';
+import { removeAvatarStatement } from './avatar';
 
 export async function updateDisplayName(db: D1Database, userId: string, displayName: string, now = new Date()) {
   await db.prepare(`UPDATE users SET display_name = ?2, updated_at = ?3 WHERE id = ?1`).bind(userId, displayName, toDbTime(now)).run();
@@ -67,6 +68,7 @@ export async function deleteAccount(db: D1Database, userId: string, now = new Da
     db.prepare(`DELETE FROM devices WHERE user_id = ?1`).bind(userId),
     db.prepare(`DELETE FROM user_interests WHERE user_id = ?1`).bind(userId),
     db.prepare(`DELETE FROM user_blocks WHERE user_id = ?1`).bind(userId),
+    removeAvatarStatement(db, userId),
     // Ratings stay (they describe real visits) but the comment text is personal data.
     db.prepare(`UPDATE reviews SET comment = NULL, updated_at = ?2 WHERE user_id = ?1`).bind(userId, nowDb),
     db.prepare(`UPDATE business_members SET revoked_at = ?2 WHERE user_id = ?1 AND revoked_at IS NULL`).bind(userId, nowDb),

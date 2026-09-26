@@ -63,7 +63,7 @@ export function BillingPlans({ businessId, plans, currentPlan, canRequest, onlin
           <label key={period.months} className={cn('inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border px-4 text-sm font-bold has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/40', months === period.months ? 'border-navy bg-navy text-white' : 'border-slate-200 bg-white text-slate-600')}>
             <input type="radio" name="billing-period" value={period.months} checked={months === period.months} onChange={() => setMonths(period.months)} className="sr-only" />
             {fmt(b.months, { count: period.months })}
-            {period.discountPercent ? <span className={cn('rounded-full px-1.5 text-[11px]', months === period.months ? 'bg-white/20' : 'bg-emerald-50 text-emerald-700')}>{fmt(b.discount, { percent: period.discountPercent })}</span> : null}
+            {period.discountPercent ? <span className={cn('rounded-full px-1.5 text-xs', months === period.months ? 'bg-white/20' : 'bg-emerald-50 text-emerald-700')}>{fmt(b.discount, { percent: period.discountPercent })}</span> : null}
           </label>
         ))}
       </div>
@@ -112,7 +112,7 @@ export function BillingPlans({ businessId, plans, currentPlan, canRequest, onlin
                   );
                 })}
               </div>
-              {online.payme && online.paymeSandbox ? <p className="mt-2 text-[11px] font-semibold text-amber-700">Payme · {b.sandbox}</p> : null}
+              {online.payme && online.paymeSandbox ? <p className="mt-2 text-xs font-semibold text-amber-700">Payme · {b.sandbox}</p> : null}
             </div>
           );
         })}

@@ -66,7 +66,7 @@ export function ClaimPanel({ dealId, branches, loggedIn, loginHref, claimable, h
     return (
       <div className="rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-600">
         <p className="flex items-center gap-2"><CheckCircle2 className="size-5 text-emerald-600" aria-hidden /> {labels.limitReached}</p>
-        <a href="/account/codes" className="mt-3 inline-flex font-bold text-primary">{labels.goToCodes}</a>
+        <a href="/account/codes" className="mt-1 inline-flex py-2 font-bold text-primary">{labels.goToCodes}</a>
       </div>
     );
   }

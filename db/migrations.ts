@@ -511,4 +511,23 @@ const appSupport: Migration = {
   },
 };
 
-export const migrations: readonly Migration[] = [baseline, systemV1, billing, media, engagement, payments, autoModeration, freeLaunch, privacyConsent, appSupport];
+/**
+ * An optional profile photo per person, seen only by that person (the site's
+ * account page and header, the app's Profile). Kept apart from `media`, whose
+ * photos are public, and removed with the account. Additive only.
+ */
+const userAvatars: Migration = {
+  id: '0011_user_avatars',
+  async build({ db }) {
+    return sql(db, [
+      `CREATE TABLE IF NOT EXISTS user_avatars (
+        user_id TEXT PRIMARY KEY, mime TEXT NOT NULL, data_base64 TEXT NOT NULL, size INTEGER NOT NULL,
+        width INTEGER NOT NULL, height INTEGER NOT NULL, sha256 TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+      )`,
+    ]);
+  },
+};
+
+export const migrations: readonly Migration[] = [baseline, systemV1, billing, media, engagement, payments, autoModeration, freeLaunch, privacyConsent, appSupport, userAvatars];
