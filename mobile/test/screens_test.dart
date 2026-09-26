@@ -59,6 +59,18 @@ void main() {
     }
   });
 
+  testWidgets('large text: every category name on Home has the same size', (tester) async {
+    await pumpApp(tester, server: FakeServer.standard(), size: phoneSizes['360']!, textScale: 1.3);
+    final heights = {
+      for (final name in ['Taomlar', 'Sport', 'Ko‘ngilochar', 'Yetkazish']) name: tester.getRect(find.text(name)).height,
+    };
+    for (final height in heights.values) {
+      expect(height, moreOrLessEquals(heights['Taomlar']!, epsilon: 0.5));
+    }
+    // And the longest one still fits its cell.
+    expect(tester.getRect(find.text('Ko‘ngilochar')).width, lessThanOrEqualTo(360 / 4));
+  });
+
   testWidgets('first start: language, interests, city — then home', (tester) async {
     final server = FakeServer.standard();
     await pumpApp(tester, server: server, onboarded: false);
@@ -274,8 +286,8 @@ void main() {
     };
     await pumpApp(tester, server: server);
     expect(find.textContaining('namuna aksiyalar'), findsOneWidget);
-    expect(find.text('Namuna'), findsWidgets);
     await showDeal(tester);
+    expect(find.text('Namuna'), findsWidgets);
     await tester.tap(find.text('Osh').hitTestable().first);
     await settle(tester);
     expect(find.textContaining('Bu namuna aksiya'), findsOneWidget);

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 
 import '../core/api_error.dart';
@@ -171,6 +173,44 @@ class BugunBorApi {
   );
 
   Future<void> deleteAccount({bool closeBusinesses = false}) => _request('DELETE', '/api/v1/me', body: {'closeBusinesses': closeBusinesses});
+
+  /// Replaces the profile photo; returns its new address.
+  Future<String> uploadAvatar(List<int> bytes) async {
+    final data = _data(
+      await _request(
+        'POST',
+        '/api/v1/me/avatar',
+        body: FormData.fromMap({'file': MultipartFile.fromBytes(bytes, filename: 'avatar.jpg', contentType: DioMediaType('image', 'jpeg'))}),
+        sendTimeout: const Duration(seconds: 60),
+      ),
+    );
+    final avatar = data['avatar'];
+    if (avatar is! String) throw const ApiError('SERVER');
+    return avatar;
+  }
+
+  Future<void> removeAvatar() => _request('DELETE', '/api/v1/me/avatar');
+
+  /// The profile photo at [path] (only its owner may load it); null when there is none.
+  Future<Uint8List?> avatar(String path) async {
+    final Response<List<int>> response;
+    try {
+      response = await _dio.get<List<int>>(
+        path,
+        options: Options(responseType: ResponseType.bytes, headers: {...headers(), 'accept': 'image/*'}),
+      );
+    } on DioException {
+      throw const ApiError('NETWORK');
+    }
+    final status = response.statusCode ?? 0;
+    if (status == 404) return null;
+    if (status == 401) {
+      if (_token() != null) _onUnauthorized();
+      throw const ApiError('UNAUTHENTICATED', status: 401);
+    }
+    if (status < 200 || status >= 300 || response.data == null) throw ApiError('SERVER', status: status);
+    return Uint8List.fromList(response.data!);
+  }
 
   Future<List<Redemption>> myCodes() async =>
       _dataList(await _request('GET', '/api/v1/me/redemptions'))

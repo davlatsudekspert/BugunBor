@@ -17,6 +17,9 @@
 | `/privacy` | Privacy policy in uz/ru/en (`?lang=`), text in `lib/privacy.ts` |
 | `/delete-account` | How to delete an account; signed-in visitors can delete right there |
 | `/oferta` | Public offer for business plans: prices, payment, refunds (`#qaytarish`), company details |
+| `/ilova` | The phone app: APK download with install steps, Google Play, or «Tez kunda» (Admin → Sozlamalar → «Mobil ilova») |
+| `/ilova/yuklash` | Download button: redirects to the newest GitHub release APK (`?v=32` for 32-bit phones) while the APK is served |
+| `/qollanma` | Video guides: «Nima uchun BugunBor?» and the 1–4 series (the APK guide only while the site serves the APK); files in `public/qollanma` |
 | `/offline` | Shown by the service worker without a connection |
 | `/r/[code]` | QR target: opens the staff check page with the code filled in |
 | `/lang/[locale]` | Switches language (`uz`, `ru`) and returns |
@@ -53,6 +56,7 @@ The site authenticates with the session cookie (writes must be same-origin); the
 | `GET /deals/{slug}` | Deal page for the app: branches, business, `claimable`, favorite, following, active code |
 | `GET /businesses/{slug}` | Business page for the app: branches, deals, reviews, following |
 | `GET /me`, `PATCH /me`, `DELETE /me` | Profile (incl. Telegram username), stats, notification switches (incl. `notifyNearby`), locale, interests, blocks, memberships with review `status`; delete account (`closeBusinesses: true` closes businesses only this person owns) |
+| `GET`/`POST`/`DELETE /me/avatar` | The person's own profile photo: load it (only its owner; `private` cache), upload one (multipart `file`, at most 300 KB, replaces the old one; returns its address with `?v=`), or remove it. `GET /me` gives the address in `user.avatar` |
 | `GET /me/redemptions`, `GET /me/favorites`, `GET /me/follows` | My codes (with the code while active), saved deals, followed businesses |
 | `PUT /me/interests` | Replace interests (category slugs) |
 | `PUT`/`DELETE /me/devices` | Register or remove a push token (FCM) |

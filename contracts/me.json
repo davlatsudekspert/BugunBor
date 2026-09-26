@@ -5,7 +5,8 @@
     "phone": "+998901234567",
     "locale": "uz",
     "role": "CUSTOMER",
-    "telegramUsername": null
+    "telegramUsername": null,
+    "avatar": null
   },
   "stats": {
     "redeemed": 0,

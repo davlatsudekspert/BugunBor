@@ -628,7 +628,7 @@ class LEn extends L {
   String get updateTitle => 'Please update the app';
 
   @override
-  String get updateText => 'This version is no longer supported. Please update from Google Play.';
+  String get updateText => 'This version is no longer supported — please install the new version of the app.';
 
   @override
   String get updateAction => 'Update';
@@ -1375,4 +1375,60 @@ class LEn extends L {
 
   @override
   String get dealsNeedUpdate => 'Viewing and running deals in the app works once the server is updated. For now, use the business workspace on the website.';
+
+  @override
+  String get newVersionTitle => 'A new version is out';
+
+  @override
+  String get newVersionText => 'A new version of the app is out — update it. Your account and data stay.';
+
+  @override
+  String get newVersionAction => 'Update';
+
+  @override
+  String get profileGuides => 'Video guides';
+
+  @override
+  String get profilePhotoAdd => 'Add a photo';
+
+  @override
+  String get profilePhotoChange => 'Change photo';
+
+  @override
+  String get profilePhotoRemove => 'Remove photo';
+
+  @override
+  String get profilePhotoHint => 'Only you see this photo.';
+
+  @override
+  String get homeHowTitle => 'How BugunBor works';
+
+  @override
+  String get homeHowText => 'Discounts from cafés, shops and services near you — in one place.';
+
+  @override
+  String get homeAllDeals => 'All deals';
+
+  @override
+  String get homePromoText => 'Post a deal — people nearby will see it.';
+
+  @override
+  String timeLeftMinutes(String count) {
+    return '$count min left';
+  }
+
+  @override
+  String timeLeftHours(String count) {
+    return '$count h left';
+  }
+
+  @override
+  String timeLeftDays(String count) {
+    return '$count d left';
+  }
+
+  @override
+  String timeLeftHoursMinutes(String hours, String minutes) {
+    return '$hours h $minutes min left';
+  }
 }

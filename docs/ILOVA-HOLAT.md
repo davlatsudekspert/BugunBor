@@ -18,8 +18,12 @@ Reja: `docs/ILOVA-REJA.md`.
   - Kontraktlar: `contracts/`.
 - [x] **1-bosqich: Flutter ilova** (`mobile/`, `uz.bugunbor.app`)
   - Birinchi ochilish: til → qiziqishlar → joylashuv (avval tushuntirish) → xabarnomalar.
-  - Asosiy: «Siz uchun» (qiziqishlar), «Yaqinimda»/shahar bo'yicha, «Tez tugaydi»,
-    «Namuna» karuseli; shahar yoki joylashuvni tanlash; bloklangan bizneslar ko'rinmaydi.
+  - Asosiy (tepadan pastga): qidiruv; yangi odamga «BugunBor qanday ishlaydi» (3 qadam,
+    ✕ bilan butunlay yopiladi, birinchi koddan keyin chiqmaydi); 8 ta kategoriya katakda
+    (nomlar bir xil o'lchamda); «Siz uchun» (qiziqishlar); «Yaqinimda»/shahar bo'yicha 4 ta
+    aksiya va «Barcha aksiyalar»; «Tez tugaydi»; «Namuna» karuseli. Vaqt «3 soat qoldi»
+    ko'rinishida, oxirgi soat ajralib turadi. Shahar yoki joylashuvni tanlash; bloklangan
+    bizneslar ko'rinmaydi.
   - Qidiruv: so'z, kategoriya, saralash, sahifalab yuklash.
   - Aksiya: band qilish (filial tanlash, takroriy so'rovdan himoya kaliti), saqlash,
     obuna, ulashish, yo'l ko'rsatish, shikoyat; namunada «Band qilish» yo'q.
@@ -55,7 +59,7 @@ Reja: `docs/ILOVA-REJA.md`.
     rad etilgan sababi bilan), tezkor amallar, statistika, profilni to'ldirish ro'yxati, so'nggi kodlar.
     Kassir faqat kod tekshirishni ko'radi. «Shaxsiy» tomoni bir bosishda.
   - «Biznes tasdiqlandi» xabarnomasi ilovada o'sha biznes profilini ochadi (to'lov sahifalari saytda qoladi).
-  - Asosiy ekranda biznes egalari uchun taklif kartochkasi (yopilsa 30 kun ko'rinmaydi, biznesi borlarga chiqmaydi).
+  - Asosiy ekran oxirida biznes egalari uchun kichik taklif kartochkasi (yopilsa 30 kun ko'rinmaydi, biznesi borlarga chiqmaydi).
   - iOS uslubidagi pastki menyu: ingichka to'q ikonkalar, tanlangani to'ldirilgan.
   - Server: `GET /api/v1/business/{id}`, `/config`da kategoriya `id`, `/me`da Telegram username va a'zolik holati.
   - Testlar: ilova 77, sayt 158. Emulyator E2E yangi ekranlarni ham suratga oladi.
@@ -75,12 +79,36 @@ Reja: `docs/ILOVA-REJA.md`.
   - Server: `GET /api/v1/business/{id}/deals`, `GET /api/v1/business/{id}/deals/{dealId}`;
     `/config`da aksiya qoidalari va belgilar; biznes profilida kategoriya va filiallar. Kassir ko'ra olmaydi.
   - Testlar: ilova 97, sayt 159.
+- [x] **PR #7 `main`ga birlashtirildi** (2026-09-26): CI yashil (check, e2e, build, verify).
+- [x] **Saytda ilova bo'limi** (2026-09-26)
+  - Bosh sahifada «BugunBor ilovasi» bo'limi va sayt pastida «Ilovani yuklab oling».
+  - `bugunbor.uz/ilova`: yuklab olish tugmasi va o'rnatish yo'riqnomasi (uz/ru).
+  - «Android ilova» tugmasi Admin → Sozlamalar → «Mobil ilova»da tanlanganiga qarab ishlaydi:
+    «Tez kunda» (standart), «Saytdan APK» (GitHub'dagi eng so'nggi reliz) yoki «Google Play».
+    App Store: «Tez kunda».
+  - APK'ni chiqarish: GitHub → Actions → «App» → Run workflow → `publish_apk`. Faqat egasi ishga
+    tushiradi; testlar, E2E va tekshirilgan build'dan keyin, faqat egasining upload kaliti bilan
+    (debug kalit bilan imzolangan APK hech qachon chiqmaydi). 64-bit va 32-bit APK, versionCode = run raqami.
+
+- [x] **Qo'llanma videolari** (2026-09-26, ilova ekranlaridan, 1080×1920): 1/4 ilovani yuklab olish
+  (sayt → o'rnatish → birinchi ochilish), 2/4 ro'yxatdan o'tish, 3/4 biznesni qo'shish, 4/4 aksiya qo'shish
+  va «Nima uchun BugunBor?» promo. Egasiga yuborildi (Instagram uchun).
+
+- [x] **Saytda video qo'llanmalar** (2026-09-26): `bugunbor.uz/qollanma` — promo va 1–4 qo'llanmalar, posterlar,
+  o'zbekcha subtitrlar (WebVTT). iPhone (Safari) uchun videolar Worker orqali qismlab beriladi (`/qollanma/video/…`).
+  Ilovada: Profil → «Video qo'llanma».
+- [x] **Profil rasmi** (2026-09-26): saytdagi kabinetda va ilovadagi Profil'da rasm qo'yish/almashtirish/olib tashlash.
+  Rasm faqat egasiga ko'rinadi (alohida `user_avatars` jadvali), hisob o'chirilganda o'chadi; maxfiylik siyosatiga yozildi.
+- [x] **Namuna belgilari** (2026-09-26): tepadagi «Demo rejim» yozuvi olib tashlandi; har bir namuna aksiya kartochkasi,
+  aksiya va biznes sahifasida «Namuna» belgisi, namuna biznesda «Tasdiqlangan» belgisi yo'q.
 
 ## Navbatda
 
 - [ ] Egasi kalitlarni qo'ygach: imzolangan build, qo'lda APK sinovi, Internal testing qoralamasi.
-- [ ] Saytda ilova bo'limi: «Android ilova» tugmasi va «App Store — tez kunda» belgisi
-  (Android havolasi qayerga olib borishi egasi bilan kelishiladi).
+- [ ] Saytdan APK: egasi upload kalitini yaratib GitHub secret'lariga qo'yadi (pastda) → Actions → «App» →
+  `publish_apk` → Admin → Sozlamalar → «Mobil ilova» → «Saytdan APK».
+- [ ] Ilova Google Play'da chiqqach: Admin → Sozlamalar → «Mobil ilova» → «Google Play».
+- [ ] Qo'llanma videolarini saytga (`/qollanma`) va ilovaga (Profil → «Qo'llanma») qo'yish — egasi ma'qullagach.
 
 ## Egasidan kerak
 
@@ -90,6 +118,24 @@ Reja: `docs/ILOVA-REJA.md`.
 - `REVIEW_LOGIN_CODE`: Google tekshiruvchisi uchun kod, 12+ belgi.
 - `ANDROID_CERT_SHA256`: Play Console → App signing'dagi SHA-256 barmoq izlari.
 - `MIN_APP_BUILD`: ixtiyoriy. Eski ilovani yangilashga majburlash uchun.
+
+### Upload kalitini yaratish (bir marta; kalit faqat sizda qoladi)
+
+Kalitsiz saytga APK chiqmaydi: boshqa kalit bilan imzolangan versiyani telefon yangilanish sifatida qabul qilmaydi.
+
+1. Kompyuterda Java bo'lsin (Android Studio yoki https://adoptium.net dan Temurin JDK).
+2. Kalit uchun OneDrive'dan tashqarida papka oching (Windows: `mkdir C:\BugunBor-kalit -Force; cd C:\BugunBor-kalit`,
+   macOS: `mkdir -p ~/BugunBor-kalit && cd ~/BugunBor-kalit`) va kalitni yarating (parollarni o'zingiz o'ylab toping va saqlab qo'ying):
+   `keytool -genkeypair -v -keystore bugunbor-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias bugunbor`
+3. Faylni base64 qiling:
+   - Windows (PowerShell): `[Convert]::ToBase64String([IO.File]::ReadAllBytes((Resolve-Path bugunbor-upload.jks).Path)) | Set-Clipboard`
+   - macOS: `base64 -i bugunbor-upload.jks | pbcopy`
+4. GitHub → Settings → Secrets and variables → Actions → New repository secret: pastdagi 4 ta `ANDROID_UPLOAD_*`.
+5. `bugunbor-upload.jks` faylini va parollarni xavfsiz joyda saqlang (masalan, ikki joyda zaxira).
+   Yo'qolsa, ilovani yangilab bo'lmaydi. Hech kimga, chatga yoki repoga bermang.
+
+Google Play'ga chiqqanda: Play Console → App integrity → App signing'da **o'z kalitingizni yuklash**ni tanlang
+(«Export and upload a key from Java keystore»). Shunda saytdan o'rnatganlar ilovani Play orqali yangilay oladi.
 
 ### GitHub secret'lari (ilova, Settings → Secrets and variables → Actions)
 

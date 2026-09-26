@@ -629,7 +629,7 @@ class LUz extends L {
   String get updateTitle => 'Ilovani yangilang';
 
   @override
-  String get updateText => 'Bu versiya endi qo‘llab-quvvatlanmaydi. Play Market’dan yangilang.';
+  String get updateText => 'Bu versiya endi qo‘llab-quvvatlanmaydi — ilovaning yangi versiyasini o‘rnating.';
 
   @override
   String get updateAction => 'Yangilash';
@@ -1377,4 +1377,60 @@ class LUz extends L {
 
   @override
   String get dealsNeedUpdate => 'Aksiyalarni ilovada ko‘rish va boshqarish server yangilangach ishlaydi. Hozircha saytdagi biznes kabinetidan foydalaning.';
+
+  @override
+  String get newVersionTitle => 'Yangi versiya bor';
+
+  @override
+  String get newVersionText => 'Ilovaning yangi versiyasi chiqdi — yangilab oling. Hisobingiz va ma’lumotlaringiz saqlanadi.';
+
+  @override
+  String get newVersionAction => 'Yangilash';
+
+  @override
+  String get profileGuides => 'Video qo‘llanma';
+
+  @override
+  String get profilePhotoAdd => 'Rasm qo‘yish';
+
+  @override
+  String get profilePhotoChange => 'Rasmni almashtirish';
+
+  @override
+  String get profilePhotoRemove => 'Rasmni olib tashlash';
+
+  @override
+  String get profilePhotoHint => 'Rasm faqat sizga ko‘rinadi.';
+
+  @override
+  String get homeHowTitle => 'BugunBor qanday ishlaydi';
+
+  @override
+  String get homeHowText => 'Yaqin atrofdagi kafe, do‘kon va xizmatlarning chegirmalari — bir joyda.';
+
+  @override
+  String get homeAllDeals => 'Barcha aksiyalar';
+
+  @override
+  String get homePromoText => 'Aksiyangizni joylang — yaqin atrofdagi xaridorlar ko‘radi.';
+
+  @override
+  String timeLeftMinutes(String count) {
+    return '$count daqiqa qoldi';
+  }
+
+  @override
+  String timeLeftHours(String count) {
+    return '$count soat qoldi';
+  }
+
+  @override
+  String timeLeftDays(String count) {
+    return '$count kun qoldi';
+  }
+
+  @override
+  String timeLeftHoursMinutes(String hours, String minutes) {
+    return '$hours soat $minutes daq. qoldi';
+  }
 }

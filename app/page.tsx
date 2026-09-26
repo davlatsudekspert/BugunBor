@@ -1,4 +1,4 @@
-import { ArrowRight, Clock3, LocateFixed, MapPin, Search, ShieldCheck, Sparkles, Store } from 'lucide-react';
+import { ArrowRight, Clock3, LocateFixed, MapPin, Search, ShieldCheck, Smartphone, Sparkles, Store } from 'lucide-react';
 
 import { CategoryIcon, categoryColor } from '@/components/deals/category-icon';
 import { CitySelect } from '@/components/deals/city-select';
@@ -7,8 +7,10 @@ import { DealCard } from '@/components/deals/deal-card';
 import { DealVisual } from '@/components/deals/deal-visual';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
+import { AppBadges } from '@/components/site/app-badges';
 import { JsonLd } from '@/components/site/json-ld';
 import { getDb } from '@/db/client';
+import { appStores } from '@/modules/app-stores';
 import { demoEnabled } from '@/modules/demo';
 import { cityName } from '@/lib/cities';
 import { getPreferredCity } from '@/lib/city-cookie';
@@ -27,11 +29,12 @@ export default async function Home() {
   // Releasing expired codes can wait until after the page is sent.
   inBackground(runMaintenance(db), 'Maintenance failed');
   const demo = await demoEnabled(db);
-  const [deals, categories, favorites, savings] = await Promise.all([
+  const [deals, categories, favorites, savings, stores] = await Promise.all([
     listLiveDeals(db, { city, demo, sort: 'ending' }),
     listCategories(db),
     user ? getFavoriteIds(db, user.id) : Promise.resolve(new Set<string>()),
     platformSavings(db, { demo }),
+    appStores(db),
   ]);
   const businessCount = new Set(deals.map((deal) => deal.business.id)).size;
   const maxDiscount = deals.reduce((max, deal) => Math.max(max, deal.discountPercent), 0);
@@ -97,7 +100,7 @@ export default async function Home() {
             </a>
 
             <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-500">
-              <a href="/discover?sort=near" className="flex items-center gap-1.5 font-semibold text-navy hover:text-primary"><LocateFixed className="size-4 text-primary" aria-hidden /> {t.discover.nearMe}</a>
+              <a href="/discover?sort=near" className="-my-2 flex items-center gap-1.5 py-2 font-semibold text-navy hover:text-primary"><LocateFixed className="size-4 text-primary" aria-hidden /> {t.discover.nearMe}</a>
               <span className="flex items-center gap-1.5"><ShieldCheck className="size-4 text-emerald-600" aria-hidden /> {t.home.trustVerified}</span>
               <span className="flex items-center gap-1.5"><Sparkles className="size-4 text-amber-500" aria-hidden /> {t.home.trustFree}</span>
             </div>
@@ -234,7 +237,20 @@ export default async function Home() {
               </li>
             ))}
           </ol>
-          <a href="/how-it-works" className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-primary">{t.home.howMore} <ArrowRight className="size-4" aria-hidden /></a>
+          <a href="/how-it-works" className="mt-4 inline-flex items-center gap-2 py-2 text-sm font-bold text-primary">{t.home.howMore} <ArrowRight className="size-4" aria-hidden /></a>
+        </div>
+      </section>
+
+      <section id="app" className="border-t border-slate-200/70 bg-cream">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-12 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
+          <div className="flex items-start gap-4">
+            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary text-white"><Smartphone className="size-6" aria-hidden /></span>
+            <div>
+              <h2 className="text-2xl font-black tracking-[-.03em] text-navy">{t.appStores.title}</h2>
+              <p className="mt-1 max-w-xl leading-7 text-slate-600">{t.appStores.text}</p>
+            </div>
+          </div>
+          <AppBadges stores={stores} t={t} />
         </div>
       </section>
     </main>

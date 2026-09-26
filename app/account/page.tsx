@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { ArrowRight, Heart, LayoutDashboard, PiggyBank, PlusCircle, ShieldCheck, TicketCheck } from 'lucide-react';
 
 import { DeleteAccountButton, LogoutButton, NameForm } from '@/components/account/account-actions';
+import { AvatarEditor } from '@/components/account/avatar-editor';
 import { NotificationSettings } from '@/components/account/notification-settings';
 import { LanguageSwitch } from '@/components/site/language-switch';
 import { getDb } from '@/db/client';
@@ -33,13 +34,14 @@ export default async function AccountPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <div className="flex items-center gap-4">
-        <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-navy text-xl font-black text-white">{initials(user.displayName) || 'B'}</span>
-        <div className="min-w-0">
-          <h1 className="truncate text-3xl font-black tracking-[-.04em] text-navy">{fmt(t.account.hello, { name: user.displayName })}</h1>
-          {user.phone ? <p className="mt-1 text-sm text-slate-500">{t.account.phone}: {formatPhone(user.phone)}</p> : null}
-        </div>
-      </div>
+      <AvatarEditor
+        avatar={user.avatar}
+        initials={initials(user.displayName) || 'B'}
+        labels={{ ...t.account.photo, tooBig: t.biz.photo.tooBig, networkError: t.common.networkError }}
+      >
+        <h1 className="break-words text-3xl font-black tracking-[-.04em] text-navy">{fmt(t.account.hello, { name: user.displayName })}</h1>
+        {user.phone ? <p className="mt-1 text-sm text-slate-500">{t.account.phone}: {formatPhone(user.phone)}</p> : null}
+      </AvatarEditor>
 
       <div className="mt-8 overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 to-emerald-700 p-6 text-white shadow-[0_18px_50px_rgba(16,120,80,.25)]">
         <p className="flex items-center gap-2 text-sm font-bold text-emerald-50"><PiggyBank className="size-5" aria-hidden /> {t.account.stats.saved}</p>

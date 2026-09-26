@@ -629,7 +629,7 @@ class LRu extends L {
   String get updateTitle => 'Обновите приложение';
 
   @override
-  String get updateText => 'Эта версия больше не поддерживается. Обновите в Play Маркете.';
+  String get updateText => 'Эта версия больше не поддерживается — установите новую версию приложения.';
 
   @override
   String get updateAction => 'Обновить';
@@ -1376,4 +1376,60 @@ class LRu extends L {
 
   @override
   String get dealsNeedUpdate => 'Просмотр и управление акциями в приложении заработают после обновления сервера. Пока пользуйтесь бизнес-кабинетом на сайте.';
+
+  @override
+  String get newVersionTitle => 'Есть новая версия';
+
+  @override
+  String get newVersionText => 'Вышла новая версия приложения — обновите его. Аккаунт и данные сохранятся.';
+
+  @override
+  String get newVersionAction => 'Обновить';
+
+  @override
+  String get profileGuides => 'Видеоинструкции';
+
+  @override
+  String get profilePhotoAdd => 'Добавить фото';
+
+  @override
+  String get profilePhotoChange => 'Сменить фото';
+
+  @override
+  String get profilePhotoRemove => 'Удалить фото';
+
+  @override
+  String get profilePhotoHint => 'Фото видите только вы.';
+
+  @override
+  String get homeHowTitle => 'Как работает BugunBor';
+
+  @override
+  String get homeHowText => 'Скидки кафе, магазинов и услуг рядом — в одном месте.';
+
+  @override
+  String get homeAllDeals => 'Все акции';
+
+  @override
+  String get homePromoText => 'Разместите акцию — её увидят покупатели рядом.';
+
+  @override
+  String timeLeftMinutes(String count) {
+    return 'Осталось $count мин';
+  }
+
+  @override
+  String timeLeftHours(String count) {
+    return 'Осталось $count ч';
+  }
+
+  @override
+  String timeLeftDays(String count) {
+    return 'Осталось $count дн.';
+  }
+
+  @override
+  String timeLeftHoursMinutes(String hours, String minutes) {
+    return 'Осталось $hours ч $minutes мин';
+  }
 }

@@ -235,7 +235,10 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
               textInputAction: TextInputAction.done,
               onSubmitted: _lookup,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: 2),
-              decoration: InputDecoration(hintText: l.cashierCodeHint),
+              decoration: InputDecoration(
+                hintText: l.cashierCodeHint,
+                hintStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.w500, letterSpacing: 0.5, color: context.mutedText),
+              ),
             ),
             const SizedBox(height: Gap.sm),
             FilledButton(

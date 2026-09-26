@@ -2,6 +2,7 @@ import handler from 'vinext/server/fetch-handler';
 
 import { assetLinks } from '@/lib/app-links';
 import { PAGE_CACHE_SECONDS, cacheablePage, pageCacheKey } from '@/lib/page-cache';
+import { serveGuideVideo } from '@/modules/guides';
 
 // The Worker entry: vinext renders the app; guests' public pages are served
 // from the edge cache for a few seconds (lib/page-cache.ts).
@@ -25,6 +26,8 @@ export default {
     if (new URL(request.url).pathname === '/.well-known/assetlinks.json') {
       return Response.json(assetLinks(env.ANDROID_CERT_SHA256), { headers: { 'cache-control': 'public, max-age=3600' } });
     }
+    const video = await serveGuideVideo(request, env.ASSETS);
+    if (video) return video;
     const key = pageCacheKey(request, BUILD);
     const cache = key ? edgeCache() : undefined;
     if (!key || !cache) return handler.fetch(request, env, ctx);

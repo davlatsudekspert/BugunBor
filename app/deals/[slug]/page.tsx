@@ -116,7 +116,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
         </div>
       ) : null}
       <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6">
-        <a href="/discover" className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-primary"><ArrowLeft className="size-4" aria-hidden /> {t.deal.backToDeals}</a>
+        <a href="/discover" className="-my-2 inline-flex items-center gap-2 py-2 text-sm font-bold text-slate-600 hover:text-primary"><ArrowLeft className="size-4" aria-hidden /> {t.deal.backToDeals}</a>
       </div>
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[1.15fr_.85fr]">
         <section className="min-w-0">
@@ -130,7 +130,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
               <a href={`/businesses/${deal.business.slug}`} className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-primary">
                 <BusinessAvatar name={deal.business.name} logo={deal.business.logo} className="size-8 rounded-full bg-white text-[11px] text-navy ring-1 ring-slate-200" />
                 {deal.business.name}
-                {deal.business.verificationStatus === 'VERIFIED' ? <BadgeCheck className="size-5 fill-emerald-500 text-white" aria-label={t.common.verified} /> : null}
+                {deal.business.verificationStatus === 'VERIFIED' && !deal.isDemo && !deal.business.isDemo ? <BadgeCheck className="size-5 fill-emerald-500 text-white" aria-label={t.common.verified} /> : null}
               </a>
               {deal.business.rating ? (
                 <a href={`/businesses/${deal.business.slug}#reviews`} className="ml-10 mt-0.5 flex items-center gap-1.5 text-xs font-bold text-navy">
@@ -143,6 +143,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
               <FollowButton businessId={deal.business.id} initial={follow} loggedIn={Boolean(user)} compact labels={{ follow: t.business.follow, following: t.business.following, followers: t.business.followers, hint: t.business.followHint }} />
             ) : null}
           </div>
+          {deal.isDemo || deal.business.isDemo ? <span className="mt-4 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-900">{t.common.sample}</span> : null}
           <h1 className="mt-2 text-4xl font-black tracking-[-.05em] text-navy sm:text-5xl">{deal.title}</h1>
           <p className="mt-5 max-w-2xl whitespace-pre-line text-lg leading-8 text-slate-600">{deal.description}</p>
 
@@ -155,7 +156,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
                   <p className="mt-2 text-sm leading-6 text-slate-500">{branch.address}, {cityName(branch.city, locale)}</p>
                   {hours ? <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500"><CalendarClock className="size-4" aria-hidden /> {hours}</p> : null}
                   <OpenBadge hoursJson={branch.hoursJson} t={t} now={now} className="mt-1.5" />
-                  <a href={directionsUrl(branch)} target="_blank" rel="noreferrer" className="mt-3 flex items-center gap-1.5 text-sm font-bold text-primary"><Navigation className="size-4" aria-hidden /> {t.common.directions}</a>
+                  <a href={directionsUrl(branch)} target="_blank" rel="noreferrer" className="-mb-2 mt-1 flex w-fit items-center gap-1.5 py-2 text-sm font-bold text-primary"><Navigation className="size-4" aria-hidden /> {t.common.directions}</a>
                 </div>
               );
             })}
@@ -185,7 +186,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
             <ShareButton url={`/deals/${deal.slug}`} text={fmt(t.deal.shareText, { title: deal.title, percent: deal.discountPercent })} labels={{ share: t.common.share, copied: t.common.copied }} />
             <FavoriteButton dealId={deal.id} initial={favorites.has(deal.id)} loggedIn={Boolean(user)} labels={{ save: fmt(t.deal.saveAria, { title: deal.title }), unsave: fmt(t.deal.unsaveAria, { title: deal.title }) }} withText={{ save: t.deal.save, saved: t.deal.saved }} />
           </div>
-          <a href={`/contact?subject=${encodeURIComponent(fmt(t.deal.reportSubject, { title: deal.title }))}`} className="mt-7 inline-flex items-center gap-2 text-sm text-slate-500 underline-offset-4 hover:underline">
+          <a href={`/contact?subject=${encodeURIComponent(fmt(t.deal.reportSubject, { title: deal.title }))}`} className="mt-5 inline-flex items-center gap-2 py-2 text-sm text-slate-500 underline-offset-4 hover:underline">
             <TriangleAlert className="size-4" aria-hidden /> {t.deal.report}
           </a>
         </section>
