@@ -1026,7 +1026,7 @@ export const uz = {
     soon: 'Android ilova tez kunda chiqadi. Hozircha saytdan foydalaning — u telefonda ham qulay ishlaydi.',
     howTitle: 'Qanday o‘rnatiladi',
     steps: [
-      { title: 'Yuklab oling', text: '«Android ilovani yuklab olish» tugmasini bosing. BugunBor fayli (APK) telefoningizga yuklanadi.' },
+      { title: 'Yuklab oling', text: '«Android ilovani yuklab olish» tugmasini bosing. BugunBor fayli (APK) telefoningizga yuklanadi. Brauzer «fayl zararli bo‘lishi mumkin» desa, «Baribir yuklab olish»ni bosing.' },
       { title: 'Faylni oching', text: 'Yuklab bo‘lingach, bildirishnomani bosing yoki «Fayllar» → «Yuklanmalar»dan BugunBor faylini oching.' },
       { title: 'Ruxsat bering', text: 'Telefon noma’lum manbadan o‘rnatishga ruxsat so‘rasa, «Sozlamalar»ni bosing, brauzeringiz (masalan, Chrome) uchun «Ruxsat berish»ni yoqing va orqaga qayting. Bu bir marta so‘raladi.' },
       { title: 'O‘rnating', text: '«O‘rnatish»ni bosing. Google Play Protect ogohlantirsa, «Batafsil» → «Baribir o‘rnatish»ni tanlang: ilova hali Google Play’da bo‘lmagani uchun shunday chiqadi.' },

@@ -86,13 +86,17 @@ Reja: `docs/ILOVA-REJA.md`.
     tushiradi; testlar, E2E va tekshirilgan build'dan keyin, faqat egasining upload kaliti bilan
     (debug kalit bilan imzolangan APK hech qachon chiqmaydi). 64-bit va 32-bit APK, versionCode = run raqami.
 
+- [x] **Qo'llanma videolari** (2026-09-26, ilova ekranlaridan, 1080×1920): 1/4 ilovani yuklab olish
+  (sayt → o'rnatish → birinchi ochilish), 2/4 ro'yxatdan o'tish, 3/4 biznesni qo'shish, 4/4 aksiya qo'shish
+  va «Nima uchun BugunBor?» promo. Egasiga yuborildi (Instagram uchun).
+
 ## Navbatda
 
 - [ ] Egasi kalitlarni qo'ygach: imzolangan build, qo'lda APK sinovi, Internal testing qoralamasi.
 - [ ] Saytdan APK: egasi upload kalitini yaratib GitHub secret'lariga qo'yadi (pastda) → Actions → «App» →
   `publish_apk` → Admin → Sozlamalar → «Mobil ilova» → «Saytdan APK».
 - [ ] Ilova Google Play'da chiqqach: Admin → Sozlamalar → «Mobil ilova» → «Google Play».
-- [ ] Qo'llanma videolari (ilovadan): ro'yxatdan o'tish, biznes qo'shish, aksiya qo'shish.
+- [ ] Qo'llanma videolarini saytga (`/qollanma`) va ilovaga (Profil → «Qo'llanma») qo'yish — egasi ma'qullagach.
 
 ## Egasidan kerak
 
@@ -108,10 +112,11 @@ Reja: `docs/ILOVA-REJA.md`.
 Kalitsiz saytga APK chiqmaydi: boshqa kalit bilan imzolangan versiyani telefon yangilanish sifatida qabul qilmaydi.
 
 1. Kompyuterda Java bo'lsin (Android Studio yoki https://adoptium.net dan Temurin JDK).
-2. Kalitni yarating (parollarni o'zingiz o'ylab toping va saqlab qo'ying):
+2. Kalit uchun OneDrive'dan tashqarida papka oching (Windows: `mkdir C:\BugunBor-kalit -Force; cd C:\BugunBor-kalit`,
+   macOS: `mkdir -p ~/BugunBor-kalit && cd ~/BugunBor-kalit`) va kalitni yarating (parollarni o'zingiz o'ylab toping va saqlab qo'ying):
    `keytool -genkeypair -v -keystore bugunbor-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias bugunbor`
 3. Faylni base64 qiling:
-   - Windows (PowerShell): `[Convert]::ToBase64String([IO.File]::ReadAllBytes("bugunbor-upload.jks")) | Set-Clipboard`
+   - Windows (PowerShell): `[Convert]::ToBase64String([IO.File]::ReadAllBytes((Resolve-Path bugunbor-upload.jks).Path)) | Set-Clipboard`
    - macOS: `base64 -i bugunbor-upload.jks | pbcopy`
 4. GitHub → Settings → Secrets and variables → Actions → New repository secret: pastdagi 4 ta `ANDROID_UPLOAD_*`.
 5. `bugunbor-upload.jks` faylini va parollarni xavfsiz joyda saqlang (masalan, ikki joyda zaxira).
