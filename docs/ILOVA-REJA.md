@@ -169,6 +169,8 @@ Hozir sayt sahifalari ma’lumotni bazadan to‘g‘ridan-to‘g‘ri oladi. Och
 
 ## 4. To‘lov va Google Play Billing
 
+**Qaror (2026-09-26):** ilovada hech qanday to‘lov bo‘lmaydi. Onlayn to‘lov hozircha o‘chiq. Keyin qo‘shilganda ham faqat saytda ishlaydi.
+
 - **Mijoz ilovada hech narsa sotib olmaydi.** Band qilish bepul, to‘lov joyida — biznesning kassasida (jismoniy mahsulot yoki xizmat). Google Play Billing talab qilinmaydi.
 - **Biznes tariflari** raqamli xizmat. Agar ilova ichida sotilsa, Play Billing talab qilinadi. Shuning uchun ilovada tarif sahifasi, narx va «saytda to‘lang» havolasi **umuman bo‘lmaydi**. Tarif faqat saytda boshqariladi.
 - Ilova hech qachon «to‘landi» holatini qo‘ymaydi, buni faqat server qiladi (saytdagi qoida o‘zgarmaydi).
