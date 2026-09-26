@@ -2,14 +2,17 @@ import { z } from 'zod';
 
 import { getDb } from '@/db/client';
 import { getConfig } from '@/lib/env';
+import { mediaUrl } from '@/lib/photos';
 import { maskPhone } from '@/lib/format';
 import { assertSameOrigin, json, readJson, requestLocale, route } from '@/lib/http';
-import type { BusinessAction } from '@/modules/auth/authorization';
+import { roleCan, type BusinessAction } from '@/modules/auth/authorization';
 import { apiUser } from '@/modules/auth/api-user';
 import { BILLING_PERIODS, requestPlan } from '@/modules/billing/service';
 import { assertNotSuspended, requireMembership } from '@/modules/businesses/access';
 import { branchSchema, businessProfileSchema, teamAddSchema } from '@/modules/businesses/schema';
-import { addMember, changeMemberRole, createBranch, deleteBranch, removeMember, updateBranch, updateBusinessProfile } from '@/modules/businesses/service';
+import {
+  addMember, businessDashboard, changeMemberRole, createBranch, deleteBranch, profileChecklist, removeMember, updateBranch, updateBusinessProfile,
+} from '@/modules/businesses/service';
 import { dealInputSchema } from '@/modules/deals/schema';
 import { createDeal, duplicateDeal, setDealTop, transitionDeal, updateDeal } from '@/modules/deals/service';
 import { DomainError } from '@/modules/errors';
@@ -71,6 +74,41 @@ async function checked<T extends { id: string; status: string }>(db: D1Database,
   const result = await autoModerateDeal(db, deal.id);
   return { ...deal, status: result?.status ?? deal.status };
 }
+
+// The app's business profile: the business as its team sees it and what this
+// member may do; owners and managers also get today's numbers, the latest
+// codes and the setup steps. Read-only: changes still go through POST.
+export const GET = route(async (request: Request, context: { params: Promise<{ businessId: string }> }) => {
+  const db = await getDb();
+  const user = await apiUser(request, db);
+  const { businessId } = await context.params;
+  const membership = await requireMembership(db, user.id, businessId, 'business.read');
+  const can = {
+    edit: roleCan(membership.role, 'business.edit'),
+    deals: roleCan(membership.role, 'deal.write'),
+    validate: roleCan(membership.role, 'redemption.validate'),
+    analytics: roleCan(membership.role, 'analytics.read'),
+  };
+  const [row, dashboard, setup] = await Promise.all([
+    db.prepare(`SELECT logo_id AS logoId FROM businesses WHERE id = ?1`).bind(businessId).first<{ logoId: string | null }>(),
+    can.analytics ? businessDashboard(db, businessId) : Promise.resolve(null),
+    can.edit ? profileChecklist(db, businessId) : Promise.resolve([]),
+  ]);
+  const { recent, ...stats } = dashboard ?? { recent: [] };
+  return json({
+    data: {
+      business: {
+        id: membership.businessId, name: membership.name, slug: membership.slug, city: membership.city, status: membership.verificationStatus,
+        rejectionReason: membership.rejectionReason, suspended: Boolean(membership.suspendedAt), isDemo: membership.isDemo, logo: mediaUrl(row?.logoId),
+      },
+      role: membership.role,
+      can,
+      stats: dashboard ? stats : null,
+      recent: recent.slice(0, 5),
+      setup: setup.map(({ key, done }) => ({ key, done })),
+    },
+  });
+});
 
 export const POST = route(async (request: Request, context: { params: Promise<{ businessId: string }> }) => {
   assertSameOrigin(request);

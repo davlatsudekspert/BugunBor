@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_deals">Deals and codes</string>
+    <string name="notification_channel_deals_description">New deals, code expiry and offers nearby</string>
+</resources>

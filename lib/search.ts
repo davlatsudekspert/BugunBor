@@ -33,6 +33,17 @@ export function searchPattern(query: string | null | undefined) {
   return `%${normalized.replace(/[%_]/g, '')}%`;
 }
 
+/**
+ * LIKE pattern for the catalogue: the query must start a word of
+ * `' ' || search_text`, so "osh" finds "osh" and "oshxona" but not
+ * "toshkent" (every address in Tashkent would match otherwise).
+ */
+export function wordSearchPattern(query: string | null | undefined) {
+  const normalized = normalizeSearchText(query ?? '').slice(0, 80).replace(/[%_]/g, '');
+  if (!normalized) return null;
+  return `% ${normalized}%`;
+}
+
 export function slugify(value: string, fallback = 'item') {
   const slug = normalizeSearchText(value)
     .replace(/[^a-z0-9 ]/g, '')

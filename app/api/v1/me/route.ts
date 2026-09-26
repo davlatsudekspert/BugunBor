@@ -18,23 +18,28 @@ import { getInterests } from '@/modules/engagement/interests';
 export const GET = route(async (request: Request) => {
   const db = await getDb();
   const user = await apiUser(request, db);
-  const [stats, notifications, interests, blocked, memberships, consent] = await Promise.all([
+  const [stats, notifications, interests, blocked, memberships, account] = await Promise.all([
     accountStats(db, user.id),
     getNotificationSettings(db, user.id),
     getInterests(db, user.id),
     listBlockedBusinessIds(db, user.id),
     listMemberships(db, user.id),
-    db.prepare(`SELECT privacy_version AS version FROM users WHERE id = ?1`).bind(user.id).first<{ version: string | null }>(),
+    db.prepare(`SELECT privacy_version AS version, telegram_username AS telegramUsername FROM users WHERE id = ?1`)
+      .bind(user.id)
+      .first<{ version: string | null; telegramUsername: string | null }>(),
   ]);
   return json({
     data: {
-      user: { id: user.id, displayName: user.displayName, phone: user.phone, locale: user.locale, role: user.role },
+      user: { id: user.id, displayName: user.displayName, phone: user.phone, locale: user.locale, role: user.role, telegramUsername: account?.telegramUsername ?? null },
       stats,
       notifications,
       interests,
       blockedBusinessIds: blocked,
-      memberships: memberships.map((m) => ({ businessId: m.businessId, name: m.name, slug: m.slug, role: m.role, verified: m.verificationStatus === 'VERIFIED' && !m.suspendedAt })),
-      privacy: { acceptedVersion: consent?.version ?? null, currentVersion: PRIVACY_VERSION },
+      // `status` is the review state (PENDING, VERIFIED, REJECTED); `verified` also needs the business not suspended.
+      memberships: memberships.map((m) => ({
+        businessId: m.businessId, name: m.name, slug: m.slug, role: m.role, status: m.verificationStatus, verified: m.verificationStatus === 'VERIFIED' && !m.suspendedAt,
+      })),
+      privacy: { acceptedVersion: account?.version ?? null, currentVersion: PRIVACY_VERSION },
     },
   });
 });

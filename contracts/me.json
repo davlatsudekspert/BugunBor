@@ -4,7 +4,8 @@
     "displayName": "Alice Karimova",
     "phone": "+998901234567",
     "locale": "uz",
-    "role": "CUSTOMER"
+    "role": "CUSTOMER",
+    "telegramUsername": null
   },
   "stats": {
     "redeemed": 0,

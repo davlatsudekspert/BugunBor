@@ -1,0 +1,67 @@
+{
+  "business": {
+    "id": "biz",
+    "name": "Kafe",
+    "slug": "kafe",
+    "city": "tashkent",
+    "status": "VERIFIED",
+    "rejectionReason": null,
+    "suspended": false,
+    "isDemo": false,
+    "logo": null
+  },
+  "role": "OWNER",
+  "can": {
+    "edit": true,
+    "deals": true,
+    "validate": true,
+    "analytics": true
+  },
+  "stats": {
+    "live": 1,
+    "pending": 0,
+    "claimsToday": 1,
+    "redeemedToday": 0,
+    "views": 0,
+    "followers": 0,
+    "ratingBp": 0,
+    "reviewCount": 0
+  },
+  "recent": [
+    {
+      "id": "b9a74318-3da0-47d9-a447-c59dbc89d2b1",
+      "status": "CLAIMED",
+      "createdAt": "2026-09-25 10:00:00",
+      "completedAt": null,
+      "dealTitle": "Osh",
+      "customerName": "Alice Karimova",
+      "branchName": "Markaz"
+    }
+  ],
+  "setup": [
+    {
+      "key": "logo",
+      "done": false
+    },
+    {
+      "key": "cover",
+      "done": false
+    },
+    {
+      "key": "description",
+      "done": false
+    },
+    {
+      "key": "contacts",
+      "done": false
+    },
+    {
+      "key": "location",
+      "done": true
+    },
+    {
+      "key": "deal",
+      "done": true
+    }
+  ]
+}

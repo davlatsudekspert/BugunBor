@@ -1,6 +1,6 @@
 import { distanceKm } from '@/lib/cities';
 import { dealPhotoUrl, mediaUrl } from '@/lib/photos';
-import { searchPattern } from '@/lib/search';
+import { wordSearchPattern } from '@/lib/search';
 import { toDbTime } from '@/lib/time';
 import { PUBLIC_BUSINESS_SQL, effectiveDealStatus, liveDealSql, subscriptionActiveSql, type EffectiveDealStatus } from '@/modules/deals/status';
 
@@ -147,9 +147,9 @@ export async function listLiveDeals(db: D1Database, filters: DealFilters) {
         AND (?2 = 1 OR d.is_demo = 0)
         AND (?3 IS NULL OR br.city = ?3)
         AND (?4 IS NULL OR c.slug = ?4)
-        AND (?5 IS NULL OR d.search_text LIKE ?5 OR b.search_text LIKE ?5)
+        AND (?5 IS NULL OR (' ' || d.search_text) LIKE ?5 OR (' ' || b.search_text) LIKE ?5)
       LIMIT 2000`)
-    .bind(toDbTime(now), filters.demo ? 1 : 0, filters.city ?? null, filters.category ?? null, searchPattern(filters.query))
+    .bind(toDbTime(now), filters.demo ? 1 : 0, filters.city ?? null, filters.category ?? null, wordSearchPattern(filters.query))
     .all<DealBranchRow>();
   const near = filters.near ?? null;
   const sort = filters.sort === 'near' && !near ? 'ending' : (filters.sort ?? 'ending');

@@ -30,7 +30,8 @@ export const GET = route(async () => {
         privacyVersion: PRIVACY_VERSION,
         links: { privacy: '/privacy', terms: '/terms', deleteAccount: '/delete-account', contact: '/contact' },
         telegramBot: bot,
-        categories: categories.map((category) => ({ slug: category.slug, nameUz: category.nameUz, nameRu: category.nameRu, icon: category.icon })),
+        // `id` is what business registration sends; `slug` is used everywhere else.
+        categories: categories.map((category) => ({ id: category.id, slug: category.slug, nameUz: category.nameUz, nameRu: category.nameRu, icon: category.icon })),
         cities: CITIES.map((city) => ({ slug: city.slug, nameUz: city.uz, nameRu: city.ru, latitude: city.latitude, longitude: city.longitude })),
         reportReasons: REPORT_REASONS,
       },
