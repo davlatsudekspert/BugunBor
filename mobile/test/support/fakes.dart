@@ -135,7 +135,7 @@ class FakeServer implements HttpClientAdapter {
         ? const Reply(404, {
             'error': {'code': 'NOT_FOUND'},
           })
-        : handler(options);
+        : await Future<Object?>.value(handler(options));
     if (result is Bytes) {
       return ResponseBody.fromBytes(
         result.bytes,

@@ -102,8 +102,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   Widget build(BuildContext context) {
     final l = L.of(context);
     final settings = ref.watch(settingsProvider);
-    final feed = ref.watch(feedProvider);
-    final config = ref.watch(configProvider).value;
+    // Until the first answers arrive, what Home showed last time (see lastAnswersProvider).
+    final last = ref.watch(lastAnswersProvider);
+    final live = ref.watch(feedProvider);
+    final feed = live.hasValue || last.feed == null ? live : AsyncData(last.feed!);
+    final offline = live.hasError && (live.hasValue || last.feed != null);
+    final config = ref.watch(configProvider).value ?? last.config;
     final located = settings.useLocation && ref.watch(locationProvider) != null;
     final cityName = config?.city(feed.value?.city ?? settings.city)?.name(settings.locale);
     final placeLabel = located ? l.homeUseLocation : (cityName ?? l.chooseCity);
@@ -156,7 +160,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                 SliverToBoxAdapter(
                   child: _Note(icon: Icons.location_off_outlined, text: l.homeLocationDenied),
                 ),
-              if (feed.hasError && feed.hasValue)
+              if (offline)
                 SliverToBoxAdapter(
                   child: _Note(icon: Icons.wifi_off_rounded, text: l.offline),
                 ),

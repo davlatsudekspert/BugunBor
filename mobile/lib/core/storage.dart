@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -45,6 +47,27 @@ class Prefs {
   /// Interests chosen before signing in (sent to the server after sign-in).
   List<String> get guestInterests => _prefs.getStringList('interests') ?? const [];
   set guestInterests(List<String> value) => _prefs.setStringList('interests', value);
+
+  /// The server's last answer for [name] (app settings, the home feed), so the
+  /// next start shows it at once. Only public catalogue data is kept here.
+  Map<String, dynamic>? lastAnswer(String name) {
+    final text = _prefs.getString('answer_$name');
+    if (text == null) return null;
+    try {
+      return (jsonDecode(text) as Map).cast<String, dynamic>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void saveAnswer(String name, Map<String, dynamic> value) => _prefs.setString('answer_$name', jsonEncode(value));
+
+  /// Forgets every kept answer (on sign-out).
+  void forgetAnswers() {
+    for (final key in _prefs.getKeys().where((key) => key.startsWith('answer_')).toList()) {
+      _prefs.remove(key);
+    }
+  }
 
   /// The home card explaining how BugunBor works was closed.
   bool get howHidden => _prefs.getBool('how_hidden') ?? false;

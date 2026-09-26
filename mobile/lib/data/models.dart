@@ -262,6 +262,12 @@ class Feed {
   final List<DealCard> nearby;
   final List<DealCard> ending;
   final int total;
+
+  /// The same feed without the deals that have ended by [now].
+  Feed withoutEnded(DateTime now) {
+    List<DealCard> live(List<DealCard> deals) => deals.where((deal) => deal.endsAt.isAfter(now)).toList();
+    return Feed(city: city, located: located, forYou: live(forYou), nearby: live(nearby), ending: live(ending), total: total);
+  }
 }
 
 class DealPage {

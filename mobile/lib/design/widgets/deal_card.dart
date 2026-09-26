@@ -112,13 +112,14 @@ class _Meta extends StatelessWidget {
   final String? text;
   final Widget? child;
 
+  // A long text (large font, a long translation) wraps instead of running off the card.
   @override
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
       Icon(icon, size: 15, color: context.mutedText),
       const SizedBox(width: 4),
-      child ?? Text(text ?? '', style: _metaStyle(context)),
+      Flexible(child: child ?? Text(text ?? '', style: _metaStyle(context))),
     ],
   );
 }

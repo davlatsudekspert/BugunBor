@@ -125,6 +125,7 @@ class SessionNotifier extends Notifier<SessionState> {
 
   Future<void> signOut() async {
     await ref.read(sessionStoreProvider).clear();
+    ref.read(prefsProvider).forgetAnswers();
     state = const SessionState();
   }
 
@@ -132,6 +133,7 @@ class SessionNotifier extends Notifier<SessionState> {
   void expire() {
     if (state.token == null) return;
     ref.read(sessionStoreProvider).clear();
+    ref.read(prefsProvider).forgetAnswers();
     state = const SessionState(expired: true);
   }
 
@@ -150,7 +152,11 @@ final apiProvider = Provider<BugunBorApi>(
   ),
 );
 
-final configProvider = FutureProvider<AppConfig>((ref) => ref.watch(apiProvider).config());
+final configProvider = FutureProvider<AppConfig>((ref) async {
+  final data = await ref.watch(apiProvider).configData();
+  ref.read(prefsProvider).saveAnswer('config', data);
+  return AppConfig.fromJson(data);
+});
 
 /// The signed-in person, or null for guests.
 final meProvider = FutureProvider<Me?>((ref) async {
@@ -237,7 +243,39 @@ final feedProvider = FutureProvider<Feed>((ref) async {
   final guestInterests = ref.watch(settingsProvider.select((settings) => settings.guestInterests));
   final position = useLocation ? ref.watch(locationProvider) : null;
   final token = ref.watch(sessionProvider.select((session) => session.token));
-  return ref.watch(apiProvider).feed(lat: position?.latitude, lng: position?.longitude, city: city, interests: token == null ? guestInterests : const []);
+  final data = await ref
+      .watch(apiProvider)
+      .feedData(lat: position?.latitude, lng: position?.longitude, city: city, interests: token == null ? guestInterests : const []);
+  ref.read(prefsProvider).saveAnswer(feedAnswerName(signedIn: token != null, city: city, near: useLocation), data);
+  return Feed.fromJson(data);
+});
+
+/// Which kept feed belongs to this way of opening Home.
+String feedAnswerName({required bool signedIn, required String? city, required bool near}) =>
+    'feed_${signedIn ? 'account' : 'guest'}_${near ? 'near' : city ?? 'none'}';
+
+/// What Home showed last time, read once when the app starts. It is shown at
+/// once while the first answers load (deals that have ended are left out), so
+/// the app opens with content even on a slow connection.
+final lastAnswersProvider = Provider<({AppConfig? config, Feed? feed})>((ref) {
+  final prefs = ref.read(prefsProvider);
+  final settings = ref.read(settingsProvider);
+  AppConfig? config;
+  Feed? feed;
+  try {
+    final data = prefs.lastAnswer('config');
+    if (data != null) config = AppConfig.fromJson(data);
+  } catch (_) {
+    // An answer from an older app version: wait for the server instead.
+  }
+  try {
+    final name = feedAnswerName(signedIn: ref.read(sessionProvider).token != null, city: settings.city, near: settings.useLocation);
+    final data = prefs.lastAnswer(name);
+    if (data != null) feed = Feed.fromJson(data).withoutEnded(DateTime.now().toUtc());
+  } catch (_) {
+    // As above.
+  }
+  return (config: config, feed: feed);
 });
 
 final dealProvider = FutureProvider.autoDispose.family<DealDetail, String>((ref, slug) {

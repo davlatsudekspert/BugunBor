@@ -71,6 +71,28 @@ void main() {
     expect(tester.getRect(find.text('Ko‘ngilochar')).width, lessThanOrEqualTo(360 / 4));
   });
 
+  testWidgets('a live deal with distance, time left and few left fits the smallest phone with large text', (tester) async {
+    final server = FakeServer.standard();
+    final feed = contractMap('feed');
+    final deal = {
+      ...(feed['nearby'] as List).first as Map<String, dynamic>,
+      'remaining': 2,
+      'distanceKm': 12.4,
+      'endsAt': serverTime(DateTime.now().toUtc().add(const Duration(hours: 2, minutes: 40))),
+    };
+    server.routes['GET /api/v1/feed'] = (_) => {
+      'data': {
+        ...feed,
+        'nearby': [deal],
+        'ending': [deal],
+      },
+    };
+    for (final locale in ['uz', 'ru']) {
+      await pumpApp(tester, server: server, size: phoneSizes['360']!, textScale: 1.3, locale: locale);
+      await showDeal(tester);
+    }
+  });
+
   testWidgets('first start: language, interests, city — then home', (tester) async {
     final server = FakeServer.standard();
     await pumpApp(tester, server: server, onboarded: false);

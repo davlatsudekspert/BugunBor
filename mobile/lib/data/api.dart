@@ -113,11 +113,15 @@ class BugunBorApi {
 
   // Catalogue ---------------------------------------------------------------
 
-  Future<AppConfig> config() async => AppConfig.fromJson(_data(await _request('GET', '/api/v1/config')));
+  Future<Json> configData() async => _data(await _request('GET', '/api/v1/config'));
 
-  Future<Feed> feed({double? lat, double? lng, String? city, List<String> interests = const []}) async => Feed.fromJson(
-    _data(await _request('GET', '/api/v1/feed', query: {'lat': lat, 'lng': lng, 'city': city, if (interests.isNotEmpty) 'interests': interests.join(',')})),
-  );
+  Future<AppConfig> config() async => AppConfig.fromJson(await configData());
+
+  Future<Json> feedData({double? lat, double? lng, String? city, List<String> interests = const []}) async =>
+      _data(await _request('GET', '/api/v1/feed', query: {'lat': lat, 'lng': lng, 'city': city, if (interests.isNotEmpty) 'interests': interests.join(',')}));
+
+  Future<Feed> feed({double? lat, double? lng, String? city, List<String> interests = const []}) async =>
+      Feed.fromJson(await feedData(lat: lat, lng: lng, city: city, interests: interests));
 
   Future<DealPage> deals({String? city, String? category, String? query, String? sort, double? lat, double? lng, int limit = 24, int offset = 0}) async {
     final body = await _request(
