@@ -275,8 +275,11 @@ export const uz = {
   },
   bot: {
     welcome: 'Salom! Bu BugunBor boti 👋\n\nBu yerda siz:\n• saytga parol va SMS’siz kirasiz;\n• obuna bo‘lgan bizneslaringizning yangi aksiyalarini birinchi bo‘lib bilasiz;\n• kodingiz tugashidan oldin eslatma olasiz.\n\nBugungi aksiyalar: {site}',
-    loginPromptNew: '🔐 BugunBor’ga kirish so‘rovi\n\nSaytdagi moslik kodi: <b>{code}</b>\nQurilma: {device}\n\nKod bir xil bo‘lsa, pastdagi tugma orqali telefon raqamingizni yuboring.',
-    loginPromptKnown: '🔐 BugunBor’ga kirish so‘rovi\n\nSaytdagi moslik kodi: <b>{code}</b>\nQurilma: {device}\n\nKod bir xil bo‘lsa, «Ha, men kiryapman» tugmasini bosing.',
+    loginPromptNew: '🔐 BugunBor’ga kirish so‘rovi\n\n{place}: <b>{code}</b>\nQurilma: {device}\n\nKod bir xil bo‘lsa, pastdagi tugma orqali telefon raqamingizni yuboring.',
+    loginPromptKnown: '🔐 BugunBor’ga kirish so‘rovi\n\n{place}: <b>{code}</b>\nQurilma: {device}\n\nKod bir xil bo‘lsa, «Ha, men kiryapman» tugmasini bosing.',
+    codeOnSite: 'Saytdagi moslik kodi',
+    codeInApp: 'Ilovadagi moslik kodi',
+    appDevice: 'BugunBor ilovasi',
     shareContact: '📱 Raqamni yuborish',
     confirm: '✅ Ha, men kiryapman',
     deny: '✋ Men emas',

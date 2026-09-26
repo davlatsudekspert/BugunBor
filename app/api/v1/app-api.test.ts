@@ -118,6 +118,9 @@ describe('app API', () => {
     const sender = { async sendMessage(_chat: number | string, text: string) { sent.push(text); }, async answerCallback() {}, async clearInlineKeyboard() {} };
     const from = { id: 4242, first_name: 'Dilnoza', language_code: 'uz' };
     await handleTelegramUpdate(state.db, { update_id: 1, message: { message_id: 1, from, chat: { id: 4242, type: 'private' }, text: `/start ${token}` } }, { sender, adminPhones: [], siteUrl: 'x', now: NOW });
+    // The code is the one the app shows, and the app is named as the device.
+    expect(sent.at(-1)).toContain('Ilovadagi moslik kodi: <b>');
+    expect(sent.at(-1)).toContain('Qurilma: BugunBor ilovasi');
     await handleTelegramUpdate(state.db, { update_id: 2, message: { message_id: 2, from, chat: { id: 4242, type: 'private' }, contact: { phone_number: '+998905550042', first_name: 'Dilnoza', user_id: 4242 } } }, { sender, adminPhones: [], siteUrl: 'x', now: NOW });
     expect(sent.at(-1)).toContain('ilovasiga qayting');
 

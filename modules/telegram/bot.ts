@@ -101,7 +101,13 @@ async function handleMessage(db: D1Database, message: TelegramMessage, deps: Bot
       return;
     }
     const rt = getDictionary(result.request.locale === 'ru' ? 'ru' : 'uz');
-    const values = { code: result.request.matchCode, device: escapeHtml(describeDevice(result.request.userAgent, rt)) };
+    // The app sends no browser details: it is named as the app, and so is where its code is shown.
+    const app = result.request.client === 'app';
+    const values = {
+      code: result.request.matchCode,
+      place: app ? rt.bot.codeInApp : rt.bot.codeOnSite,
+      device: escapeHtml(app ? rt.bot.appDevice : describeDevice(result.request.userAgent, rt)),
+    };
     const known = result.knownUser;
     if (known && known.status !== 'ACTIVE') {
       await deps.sender.sendMessage(chatId, rt.bot.blocked);
