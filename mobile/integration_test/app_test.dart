@@ -29,8 +29,14 @@ Future<void> shot(IntegrationTestWidgetsFlutterBinding binding, WidgetTester tes
   await binding.takeScreenshot(name);
 }
 
-/// Scrolls the home screen down until [target] can be tapped.
-Future<bool> scrollHomeTo(WidgetTester tester, Finder target) async {
+/// From the top of the home screen (its [title] in view), scrolls down
+/// until [target] can be tapped. Home keeps its scroll position, so it may
+/// start anywhere.
+Future<bool> scrollHomeTo(WidgetTester tester, Finder target, {required String title}) async {
+  for (var step = 0; step < 15 && find.text(title).hitTestable().evaluate().isEmpty; step++) {
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 600));
+    await tester.pump(const Duration(milliseconds: 300));
+  }
   for (var step = 0; step < 15 && target.hitTestable().evaluate().isEmpty; step++) {
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
     await tester.pump(const Duration(milliseconds: 300));
@@ -98,7 +104,7 @@ void main() {
 
     // The card that invites business owners, and the registration it opens
     // (a guest sees the sign-in step; nothing is sent).
-    if (await scrollHomeTo(tester, find.text('Biznesimni qo‘shish'))) {
+    if (await scrollHomeTo(tester, find.text('Biznesimni qo‘shish'), title: 'Bugun nima bor?')) {
       await shot(binding, tester, '07a-business-promo');
       await tester.tap(find.text('Biznesimni qo‘shish').hitTestable());
       await waitFor(tester, find.text('Biznesingizni BugunBor’ga qo‘shing'));
@@ -150,7 +156,7 @@ void main() {
     }
     await waitFor(tester, find.text('Что есть сегодня?'));
     await shot(binding, tester, '13-home-ru-dark');
-    if (await scrollHomeTo(tester, find.text('Добавить мой бизнес'))) {
+    if (await scrollHomeTo(tester, find.text('Добавить мой бизнес'), title: 'Что есть сегодня?')) {
       await shot(binding, tester, '14-business-promo-ru-dark');
     }
   });
