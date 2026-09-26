@@ -11,15 +11,7 @@ const text = (details?: PrivacyDetails) =>
     return [policy.title, policy.updated, policy.intro, ...policy.sections.flatMap((section) => [section.title, ...(section.paragraphs ?? []), ...(section.items ?? []), section.after ?? ''])].join('\n');
   }).join('\n');
 
-const filled: PrivacyDetails = {
-  operatorName: 'Test Operator',
-  registration: { uz: 'guvohnoma № 1', ru: 'свидетельство № 1', en: 'certificate No. 1' },
-  address: { uz: 'Toshkent', ru: 'Ташкент', en: 'Tashkent' },
-  officer: { uz: 'Test Mas’ul', ru: 'Тест Ответственный', en: 'Test Officer' },
-  email: 'test@example.com',
-  databaseLocation: { uz: 'Yevropa', ru: 'Европа', en: 'Europe' },
-  minAge: 16,
-};
+const empty: PrivacyDetails = { operator: null, officer: null, email: null, databaseLocation: null, minAge: null };
 
 describe('privacy policy', () => {
   it('has the same sections in every language, in the order the operator asked for', () => {
@@ -30,12 +22,17 @@ describe('privacy policy', () => {
     expect(ids[0].filter((id) => required.includes(id))).toEqual(required);
   });
 
-  it('marks every detail the operator has not confirmed and nothing else', () => {
-    expect(missingDetails()).toEqual(Object.values(MISSING_LABELS));
-    const markers = new Set(text().match(PLACEHOLDER));
+  it('is complete: every operator detail is filled in', () => {
+    expect(missingDetails()).toEqual([]);
+    expect(text()).not.toMatch(PLACEHOLDER);
+    expect(text()).toContain('davlatsudekspert@gmail.com');
+    expect(text()).toContain('BugunBor 16 yoshga to‘lgan foydalanuvchilar uchun.');
+  });
+
+  it('would mark each missing detail instead of inventing it', () => {
+    expect(missingDetails(empty)).toEqual(Object.values(MISSING_LABELS));
+    const markers = new Set(text(empty).match(PLACEHOLDER));
     expect([...markers].sort()).toEqual(Object.values(MISSING_LABELS).map((label) => `[TO'LDIRISH KERAK: ${label}]`).sort());
-    expect(missingDetails(filled)).toEqual([]);
-    expect(text(filled)).not.toMatch(PLACEHOLDER);
   });
 
   it('quotes the same periods the code uses', () => {
@@ -46,9 +43,10 @@ describe('privacy policy', () => {
     expect(text()).toContain(`«Bog‘lanish» orqali kelgan murojaatlar — ${RETENTION.logYears} yilgacha`);
   });
 
-  it('describes only BugunBor, with no identifiers of another product or person', () => {
-    const all = text(filled);
-    expect(all).not.toMatch(/NFC|Reels|Gemini|Anthropic|Resend|Google Play|auksion|аукцион|nfcstore|7199859|Shahrixon|Шахрихан/i);
+  it('describes only BugunBor, with no other product’s features and no home address', () => {
+    const all = text();
+    expect(all).not.toMatch(/NFC|Reels|Gemini|Anthropic|Resend|Google Play|auksion|аукцион|nfcstore/i);
+    expect(all).not.toMatch(/ko‘chasi|улица|ул\.|street|uy\b|дом \d/i);
     expect(all).not.toMatch(/reyestr|реестр|register of personal data/i);
   });
 });

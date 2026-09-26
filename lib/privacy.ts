@@ -6,9 +6,9 @@ import { SESSION_DAYS } from '@/modules/auth/sessions';
 // retention period below was checked against the code, and the retention
 // numbers come from the same constants the cleanup jobs use.
 //
-// Operator details are filled in only from what the operator confirms. Until
-// then each missing value renders as a highlighted [TO'LDIRISH KERAK: …]
-// marker. JShShIR, passport number and home address never go on the site.
+// Operator details are exactly what the operator confirmed (2026-09-26); a
+// missing value would render as a highlighted [TO'LDIRISH KERAK: …] marker.
+// JShShIR, passport number and home address never go on the site.
 
 export const PRIVACY_LOCALES = ['uz', 'ru', 'en'] as const;
 export type PrivacyLocale = (typeof PRIVACY_LOCALES)[number];
@@ -25,12 +25,8 @@ export const LOGIN_REQUEST_MINUTES = 10;
 type Localized = Record<PrivacyLocale, string>;
 
 export type PrivacyDetails = {
-  /** YATT full name or the MChJ's name. */
-  operatorName: string | null;
-  /** Optional: state registration certificate or STIR; left out of the text when not given. */
-  registration: Localized | null;
-  /** Place of business, never a home address. */
-  address: Localized | null;
+  /** Who the operator is: name, registration and region (never a home address). */
+  operator: Localized | null;
   /** The person responsible for processing personal data, with their position. */
   officer: Localized | null;
   email: string | null;
@@ -40,20 +36,29 @@ export type PrivacyDetails = {
 };
 
 export const PRIVACY_DETAILS: PrivacyDetails = {
-  operatorName: null,
-  registration: null,
-  address: null,
-  officer: null,
-  email: null,
-  databaseLocation: null,
-  minAge: null,
+  operator: {
+    uz: 'yakka tartibdagi tadbirkor Abduraxmonova Shaxnozaxon Xasanboyevna (Andijon viloyati, Shahrixon tumani; YATT sifatida davlat ro‘yxatidan o‘tkazilgan: 08.10.2025, № 7199859)',
+    ru: 'индивидуальный предприниматель Abduraxmonova Shaxnozaxon Xasanboyevna (Андижанская область, Шахриханский район; зарегистрирована как индивидуальный предприниматель 08.10.2025, № 7199859)',
+    en: 'Abduraxmonova Shaxnozaxon Xasanboyevna, an individual entrepreneur registered on 8 October 2025 under No. 7199859 (Shahrixon district, Andijan region, Uzbekistan)',
+  },
+  officer: {
+    uz: 'Abduraxmonov Yo‘ldoshali Toshtemirovich, sayt ma’muri',
+    ru: 'Abduraxmonov Yo‘ldoshali Toshtemirovich, администратор сайта',
+    en: 'Abduraxmonov Yo‘ldoshali Toshtemirovich, site administrator',
+  },
+  email: 'davlatsudekspert@gmail.com',
+  databaseLocation: {
+    uz: 'Sharqiy Yevropa (Cloudflare D1 «Eastern Europe» mintaqasi)',
+    ru: 'Восточная Европа (регион Cloudflare D1 «Eastern Europe»)',
+    en: 'Eastern Europe (Cloudflare D1 “Eastern Europe” region)',
+  },
+  minAge: 16,
 };
 
-type Required = Exclude<keyof PrivacyDetails, 'registration'>;
+type Required = keyof PrivacyDetails;
 
 export const MISSING_LABELS: Record<Required, string> = {
-  operatorName: 'operator — YATT F.I.Sh. yoki MChJ nomi',
-  address: 'faoliyat manzili (uy manzili emas)',
+  operator: 'operator — YATT F.I.Sh., ro‘yxatdan o‘tganlik ma’lumoti va hudud (uy manzili emas)',
   officer: 'ma’lumotlarga ishlov berish uchun mas’ul shaxs — F.I.Sh. va lavozimi',
   email: 'aloqa emaili',
   databaseLocation: 'ma’lumotlar bazasi mintaqasi (Cloudflare → D1 → baza → Location)',
@@ -88,11 +93,9 @@ function versionDate(locale: PrivacyLocale) {
 }
 
 export function privacyPolicy(locale: PrivacyLocale, details: PrivacyDetails = PRIVACY_DETAILS): PrivacyPolicy {
-  const pick = (key: 'address' | 'officer' | 'databaseLocation') => details[key]?.[locale] ?? missing(key);
+  const pick = (key: 'operator' | 'officer' | 'databaseLocation') => details[key]?.[locale] ?? missing(key);
   const d = {
-    name: details.operatorName ?? missing('operatorName'),
-    registration: details.registration ? `, ${details.registration[locale]}` : '',
-    address: pick('address'),
+    operator: pick('operator'),
     officer: pick('officer'),
     email: details.email ?? missing('email'),
     region: pick('databaseLocation'),
@@ -104,7 +107,7 @@ export function privacyPolicy(locale: PrivacyLocale, details: PrivacyDetails = P
   return uz(d, r);
 }
 
-type Values = { name: string; registration: string; address: string; officer: string; email: string; region: string; age: string };
+type Values = { operator: string; officer: string; email: string; region: string; age: string };
 type Periods = { session: number; login: number; notices: number; logs: number };
 
 function uz(d: Values, r: Periods): PrivacyPolicy {
@@ -115,7 +118,7 @@ function uz(d: Values, r: Periods): PrivacyPolicy {
     intro: 'Ushbu siyosat bugunbor.uz sayti (keyingi o‘rinlarda — BugunBor) qanday ma’lumot yig‘ishi, nima uchun ishlatishi, kimga yuborishi va qanday saqlashini tushuntiradi. BugunBor — bizneslar chegirma va aksiyalarini e’lon qiladigan, mijozlar esa ularni band qilib, joyida bir martalik kod bilan oladigan platforma.',
     sections: [
       { id: 'operator', title: 'Operator', paragraphs: [
-        `Shaxsga doir ma’lumotlar operatori va ma’lumotlar bazasining egasi — ${d.name}${d.registration} (${d.address}). Ma’lumotlarga ishlov berish uchun mas’ul shaxs — ${d.officer}. Murojaat uchun: ${d.email}.`,
+        `Shaxsga doir ma’lumotlar operatori va ma’lumotlar bazasining egasi — ${d.operator}. Ma’lumotlarga ishlov berish uchun mas’ul shaxs — ${d.officer}. Murojaat uchun: ${d.email}.`,
       ] },
       { id: 'collect', title: 'Qanday ma’lumot yig‘amiz', items: [
         'Hisob: tizimga Telegram orqali kirasiz. Telegram ID raqamingiz, foydalanuvchi nomingiz (bo‘lsa), Telegram’dagi ism va familiyangiz, Telegram tasdiqlagan telefon raqamingiz (kontaktni botga o‘zingiz yuborasiz) va interfeys tili. Parol va elektron pochta so‘ralmaydi.',
@@ -203,7 +206,7 @@ function ru(d: Values, r: Periods): PrivacyPolicy {
     intro: 'Эта политика объясняет, какие данные собирает сайт bugunbor.uz (далее — BugunBor), зачем они используются, кому передаются и как хранятся. BugunBor — платформа, где бизнесы публикуют скидки и акции, а покупатели бронируют их и получают на месте по одноразовому коду.',
     sections: [
       { id: 'operator', title: 'Оператор', paragraphs: [
-        `Оператор персональных данных и владелец базы данных — ${d.name}${d.registration} (${d.address}). Ответственный за обработку персональных данных — ${d.officer}. Для обращений: ${d.email}.`,
+        `Оператор персональных данных и владелец базы данных — ${d.operator}. Ответственный за обработку персональных данных — ${d.officer}. Для обращений: ${d.email}.`,
       ] },
       { id: 'collect', title: 'Какие данные мы собираем', items: [
         'Аккаунт: вход через Telegram. Ваш Telegram ID, имя пользователя (если есть), имя и фамилия в Telegram, номер телефона, подтверждённый Telegram (контакт вы сами отправляете боту), и язык интерфейса. Пароль и электронная почта не запрашиваются.',
@@ -291,7 +294,7 @@ function en(d: Values, r: Periods): PrivacyPolicy {
     intro: 'This policy explains what data the bugunbor.uz website (BugunBor) collects, why, who it is sent to and how it is kept. BugunBor is a platform where businesses publish discounts and deals, and customers reserve them and get them on the spot with a one-time code. The site itself is in Uzbek and Russian; button names are given in Uzbek.',
     sections: [
       { id: 'operator', title: 'Operator', paragraphs: [
-        `The personal data operator and owner of the database is ${d.name}${d.registration} (${d.address}, Uzbekistan). The person responsible for processing personal data is ${d.officer}. Contact: ${d.email}.`,
+        `The personal data operator and owner of the database is ${d.operator}. The person responsible for processing personal data is ${d.officer}. Contact: ${d.email}.`,
       ] },
       { id: 'collect', title: 'What data we collect', items: [
         'Account: you sign in with Telegram. Your Telegram ID, username (if any), first and last name in Telegram, the phone number verified by Telegram (you send your contact to our bot yourself) and interface language. No password or email is requested.',

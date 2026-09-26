@@ -27,7 +27,7 @@ Oxirgi yig‘ma (build) toza bazada, brauzerda to‘liq sinaldi (2026-09-26). Ha
 | Chiqish | ✅ |
 
 Ilovadan oldin yana ikki narsa kerak:
-- Operator ma’lumotlari (maxfiylik siyosatidagi `[TO'LDIRISH KERAK]` joylar);
+- Operator ma’lumotlari — maxfiylik siyosatida to‘ldirildi (YATT, mas’ul shaxs, aloqa emaili, baza mintaqasi, yosh chegarasi);
 - bu o‘zgarishlarning production’ga chiqishi.
 
 ---
@@ -43,7 +43,7 @@ Ilovadan oldin yana ikki narsa kerak:
 | Dizayn | Sayt tokenlari: sutli fon, to‘q ko‘k matn, to‘q sariq urg‘u + qorong‘i mavzu | 360/390/430 px, tugma ≥ 44 px, klaviatura maydonni yopmaydi, pastki menyu tizim paneli ostiga kirmaydi. |
 | Texnologiya | Flutter (versiya qotiriladi), Riverpod 2 (kod generatsiyasiz), go_router, dio, flutter_secure_storage, cached_network_image | NFCSTORE’da sinalgan to‘plam. |
 | Reklama SDK | Yo‘q | Data safety sodda bo‘ladi. |
-| Push xabarnomalar | MVP’da yo‘q — Telegram xabarnomalari ishlashda davom etadi | Firebase keyin qo‘shiladi, shunda Data safety yangilanadi. |
+| Push xabarnomalar | **MVP’da bor** (Firebase Cloud Messaging) + Telegram xabarnomalari ham qoladi | Data safety’da «qurilma ID (push token)» belgilanadi. Reklama uchun ishlatilmaydi. |
 
 ---
 
@@ -107,12 +107,29 @@ Kirish → rozilik belgisi → Telegram → kutish (moslik kodi) → qaytish
 
 Biznes kabinetining qolgani (aksiya yaratish, filiallar, jamoa, rasmlar) 5-bosqichda qo‘shiladi. Unga qadar egalar saytdan foydalanadi.
 
+«Asosiy» ekranida «Siz uchun» (qiziqish + yaqinlik) qatori eng tepada turadi (2.4-bo‘lim).
+
 Har bir ekranda 3 holat bo‘ladi:
 - yuklanmoqda (skelet);
 - bo‘sh (tushuntirish va tugma);
 - xato («Qayta urinish» tugmasi bilan).
 
-### 2.4. Namuna (demo) kontent ilovada
+### 2.4. Joylashuv, qiziqishlar va xabarnomalar (asosiy talab)
+
+- **Joylashuv:** ilova ochilganda «Yaqinimdagilar» asosiy bo‘ladi. Ruxsat berilsa, aksiyalar masofa bo‘yicha saralanadi: «500 m», «1,2 km».
+  - Ruxsat berilmasa, tanlangan shahar bo‘yicha ko‘rsatiladi.
+  - Ruxsat faqat «ishlatayotganda» so‘raladi, oldin tushuntirish oynasi chiqadi.
+- **Qiziqishlar:** tanishuvda va Profilda foydalanuvchi yoqtirgan kategoriyalarni tanlaydi (Taomlar, Kofe, Go‘zallik, Kiyim, Sport…).
+  - «Asosiy» bo‘limning tepasida **«Siz uchun»** qatori turadi: tanlangan kategoriyalardagi, yaqin va tez tugaydigan aksiyalar.
+  - Keyin ular ostida hamma aksiyalar chiqadi.
+- **Xabarnomalar (push):**
+  - obuna bo‘lgan biznes yangi aksiya chiqarsa;
+  - kod muddati tugashiga 30 daqiqa qolganda;
+  - qiziqishingizga mos yangi aksiya yaqin atrofda (tanlangan radiusda) chiqsa.
+- **Xabarnomalarni boshqarish:** har turini Profilda alohida o‘chirish mumkin. Kuniga ko‘pi bilan 3 ta «yangi aksiya» xabari yuboriladi, kechasi (22:00–08:00) yuborilmaydi.
+- **Joylashuv va xabarnoma:** xabarnoma uchun fonda joylashuv **olinmaydi**. Foydalanuvchi ilovani oxirgi marta ochgandagi taxminiy hudud (~1 km) yoki tanlangan shahar ishlatiladi. Buni u Profilda ko‘radi va o‘chira oladi.
+
+### 2.5. Namuna (demo) kontent ilovada
 
 - Har bir namuna yozuvda **«Namuna»** belgisi turadi.
 - Band qilish tugmasi o‘rnida saytdagidek izoh chiqadi.
@@ -159,6 +176,10 @@ Hozir sayt sahifalari ma’lumotni bazadan to‘g‘ridan-to‘g‘ri oladi. Och
 | 13 | `/.well-known/assetlinks.json` (upload va Play imzo barmoq izlari, secret’dan) | App Links: `bugunbor.uz/deals/…` havolalari ilovada ochilsin |
 | 14 | Tekshiruvchi (reviewer) uchun kirish: alohida, oldindan tayyorlangan hisob va Worker secret’dagi kod bilan; admin o‘chira oladi, har kirish jurnalga yoziladi | Google tekshiruvchisi Telegram orqali kira olmaydi. Shaxsiy hisob berilmaydi |
 | 15 | Rasm manzillari nisbiy (`/media/…`, `/photos/…`) qoladi — ilova to‘liq manzilga aylantiradi (test bilan) | Keng tarqalgan xato — oldindan test |
+| 16 | Qiziqishlar: `GET/PUT /me/interests` (kategoriyalar ro‘yxati) | «Siz uchun» qatori |
+| 17 | `GET /feed?lat&lng` — qiziqish + masofa + tugash vaqti bo‘yicha tartiblangan lenta (mehmon uchun shahar bo‘yicha) | Asosiy bo‘lim |
+| 18 | Push: `PUT/DELETE /me/devices` (FCM token), xabarnomalar navbatiga push kanali; «qiziqishga mos yangi aksiya» turi, kunlik chegara va tungi sukut | Xabarnomalar |
+| 19 | Xabarnoma hududi: foydalanuvchi ruxsat bergan taxminiy hudud (~1 km, yaxlitlangan) saqlanadi; o‘chirilsa, darhol o‘chadi. Maxfiylik siyosatiga shu band qo‘shiladi | Fonda joylashuvsiz yaqin aksiya xabari |
 
 **Kontrakt testlari (0-bosqichning bir qismi):**
 - Server tomonida har bir ilova API’sining javob kalitlari va query parametrlari testda qotiriladi. Namuna JSON’lar repoda `contracts/` papkasida saqlanadi.
@@ -241,16 +262,16 @@ Hozir sayt sahifalari ma’lumotni bazadan to‘g‘ridan-to‘g‘ri oladi. Och
 | --- | --- |
 | Dasturchi hisobi turi (shaxsiy yoki tashkilot) | **Siz aytasiz.** Shaxsiy bo‘lsa, Closed testing’da 12 tester 14 kun uzluksiz turishi shart (Internal testing sanalmaydi) |
 | 12+ tester (Gmail manzillari) va fikr uchun Telegram guruhi | **Hozirdan yig‘ish kerak** |
-| Maxfiylik siyosati URL | `https://bugunbor.uz/privacy` — tayyor, operator ma’lumotlari kerak |
+| Maxfiylik siyosati URL | `https://bugunbor.uz/privacy` — tayyor. Operator ma’lumotlari to‘ldirildi, saytga chiqarilishi kerak |
 | Hisobni o‘chirish URL | `https://bugunbor.uz/delete-account` — tayyor |
 | Ilova ichida «Hisobni o‘chirish» | Profil → Hisobni o‘chirish (MVP’da bor) |
 | App access (tekshiruvchi hisobi) | Alohida hisob + kod (3.2-jadval, 14-band). Ko‘rsatma matnini men tayyorlayman |
 | Data safety | Pastdagi qoralama. Kodda haqiqatan nima yig‘ilsa, shunga mos |
 | Content rating (IARC so‘rovnomasi) | Foydalanuvchi kontenti bor (sharh, biznes e’lonlari), qimor yo‘q, reklama yo‘q |
-| Target audience | Yosh chegarasi (16 yoki 18) — maxfiylik siyosatidagi bilan bir xil |
+| Target audience | **16+** — maxfiylik siyosatidagi bilan bir xil |
 | Ads | «Yo‘q» |
 | Do‘kon sahifasi | Nomi, qisqa va to‘liq tavsif uz/ru/en; 512 px ikonka; 1024×500 banner; kamida 4 ta telefon skrinshoti (1080×1920, shaffoflik yo‘q). Skrinshotlar testlardan avtomatik olinadi |
-| Aloqa emaili | Siz berasiz (maxfiylik siyosatidagi bilan bir xil) |
+| Aloqa emaili | `davlatsudekspert@gmail.com` (maxfiylik siyosatidagi bilan bir xil) |
 | Upload kaliti | CI yaratadi. Faqat GitHub secret’ida, sizda zaxira nusxasi bo‘ladi |
 | App Links | `assetlinks.json` (3.2-jadval, 13-band) |
 
@@ -261,10 +282,11 @@ Hozir sayt sahifalari ma’lumotni bazadan to‘g‘ridan-to‘g‘ri oladi. Och
 | Ism | ha | hisob, kassirga ko‘rsatish | yo‘q |
 | Telefon raqami | ha | hisob (Telegram tasdiqlaydi) | yo‘q |
 | Foydalanuvchi ID (Telegram ID) | ha | kirish, xabarnoma | yo‘q |
-| Taxminiy joylashuv | ha, **saqlanmaydi** (vaqtincha) | yaqin aksiyalar | yo‘q |
+| Taxminiy joylashuv | ha; lenta uchun saqlanmaydi, xabarnoma hududi (~1 km) faqat rozilik bilan | yaqin aksiyalar, xabarnomalar | yo‘q |
 | Rasmlar (faqat biznes egalari) | ha | biznes va aksiya rasmlari | yo‘q |
 | Ilovadagi harakatlar (band qilish, saqlash, baho) | ha | xizmat ishlashi | yo‘q |
 | Boshqa xabarlar (Bog‘lanish, shikoyat) | ha | qo‘llab-quvvatlash, moderatsiya | yo‘q |
+| Qurilma ID (push token) | ha | xabarnomalar | yo‘q |
 | Reklama ID, kontaktlar, SMS, fayllar | yo‘q | — | — |
 
 - Uzatishda shifrlanadi (HTTPS).
@@ -276,12 +298,12 @@ Hozir sayt sahifalari ma’lumotni bazadan to‘g‘ridan-to‘g‘ri oladi. Och
 
 | Bosqich | Ichida | Tugash sharti |
 | --- | --- | --- |
-| **0. Server tayyorligi** | 3.2-jadvaldagi 1–15 bandlar, kontrakt testlari, admin panelda «Ilova» statistikasi | Hamma testlar yashil; sayt ishlashi o‘zgarmagan (saytdagi to‘liq sinov qayta o‘tadi) |
-| **1. MVP ilova** | Asos: mavzu, uz/ru/en, navigatsiya, API mijoz, secure storage, 401. Keyin 2.3-dagi 15 ta ekran, namuna belgilari, shikoyat va bloklash, hisobni o‘chirish, kassir skaneri. CI: imzolangan APK/AAB | CI yashil; APK’ni siz telefonda sinab «bo‘ldi» deysiz |
+| **0. Server tayyorligi** | 3.2-jadvaldagi 1–19 bandlar, kontrakt testlari, admin panelda «Ilova» statistikasi | Hamma testlar yashil; sayt ishlashi o‘zgarmagan (saytdagi to‘liq sinov qayta o‘tadi) |
+| **1. MVP ilova** | Asos: mavzu, uz/ru/en, navigatsiya, API mijoz, secure storage, 401. Keyin 2.3-dagi 15 ta ekran, joylashuv, qiziqishlar va «Siz uchun» lentasi, push xabarnomalar, namuna belgilari, shikoyat va bloklash, hisobni o‘chirish, kassir skaneri. CI: imzolangan APK/AAB | CI yashil; APK’ni siz telefonda sinab «bo‘ldi» deysiz |
 | **2. Testerlar** | Bitta build Internal testing’ga qoralama bo‘lib chiqadi, siz Publish qilasiz. Shu vaqtda 12+ tester yig‘iladi | Testerlar ro‘yxati tayyor, ilova ularning telefonida ochiladi |
 | **3. Closed testing** | 14 kun uzluksiz, ≥ 12 tester. Xatolar yig‘iladi va **haftasiga ko‘pi bilan bitta** tuzatilgan build chiqadi | 14 kun to‘ldi, jiddiy xato qolmadi |
 | **4. Production** | Production’ga kirish arizasi (Google savollariga javoblar tayyorlanadi). Bosqichma-bosqich tarqatish: 20% → 100% | Siz «Publish» bosasiz |
-| **5. Keyin** | Biznes kabineti ilovada, push xabarnomalar (Firebase), iOS (Apple talablari alohida tekshiriladi, masalan, uchinchi tomon orqali kirish qoidasi) | — |
+| **5. Keyin** | Biznes kabineti ilovada, iOS (Apple talablari alohida tekshiriladi, masalan, uchinchi tomon orqali kirish qoidasi) | — |
 
 ---
 
@@ -290,6 +312,6 @@ Hozir sayt sahifalari ma’lumotni bazadan to‘g‘ridan-to‘g‘ri oladi. Och
 1. Paket nomi `uz.bugunbor.app` — tasdiqlaysizmi? Keyin o‘zgarmaydi.
 2. Google Play dasturchi hisobi bormi? Shaxsiymi yoki tashkilotmi? NFCSTORE bilan bir hisob bo‘lishi mumkin, lekin kalitlar alohida bo‘ladi.
 3. MVP’da kassir skaneri bo‘lsinmi (taklif: ha), biznes kabineti esa keyinroq?
-4. Push xabarnomalar: MVP’da faqat Telegram (taklif), Firebase keyin?
-5. Yosh chegarasi: 16 yoki 18?
+4. Push xabarnomalar — **MVP’da bor** (hal qilindi).
+5. Yosh chegarasi — **16** (hal qilindi).
 6. 12 tester: kimlarni taklif qilamiz? Ro‘yxatni hozirdan boshlash kerak.
