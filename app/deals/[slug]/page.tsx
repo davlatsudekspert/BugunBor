@@ -130,7 +130,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
               <a href={`/businesses/${deal.business.slug}`} className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-primary">
                 <BusinessAvatar name={deal.business.name} logo={deal.business.logo} className="size-8 rounded-full bg-white text-[11px] text-navy ring-1 ring-slate-200" />
                 {deal.business.name}
-                {deal.business.verificationStatus === 'VERIFIED' ? <BadgeCheck className="size-5 fill-emerald-500 text-white" aria-label={t.common.verified} /> : null}
+                {deal.business.verificationStatus === 'VERIFIED' && !deal.isDemo && !deal.business.isDemo ? <BadgeCheck className="size-5 fill-emerald-500 text-white" aria-label={t.common.verified} /> : null}
               </a>
               {deal.business.rating ? (
                 <a href={`/businesses/${deal.business.slug}#reviews`} className="ml-10 mt-0.5 flex items-center gap-1.5 text-xs font-bold text-navy">
@@ -143,6 +143,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
               <FollowButton businessId={deal.business.id} initial={follow} loggedIn={Boolean(user)} compact labels={{ follow: t.business.follow, following: t.business.following, followers: t.business.followers, hint: t.business.followHint }} />
             ) : null}
           </div>
+          {deal.isDemo || deal.business.isDemo ? <span className="mt-4 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-900">{t.common.sample}</span> : null}
           <h1 className="mt-2 text-4xl font-black tracking-[-.05em] text-navy sm:text-5xl">{deal.title}</h1>
           <p className="mt-5 max-w-2xl whitespace-pre-line text-lg leading-8 text-slate-600">{deal.description}</p>
 

@@ -88,7 +88,11 @@ export default async function BusinessPage({ params }: { params: Promise<{ slug:
           <div className="flex flex-wrap items-start gap-5">
             <BusinessAvatar name={business.name} logo={business.logo} className={cn('size-20 rounded-3xl bg-navy text-2xl font-black text-white shadow-[0_12px_30px_rgba(21,42,59,.25)]', business.cover && '-mt-10 ring-4 ring-white')} />
             <div className="min-w-0 flex-1">
-              <p className="flex items-center gap-1.5 text-sm font-bold text-emerald-700"><BadgeCheck className="size-4 fill-emerald-500 text-white" aria-hidden /> {t.business.verified}</p>
+              {business.isDemo ? (
+                <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-900">{t.common.sample}</span>
+              ) : (
+                <p className="flex items-center gap-1.5 text-sm font-bold text-emerald-700"><BadgeCheck className="size-4 fill-emerald-500 text-white" aria-hidden /> {t.business.verified}</p>
+              )}
               <h1 className="mt-1 text-4xl font-black tracking-[-.05em] text-navy">{business.name}</h1>
               {business.rating ? (
                 <a href="#reviews" className="mt-2 inline-flex items-center gap-2 text-sm font-bold text-navy">

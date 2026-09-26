@@ -40,7 +40,11 @@ export async function SiteHeader() {
           ) : null}
           {user ? (
             <a href="/account" className="hidden items-center gap-2 rounded-xl py-1 pl-1 pr-3 text-sm font-bold text-navy hover:bg-slate-100 sm:inline-flex" aria-label={t.nav.account}>
-              <span className="grid size-8 place-items-center rounded-full bg-navy text-xs font-black text-white">{initials(user.displayName) || 'B'}</span>
+              {user.avatar ? (
+                <img src={user.avatar} alt="" className="size-8 rounded-full object-cover" />
+              ) : (
+                <span className="grid size-8 place-items-center rounded-full bg-navy text-xs font-black text-white">{initials(user.displayName) || 'B'}</span>
+              )}
               <span className="hidden max-w-32 truncate md:inline">{user.displayName}</span>
             </a>
           ) : (

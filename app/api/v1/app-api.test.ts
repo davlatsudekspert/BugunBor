@@ -35,6 +35,7 @@ const { GET: feed } = await import('./feed/route');
 const { GET: deal } = await import('./deals/[id]/route');
 const { GET: business } = await import('./businesses/[slug]/route');
 const { GET: me, PATCH: patchMe, DELETE: deleteMe } = await import('./me/route');
+const { GET: avatar, POST: uploadAvatar, DELETE: removeAvatar } = await import('./me/avatar/route');
 const { GET: myCodes } = await import('./me/redemptions/route');
 const { GET: myFavorites } = await import('./me/favorites/route');
 const { GET: myFollows } = await import('./me/follows/route');
@@ -195,6 +196,56 @@ describe('app API', () => {
     pinContract('my-codes', codes.body.data);
     expect((await read(await myFavorites(req('/api/v1/me/favorites', { token: alice })))).body.data).toEqual({ live: [], ended: [] });
     expect((await read(await myFollows(req('/api/v1/me/follows', { token: alice })))).body.data).toEqual([]);
+  });
+
+  it('keeps a profile photo only its owner can load, replaces it, and removes it with the account', async () => {
+    const bob = (await createSession(state.db, 'owner', { client: 'app' })).token;
+    // A 512×512 PNG header is enough for the server's checks.
+    const png = (seed: number) => {
+      const bytes = new Uint8Array(64);
+      bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52]);
+      new DataView(bytes.buffer).setUint32(16, 512);
+      new DataView(bytes.buffer).setUint32(20, 512);
+      bytes[40] = seed;
+      return bytes;
+    };
+    const upload = (bytes: Uint8Array<ArrayBuffer>) => {
+      const form = new FormData();
+      form.set('file', new Blob([bytes], { type: 'image/png' }), 'avatar.png');
+      return uploadAvatar(new Request('https://bugunbor.uz/api/v1/me/avatar', { method: 'POST', headers: { ...APP_HEADERS, authorization: `Bearer ${alice}` }, body: form }));
+    };
+    const photoOf = async (token: string) => ((await (await me(req('/api/v1/me', { token }))).json()) as { data: { user: { avatar: string | null } } }).data.user.avatar;
+
+    expect(await photoOf(alice)).toBeNull();
+    expect((await avatar(req('/api/v1/me/avatar', { token: alice }))).status).toBe(404);
+
+    const first = await read(await upload(png(1)));
+    expect(first.status).toBe(201);
+    pinContract('me-avatar', first.body.data);
+    const address = first.body.data.avatar as string;
+    expect(address).toMatch(/^\/api\/v1\/me\/avatar\?v=[0-9a-f]{16}$/);
+    expect(await photoOf(alice)).toBe(address);
+
+    // Only the owner gets the picture, never a shared cache.
+    const own = await avatar(req('/api/v1/me/avatar', { token: alice }));
+    expect([own.status, own.headers.get('content-type'), own.headers.get('cache-control')]).toEqual([200, 'image/png', 'private, max-age=86400']);
+    expect(new Uint8Array(await own.arrayBuffer())).toEqual(png(1));
+    expect((await avatar(req('/api/v1/me/avatar', { token: alice, headers: { 'if-none-match': own.headers.get('etag')! } }))).status).toBe(304);
+    expect((await avatar(req('/api/v1/me/avatar', { token: bob }))).status).toBe(404);
+    expect((await avatar(req('/api/v1/me/avatar'))).status).toBe(401);
+
+    // A new photo gets a new address; a file that is not an image is refused.
+    const second = await read(await upload(png(2)));
+    expect(second.body.data.avatar).not.toBe(address);
+    expect((await upload(new TextEncoder().encode('not an image'))).status).toBe(415);
+    expect((await upload(new Uint8Array(300_001))).status).toBe(413);
+
+    expect((await read(await removeAvatar(req('/api/v1/me/avatar', { method: 'DELETE', token: alice })))).body.data).toEqual({ ok: true });
+    expect(await photoOf(alice)).toBeNull();
+
+    await upload(png(3));
+    await deleteMe(req('/api/v1/me', { method: 'DELETE', token: alice, body: {} }));
+    expect(await state.db.prepare(`SELECT COUNT(*) AS n FROM user_avatars WHERE user_id = 'alice'`).first<{ n: number }>()).toEqual({ n: 0 });
   });
 
   it('registers push devices and takes reports once per person', async () => {

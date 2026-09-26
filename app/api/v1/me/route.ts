@@ -8,6 +8,7 @@ import {
   accountStats, deleteAccount, getNotificationSettings, setNotifyNearby, setUserLocale, soleOwnedBusinesses, updateDisplayName, updateNotificationSettings,
 } from '@/modules/auth/account';
 import { apiUser } from '@/modules/auth/api-user';
+import { avatarUrl } from '@/modules/auth/avatar';
 import { clearSessionCookie } from '@/modules/auth/sessions';
 import { listMemberships } from '@/modules/businesses/access';
 import { listBlockedBusinessIds } from '@/modules/engagement/blocks';
@@ -24,13 +25,17 @@ export const GET = route(async (request: Request) => {
     getInterests(db, user.id),
     listBlockedBusinessIds(db, user.id),
     listMemberships(db, user.id),
-    db.prepare(`SELECT privacy_version AS version, telegram_username AS telegramUsername FROM users WHERE id = ?1`)
+    db.prepare(`SELECT u.privacy_version AS version, u.telegram_username AS telegramUsername, a.sha256 AS avatar
+        FROM users u LEFT JOIN user_avatars a ON a.user_id = u.id WHERE u.id = ?1`)
       .bind(user.id)
-      .first<{ version: string | null; telegramUsername: string | null }>(),
+      .first<{ version: string | null; telegramUsername: string | null; avatar: string | null }>(),
   ]);
   return json({
     data: {
-      user: { id: user.id, displayName: user.displayName, phone: user.phone, locale: user.locale, role: user.role, telegramUsername: account?.telegramUsername ?? null },
+      user: {
+        id: user.id, displayName: user.displayName, phone: user.phone, locale: user.locale, role: user.role, telegramUsername: account?.telegramUsername ?? null,
+        avatar: account?.avatar ? avatarUrl(account.avatar) : null,
+      },
       stats,
       notifications,
       interests,
