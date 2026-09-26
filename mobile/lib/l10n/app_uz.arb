@@ -732,5 +732,9 @@
   "newVersionTitle": "Yangi versiya bor",
   "newVersionText": "Ilovaning yangi versiyasi chiqdi — yangilab oling. Hisobingiz va ma’lumotlaringiz saqlanadi.",
   "newVersionAction": "Yangilash",
-  "profileGuides": "Video qo‘llanma"
+  "profileGuides": "Video qo‘llanma",
+  "profilePhotoAdd": "Rasm qo‘yish",
+  "profilePhotoChange": "Rasmni almashtirish",
+  "profilePhotoRemove": "Rasmni olib tashlash",
+  "profilePhotoHint": "Rasm faqat sizga ko‘rinadi."
 }

@@ -15,6 +15,7 @@ import '../../design/theme.dart';
 import '../../design/widgets/common.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../common/pickers.dart';
+import '../deals/photo.dart';
 import '../workspace/workspace_view.dart';
 
 const _languages = {'uz': 'O‘zbekcha', 'ru': 'Русский', 'en': 'English'};
@@ -231,14 +232,7 @@ class _AccountCard extends ConsumerWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 26,
-                  backgroundColor: Brand.primary.withValues(alpha: 0.12),
-                  child: Text(
-                    me.displayName.isEmpty ? '?' : me.displayName.characters.first.toUpperCase(),
-                    style: TextStyle(color: context.accentText, fontWeight: FontWeight.w900, fontSize: 22),
-                  ),
-                ),
+                _AvatarButton(me: me),
                 const SizedBox(width: Gap.md),
                 Expanded(
                   child: Column(
@@ -265,6 +259,130 @@ class _AccountCard extends ConsumerWidget {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The person's own photo, or their initial. A tap offers the camera, the
+/// gallery or removal; only they ever see the photo.
+class _AvatarButton extends ConsumerStatefulWidget {
+  const _AvatarButton({required this.me});
+  final Me me;
+
+  @override
+  ConsumerState<_AvatarButton> createState() => _AvatarButtonState();
+}
+
+class _AvatarButtonState extends ConsumerState<_AvatarButton> {
+  var _busy = false;
+
+  void _say(String text) {
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  Future<void> _choose() async {
+    final l = L.of(context);
+    final hasPhoto = widget.me.avatar != null;
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(Gap.lg, 0, Gap.lg, Gap.sm),
+              child: Text(l.profilePhotoHint, style: TextStyle(color: context.mutedText)),
+            ),
+            ListTile(leading: const Icon(Icons.photo_camera_outlined), title: Text(l.dealPhotoCamera), onTap: () => Navigator.pop(context, 'camera')),
+            ListTile(leading: const Icon(Icons.photo_library_outlined), title: Text(l.dealPhotoGallery), onTap: () => Navigator.pop(context, 'gallery')),
+            if (hasPhoto)
+              ListTile(
+                leading: Icon(Icons.delete_outline_rounded, color: Theme.of(context).colorScheme.error),
+                title: Text(l.profilePhotoRemove, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                onTap: () => Navigator.pop(context, 'remove'),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (choice == null || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      final api = ref.read(apiProvider);
+      if (choice == 'remove') {
+        await api.removeAvatar();
+      } else {
+        final bytes = await ref.read(photoPickerProvider)(camera: choice == 'camera', use: PhotoUse.avatar);
+        if (bytes == null) return;
+        await api.uploadAvatar(bytes);
+      }
+      ref.invalidate(meProvider);
+    } on CameraDenied {
+      _say(l.dealPhotoCameraDenied);
+    } on UnreadablePhoto {
+      _say(l.dealPhotoUnsupported);
+    } catch (error) {
+      if (mounted) _say(errorText(context, error));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    final me = widget.me;
+    final avatar = me.avatar;
+    final photo = avatar == null ? null : ref.watch(avatarImageProvider(avatar)).value;
+    return Semantics(
+      container: true,
+      button: true,
+      label: avatar == null ? l.profilePhotoAdd : l.profilePhotoChange,
+      onTap: _busy ? null : _choose,
+      excludeSemantics: true,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: _busy ? null : _choose,
+        child: SizedBox.square(
+          dimension: 56,
+          child: Stack(
+            children: [
+              Center(
+                child: CircleAvatar(
+                  radius: 26,
+                  backgroundColor: Brand.primary.withValues(alpha: 0.12),
+                  foregroundImage: photo == null ? null : MemoryImage(photo),
+                  child: Text(
+                    me.displayName.isEmpty ? '?' : me.displayName.characters.first.toUpperCase(),
+                    style: TextStyle(color: context.accentText, fontWeight: FontWeight.w900, fontSize: 22),
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: Brand.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Theme.of(context).cardColor, width: 2),
+                  ),
+                  child: _busy
+                      ? const Padding(
+                          padding: EdgeInsets.all(4),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.photo_camera_rounded, size: 12, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

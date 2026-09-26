@@ -2672,6 +2672,30 @@ abstract class L {
   /// In uz, this message translates to:
   /// **'Video qo‘llanma'**
   String get profileGuides;
+
+  /// No description provided for @profilePhotoAdd.
+  ///
+  /// In uz, this message translates to:
+  /// **'Rasm qo‘yish'**
+  String get profilePhotoAdd;
+
+  /// No description provided for @profilePhotoChange.
+  ///
+  /// In uz, this message translates to:
+  /// **'Rasmni almashtirish'**
+  String get profilePhotoChange;
+
+  /// No description provided for @profilePhotoRemove.
+  ///
+  /// In uz, this message translates to:
+  /// **'Rasmni olib tashlash'**
+  String get profilePhotoRemove;
+
+  /// No description provided for @profilePhotoHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Rasm faqat sizga ko‘rinadi.'**
+  String get profilePhotoHint;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

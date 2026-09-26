@@ -1387,4 +1387,16 @@ class LEn extends L {
 
   @override
   String get profileGuides => 'Video guides';
+
+  @override
+  String get profilePhotoAdd => 'Add a photo';
+
+  @override
+  String get profilePhotoChange => 'Change photo';
+
+  @override
+  String get profilePhotoRemove => 'Remove photo';
+
+  @override
+  String get profilePhotoHint => 'Only you see this photo.';
 }

@@ -429,5 +429,9 @@
   "newVersionTitle": "Есть новая версия",
   "newVersionText": "Вышла новая версия приложения — обновите его. Аккаунт и данные сохранятся.",
   "newVersionAction": "Обновить",
-  "profileGuides": "Видеоинструкции"
+  "profileGuides": "Видеоинструкции",
+  "profilePhotoAdd": "Добавить фото",
+  "profilePhotoChange": "Сменить фото",
+  "profilePhotoRemove": "Удалить фото",
+  "profilePhotoHint": "Фото видите только вы."
 }

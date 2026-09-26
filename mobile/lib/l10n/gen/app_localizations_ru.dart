@@ -1388,4 +1388,16 @@ class LRu extends L {
 
   @override
   String get profileGuides => 'Видеоинструкции';
+
+  @override
+  String get profilePhotoAdd => 'Добавить фото';
+
+  @override
+  String get profilePhotoChange => 'Сменить фото';
+
+  @override
+  String get profilePhotoRemove => 'Удалить фото';
+
+  @override
+  String get profilePhotoHint => 'Фото видите только вы.';
 }

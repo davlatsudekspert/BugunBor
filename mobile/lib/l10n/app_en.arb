@@ -429,5 +429,9 @@
   "newVersionTitle": "A new version is out",
   "newVersionText": "A new version of the app is out — update it. Your account and data stay.",
   "newVersionAction": "Update",
-  "profileGuides": "Video guides"
+  "profileGuides": "Video guides",
+  "profilePhotoAdd": "Add a photo",
+  "profilePhotoChange": "Change photo",
+  "profilePhotoRemove": "Remove photo",
+  "profilePhotoHint": "Only you see this photo."
 }

@@ -559,6 +559,7 @@ class Me {
     required this.blockedBusinessIds,
     required this.memberships,
     this.telegramUsername,
+    this.avatar,
   });
 
   factory Me.fromJson(Json json) {
@@ -578,6 +579,7 @@ class Me {
       blockedBusinessIds: (json['blockedBusinessIds'] as List?)?.map((id) => '$id').toSet() ?? const {},
       memberships: _list(json['memberships'], Membership.fromJson),
       telegramUsername: _strOrNull(user['telegramUsername']),
+      avatar: _strOrNull(user['avatar']),
     );
   }
 
@@ -596,6 +598,9 @@ class Me {
 
   /// Offered with one tap as the business's Telegram contact.
   final String? telegramUsername;
+
+  /// The person's own profile photo (a site path only they can load; it changes with each photo), or null.
+  final String? avatar;
 
   bool get hasBusiness => memberships.isNotEmpty;
 

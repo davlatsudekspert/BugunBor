@@ -1389,4 +1389,16 @@ class LUz extends L {
 
   @override
   String get profileGuides => 'Video qo‘llanma';
+
+  @override
+  String get profilePhotoAdd => 'Rasm qo‘yish';
+
+  @override
+  String get profilePhotoChange => 'Rasmni almashtirish';
+
+  @override
+  String get profilePhotoRemove => 'Rasmni olib tashlash';
+
+  @override
+  String get profilePhotoHint => 'Rasm faqat sizga ko‘rinadi.';
 }
