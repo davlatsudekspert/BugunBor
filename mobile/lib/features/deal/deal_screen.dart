@@ -194,7 +194,7 @@ class _DealScreenState extends ConsumerState<DealScreen> {
       );
     }
     final locale = ref.watch(settingsProvider.select((settings) => settings.locale));
-    final category = ref.watch(configProvider).value?.category(deal.categorySlug);
+    final category = ref.watch(currentConfigProvider)?.category(deal.categorySlug);
     final saving = (deal.originalPrice ?? 0) - deal.price;
 
     return Scaffold(

@@ -62,9 +62,10 @@ class Prefs {
 
   void saveAnswer(String name, Map<String, dynamic> value) => _prefs.setString('answer_$name', jsonEncode(value));
 
-  /// Forgets every kept answer (on sign-out).
-  void forgetAnswers() {
-    for (final key in _prefs.getKeys().where((key) => key.startsWith('answer_')).toList()) {
+  /// Forgets the answers that belong to the account (on sign-out); the
+  /// settings and the guest's Home stay for a quick start.
+  void forgetAccountAnswers() {
+    for (final key in _prefs.getKeys().where((key) => key.startsWith('answer_feed_account')).toList()) {
       _prefs.remove(key);
     }
   }

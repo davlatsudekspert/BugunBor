@@ -207,12 +207,17 @@ class _AccountCard extends ConsumerWidget {
         content: TextField(controller: controller, autofocus: true, maxLength: 60, textCapitalization: TextCapitalization.words),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: Text(l.cancel)),
-          TextButton(onPressed: () => Navigator.pop(context, controller.text.trim()), child: Text(l.save)),
+          // The server takes 2–60 letters: a shorter name cannot be saved.
+          ListenableBuilder(
+            listenable: controller,
+            builder: (context, _) =>
+                TextButton(onPressed: controller.text.trim().length >= 2 ? () => Navigator.pop(context, controller.text.trim()) : null, child: Text(l.save)),
+          ),
         ],
       ),
     );
     controller.dispose();
-    if (name == null || name.length < 2 || name == me.displayName || !context.mounted) return;
+    if (name == null || name == me.displayName || !context.mounted) return;
     try {
       await ref.read(apiProvider).updateMe(displayName: name);
       ref.invalidate(meProvider);
@@ -449,7 +454,7 @@ class _Preferences extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = L.of(context);
     final settings = ref.watch(settingsProvider);
-    final config = ref.watch(configProvider).value;
+    final config = ref.watch(currentConfigProvider);
     final interests = ref.watch(interestsProvider);
     final place = settings.useLocation ? l.homeUseLocation : (config?.city(settings.city)?.name(settings.locale) ?? l.chooseCity);
     final interestNames = interests.map((slug) => config?.category(slug)?.name(settings.locale)).nonNulls.join(', ');
@@ -654,7 +659,9 @@ class _AccountActions extends ConsumerStatefulWidget {
 }
 
 class _AccountActionsState extends ConsumerState<_AccountActions> {
-  bool _busy = false;
+  /// What is running: 'logout' or 'delete' (both rows wait meanwhile).
+  String? _running;
+  bool get _busy => _running != null;
 
   Future<bool> _confirm(String text, String action, {bool danger = true}) async {
     final l = L.of(context);
@@ -676,23 +683,23 @@ class _AccountActionsState extends ConsumerState<_AccountActions> {
   }
 
   Future<void> _logout() async {
-    setState(() => _busy = true);
+    setState(() => _running = 'logout');
     await ref.read(accountProvider).signOut();
-    if (mounted) setState(() => _busy = false);
+    if (mounted) setState(() => _running = null);
   }
 
   Future<void> _delete() async {
     final l = L.of(context);
     if (!await _confirm(l.deleteAsk, l.profileDelete) || !mounted) return;
-    setState(() => _busy = true);
+    setState(() => _running = 'delete');
     try {
       try {
         await ref.read(accountProvider).deleteAccount();
       } on ApiError catch (error) {
         if (error.code != 'SOLE_OWNER' || !mounted) rethrow;
-        setState(() => _busy = false);
+        setState(() => _running = null);
         if (!await _confirm(l.deleteSoleOwner, l.deleteCloseAndDelete) || !mounted) return;
-        setState(() => _busy = true);
+        setState(() => _running = 'delete');
         await ref.read(accountProvider).deleteAccount(closeBusinesses: true);
       }
       if (!mounted) return;
@@ -700,7 +707,7 @@ class _AccountActionsState extends ConsumerState<_AccountActions> {
       context.go('/');
     } catch (error) {
       if (!mounted) return;
-      setState(() => _busy = false);
+      setState(() => _running = null);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorText(context, error))));
     }
   }
@@ -708,14 +715,22 @@ class _AccountActionsState extends ConsumerState<_AccountActions> {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
+    const spinner = SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2.5));
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
-          ListTile(leading: const Icon(Icons.logout_rounded), title: Text(l.profileLogout), enabled: !_busy, onTap: _logout),
+          ListTile(
+            leading: const Icon(Icons.logout_rounded),
+            title: Text(l.profileLogout),
+            trailing: _running == 'logout' ? spinner : null,
+            enabled: !_busy,
+            onTap: _logout,
+          ),
           ListTile(
             leading: Icon(Icons.delete_outline_rounded, color: context.dangerText),
             title: Text(l.profileDelete, style: TextStyle(color: context.dangerText)),
+            trailing: _running == 'delete' ? spinner : null,
             enabled: !_busy,
             onTap: _delete,
           ),

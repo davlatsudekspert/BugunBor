@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
 import '../../data/models.dart';
@@ -14,6 +15,8 @@ const _pageSize = 24;
 const _sorts = ['ending', 'discount', 'new', 'near'];
 
 /// Search and filters over all live deals of the city (or around the phone).
+/// The chosen category and order live in the address (/search?category=…),
+/// so a link from Home always shows what it names.
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key, this.category, this.sort, this.query, this.focus = false});
   final String? category;
@@ -64,7 +67,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   void _applyRoute() {
     _category = widget.category;
-    if (widget.sort != null && _sorts.contains(widget.sort)) _sort = widget.sort!;
+    _sort = _sorts.contains(widget.sort) ? widget.sort! : 'ending';
     if (widget.query != null) _text.text = widget.query!;
   }
 
@@ -106,7 +109,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     });
     final settings = ref.read(settingsProvider);
     final position = settings.useLocation ? ref.read(locationProvider) : null;
-    final city = ref.read(feedProvider).value?.city ?? settings.city;
+    // The city the person chose; without one, the city the server picked for Home.
+    final city = settings.city ?? ref.read(feedProvider).value?.city;
     try {
       final page = await ref
           .read(apiProvider)
@@ -139,9 +143,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
-    final config = ref.watch(configProvider).value;
+    // Another city on Home, or the phone's place turned on, off or moved: other deals.
+    ref.listen(settingsProvider.select((settings) => (settings.city, settings.useLocation)), (_, _) => _reload());
+    ref.listen(locationProvider, (_, _) {
+      if (ref.read(settingsProvider).useLocation) _reload();
+    });
+    final config = ref.watch(currentConfigProvider);
     final locale = ref.watch(settingsProvider.select((settings) => settings.locale));
     final located = ref.watch(settingsProvider.select((settings) => settings.useLocation)) && ref.watch(locationProvider) != null;
+    // "Near me" without a place is sorted by the end time instead.
+    final sort = _sort == 'near' && !located ? 'ending' : _sort;
     final blocked = ref.watch(meProvider).value?.blockedBusinessIds ?? const <String>{};
     final visible = _items.where((deal) => !blocked.contains(deal.business.id)).toList();
     final sortLabels = {'ending': l.sortEnding, 'discount': l.sortDiscount, 'new': l.sortNew, 'near': l.sortNear};
@@ -196,8 +207,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.xs, Gap.gutter, 0),
                 children: [
-                  for (final sort in _sorts)
-                    if (sort != 'near' || located) _chip(sortLabels[sort]!, _sort == sort, () => _setSort(sort)),
+                  for (final option in _sorts)
+                    if (option != 'near' || located) _chip(sortLabels[option]!, sort == option, () => _setSort(option)),
                 ],
               ),
             ),
@@ -214,16 +225,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   );
 
   void _setCategory(String? slug) {
-    if (_category == slug) return;
-    _category = slug;
-    _reload();
+    if (_category != slug) _show(category: slug, sort: _sort);
   }
 
   void _setSort(String sort) {
-    if (_sort == sort) return;
-    _sort = sort;
-    _reload();
+    if (_sort != sort) _show(category: _category, sort: sort);
   }
+
+  /// The new choice goes into the address; didUpdateWidget then loads it.
+  void _show({required String? category, required String sort}) =>
+      context.go(Uri(path: '/search', queryParameters: {'category': ?category, 'sort': sort}).toString());
 
   Widget _results(BuildContext context, List<DealCard> visible) {
     final l = L.of(context);

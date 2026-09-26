@@ -125,7 +125,7 @@ class SessionNotifier extends Notifier<SessionState> {
 
   Future<void> signOut() async {
     await ref.read(sessionStoreProvider).clear();
-    ref.read(prefsProvider).forgetAnswers();
+    ref.read(prefsProvider).forgetAccountAnswers();
     state = const SessionState();
   }
 
@@ -133,7 +133,7 @@ class SessionNotifier extends Notifier<SessionState> {
   void expire() {
     if (state.token == null) return;
     ref.read(sessionStoreProvider).clear();
-    ref.read(prefsProvider).forgetAnswers();
+    ref.read(prefsProvider).forgetAccountAnswers();
     state = const SessionState(expired: true);
   }
 
@@ -277,6 +277,11 @@ final lastAnswersProvider = Provider<({AppConfig? config, Feed? feed})>((ref) {
   }
   return (config: config, feed: feed);
 });
+
+/// The settings to use now: the server's latest, or the ones kept from last
+/// time while they load or when there is no connection. Null only on a first
+/// start without a connection (then the screens show the error and a retry).
+final currentConfigProvider = Provider<AppConfig?>((ref) => ref.watch(configProvider).value ?? ref.watch(lastAnswersProvider).config);
 
 final dealProvider = FutureProvider.autoDispose.family<DealDetail, String>((ref, slug) {
   ref.watch(sessionProvider.select((session) => session.token));

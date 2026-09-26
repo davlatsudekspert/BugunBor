@@ -89,5 +89,7 @@ void main() {
     await container.read(sessionProvider.notifier).signOut();
     await settle(tester);
     expect(prefs.getKeys().where((key) => key.startsWith('answer_feed_account')), isEmpty);
+    // The settings are nobody's: the next start is still quick.
+    expect(prefs.getString('answer_config'), isNotNull);
   });
 }

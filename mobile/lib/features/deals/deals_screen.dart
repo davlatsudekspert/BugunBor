@@ -200,7 +200,7 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
-    final config = ref.watch(configProvider).value;
+    final config = ref.watch(currentConfigProvider);
     // A server without the deal rules (not yet updated) has no deals list
     // either: the site's workspace still works.
     if (config != null && config.deal.visuals.isEmpty) {

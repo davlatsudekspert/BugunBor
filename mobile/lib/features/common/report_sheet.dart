@@ -81,7 +81,7 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
-    final configured = ref.watch(configProvider).value?.reportReasons ?? const [];
+    final configured = ref.watch(currentConfigProvider)?.reportReasons ?? const [];
     final reasons = configured.isEmpty ? _reasons : configured;
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),

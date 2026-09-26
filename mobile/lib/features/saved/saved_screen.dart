@@ -152,7 +152,7 @@ class _FollowTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = L.of(context);
-    final city = ref.watch(configProvider).value?.city(business.city)?.name(ref.watch(settingsProvider).locale);
+    final city = ref.watch(currentConfigProvider)?.city(business.city)?.name(ref.watch(settingsProvider).locale);
     return Card(
       clipBehavior: Clip.antiAlias,
       child: ListTile(

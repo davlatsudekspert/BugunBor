@@ -21,7 +21,7 @@ class InterestPicker extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final config = ref.watch(configProvider);
     final locale = ref.watch(settingsProvider.select((settings) => settings.locale));
-    final categories = config.value?.categories ?? const <Category>[];
+    final categories = ref.watch(currentConfigProvider)?.categories ?? const <Category>[];
     if (categories.isEmpty) {
       if (config.hasError) return StatePanel.error(context, config.error!, onRetry: () => ref.invalidate(configProvider));
       return const Padding(

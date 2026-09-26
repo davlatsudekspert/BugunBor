@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -45,7 +46,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     _pages.nextPage(duration: const Duration(milliseconds: 260), curve: Curves.easeOut);
   }
 
+  void _back() {
+    if (_page > 0 && !_busy) _pages.previousPage(duration: const Duration(milliseconds: 260), curve: Curves.easeOut);
+  }
+
   void _finish() {
+    // Interests ticked before "Skip" count too.
+    if (_page >= 1 && !setEquals(_interests, ref.read(settingsProvider).guestInterests.toSet())) {
+      ref.read(accountProvider).setInterests(_interests.toList());
+    }
     ref.read(settingsProvider.notifier).finishOnboarding();
     context.go('/');
     final next = widget.next;
@@ -94,37 +103,46 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       _Step(icon: Icons.near_me_rounded, title: l.onbLocationTitle, text: l.onbLocationText),
       if (Env.pushEnabled) _Step(icon: Icons.notifications_active_rounded, title: l.onbNotifyTitle, text: l.onbNotifyText),
     ];
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.sm, Gap.sm, 0),
-              child: Row(
-                children: [
-                  for (var index = 0; index < _count; index++)
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      margin: const EdgeInsets.only(right: 6),
-                      width: index == _page ? 22 : 8,
-                      height: 8,
-                      decoration: BoxDecoration(color: index <= _page ? Brand.primary : context.borderColor, borderRadius: BorderRadius.circular(99)),
-                    ),
-                  const Spacer(),
-                  if (_page > 0) TextButton(onPressed: _busy ? null : _finish, child: Text(l.skip)),
-                ],
+    // The phone's back goes to the previous step, not out of the app.
+    return PopScope(
+      canPop: _page == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _back();
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(_page > 0 ? Gap.xs : Gap.gutter, Gap.sm, Gap.sm, 0),
+                child: Row(
+                  children: [
+                    if (_page > 0)
+                      IconButton(tooltip: MaterialLocalizations.of(context).backButtonTooltip, onPressed: _busy ? null : _back, icon: const BackButtonIcon()),
+                    for (var index = 0; index < _count; index++)
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.only(right: 6),
+                        width: index == _page ? 22 : 8,
+                        height: 8,
+                        decoration: BoxDecoration(color: index <= _page ? Brand.primary : context.borderColor, borderRadius: BorderRadius.circular(99)),
+                      ),
+                    const Spacer(),
+                    if (_page > 0) TextButton(onPressed: _busy ? null : _finish, child: Text(l.skip)),
+                  ],
+                ),
               ),
-            ),
-            Expanded(
-              child: PageView(
-                controller: _pages,
-                physics: const NeverScrollableScrollPhysics(),
-                onPageChanged: (page) => setState(() => _page = page),
-                children: pages,
+              Expanded(
+                child: PageView(
+                  controller: _pages,
+                  physics: const NeverScrollableScrollPhysics(),
+                  onPageChanged: (page) => setState(() => _page = page),
+                  children: pages,
+                ),
               ),
-            ),
-            Padding(padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.sm, Gap.gutter, Gap.lg), child: _actions(context)),
-          ],
+              Padding(padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.sm, Gap.gutter, Gap.lg), child: _actions(context)),
+            ],
+          ),
         ),
       ),
     );

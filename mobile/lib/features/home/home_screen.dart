@@ -107,7 +107,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     final live = ref.watch(feedProvider);
     final feed = live.hasValue || last.feed == null ? live : AsyncData(last.feed!);
     final offline = live.hasError && (live.hasValue || last.feed != null);
-    final config = ref.watch(configProvider).value ?? last.config;
+    final config = ref.watch(currentConfigProvider);
     final located = settings.useLocation && ref.watch(locationProvider) != null;
     final cityName = config?.city(feed.value?.city ?? settings.city)?.name(settings.locale);
     final placeLabel = located ? l.homeUseLocation : (cityName ?? l.chooseCity);
@@ -177,7 +177,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     final l = L.of(context);
     if (!feed.hasValue) {
       if (feed.hasError) {
-        return [SliverFillRemaining(hasScrollBody: false, child: StatePanel.error(context, feed.error!, onRetry: () => ref.invalidate(feedProvider)))];
+        return [SliverFillRemaining(hasScrollBody: false, child: StatePanel.error(context, feed.error!, onRetry: _reload))];
       }
       return const [SliverToBoxAdapter(child: _HomeSkeleton())];
     }
