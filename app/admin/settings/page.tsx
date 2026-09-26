@@ -10,6 +10,7 @@ import { getI18n } from '@/lib/i18n/server';
 import { requireAdmin } from '@/modules/auth/current';
 import { notificationStats } from '@/modules/notifications/service';
 import { createTelegramApi, type WebhookInfo } from '@/modules/telegram/api';
+import { currentWebhookState } from '@/modules/telegram/setup';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -25,6 +26,9 @@ export default async function AdminSettingsPage() {
   const s = t.admin.settings;
   let info: WebhookInfo | null = null;
   let infoError = '';
+  const connection = configured ? await currentWebhookState(db, config) : null;
+  const tokenBot = connection?.username ?? null;
+  const mismatch = Boolean(tokenBot && config.telegram.botUsername && tokenBot.toLowerCase() !== config.telegram.botUsername.toLowerCase());
   if (configured) {
     try {
       info = await createTelegramApi(config.telegram.botToken!).getWebhookInfo();
@@ -49,6 +53,10 @@ export default async function AdminSettingsPage() {
         </p>
         {configured ? (
           <div className="mt-4 space-y-2 text-sm text-slate-600">
+            <p>{s.autoConnect}</p>
+            {tokenBot ? <p><span className="font-semibold text-navy">{s.tokenBot}:</span> @{tokenBot}</p> : null}
+            {mismatch ? <p role="alert" className="rounded-xl bg-amber-50 p-3 font-semibold text-amber-800">{fmt(s.botMismatch, { actual: tokenBot ?? '', configured: config.telegram.botUsername ?? '' })}</p> : null}
+            {connection?.error ? <p className="text-red-600">{fmt(s.autoConnectError, { error: /unauthorized|not found/i.test(connection.error) ? s.tokenInvalid : connection.error })}</p> : null}
             <p><span className="font-semibold text-navy">{s.webhookInfo}:</span> {info?.url || '—'}</p>
             {info ? <p>{fmt(s.pending, { count: info.pending_update_count })}</p> : null}
             {info?.last_error_message ? <p className="text-red-600">{fmt(s.lastError, { error: info.last_error_message })}</p> : null}

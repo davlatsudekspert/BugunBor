@@ -11,6 +11,7 @@ import { setReviewHidden } from '@/modules/engagement/reviews';
 import { DomainError } from '@/modules/errors';
 import { archiveDealByModerator, decideBusiness, decideDeal, removeImagesByModerator, setBusinessSuspended } from '@/modules/moderation/service';
 import { createTelegramApi } from '@/modules/telegram/api';
+import { ensureTelegramWebhook } from '@/modules/telegram/setup';
 
 const id = z.string().min(1).max(100);
 const decision = z.enum(['APPROVE', 'REJECT']);
@@ -114,7 +115,11 @@ export const POST = route(async (request: Request) => {
     case 'telegram.webhook': {
       const config = getConfig();
       if (!isTelegramConfigured(config)) throw new DomainError('TELEGRAM_NOT_CONFIGURED');
-      const origin = config.appUrl ?? new URL(request.url).origin;
+      const state = await ensureTelegramWebhook(db, config, { force: true });
+      if (state?.error) throw new DomainError('WEBHOOK_FAILED', 502, { detail: state.error });
+      if (state) return json({ data: { url: state.url } });
+      // No https APP_URL: register the address this request came in on.
+      const origin = new URL(request.url).origin;
       try {
         await createTelegramApi(config.telegram.botToken!).setWebhook(`${origin}/api/v1/telegram/webhook`, config.telegram.webhookSecret!);
       } catch (error) {

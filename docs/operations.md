@@ -5,8 +5,10 @@
 1. Run the gates: `npm run lint && npm run typecheck && npm test && npm run build`.
 2. Deploy the Worker with its D1 binding `DB` (the Sites plugin reads `.openai/hosting.json`).
 3. Set the variables from `.env.example` (at least `APP_URL`, `HASH_SECRET`, the three `TELEGRAM_*` values and `ADMIN_PHONES`).
-4. Open the site, log in with an admin phone through Telegram, go to **Admin → Sozlamalar** and press **Webhook o‘rnatish**.
+4. Open the site once: the first request connects the Telegram bot (webhook) by itself, and again whenever the token, secret or `APP_URL` changes. Then log in with an admin phone through Telegram. **Admin → Sozlamalar** shows which bot the token belongs to and any connection error; **Webhook’ni o‘rnatish** reconnects by hand.
 5. In **Admin → Tariflar** check prices, the free-period length (1–3 months) and the payment instructions shown to businesses.
+
+Deploying straight to Cloudflare Workers Builds: set the build variables `D1_DATABASE_ID` and `D1_DATABASE_NAME`, so the built `wrangler.json` binds the real database (without them it carries a placeholder id).
 
 Migrations run automatically on the first request after a deploy. They are additive and idempotent; never edit a migration that has shipped — add a new one.
 

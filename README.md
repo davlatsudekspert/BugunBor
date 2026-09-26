@@ -45,7 +45,7 @@ Set these as Worker environment variables / secrets (see `.env.example`):
 | `ADMIN_PHONES` | Comma-separated phones that become admins on first Telegram login, e.g. `+998901234567` |
 | `DEMO_SEED` | `true` to show the demo catalogue in production (off by default) |
 
-After deploying, open **Admin → Sozlamalar** and press **Webhook o‘rnatish** to connect the bot.
+After deploying, open the site once: the bot connects itself (Telegram webhook) on the first request. **Admin → Sozlamalar** shows its state. For Cloudflare Workers Builds also set the build variables `D1_DATABASE_ID` and `D1_DATABASE_NAME`.
 
 ## Quality gates
 

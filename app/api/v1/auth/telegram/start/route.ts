@@ -6,6 +6,7 @@ import { getConfig, isTelegramConfigured } from '@/lib/env';
 import { assertSameOrigin, clientIp, json, readJson, requestLocale, route } from '@/lib/http';
 import { LOGIN_COOKIE, LOGIN_TTL_MINUTES, loginCookieValue, startLogin } from '@/modules/auth/login';
 import { DomainError } from '@/modules/errors';
+import { loginBotUsername } from '@/modules/telegram/setup';
 import { RATE_RULES, enforceRateLimit, hashIp } from '@/modules/rate-limit';
 
 const bodySchema = z.object({ returnTo: z.string().max(500).optional() });
@@ -35,7 +36,7 @@ export const POST = route(async (request) => {
       data: {
         matchCode: login.matchCode,
         expiresAt: login.expiresAt.toISOString(),
-        deepLink: `https://t.me/${config.telegram.botUsername}?start=${login.token}`,
+        deepLink: `https://t.me/${await loginBotUsername(db, config)}?start=${login.token}`,
       },
     },
     { status: 201, headers: { 'set-cookie': cookie } },

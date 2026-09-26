@@ -70,7 +70,7 @@
    - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET`.
    - `ADMIN_PHONES`: sizning telefon raqamingiz. Shu raqam bilan kirsangiz, avtomatik admin bo‘lasiz.
 
-   So‘ng Admin → Sozlamalar → «Webhook o‘rnatish» tugmasini bosasiz.
+   Bot saytga o‘zi ulanadi: deploydan keyin saytni bir marta ochishning o‘zi yetadi. Holatini Admin → Sozlamalar sahifasida ko‘rasiz.
 3. **Original fotolar** tayyor, sizdan hech narsa kerak emas. Yana foto qo‘shmoqchi bo‘lsangiz, ularni Google Drive’dagi «BugunBor rasmlar» papkasiga tashlang. Yo‘riqnoma va yordamchi uchun promt `docs/RASMLAR.md` faylida.
 
 ---
