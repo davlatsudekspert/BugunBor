@@ -54,7 +54,8 @@ const denyTexts = new Set([getDictionary('uz').bot.deny, getDictionary('ru').bot
 
 async function reportApproval(result: ApproveResult, chatId: number, fallback: Dictionary, sender: BotSender) {
   const t = result.kind === 'expired' ? fallback : getDictionary(result.request.locale === 'ru' ? 'ru' : 'uz');
-  const text = result.kind === 'approved' ? t.bot.approved : result.kind === 'blocked' ? t.bot.blocked : t.bot.expired;
+  const approved = result.kind === 'approved' && result.request.client === 'app' ? t.bot.approvedApp : t.bot.approved;
+  const text = result.kind === 'approved' ? approved : result.kind === 'blocked' ? t.bot.blocked : t.bot.expired;
   await sender.sendMessage(chatId, text, { remove_keyboard: true });
 }
 

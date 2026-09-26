@@ -1,6 +1,6 @@
 import { getDb } from '@/db/client';
 import { assertSameOrigin, json, route } from '@/lib/http';
-import { apiUser } from '@/modules/auth/current';
+import { apiUser } from '@/modules/auth/api-user';
 import { cancelRedemption } from '@/modules/redemptions/service';
 
 export const POST = route(async (request: Request, context: { params: Promise<{ id: string }> }) => {

@@ -1,0 +1,86 @@
+{
+  "city": "tashkent",
+  "located": true,
+  "forYou": [],
+  "nearby": [
+    {
+      "id": "deal",
+      "slug": "osh",
+      "title": "Osh",
+      "originalPrice": 50000,
+      "price": 30000,
+      "discountPercent": 40,
+      "startsAt": "2026-09-25 09:00:00",
+      "endsAt": "2026-09-25 12:00:00",
+      "remaining": 2,
+      "total": 2,
+      "visual": null,
+      "photo": null,
+      "categorySlug": "taomlar",
+      "claimTtlMinutes": 60,
+      "publishedAt": "2026-09-26 08:13:44",
+      "isSponsored": false,
+      "business": {
+        "id": "biz",
+        "slug": "kafe",
+        "name": "Kafe",
+        "logo": null,
+        "rating": null
+      },
+      "branch": {
+        "id": "br1",
+        "name": "Markaz",
+        "address": "Amir Temur 1",
+        "city": "tashkent",
+        "latitude": 41.3111,
+        "longitude": 69.2797,
+        "hoursJson": "{\"open\":\"09:00\",\"close\":\"22:00\"}"
+      },
+      "branchCount": 2,
+      "distanceKm": 1.4764456746137822,
+      "effective": "LIVE",
+      "isDemo": false
+    }
+  ],
+  "ending": [
+    {
+      "id": "deal",
+      "slug": "osh",
+      "title": "Osh",
+      "originalPrice": 50000,
+      "price": 30000,
+      "discountPercent": 40,
+      "startsAt": "2026-09-25 09:00:00",
+      "endsAt": "2026-09-25 12:00:00",
+      "remaining": 2,
+      "total": 2,
+      "visual": null,
+      "photo": null,
+      "categorySlug": "taomlar",
+      "claimTtlMinutes": 60,
+      "publishedAt": "2026-09-26 08:13:44",
+      "isSponsored": false,
+      "business": {
+        "id": "biz",
+        "slug": "kafe",
+        "name": "Kafe",
+        "logo": null,
+        "rating": null
+      },
+      "branch": {
+        "id": "br1",
+        "name": "Markaz",
+        "address": "Amir Temur 1",
+        "city": "tashkent",
+        "latitude": 41.3111,
+        "longitude": 69.2797,
+        "hoursJson": "{\"open\":\"09:00\",\"close\":\"22:00\"}"
+      },
+      "branchCount": 2,
+      "distanceKm": 1.4764456746137822,
+      "effective": "LIVE",
+      "isDemo": false
+    }
+  ],
+  "total": 1
+}

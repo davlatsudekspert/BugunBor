@@ -1,0 +1,69 @@
+{
+  "id": "deal",
+  "slug": "osh",
+  "title": "Osh",
+  "description": "Mazali osh",
+  "terms": "Faqat zalda",
+  "originalPrice": 50000,
+  "price": 30000,
+  "discountPercent": 40,
+  "startsAt": "2026-09-25 09:00:00",
+  "endsAt": "2026-09-25 12:00:00",
+  "remaining": 2,
+  "total": 2,
+  "perCustomerLimit": 1,
+  "claimTtlMinutes": 60,
+  "visual": null,
+  "photo": null,
+  "isDemo": false,
+  "category": {
+    "slug": "taomlar",
+    "nameUz": "Taomlar",
+    "nameRu": "Еда"
+  },
+  "business": {
+    "id": "biz",
+    "slug": "kafe",
+    "name": "Kafe",
+    "description": "Yaxshi kafe",
+    "phone": "+998712000000",
+    "telegram": null,
+    "instagram": null,
+    "website": null,
+    "verificationStatus": "VERIFIED",
+    "suspendedAt": null,
+    "isDemo": false,
+    "logo": null,
+    "rating": null,
+    "onAir": true
+  },
+  "branches": [
+    {
+      "id": "br2",
+      "name": "Chilonzor",
+      "address": "Bunyodkor 2",
+      "city": "tashkent",
+      "phone": null,
+      "hoursJson": "{\"open\":\"09:00\",\"close\":\"22:00\"}",
+      "latitude": 41.28,
+      "longitude": 69.21
+    },
+    {
+      "id": "br1",
+      "name": "Markaz",
+      "address": "Amir Temur 1",
+      "city": "tashkent",
+      "phone": null,
+      "hoursJson": "{\"open\":\"09:00\",\"close\":\"22:00\"}",
+      "latitude": 41.3111,
+      "longitude": 69.2797
+    }
+  ],
+  "effective": "LIVE",
+  "claimable": true,
+  "favorite": false,
+  "following": false,
+  "followers": 0,
+  "usedCount": 0,
+  "activeRedemptionId": null
+}

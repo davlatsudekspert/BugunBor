@@ -9,8 +9,8 @@ async function send(url: string, method: string, body?: unknown) {
     headers: body === undefined ? undefined : { 'content-type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  const payload = (await response.json().catch(() => ({}))) as { error?: { message: string } };
-  return { ok: response.ok, message: payload.error?.message };
+  const payload = (await response.json().catch(() => ({}))) as { error?: { code: string; message: string } };
+  return { ok: response.ok, message: payload.error?.message, code: payload.error?.code };
 }
 
 export function NameForm({ initial, labels }: { initial: string; labels: { name: string; placeholder: string; save: string; saved: string; error: string } }) {
@@ -58,30 +58,39 @@ export function LogoutButton({ label }: { label: string }) {
   );
 }
 
-export function DeleteAccountButton({ labels }: { labels: { button: string; ask: string; error: string } }) {
+/** Deletes the account; the only owner of a business may close the business in the same step. */
+export function DeleteAccountButton({ labels }: { labels: { button: string; ask: string; error: string; closeAndDelete: string; closeAsk: string } }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [soleOwner, setSoleOwner] = useState(false);
+  async function remove(closeBusinesses: boolean) {
+    if (!window.confirm(closeBusinesses ? labels.closeAsk : labels.ask)) return;
+    setBusy(true);
+    const result = await send('/api/v1/me', 'DELETE', closeBusinesses ? { closeBusinesses: true } : undefined);
+    if (result.ok) {
+      window.location.assign('/');
+      return;
+    }
+    setBusy(false);
+    setSoleOwner(result.code === 'SOLE_OWNER');
+    setError(result.message ?? labels.error);
+  }
   return (
     <div>
       <button
         type="button"
         disabled={busy}
-        onClick={async () => {
-          if (!window.confirm(labels.ask)) return;
-          setBusy(true);
-          const result = await send('/api/v1/me', 'DELETE');
-          if (result.ok) {
-            window.location.assign('/');
-            return;
-          }
-          setBusy(false);
-          setError(result.message ?? labels.error);
-        }}
+        onClick={() => remove(false)}
         className="inline-flex h-11 items-center gap-2 rounded-xl bg-red-50 px-4 text-sm font-bold text-red-700 hover:bg-red-100 disabled:opacity-60"
       >
         <Trash2 className="size-4" aria-hidden /> {labels.button}
       </button>
       {error ? <p role="alert" className="mt-2 text-sm font-semibold text-red-600">{error}</p> : null}
+      {soleOwner ? (
+        <button type="button" disabled={busy} onClick={() => remove(true)} className="mt-3 inline-flex h-11 items-center gap-2 rounded-xl bg-red-600 px-4 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-60">
+          <Trash2 className="size-4" aria-hidden /> {labels.closeAndDelete}
+        </button>
+      ) : null}
     </div>
   );
 }

@@ -5,8 +5,21 @@ import { DEFAULT_LOCALE, LOCALE_COOKIE, errorMessage, fmt, getDictionary, isLoca
 import { DomainError, isDomainError } from '@/modules/errors';
 
 export function requestLocale(request: Request): Locale {
-  const value = readCookie(request, LOCALE_COOKIE);
+  const value = readCookie(request, LOCALE_COOKIE) ?? request.headers.get('x-locale');
   return isLocale(value) ? value : DEFAULT_LOCALE;
+}
+
+/** The session token a mobile app sends as `Authorization: Bearer <token>`. */
+export function bearerToken(request: Request) {
+  const match = /^Bearer\s+([A-Za-z0-9_-]{20,100})$/.exec(request.headers.get('authorization') ?? '');
+  return match ? match[1] : null;
+}
+
+/** Which client made the request: the mobile app sends `x-app: bugunbor` and its build number. */
+export function requestClient(request: Request): { client: 'app' | 'web'; build: string | null } {
+  if (request.headers.get('x-app') !== 'bugunbor') return { client: 'web', build: null };
+  const build = request.headers.get('x-app-build');
+  return { client: 'app', build: build && /^\d{1,9}$/.test(build) ? build : null };
 }
 
 export function clientIp(request: Request) {
@@ -23,6 +36,8 @@ export function clientIp(request: Request) {
  * Origin on POST/PATCH/DELETE; Sec-Fetch-Site covers the rare case without it.
  */
 export function assertSameOrigin(request: Request) {
+  // A bearer token is never sent by a browser on its own, so such requests carry no ambient credentials.
+  if (bearerToken(request) && !readCookie(request, 'bb_session')) return;
   const origin = request.headers.get('origin');
   const url = new URL(request.url);
   if (origin) {

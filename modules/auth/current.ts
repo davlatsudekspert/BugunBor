@@ -3,8 +3,6 @@ import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 
 import { getDb } from '@/db/client';
-import { readCookie } from '@/lib/cookies';
-import { DomainError } from '@/modules/errors';
 import { SESSION_COOKIE, getSessionUser, type SessionUser } from './sessions';
 
 /** The signed-in user for server components, cached per request. */
@@ -36,21 +34,4 @@ export async function requireAdmin(returnTo: string) {
   return user;
 }
 
-/** The signed-in user for API route handlers. */
-export async function apiUser(request: Request, db: D1Database) {
-  const user = await getSessionUser(db, readCookie(request, SESSION_COOKIE));
-  if (!user) throw new DomainError('UNAUTHENTICATED');
-  return user;
-}
-
-export async function apiModerator(request: Request, db: D1Database) {
-  const user = await apiUser(request, db);
-  if (!isModerator(user)) throw new DomainError('FORBIDDEN');
-  return user;
-}
-
-export async function apiAdmin(request: Request, db: D1Database) {
-  const user = await apiUser(request, db);
-  if (user.role !== 'ADMIN') throw new DomainError('FORBIDDEN');
-  return user;
-}
+export { apiAdmin, apiModerator, apiUser, optionalApiUser, requestSessionToken } from './api-user';

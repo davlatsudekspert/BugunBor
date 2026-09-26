@@ -32,5 +32,13 @@ declare namespace Cloudflare {
     CLICK_SANDBOX?: string;
     /** "true" lets businesses pay online; until then the buttons say "coming soon". */
     PAYMENTS_ENABLED?: string;
+    /** Android app: SHA-256 signing certificate fingerprints (upload and Play signing keys), comma-separated, for /.well-known/assetlinks.json. */
+    ANDROID_CERT_SHA256?: string;
+    /** Firebase service account JSON (FCM push). Push stays off until it is set. */
+    FCM_SERVICE_ACCOUNT?: string;
+    /** Store reviewers' sign-in code (at least 12 characters). Unset = reviewer sign-in is off. */
+    REVIEW_LOGIN_CODE?: string;
+    /** Oldest app build that may still be used; older builds are asked to update. */
+    MIN_APP_BUILD?: string;
   }
 }

@@ -1,7 +1,7 @@
 import { getDb } from '@/db/client';
 import { assertSameOrigin, json, route } from '@/lib/http';
 import { toDbTime } from '@/lib/time';
-import { apiUser } from '@/modules/auth/current';
+import { apiUser } from '@/modules/auth/api-user';
 import { DomainError } from '@/modules/errors';
 import { RATE_RULES, enforceRateLimit } from '@/modules/rate-limit';
 

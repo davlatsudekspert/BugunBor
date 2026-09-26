@@ -1,0 +1,192 @@
+{
+  "demo": false,
+  "tariffsEnabled": false,
+  "minAppBuild": 3,
+  "privacyVersion": "2026-09-26",
+  "links": {
+    "privacy": "/privacy",
+    "terms": "/terms",
+    "deleteAccount": "/delete-account",
+    "contact": "/contact"
+  },
+  "telegramBot": "bugunborbot",
+  "categories": [
+    {
+      "slug": "taomlar",
+      "nameUz": "Taomlar",
+      "nameRu": "Еда",
+      "icon": "utensils"
+    },
+    {
+      "slug": "kofe",
+      "nameUz": "Kofe",
+      "nameRu": "Кофе",
+      "icon": "coffee"
+    },
+    {
+      "slug": "xaridlar",
+      "nameUz": "Xaridlar",
+      "nameRu": "Покупки",
+      "icon": "shopping-bag"
+    },
+    {
+      "slug": "gozallik",
+      "nameUz": "Go‘zallik",
+      "nameRu": "Красота",
+      "icon": "sparkles"
+    },
+    {
+      "slug": "sport",
+      "nameUz": "Sport",
+      "nameRu": "Спорт",
+      "icon": "dumbbell"
+    },
+    {
+      "slug": "kongilochar",
+      "nameUz": "Ko‘ngilochar",
+      "nameRu": "Развлечения",
+      "icon": "ticket"
+    },
+    {
+      "slug": "xizmatlar",
+      "nameUz": "Xizmatlar",
+      "nameRu": "Услуги",
+      "icon": "wrench"
+    },
+    {
+      "slug": "yetkazish",
+      "nameUz": "Yetkazish",
+      "nameRu": "Доставка",
+      "icon": "bike"
+    }
+  ],
+  "cities": [
+    {
+      "slug": "tashkent",
+      "nameUz": "Toshkent",
+      "nameRu": "Ташкент",
+      "latitude": 41.3111,
+      "longitude": 69.2797
+    },
+    {
+      "slug": "samarkand",
+      "nameUz": "Samarqand",
+      "nameRu": "Самарканд",
+      "latitude": 39.6542,
+      "longitude": 66.9597
+    },
+    {
+      "slug": "bukhara",
+      "nameUz": "Buxoro",
+      "nameRu": "Бухара",
+      "latitude": 39.7747,
+      "longitude": 64.4286
+    },
+    {
+      "slug": "andijan",
+      "nameUz": "Andijon",
+      "nameRu": "Андижан",
+      "latitude": 40.7821,
+      "longitude": 72.3442
+    },
+    {
+      "slug": "fergana",
+      "nameUz": "Farg‘ona",
+      "nameRu": "Фергана",
+      "latitude": 40.3842,
+      "longitude": 71.7843
+    },
+    {
+      "slug": "namangan",
+      "nameUz": "Namangan",
+      "nameRu": "Наманган",
+      "latitude": 40.9983,
+      "longitude": 71.6726
+    },
+    {
+      "slug": "kokand",
+      "nameUz": "Qo‘qon",
+      "nameRu": "Коканд",
+      "latitude": 40.5286,
+      "longitude": 70.9425
+    },
+    {
+      "slug": "margilan",
+      "nameUz": "Marg‘ilon",
+      "nameRu": "Маргилан",
+      "latitude": 40.4711,
+      "longitude": 71.7247
+    },
+    {
+      "slug": "nurafshon",
+      "nameUz": "Nurafshon",
+      "nameRu": "Нурафшан",
+      "latitude": 41.0439,
+      "longitude": 69.3578
+    },
+    {
+      "slug": "chirchiq",
+      "nameUz": "Chirchiq",
+      "nameRu": "Чирчик",
+      "latitude": 41.4689,
+      "longitude": 69.5822
+    },
+    {
+      "slug": "navoi",
+      "nameUz": "Navoiy",
+      "nameRu": "Навои",
+      "latitude": 40.0844,
+      "longitude": 65.3792
+    },
+    {
+      "slug": "jizzakh",
+      "nameUz": "Jizzax",
+      "nameRu": "Джизак",
+      "latitude": 40.1158,
+      "longitude": 67.8422
+    },
+    {
+      "slug": "gulistan",
+      "nameUz": "Guliston",
+      "nameRu": "Гулистан",
+      "latitude": 40.4897,
+      "longitude": 68.7842
+    },
+    {
+      "slug": "karshi",
+      "nameUz": "Qarshi",
+      "nameRu": "Карши",
+      "latitude": 38.8606,
+      "longitude": 65.7891
+    },
+    {
+      "slug": "termez",
+      "nameUz": "Termiz",
+      "nameRu": "Термез",
+      "latitude": 37.2242,
+      "longitude": 67.2783
+    },
+    {
+      "slug": "urgench",
+      "nameUz": "Urganch",
+      "nameRu": "Ургенч",
+      "latitude": 41.55,
+      "longitude": 60.6333
+    },
+    {
+      "slug": "nukus",
+      "nameUz": "Nukus",
+      "nameRu": "Нукус",
+      "latitude": 42.4531,
+      "longitude": 59.6103
+    }
+  ],
+  "reportReasons": [
+    "WRONG_INFO",
+    "SCAM",
+    "OFFENSIVE",
+    "PROHIBITED",
+    "SPAM",
+    "OTHER"
+  ]
+}

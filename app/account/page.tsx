@@ -93,7 +93,7 @@ export default async function AccountPage() {
         <h2 className="text-sm font-black uppercase tracking-[.12em] text-red-600">{t.account.danger}</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">{t.account.deleteText}</p>
         <div className="mt-4">
-          <DeleteAccountButton labels={{ button: t.account.deleteTitle, ask: t.account.deleteAsk, error: t.common.unknownError }} />
+          <DeleteAccountButton labels={{ button: t.account.deleteTitle, ask: t.account.deleteAsk, error: t.common.unknownError, closeAndDelete: t.account.closeAndDelete, closeAsk: t.account.closeAsk }} />
         </div>
       </section>
     </main>

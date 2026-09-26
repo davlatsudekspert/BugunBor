@@ -45,13 +45,15 @@ export type DealCard = {
   branchCount: number;
   distanceKm: number | null;
   effective: EffectiveDealStatus;
+  /** A sample (demo) deal or business: shown with a «Namuna» mark and never claimable. */
+  isDemo: boolean;
 };
 
 type DealBranchRow = {
   id: string; slug: string; title: string; originalPrice: number | null; price: number; discountPercent: number;
   startsAt: string; endsAt: string; remaining: number | null; total: number | null; visual: string | null;
   publishedAt: string; isSponsored: number; claimTtlMinutes: number; status: string; categorySlug: string;
-  businessId: string; businessSlug: string; businessName: string; logoId: string | null; photoId: string | null; isDemo: number;
+  businessId: string; businessSlug: string; businessName: string; logoId: string | null; photoId: string | null; isDemo: number; businessIsDemo: number;
   ratingBp: number | null; reviewCount: number | null;
   branchId: string; branchName: string; address: string; city: string; lat: number; lon: number; hoursJson: string;
 };
@@ -61,7 +63,7 @@ const DEAL_BRANCH_COLUMNS = `d.id, d.slug, d.title, d.original_price_uzs AS orig
   d.remaining_quantity AS remaining, d.total_quantity AS total, d.visual, d.status,
   COALESCE(d.approved_at, d.created_at) AS publishedAt, d.is_sponsored AS isSponsored, d.claim_ttl_minutes AS claimTtlMinutes,
   c.slug AS categorySlug, b.id AS businessId, b.slug AS businessSlug, b.name AS businessName,
-  b.logo_id AS logoId, d.photo_id AS photoId, d.is_demo AS isDemo, b.rating_basis_points AS ratingBp, b.review_count AS reviewCount,
+  b.logo_id AS logoId, d.photo_id AS photoId, d.is_demo AS isDemo, b.is_demo AS businessIsDemo, b.rating_basis_points AS ratingBp, b.review_count AS reviewCount,
   br.id AS branchId, br.name AS branchName, br.address, br.city, br.latitude_e6 AS lat, br.longitude_e6 AS lon, br.working_hours_json AS hoursJson`;
 
 type Point = { latitude: number; longitude: number };
@@ -104,6 +106,7 @@ function groupDeals(rows: DealBranchRow[], near: Point | null, now: Date): DealC
       branchCount: 1,
       distanceKm: distance,
       effective: effectiveDealStatus({ status: row.status, startsAt: row.startsAt, endsAt: row.endsAt, remainingQuantity: row.remaining }, now),
+      isDemo: Boolean(row.isDemo || row.businessIsDemo),
     });
   }
   return [...grouped.values()];
