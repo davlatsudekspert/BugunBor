@@ -3,9 +3,9 @@ import { ArrowRight } from 'lucide-react';
 
 import { CategoryIcon, categoryColor } from '@/components/deals/category-icon';
 import { getDb } from '@/db/client';
+import { demoEnabled } from '@/modules/demo';
 import { cityName } from '@/lib/cities';
 import { getPreferredCity } from '@/lib/city-cookie';
-import { getConfig } from '@/lib/env';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
 import { cn } from '@/lib/utils';
@@ -18,7 +18,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function CategoriesPage() {
   const [{ t, locale }, city, db] = await Promise.all([getI18n(), getPreferredCity(), getDb()]);
-  const [categories, deals] = await Promise.all([listCategories(db), listLiveDeals(db, { city, demo: getConfig().demoMode })]);
+  const demo = await demoEnabled(db);
+  const [categories, deals] = await Promise.all([listCategories(db), listLiveDeals(db, { city, demo })]);
   const counts = countByCategory(deals);
   return (
     <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6">

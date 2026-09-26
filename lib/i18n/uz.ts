@@ -826,6 +826,10 @@ export const uz = {
       saveCompany: 'Rekvizitlarni saqlash',
       demoOn: 'Yoqilgan — demo bizneslar saytda ko‘rinadi.',
       demoOff: 'O‘chirilgan.',
+      demoHint: 'Namuna (demo) bizneslar va aksiyalar saytni jonli ko‘rsatadi: tepada «Demo rejim» yozuvi turadi va ularni band qilib bo‘lmaydi. Haqiqiy bizneslar ko‘paygach yashiring.',
+      demoTurnOn: 'Namuna bizneslarni ko‘rsatish',
+      demoTurnOff: 'Namuna bizneslarni yashirish',
+      demoFromEnv: 'DEMO_SEED=true muhit o‘zgaruvchisi bilan yoqilgan — bu yerdan o‘chmaydi.',
     },
   },
   how: {

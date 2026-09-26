@@ -4,8 +4,8 @@ import { Heart } from 'lucide-react';
 import { BusinessAvatar } from '@/components/deals/business-avatar';
 import { DealCard } from '@/components/deals/deal-card';
 import { getDb } from '@/db/client';
+import { demoEnabled } from '@/modules/demo';
 import { cityName } from '@/lib/cities';
-import { getConfig } from '@/lib/env';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
 import { requireUser } from '@/modules/auth/current';
@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function SavedPage() {
   const user = await requireUser('/account/saved');
   const [{ t, locale }, db] = await Promise.all([getI18n(), getDb()]);
-  const demo = getConfig().demoMode;
+  const demo = await demoEnabled(db);
   const [{ live, ended }, followed] = await Promise.all([listFavoriteDeals(db, user.id, { demo }), listFollowedBusinesses(db, user.id, { demo })]);
 
   return (

@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 import { getDb } from '@/db/client';
-import { getConfig } from '@/lib/env';
+import { demoEnabled } from '@/modules/demo';
 import { toDbTime } from '@/lib/time';
 import { PUBLIC_BUSINESS_SQL, liveDealSql } from '@/modules/deals/status';
 
@@ -16,7 +16,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const db = await getDb();
     const now = toDbTime(new Date());
-    const demo = getConfig().demoMode ? 1 : 0;
+    const demo = (await demoEnabled(db)) ? 1 : 0;
     const [categories, deals, businesses] = await Promise.all([
       db.prepare(`SELECT slug FROM categories WHERE is_active = 1`).all<{ slug: string }>(),
       db.prepare(`SELECT d.slug, d.updated_at AS updatedAt FROM deals d JOIN businesses b ON b.id = d.business_id WHERE ${liveDealSql('?1')} AND (?2 = 1 OR d.is_demo = 0) LIMIT 5000`).bind(now, demo).all<{ slug: string; updatedAt: string }>(),

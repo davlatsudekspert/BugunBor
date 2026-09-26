@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { JsonLd } from '@/components/site/json-ld';
 import { getDb } from '@/db/client';
+import { demoEnabled } from '@/modules/demo';
 import { cityName } from '@/lib/cities';
 import { getPreferredCity } from '@/lib/city-cookie';
 import { getConfig } from '@/lib/env';
@@ -18,12 +19,14 @@ import { getI18n } from '@/lib/i18n/server';
 import { cn } from '@/lib/utils';
 import { getCurrentUser } from '@/modules/auth/current';
 import { categoryName, countByCategory, getFavoriteIds, listCategories, listLiveDeals, platformSavings } from '@/modules/catalog/queries';
+import { inBackground } from '@/modules/jobs';
 import { runMaintenance } from '@/modules/redemptions/service';
 
 export default async function Home() {
   const [{ t, locale }, city, user, db] = await Promise.all([getI18n(), getPreferredCity(), getCurrentUser(), getDb()]);
-  await runMaintenance(db);
-  const demo = getConfig().demoMode;
+  // Releasing expired codes can wait until after the page is sent.
+  inBackground(runMaintenance(db), 'Maintenance failed');
+  const demo = await demoEnabled(db);
   const [deals, categories, favorites, savings] = await Promise.all([
     listLiveDeals(db, { city, demo, sort: 'ending' }),
     listCategories(db),

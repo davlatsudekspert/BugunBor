@@ -4,9 +4,11 @@ import { MobileTabBar } from '@/components/site/mobile-tab-bar';
 import { ServiceWorker } from '@/components/site/service-worker';
 import { SiteFooter } from '@/components/site/site-footer';
 import { SiteHeader } from '@/components/site/site-header';
+import { getDb } from '@/db/client';
 import { getConfig } from '@/lib/env';
 import { htmlLang } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
+import { demoEnabled } from '@/modules/demo';
 
 // Imported from JS (not from globals.css) so the build emits the font files.
 import '@fontsource-variable/inter/wght.css';
@@ -44,10 +46,12 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const { t, locale } = await getI18n();
+  // A missing database never takes the page frame down with it.
+  const demo = await getDb().then(demoEnabled).catch(() => getConfig().demoMode);
   return (
     <html lang={htmlLang(locale)}>
       <body className="min-h-dvh">
-        {getConfig().demoMode ? (
+        {demo ? (
           <p className="bg-amber-100 px-4 py-1.5 text-center text-xs font-semibold text-amber-900 print:hidden">{t.common.demoBanner}</p>
         ) : null}
         <SiteHeader />

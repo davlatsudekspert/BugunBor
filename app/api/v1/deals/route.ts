@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 import { getDb } from '@/db/client';
+import { demoEnabled } from '@/modules/demo';
 import { CITY_SLUGS } from '@/lib/cities';
-import { getConfig } from '@/lib/env';
 import { json, route, ValidationError } from '@/lib/http';
 import { SORT_KEYS, listLiveDeals, type SortKey } from '@/modules/catalog/queries';
 
@@ -23,7 +23,8 @@ export const GET = route(async (request: Request) => {
   if (!parsed.success) throw new ValidationError(parsed.error);
   const { city, category, q, sort, lat, lng, limit, offset } = parsed.data;
   const near = lat !== undefined && lng !== undefined ? { latitude: lat, longitude: lng } : null;
-  const deals = await listLiveDeals(await getDb(), { city: city ?? null, category: category ?? null, query: q, sort, near, demo: getConfig().demoMode });
+  const db = await getDb();
+  const deals = await listLiveDeals(db, { city: city ?? null, category: category ?? null, query: q, sort, near, demo: await demoEnabled(db) });
   return json(
     { data: deals.slice(offset, offset + limit), page: { total: deals.length, offset, limit } },
     { headers: { 'cache-control': 'public, max-age=30, stale-while-revalidate=60' } },

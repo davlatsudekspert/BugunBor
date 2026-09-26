@@ -26,10 +26,12 @@ import { parseDbTime, toDbTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { getCurrentUser, isModerator } from '@/modules/auth/current';
 import { getDealBySlug, getFavoriteIds, getPublicBusiness } from '@/modules/catalog/queries';
+import { demoEnabled } from '@/modules/demo';
 import { followState } from '@/modules/engagement/follows';
 
 async function loadDeal(slug: string) {
-  return getDealBySlug(await getDb(), slug, { demo: getConfig().demoMode });
+  const db = await getDb();
+  return getDealBySlug(db, slug, { demo: await demoEnabled(db) });
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -70,7 +72,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
             SUM(CASE WHEN status = 'COMPLETED' OR (status = 'CLAIMED' AND expires_at > ?3) THEN 1 ELSE 0 END) AS used
           FROM redemptions WHERE deal_id = ?1 AND user_id = ?2`).bind(deal.id, user.id, toDbTime(now)).first<{ active: number | null; used: number | null }>()
       : Promise.resolve(null),
-    deal.isPublic ? getPublicBusiness(db, deal.business.slug, { demo: getConfig().demoMode }) : Promise.resolve(null),
+    deal.isPublic ? demoEnabled(db).then((demo) => getPublicBusiness(db, deal.business.slug, { demo })) : Promise.resolve(null),
     followState(db, deal.business.id, user?.id ?? null),
   ]);
 

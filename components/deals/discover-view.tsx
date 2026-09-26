@@ -2,14 +2,15 @@ import { ArrowRight, ListFilter, MapPin, Search } from 'lucide-react';
 
 import { buttonVariants } from '@/components/ui/button';
 import { getDb } from '@/db/client';
+import { demoEnabled } from '@/modules/demo';
 import { cityName, isCitySlug, nearestCity } from '@/lib/cities';
 import { getPreferredCity } from '@/lib/city-cookie';
-import { getConfig } from '@/lib/env';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
 import { cn } from '@/lib/utils';
 import { getCurrentUser } from '@/modules/auth/current';
 import { SORT_KEYS, categoryName, getFavoriteIds, listCategories, listLiveDeals, type Category, type SortKey } from '@/modules/catalog/queries';
+import { inBackground } from '@/modules/jobs';
 import { runMaintenance } from '@/modules/redemptions/service';
 import { CategoryIcon, categoryColor } from './category-icon';
 import { CitySelect } from './city-select';
@@ -39,7 +40,7 @@ function href(basePath: string, params: DiscoverParams, changes: Partial<Record<
 
 export async function DiscoverView({ params, basePath, category }: { params: DiscoverParams; basePath: string; category?: Category }) {
   const [{ t, locale }, preferredCity, user, db] = await Promise.all([getI18n(), getPreferredCity(), getCurrentUser(), getDb()]);
-  await runMaintenance(db);
+  inBackground(runMaintenance(db), 'Maintenance failed');
   const near = parsePoint(params.lat, params.lng);
   const city = isCitySlug(params.city) ? params.city : near ? nearestCity(near).slug : preferredCity;
   const requestedSort = SORT_KEYS.includes(params.sort as SortKey) ? (params.sort as SortKey) : 'ending';
@@ -47,8 +48,9 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
   const categorySlug = category?.slug ?? (params.category || null);
   const page = Math.max(1, Math.min(20, Number.parseInt(params.page ?? '1', 10) || 1));
 
+  const demo = await demoEnabled(db);
   const [deals, categories, favorites] = await Promise.all([
-    listLiveDeals(db, { city, category: categorySlug, query: params.q, sort, near, demo: getConfig().demoMode }),
+    listLiveDeals(db, { city, category: categorySlug, query: params.q, sort, near, demo }),
     category ? Promise.resolve([] as Category[]) : listCategories(db),
     user ? getFavoriteIds(db, user.id) : Promise.resolve(new Set<string>()),
   ]);
