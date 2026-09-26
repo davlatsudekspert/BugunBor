@@ -7,7 +7,7 @@ import type { Locale } from '@/lib/i18n';
 
 export type OfferPlan = { name: string; priceMonthlyUzs: number; maxBranches: number | null; maxLiveDeals: number | null; maxStaff: number | null; topSlots: number };
 export type OfferInput = {
-  company: { legalName: string; tin: string; address: string; phone: string; email: string };
+  company: { legalName: string; tin: string; registration: string; address: string; phone: string; email: string };
   plans: OfferPlan[];
   periods: ReadonlyArray<{ months: number; discountPercent: number }>;
   trialMonths: number;
@@ -62,7 +62,8 @@ export function offerSections(locale: Locale, input: OfferInput): OfferSection[]
       { id: 'nizolar', title: 'Разрешение споров', paragraphs: ['Споры решаются путём переговоров, а при недостижении согласия — в суде по законодательству Республики Узбекистан.'] },
       { id: 'rekvizitlar', title: 'Реквизиты Исполнителя', paragraphs: [], items: [
         `Наименование: ${company.legalName || '—'}`,
-        `ИНН (СТИР): ${company.tin || '—'}`,
+        ...(company.tin || !company.registration ? [`ИНН (СТИР): ${company.tin || '—'}`] : []),
+        ...(company.registration ? [`Регистрация: ${company.registration}`] : []),
         `Адрес: ${company.address || '—'}`,
         `Телефон: ${company.phone || '—'}`,
         ...(company.email ? [`E-mail: ${company.email}`] : []),
@@ -110,7 +111,8 @@ export function offerSections(locale: Locale, input: OfferInput): OfferSection[]
     { id: 'nizolar', title: 'Nizolarni hal qilish', paragraphs: ['Nizolar muzokaralar yo‘li bilan, kelishuvga erishilmasa — O‘zbekiston Respublikasi qonunchiligiga muvofiq sud orqali hal qilinadi.'] },
     { id: 'rekvizitlar', title: 'Ijrochi rekvizitlari', paragraphs: [], items: [
       `Nomi: ${company.legalName || '—'}`,
-      `STIR: ${company.tin || '—'}`,
+      ...(company.tin || !company.registration ? [`STIR: ${company.tin || '—'}`] : []),
+      ...(company.registration ? [`Ro‘yxatdan o‘tganlik: ${company.registration}`] : []),
       `Manzil: ${company.address || '—'}`,
       `Telefon: ${company.phone || '—'}`,
       ...(company.email ? [`E-mail: ${company.email}`] : []),

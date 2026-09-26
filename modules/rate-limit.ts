@@ -4,8 +4,10 @@ import { sha256Hex } from '@/lib/crypto';
 export type RateRule = { limit: number; windowSeconds: number };
 
 export const RATE_RULES = {
-  loginStart: { limit: 10, windowSeconds: 600 },
-  loginPoll: { limit: 400, windowSeconds: 600 },
+  // Login limits are per IP address, and mobile carriers put many people behind
+  // one address: room for dozens of people signing in at once (a poll every 2 s).
+  loginStart: { limit: 40, windowSeconds: 600 },
+  loginPoll: { limit: 3000, windowSeconds: 600 },
   claim: { limit: 10, windowSeconds: 60 },
   redeemLookup: { limit: 30, windowSeconds: 600 },
   contact: { limit: 5, windowSeconds: 600 },

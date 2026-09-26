@@ -106,7 +106,7 @@ Istalgan bosqichda: 10 daqiqa o‘tsa ▶ Muddati o‘tgan (EXPIRED); botda «Me
 
 ### 4.1. Kirish (Telegram bot orqali)
 
-1. Mijoz saytda «Telegram orqali kirish» tugmasini bosadi. Sayt 4 xonali **moslik kodi** ko‘rsatadi va botni ochadigan havola beradi (kompyuterda QR ham chiqadi).
+1. Mijoz «Maxfiylik siyosati va foydalanish shartlariga roziman» belgisini qo‘yadi (belgisiz tugma ishlamaydi, server ham so‘rovni rad etadi) va «Telegram orqali kirish» tugmasini bosadi. Rozilik vaqti va siyosat tahriri kirish so‘rovi bilan saqlanadi, tasdiqlanganda hisobga yoziladi (`users.privacy_accepted_at`, `privacy_version`). Sayt 4 xonali **moslik kodi** ko‘rsatadi va botni ochadigan havola beradi (kompyuterda QR ham chiqadi).
 2. Botda «Start» bosiladi. Bot shu 4 xonali kodni ko‘rsatib, «Saytdagi kod bilan bir xilmi?» deb so‘raydi.
 3. Birinchi marta kirayotgan foydalanuvchi «📱 Raqamni yuborish» tugmasi bilan **o‘z** kontaktini yuboradi. Bot kontakt aynan shu Telegram hisobiniki ekanini tekshiradi. Oldin kirgan foydalanuvchi «✅ Ha, men kiryapman» tugmasini bosadi.
 4. Sayt so‘rov tasdiqlanganini ko‘radi va sessiya ochadi. Sessiya faqat so‘rovni boshlagan brauzerda ochiladi.
@@ -245,7 +245,7 @@ Biror belgi topilsa, ariza navbatda qoladi, sababi yoziladi va moderatorlarga xa
 
 ## 6. Sahifalar
 
-**Ommaviy:** `/` bosh sahifa · `/discover` aksiyalar (qidiruv, filtr, saralash) · `/categories` va `/categories/[slug]` · `/businesses/[slug]` biznes sahifasi · `/deals/[slug]` aksiya sahifasi · `/business` bizneslar uchun · `/how-it-works` · `/faq` · `/contact` · `/terms` · `/privacy` · `/oferta` ommaviy oferta · `/login`
+**Ommaviy:** `/` bosh sahifa · `/discover` aksiyalar (qidiruv, filtr, saralash) · `/categories` va `/categories/[slug]` · `/businesses/[slug]` biznes sahifasi · `/deals/[slug]` aksiya sahifasi · `/business` bizneslar uchun · `/how-it-works` · `/faq` · `/contact` · `/terms` · `/privacy` maxfiylik siyosati (uz/ru/en, `?lang=`) · `/delete-account` hisobni o‘chirish · `/oferta` ommaviy oferta · `/login`
 
 **Mijoz:** `/account` profil (tejalgan summa, xabarnomalar) · `/account/codes` kodlarim va baholash · `/account/saved` saqlanganlar va obunalar
 
@@ -273,6 +273,8 @@ Sayt o‘zbek (lotin) va rus tillarida ishlaydi. Til tepadagi UZ/RU tugmasi bila
 - Telegram webhook maxfiy token bilan tekshiriladi.
 - Kirish, band qilish, kod tekshirish va murojaat so‘rovlari cheklanadi (rate limit).
 - Moderatsiya, rollar, bloklash va kod tasdiqlash audit jurnaliga yoziladi.
+- Saqlash muddatlari `lib/retention.ts` da: tugagan sessiya, kirish so‘rovi va urinishlar hisoblagichi — 24 soat, xabarnomalar navbati — 14 kun, ishlatilmagan rasm — 1 kun, audit jurnali, moderatsiya tarixi va murojaatlar — 5 yil. Maxfiylik siyosati (`lib/privacy.ts`) shu raqamlarni oladi.
+- JShShIR, pasport va uy manzili so‘ralmaydi. Kompaniya rekvizitlarida STIR faqat 9 xonali (MChJ) bo‘ladi.
 
 ---
 

@@ -4,19 +4,21 @@ import { auditStatement } from '@/modules/audit';
 // The operator's legal details (Payme, Click and the public offer need them):
 // entered by an admin in Admin → Sozlamalar, stored in app_settings, shown in
 // the footer, on the contact page and in the public offer. Empty until set —
-// nothing is invented.
+// nothing is invented. A sole trader publishes the state registration
+// certificate; personal identification numbers and home addresses never go here.
 
-export type CompanyInfo = { legalName: string; tin: string; address: string; phone: string; email: string };
+export type CompanyInfo = { legalName: string; tin: string; registration: string; address: string; phone: string; email: string };
 
 export const COMPANY_KEYS = {
   legalName: 'company_legal_name',
   tin: 'company_tin',
+  registration: 'company_registration',
   address: 'company_address',
   phone: 'company_phone',
   email: 'company_email',
 } as const satisfies Record<keyof CompanyInfo, string>;
 
-export const EMPTY_COMPANY: CompanyInfo = { legalName: '', tin: '', address: '', phone: '', email: '' };
+export const EMPTY_COMPANY: CompanyInfo = { legalName: '', tin: '', registration: '', address: '', phone: '', email: '' };
 
 // The footer shows these on every page, so they are kept for a minute per database.
 const cache = new WeakMap<D1Database, { value: CompanyInfo; at: number }>();
@@ -26,13 +28,14 @@ export async function getCompanyInfo(db: D1Database, options: { fresh?: boolean 
   const hit = cache.get(db);
   if (hit && !options.fresh && Date.now() - hit.at < CACHE_MS) return hit.value;
   const rows = await db
-    .prepare(`SELECT key, value FROM app_settings WHERE key IN (?1, ?2, ?3, ?4, ?5)`)
+    .prepare(`SELECT key, value FROM app_settings WHERE key IN (?1, ?2, ?3, ?4, ?5, ?6)`)
     .bind(...Object.values(COMPANY_KEYS))
     .all<{ key: string; value: string }>();
   const map = new Map(rows.results.map((row) => [row.key, row.value]));
   const value: CompanyInfo = {
     legalName: map.get(COMPANY_KEYS.legalName) ?? '',
     tin: map.get(COMPANY_KEYS.tin) ?? '',
+    registration: map.get(COMPANY_KEYS.registration) ?? '',
     address: map.get(COMPANY_KEYS.address) ?? '',
     phone: map.get(COMPANY_KEYS.phone) ?? '',
     email: map.get(COMPANY_KEYS.email) ?? '',
@@ -49,10 +52,14 @@ export async function updateCompanyInfo(db: D1Database, input: { actorId: string
         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at, updated_by = excluded.updated_by`)
         .bind(COMPANY_KEYS[field], input.info[field], nowDb, input.actorId),
     ),
-    auditStatement(db, { actorUserId: input.actorId, action: 'company.updated', targetType: 'Settings', targetId: 'company', after: { legalName: input.info.legalName, tin: input.info.tin } }, nowDb),
+    auditStatement(db, { actorUserId: input.actorId, action: 'company.updated', targetType: 'Settings', targetId: 'company', after: { legalName: input.info.legalName, tin: input.info.tin, registration: input.info.registration } }, nowDb),
   ]);
   cache.delete(db);
 }
 
 /** What Payme and Click check on the site before approving a cashbox. */
-export const companyComplete = (info: CompanyInfo) => Boolean(info.legalName && info.tin && info.address && info.phone);
+/** Name, address and phone are enough; STIR or the certificate is added when Payme/Click are connected. */
+export const companyComplete = (info: CompanyInfo) => Boolean(info.legalName && info.address && info.phone);
+
+/** "STIR 123456789" for a company, the registration certificate for a sole trader. */
+export const companyIdentifier = (info: CompanyInfo, stirLabel: string) => (info.tin ? `${stirLabel} ${info.tin}` : info.registration);

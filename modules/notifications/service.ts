@@ -1,5 +1,6 @@
 import { formatNumber } from '@/lib/format';
 import { fmt, getDictionary, isLocale, type Dictionary } from '@/lib/i18n';
+import { RETENTION } from '@/lib/retention';
 import { formatClock, formatNumericDate, isSameTashkentDay, parseDbTime, toDbTime } from '@/lib/time';
 import type { BotSender } from '@/modules/telegram/api';
 
@@ -199,7 +200,7 @@ export async function processNotifications(db: D1Database, sender: Pick<BotSende
   const stale = toDbTime(new Date(now.getTime() - 10 * 60_000));
   await db.batch([
     db.prepare(`UPDATE notifications SET status = CASE WHEN attempts >= ?2 THEN 'FAILED' ELSE 'PENDING' END WHERE status = 'SENDING' AND claimed_at < ?1`).bind(stale, RETRY_LIMIT),
-    db.prepare(`DELETE FROM notifications WHERE created_at < ?1`).bind(toDbTime(new Date(now.getTime() - 14 * 24 * 60 * 60_000))),
+    db.prepare(`DELETE FROM notifications WHERE created_at < ?1`).bind(toDbTime(new Date(now.getTime() - RETENTION.notificationDays * 24 * 60 * 60_000))),
   ]);
   const claimed = await db
     .prepare(`UPDATE notifications SET status = 'SENDING', claimed_at = ?1, attempts = attempts + 1

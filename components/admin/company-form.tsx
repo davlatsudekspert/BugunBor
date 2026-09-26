@@ -5,8 +5,8 @@ import { useState } from 'react';
 
 import { apiRequest } from '@/lib/api-client';
 
-type Company = { legalName: string; tin: string; address: string; phone: string; email: string };
-type Labels = { legalName: string; tin: string; tinHint: string; address: string; phone: string; email: string; save: string; saved: string; networkError: string };
+type Company = { legalName: string; tin: string; registration: string; address: string; phone: string; email: string };
+type Labels = { legalName: string; tin: string; tinHint: string; registration: string; registrationHint: string; address: string; addressHint: string; phone: string; email: string; save: string; saved: string; networkError: string };
 
 const input = 'h-11 w-full rounded-xl border border-slate-200 px-3 text-sm text-navy outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20';
 
@@ -40,8 +40,9 @@ export function CompanyForm({ initial, labels }: { initial: Company; labels: Lab
     >
       <div className="grid gap-3 sm:grid-cols-2">
         {field('legalName', labels.legalName, { maxLength: 160 })}
-        {field('tin', labels.tin, { inputMode: 'numeric', maxLength: 14 }, labels.tinHint)}
-        {field('address', labels.address, { maxLength: 240 })}
+        {field('tin', labels.tin, { inputMode: 'numeric', maxLength: 9, pattern: '\\d{9}' }, labels.tinHint)}
+        {field('registration', labels.registration, { maxLength: 120 }, labels.registrationHint)}
+        {field('address', labels.address, { maxLength: 240 }, labels.addressHint)}
         {field('phone', labels.phone, { type: 'tel', inputMode: 'tel', maxLength: 20, placeholder: '+998' })}
         {field('email', labels.email, { type: 'email', maxLength: 120 })}
       </div>

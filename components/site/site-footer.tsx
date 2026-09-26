@@ -2,7 +2,7 @@ import { getDb } from '@/db/client';
 import { formatPhone } from '@/lib/format';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
-import { EMPTY_COMPANY, getCompanyInfo } from '@/modules/company';
+import { EMPTY_COMPANY, companyIdentifier, getCompanyInfo } from '@/modules/company';
 import { LanguageSwitch } from './language-switch';
 import { Logo } from './logo';
 import { STOCK_PHOTOS } from '@/lib/stock-photos';
@@ -48,9 +48,10 @@ export async function SiteFooter() {
       <div className="border-t border-slate-100">
         <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-5 text-xs text-slate-400 sm:px-6 lg:px-8">
           <p>{fmt(t.footer.rights, { year: new Date().getUTCFullYear() })}</p>
-          {company.legalName && company.tin ? (
+          {company.legalName ? (
             <p>
-              {fmt(t.footer.company, { name: company.legalName, tin: company.tin })}
+              {company.legalName}
+              {company.tin || company.registration ? ` · ${companyIdentifier(company, t.contact.tin)}` : ''}
               {company.address ? ` · ${company.address}` : ''}
               {company.phone ? <> · <a href={`tel:${company.phone}`} className="hover:text-primary">{formatPhone(company.phone)}</a></> : null}
             </p>

@@ -6,6 +6,7 @@ const defaultStatus: Partial<Record<ErrorCode, number>> = {
   CSRF: 403,
   ACCOUNT_BLOCKED: 403,
   VALIDATION: 422,
+  CONSENT_REQUIRED: 422,
   NOT_FOUND: 404,
   CODE_NOT_FOUND: 404,
   USER_NOT_FOUND: 404,

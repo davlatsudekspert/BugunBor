@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, BadgeCheck, CalendarClock, Clock3, Eye, MapPin, Navigation, Phone, ShieldCheck, Ticket, Timer, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, CalendarClock, Clock3, Eye, Info, MapPin, Navigation, Phone, ShieldCheck, Ticket, Timer, TriangleAlert } from 'lucide-react';
 
 import { BusinessAvatar } from '@/components/deals/business-avatar';
 import { ClaimPanel } from '@/components/deals/claim-panel';
@@ -219,41 +219,49 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
             </p>
 
             <div className="mt-5">
-              <ClaimPanel
-                dealId={deal.id}
-                branches={deal.branches.map((branch) => {
-                  // Warn when the code would expire before this branch even opens.
-                  const hours = parseHours(branch.hoursJson);
-                  const wait = hours ? minutesUntilOpen(hours, now) : 0;
-                  const warning = hours && wait > 0 && wait >= deal.claimTtlMinutes
-                    ? fmt(t.deal.closedWarning, { time: hours.open, duration: formatDurationMinutes(deal.claimTtlMinutes, t) })
-                    : null;
-                  return { id: branch.id, name: branch.name, address: branch.address, warning };
-                })}
-                loggedIn={Boolean(user)}
-                loginHref={`/login?returnTo=${encodeURIComponent(`/deals/${deal.slug}`)}`}
-                claimable={claimable}
-                hasActiveCode={Boolean(usage?.active)}
-                limitReached={(usage?.used ?? 0) >= deal.perCustomerLimit}
-                labels={{
-                  button: t.claim.button,
-                  loginToClaim: t.claim.loginToClaim,
-                  claiming: t.claim.claiming,
-                  hint: fmt(t.claim.hint, { duration: formatDurationMinutes(deal.claimTtlMinutes, t) }),
-                  successTitle: t.claim.successTitle,
-                  yourCode: t.claim.yourCode,
-                  validUntil: t.claim.validUntil,
-                  showToCashier: t.claim.showToCashier,
-                  goToCodes: t.claim.goToCodes,
-                  alreadyHave: t.claim.alreadyHave,
-                  limitReached: t.errors.LIMIT_REACHED,
-                  viewCode: t.claim.viewCode,
-                  chooseBranch: t.deal.chooseBranch,
-                  unavailable: demoOnly ? t.claim.demoOnly : t.claim.unavailable,
-                  networkError: t.common.networkError,
-                  qrAria: t.codes.qrAria,
-                }}
-              />
+              {demoOnly ? (
+                // A sample business does not exist: explain instead of showing a dead button.
+                <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+                  <p className="flex items-center gap-2 font-bold"><Info className="size-4 shrink-0" aria-hidden /> {t.claim.demoOnly}</p>
+                  <p className="mt-1">{fmt(t.claim.demoHint, { button: t.claim.button })}</p>
+                </div>
+              ) : (
+                <ClaimPanel
+                  dealId={deal.id}
+                  branches={deal.branches.map((branch) => {
+                    // Warn when the code would expire before this branch even opens.
+                    const hours = parseHours(branch.hoursJson);
+                    const wait = hours ? minutesUntilOpen(hours, now) : 0;
+                    const warning = hours && wait > 0 && wait >= deal.claimTtlMinutes
+                      ? fmt(t.deal.closedWarning, { time: hours.open, duration: formatDurationMinutes(deal.claimTtlMinutes, t) })
+                      : null;
+                    return { id: branch.id, name: branch.name, address: branch.address, warning };
+                  })}
+                  loggedIn={Boolean(user)}
+                  loginHref={`/login?returnTo=${encodeURIComponent(`/deals/${deal.slug}`)}`}
+                  claimable={claimable}
+                  hasActiveCode={Boolean(usage?.active)}
+                  limitReached={(usage?.used ?? 0) >= deal.perCustomerLimit}
+                  labels={{
+                    button: t.claim.button,
+                    loginToClaim: t.claim.loginToClaim,
+                    claiming: t.claim.claiming,
+                    hint: fmt(t.claim.hint, { duration: formatDurationMinutes(deal.claimTtlMinutes, t) }),
+                    successTitle: t.claim.successTitle,
+                    yourCode: t.claim.yourCode,
+                    validUntil: t.claim.validUntil,
+                    showToCashier: t.claim.showToCashier,
+                    goToCodes: t.claim.goToCodes,
+                    alreadyHave: t.claim.alreadyHave,
+                    limitReached: t.errors.LIMIT_REACHED,
+                    viewCode: t.claim.viewCode,
+                    chooseBranch: t.deal.chooseBranch,
+                    unavailable: t.claim.unavailable,
+                    networkError: t.common.networkError,
+                    qrAria: t.codes.qrAria,
+                  }}
+                />
+              )}
             </div>
             {isMember || isModerator(user) ? (
               <p className="mt-4 flex items-center gap-1.5 text-xs text-slate-400"><Eye className="size-3.5" aria-hidden /> {t.biz.deals.views}: {deal.viewCount}</p>

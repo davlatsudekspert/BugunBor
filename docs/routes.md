@@ -13,7 +13,9 @@
 | `/account` | Savings, stats, notification settings, name, language, delete account |
 | `/account/codes` | Active codes with QR, history, rating of redeemed visits |
 | `/account/saved` | Saved deals and followed businesses |
-| `/how-it-works`, `/faq`, `/contact`, `/terms`, `/privacy` | Information pages (the contact page shows the company details) |
+| `/how-it-works`, `/faq`, `/contact`, `/terms` | Information pages (the contact page shows the company details) |
+| `/privacy` | Privacy policy in uz/ru/en (`?lang=`), text in `lib/privacy.ts` |
+| `/delete-account` | How to delete an account; signed-in visitors can delete right there |
 | `/oferta` | Public offer for business plans: prices, payment, refunds (`#qaytarish`), company details |
 | `/offline` | Shown by the service worker without a connection |
 | `/r/[code]` | QR target: opens the staff check page with the code filled in |

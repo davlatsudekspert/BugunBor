@@ -1,4 +1,4 @@
-import { ArrowRight, Clock3, LocateFixed, MapPin, Search, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, Clock3, LocateFixed, MapPin, Search, ShieldCheck, Sparkles, Store } from 'lucide-react';
 
 import { CategoryIcon, categoryColor } from '@/components/deals/category-icon';
 import { CitySelect } from '@/components/deals/city-select';
@@ -66,10 +66,18 @@ export default async function Home() {
             <Badge className="mb-5 h-7 border-orange-200 bg-orange-50 px-3 text-orange-700" variant="outline">
               <Sparkles className="size-3.5" aria-hidden /> {fmt(deals.length ? t.home.badge : t.home.badgeSoon, { city: cityLabel, count: deals.length })}
             </Badge>
-            <h1 className="max-w-3xl text-[clamp(2.6rem,6vw,5.4rem)] font-black leading-[.95] tracking-[-.055em] text-navy">
+            <h1 className="max-w-3xl text-[clamp(2.4rem,5vw,4.5rem)] font-black leading-[.95] tracking-[-.055em] text-navy">
               {t.home.heroLead} <span className="text-primary">{t.home.heroAccent}</span> {t.home.heroTail}
             </h1>
-            <p className="mt-6 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">{t.home.heroText}</p>
+            <p className="mt-6 max-w-xl text-base leading-7 text-slate-700 sm:text-lg">{t.home.heroText}</p>
+            <ol aria-label={t.home.heroStepsLabel} className="mt-5 grid max-w-xl grid-cols-3 gap-2">
+              {t.home.heroSteps.map((step, index) => (
+                <li key={step} className="flex flex-col gap-1.5 rounded-2xl border border-orange-100 bg-white/80 p-3 text-xs font-bold leading-4 text-navy sm:flex-row sm:items-center sm:gap-2.5 sm:text-sm sm:leading-5">
+                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary text-xs font-black text-white" aria-hidden>{index + 1}</span>
+                  {step}
+                </li>
+              ))}
+            </ol>
 
             <form action="/discover" className="mt-8 flex max-w-2xl flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_60px_rgba(30,50,65,.12)] sm:flex-row">
               <label className="flex h-12 min-w-0 flex-1 items-center gap-3 rounded-xl px-3 focus-within:ring-2 focus-within:ring-primary/25">
@@ -83,6 +91,10 @@ export default async function Home() {
               </div>
               <button className="h-12 rounded-xl bg-primary px-6 text-sm font-bold text-white transition hover:bg-primary/90" type="submit">{t.home.find}</button>
             </form>
+
+            <a href="/business" className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl border border-orange-200 bg-white px-4 text-sm font-bold text-primary shadow-sm hover:border-primary/50">
+              <Store className="size-4" aria-hidden /> {t.home.heroBusiness} <ArrowRight className="size-4" aria-hidden />
+            </a>
 
             <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-500">
               <a href="/discover?sort=near" className="flex items-center gap-1.5 font-semibold text-navy hover:text-primary"><LocateFixed className="size-4 text-primary" aria-hidden /> {t.discover.nearMe}</a>

@@ -1,4 +1,5 @@
 import { mediaUrl } from '@/lib/photos';
+import { RETENTION } from '@/lib/retention';
 import { toDbTime } from '@/lib/time';
 import { DomainError } from '@/modules/errors';
 
@@ -130,7 +131,7 @@ export async function assertOwnMedia(db: D1Database, businessId: string, mediaId
 
 /** Uploads never attached to a deal or profile within a day are removed. */
 export function pruneOrphanMediaStatement(db: D1Database, now: Date) {
-  const dayAgo = toDbTime(new Date(now.getTime() - 24 * 60 * 60_000));
+  const dayAgo = toDbTime(new Date(now.getTime() - RETENTION.unusedPhotoHours * 60 * 60_000));
   return db
     .prepare(`DELETE FROM media WHERE created_at < ?1
       AND id NOT IN (SELECT photo_id FROM deals WHERE photo_id IS NOT NULL)
