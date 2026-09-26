@@ -2024,6 +2024,624 @@ abstract class L {
   /// In uz, this message translates to:
   /// **'Saytda qo‘shish'**
   String get bizOnSite;
+
+  /// No description provided for @dealsTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiyalar'**
+  String get dealsTitle;
+
+  /// No description provided for @dealsNew.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yangi aksiya'**
+  String get dealsNew;
+
+  /// No description provided for @dealsFilterAll.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hammasi'**
+  String get dealsFilterAll;
+
+  /// No description provided for @dealsFilterLive.
+  ///
+  /// In uz, this message translates to:
+  /// **'Faol'**
+  String get dealsFilterLive;
+
+  /// No description provided for @dealsFilterReview.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tekshiruvda'**
+  String get dealsFilterReview;
+
+  /// No description provided for @dealsFilterDraft.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qoralama'**
+  String get dealsFilterDraft;
+
+  /// No description provided for @dealsFilterEnded.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yakunlangan'**
+  String get dealsFilterEnded;
+
+  /// No description provided for @dealsEmpty.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bu bo‘limda aksiya yo‘q.'**
+  String get dealsEmpty;
+
+  /// No description provided for @dealsEmptyTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hali aksiya yo‘q'**
+  String get dealsEmptyTitle;
+
+  /// No description provided for @dealsEmptyText.
+  ///
+  /// In uz, this message translates to:
+  /// **'Birinchi aksiyangizni qo‘shing — yaqin atrofdagi xaridorlar uni shu zahoti ko‘radi.'**
+  String get dealsEmptyText;
+
+  /// No description provided for @dealsStock.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qoldiq: {left} / {total}'**
+  String dealsStock(String left, String total);
+
+  /// No description provided for @dealsUnlimited.
+  ///
+  /// In uz, this message translates to:
+  /// **'Miqdor cheklanmagan'**
+  String get dealsUnlimited;
+
+  /// No description provided for @dealsClaims.
+  ///
+  /// In uz, this message translates to:
+  /// **'Band: {count}'**
+  String dealsClaims(String count);
+
+  /// No description provided for @dealsRedeemed.
+  ///
+  /// In uz, this message translates to:
+  /// **'Ishlatilgan: {count}'**
+  String dealsRedeemed(String count);
+
+  /// No description provided for @dealsViews.
+  ///
+  /// In uz, this message translates to:
+  /// **'Ko‘rishlar: {count}'**
+  String dealsViews(String count);
+
+  /// No description provided for @dealsRejected.
+  ///
+  /// In uz, this message translates to:
+  /// **'Rad etish sababi: {reason}'**
+  String dealsRejected(String reason);
+
+  /// No description provided for @dealActEdit.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tahrirlash'**
+  String get dealActEdit;
+
+  /// No description provided for @dealActSubmit.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tekshiruvga yuborish'**
+  String get dealActSubmit;
+
+  /// No description provided for @dealActWithdraw.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qaytarib olish'**
+  String get dealActWithdraw;
+
+  /// No description provided for @dealActPause.
+  ///
+  /// In uz, this message translates to:
+  /// **'Pauza'**
+  String get dealActPause;
+
+  /// No description provided for @dealActResume.
+  ///
+  /// In uz, this message translates to:
+  /// **'Davom ettirish'**
+  String get dealActResume;
+
+  /// No description provided for @dealActEnd.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yakunlash'**
+  String get dealActEnd;
+
+  /// No description provided for @dealActDuplicate.
+  ///
+  /// In uz, this message translates to:
+  /// **'Nusxa olish'**
+  String get dealActDuplicate;
+
+  /// No description provided for @dealActDelete.
+  ///
+  /// In uz, this message translates to:
+  /// **'O‘chirish'**
+  String get dealActDelete;
+
+  /// No description provided for @dealActView.
+  ///
+  /// In uz, this message translates to:
+  /// **'Mijozlar ko‘rinishida ochish'**
+  String get dealActView;
+
+  /// No description provided for @dealConfirmEnd.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiyani yakunlaysizmi? Buni qaytarib bo‘lmaydi, berilgan kodlar amal qilishda davom etadi.'**
+  String get dealConfirmEnd;
+
+  /// No description provided for @dealConfirmDelete.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qoralamani o‘chirasizmi?'**
+  String get dealConfirmDelete;
+
+  /// No description provided for @dealLocked.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tasdiqlangan aksiyaning shartlarini o‘zgartirib bo‘lmaydi. O‘zgartirish uchun nusxa oling.'**
+  String get dealLocked;
+
+  /// No description provided for @dealStLive.
+  ///
+  /// In uz, this message translates to:
+  /// **'Faol'**
+  String get dealStLive;
+
+  /// No description provided for @dealStScheduled.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tez orada'**
+  String get dealStScheduled;
+
+  /// No description provided for @dealStSoldOut.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tugadi'**
+  String get dealStSoldOut;
+
+  /// No description provided for @dealStExpired.
+  ///
+  /// In uz, this message translates to:
+  /// **'Muddati o‘tgan'**
+  String get dealStExpired;
+
+  /// No description provided for @dealStPaused.
+  ///
+  /// In uz, this message translates to:
+  /// **'Pauzada'**
+  String get dealStPaused;
+
+  /// No description provided for @dealStDraft.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qoralama'**
+  String get dealStDraft;
+
+  /// No description provided for @dealStReview.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tekshiruvda'**
+  String get dealStReview;
+
+  /// No description provided for @dealStRejected.
+  ///
+  /// In uz, this message translates to:
+  /// **'Rad etilgan'**
+  String get dealStRejected;
+
+  /// No description provided for @dealStArchived.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yakunlangan'**
+  String get dealStArchived;
+
+  /// No description provided for @dealSavedLive.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiya chiqdi — mijozlar uni hozir ko‘ryapti!'**
+  String get dealSavedLive;
+
+  /// No description provided for @dealSavedReview.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiya tekshiruvga yuborildi. Tasdiqlangach chiqadi.'**
+  String get dealSavedReview;
+
+  /// No description provided for @dealSavedDraft.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qoralama saqlandi.'**
+  String get dealSavedDraft;
+
+  /// No description provided for @dealDonePause.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiya pauzaga qo‘yildi.'**
+  String get dealDonePause;
+
+  /// No description provided for @dealDoneResume.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiya davom etyapti.'**
+  String get dealDoneResume;
+
+  /// No description provided for @dealDoneEnd.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiya yakunlandi.'**
+  String get dealDoneEnd;
+
+  /// No description provided for @dealDoneDuplicate.
+  ///
+  /// In uz, this message translates to:
+  /// **'Nusxa qoralamaga qo‘shildi.'**
+  String get dealDoneDuplicate;
+
+  /// No description provided for @dealDoneDelete.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qoralama o‘chirildi.'**
+  String get dealDoneDelete;
+
+  /// No description provided for @dealDoneWithdraw.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiya tekshiruvdan qaytarildi.'**
+  String get dealDoneWithdraw;
+
+  /// No description provided for @dealNewTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yangi aksiya'**
+  String get dealNewTitle;
+
+  /// No description provided for @dealEditTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiyani tahrirlash'**
+  String get dealEditTitle;
+
+  /// No description provided for @dealTitleLabel.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiya nomi'**
+  String get dealTitleLabel;
+
+  /// No description provided for @dealTitleHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Masalan, Lag‘mon va salat kombo'**
+  String get dealTitleHint;
+
+  /// No description provided for @dealDescriptionLabel.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tavsif'**
+  String get dealDescriptionLabel;
+
+  /// No description provided for @dealDescriptionHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Mijoz nima oladi? Aniq yozing.'**
+  String get dealDescriptionHint;
+
+  /// No description provided for @dealTermsHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Masalan: Faqat restoranda. Boshqa chegirmalar bilan qo‘shilmaydi.'**
+  String get dealTermsHint;
+
+  /// No description provided for @dealPhoto.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiya rasmi'**
+  String get dealPhoto;
+
+  /// No description provided for @dealPhotoHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Mahsulot yoki xizmatingizning o‘zingiz olgan haqiqiy fotosurati. Rasm bo‘lmasa, chiroyli belgi ko‘rsatiladi.'**
+  String get dealPhotoHint;
+
+  /// No description provided for @dealPhotoAdd.
+  ///
+  /// In uz, this message translates to:
+  /// **'Rasm qo‘shish'**
+  String get dealPhotoAdd;
+
+  /// No description provided for @dealPhotoChange.
+  ///
+  /// In uz, this message translates to:
+  /// **'Almashtirish'**
+  String get dealPhotoChange;
+
+  /// No description provided for @dealPhotoRemove.
+  ///
+  /// In uz, this message translates to:
+  /// **'Olib tashlash'**
+  String get dealPhotoRemove;
+
+  /// No description provided for @dealPhotoCamera.
+  ///
+  /// In uz, this message translates to:
+  /// **'Kamera'**
+  String get dealPhotoCamera;
+
+  /// No description provided for @dealPhotoGallery.
+  ///
+  /// In uz, this message translates to:
+  /// **'Galereya'**
+  String get dealPhotoGallery;
+
+  /// No description provided for @dealPhotoUploading.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yuklanmoqda…'**
+  String get dealPhotoUploading;
+
+  /// No description provided for @dealPhotoUnsupported.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bu rasmni o‘qib bo‘lmadi. JPG yoki PNG rasm tanlang.'**
+  String get dealPhotoUnsupported;
+
+  /// No description provided for @dealVisualLabel.
+  ///
+  /// In uz, this message translates to:
+  /// **'Belgi'**
+  String get dealVisualLabel;
+
+  /// No description provided for @dealVisualHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Rasm bo‘lmasa, shu belgi ko‘rsatiladi.'**
+  String get dealVisualHint;
+
+  /// No description provided for @dealOriginalPrice.
+  ///
+  /// In uz, this message translates to:
+  /// **'Asl narx, so‘m'**
+  String get dealOriginalPrice;
+
+  /// No description provided for @dealPriceLabel.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiya narxi, so‘m'**
+  String get dealPriceLabel;
+
+  /// No description provided for @dealDiscountPreview.
+  ///
+  /// In uz, this message translates to:
+  /// **'Chegirma: {percent}%'**
+  String dealDiscountPreview(String percent);
+
+  /// No description provided for @dealStarts.
+  ///
+  /// In uz, this message translates to:
+  /// **'Boshlanish'**
+  String get dealStarts;
+
+  /// No description provided for @dealEnds.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tugash'**
+  String get dealEnds;
+
+  /// No description provided for @dealTimeHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Toshkent vaqti bilan'**
+  String get dealTimeHint;
+
+  /// No description provided for @dealQuick2h.
+  ///
+  /// In uz, this message translates to:
+  /// **'2 soat'**
+  String get dealQuick2h;
+
+  /// No description provided for @dealQuick4h.
+  ///
+  /// In uz, this message translates to:
+  /// **'4 soat'**
+  String get dealQuick4h;
+
+  /// No description provided for @dealQuickToday.
+  ///
+  /// In uz, this message translates to:
+  /// **'Kun oxirigacha'**
+  String get dealQuickToday;
+
+  /// No description provided for @dealQuick1d.
+  ///
+  /// In uz, this message translates to:
+  /// **'1 kun'**
+  String get dealQuick1d;
+
+  /// No description provided for @dealQuick3d.
+  ///
+  /// In uz, this message translates to:
+  /// **'3 kun'**
+  String get dealQuick3d;
+
+  /// No description provided for @dealQuick7d.
+  ///
+  /// In uz, this message translates to:
+  /// **'7 kun'**
+  String get dealQuick7d;
+
+  /// No description provided for @dealQuantity.
+  ///
+  /// In uz, this message translates to:
+  /// **'Miqdor'**
+  String get dealQuantity;
+
+  /// No description provided for @dealUnlimited.
+  ///
+  /// In uz, this message translates to:
+  /// **'Cheklanmagan'**
+  String get dealUnlimited;
+
+  /// No description provided for @dealPerCustomerLabel.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bir mijozga'**
+  String get dealPerCustomerLabel;
+
+  /// No description provided for @dealTtl.
+  ///
+  /// In uz, this message translates to:
+  /// **'Kod amal qilish muddati'**
+  String get dealTtl;
+
+  /// No description provided for @dealTtl30.
+  ///
+  /// In uz, this message translates to:
+  /// **'30 daqiqa'**
+  String get dealTtl30;
+
+  /// No description provided for @dealTtl60.
+  ///
+  /// In uz, this message translates to:
+  /// **'1 soat'**
+  String get dealTtl60;
+
+  /// No description provided for @dealTtl120.
+  ///
+  /// In uz, this message translates to:
+  /// **'2 soat'**
+  String get dealTtl120;
+
+  /// No description provided for @dealTtl240.
+  ///
+  /// In uz, this message translates to:
+  /// **'4 soat'**
+  String get dealTtl240;
+
+  /// No description provided for @dealWhere.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qaysi filiallarda'**
+  String get dealWhere;
+
+  /// No description provided for @dealNoBranches.
+  ///
+  /// In uz, this message translates to:
+  /// **'Filial yo‘q — avval saytdagi kabinetda filial qo‘shing.'**
+  String get dealNoBranches;
+
+  /// No description provided for @dealRulesNote.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qoidalar: chegirma kamida {min}%, davomiylik 30 daqiqadan 30 kungacha.'**
+  String dealRulesNote(String min);
+
+  /// No description provided for @dealPreview.
+  ///
+  /// In uz, this message translates to:
+  /// **'Mijozlarga shunday ko‘rinadi'**
+  String get dealPreview;
+
+  /// No description provided for @dealSaveDraft.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qoralama sifatida saqlash'**
+  String get dealSaveDraft;
+
+  /// No description provided for @dealSaving.
+  ///
+  /// In uz, this message translates to:
+  /// **'Saqlanmoqda…'**
+  String get dealSaving;
+
+  /// No description provided for @dealAutoNote.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yuborilgach aksiya avtomatik tekshiriladi — odatda bir necha soniyada chiqadi.'**
+  String get dealAutoNote;
+
+  /// No description provided for @dealNeedsUpdate.
+  ///
+  /// In uz, this message translates to:
+  /// **'Ilovadan aksiya qo‘shish server yangilangach ishlaydi. Hozircha saytda qo‘shishingiz mumkin.'**
+  String get dealNeedsUpdate;
+
+  /// No description provided for @valPriceOrder.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiya narxi asl narxdan past bo‘lishi kerak'**
+  String get valPriceOrder;
+
+  /// No description provided for @valMinDiscount.
+  ///
+  /// In uz, this message translates to:
+  /// **'Chegirma kamida {min}% bo‘lishi kerak'**
+  String valMinDiscount(String min);
+
+  /// No description provided for @valEndAfterStart.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tugash vaqti boshlanishdan keyin bo‘lishi kerak'**
+  String get valEndAfterStart;
+
+  /// No description provided for @valDuration.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiya 30 daqiqadan 30 kungacha davom etishi mumkin'**
+  String get valDuration;
+
+  /// No description provided for @valEndInPast.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tugash vaqti o‘tib ketgan'**
+  String get valEndInPast;
+
+  /// No description provided for @valBranches.
+  ///
+  /// In uz, this message translates to:
+  /// **'Kamida bitta filialni tanlang'**
+  String get valBranches;
+
+  /// No description provided for @valMinAmount.
+  ///
+  /// In uz, this message translates to:
+  /// **'Kamida {amount} so‘m'**
+  String valMinAmount(String amount);
+
+  /// No description provided for @bizDeals.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiyalar'**
+  String get bizDeals;
+
+  /// No description provided for @bizSiteHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Filiallar, jamoa va profil rasmlari saytdagi kabinetda boshqariladi'**
+  String get bizSiteHint;
+
+  /// No description provided for @dealPhotoCameraDenied.
+  ///
+  /// In uz, this message translates to:
+  /// **'Kameraga ruxsat berilmadi — rasmni galereyadan tanlang yoki telefon sozlamalarida kameraga ruxsat bering.'**
+  String get dealPhotoCameraDenied;
+
+  /// No description provided for @dealWhen.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qachon'**
+  String get dealWhen;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

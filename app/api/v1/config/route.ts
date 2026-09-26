@@ -3,8 +3,10 @@ import { CITIES } from '@/lib/cities';
 import { getConfig } from '@/lib/env';
 import { json, route } from '@/lib/http';
 import { PRIVACY_VERSION } from '@/lib/privacy';
+import { DEAL_VISUALS, DEAL_VISUAL_KEYS, dealVisual } from '@/lib/visuals';
 import { getBillingSettings } from '@/modules/billing/service';
 import { listCategories } from '@/modules/catalog/queries';
+import { DEAL_RULES } from '@/modules/deals/status';
 import { demoEnabled } from '@/modules/demo';
 import { REPORT_REASONS } from '@/modules/reports';
 import { loginBotUsername } from '@/modules/telegram/setup';
@@ -34,6 +36,12 @@ export const GET = route(async () => {
         categories: categories.map((category) => ({ id: category.id, slug: category.slug, nameUz: category.nameUz, nameRu: category.nameRu, icon: category.icon })),
         cities: CITIES.map((city) => ({ slug: city.slug, nameUz: city.uz, nameRu: city.ru, latitude: city.latitude, longitude: city.longitude })),
         reportReasons: REPORT_REASONS,
+        // The deal form's rules (modules/deals/schema.ts) and the pictures a deal without a photo can show.
+        deal: {
+          ...DEAL_RULES,
+          visuals: DEAL_VISUAL_KEYS.map((key) => ({ key, emoji: DEAL_VISUALS[key].emoji })),
+          categoryVisuals: Object.fromEntries(categories.map((category) => [category.slug, dealVisual(null, category.slug).key])),
+        },
       },
     },
     { headers: { 'cache-control': 'public, max-age=60' } },

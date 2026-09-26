@@ -14,30 +14,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/fakes.dart';
 
-const owner = {'businessId': 'biz', 'name': 'Kafe', 'slug': 'kafe', 'role': 'OWNER', 'status': 'VERIFIED', 'verified': true};
-
-/// Alice (nothing blocked) with these [memberships]; the contract has none.
-FakeServer memberServer(List<Object?> Function() memberships) {
-  final server = signedInServer();
-  server.routes['GET /api/v1/me'] = (_) {
-    final me = contractMap('me');
-    me['blockedBusinessIds'] = <String>[];
-    me['memberships'] = memberships();
-    return {'data': me};
-  };
-  return server;
-}
-
-/// The workspace answer with some fields replaced.
-Map<String, dynamic> workspace({Map<String, Object?> business = const {}, Map<String, Object?> other = const {}}) {
-  final json = contractMap('business-workspace');
-  return {
-    ...json,
-    'business': {...(json['business'] as Map).cast<String, dynamic>(), ...business},
-    ...other,
-  };
-}
-
 Finder get formList => find.descendant(of: find.byType(JoinScreen), matching: find.byType(Scrollable)).first;
 
 /// Scrolls [target] into view and lets the new layout settle (a tap right

@@ -41,7 +41,15 @@ class BugunBorApi {
     };
   }
 
-  Future<Json> _request(String method, String path, {Object? body, Map<String, Object?>? query, Map<String, String>? extra, bool withAuth = true}) async {
+  Future<Json> _request(
+    String method,
+    String path, {
+    Object? body,
+    Map<String, Object?>? query,
+    Map<String, String>? extra,
+    bool withAuth = true,
+    Duration? sendTimeout,
+  }) async {
     final Response<dynamic> response;
     try {
       response = await _dio.request<dynamic>(
@@ -55,9 +63,11 @@ class BugunBorApi {
               },
         options: Options(
           method: method,
+          sendTimeout: sendTimeout,
           headers: {
             ...headers(withAuth: withAuth),
-            if (body != null) 'content-type': 'application/json',
+            // A form upload sets its own multipart type.
+            if (body != null && body is! FormData) 'content-type': 'application/json',
             ...?extra,
           },
         ),
@@ -229,6 +239,52 @@ class BugunBorApi {
 
   Future<BusinessWorkspace> businessWorkspace(String businessId) async =>
       BusinessWorkspace.fromJson(_data(await _request('GET', '/api/v1/business/${Uri.encodeComponent(businessId)}')));
+
+  String _business(String businessId) => '/api/v1/business/${Uri.encodeComponent(businessId)}';
+
+  Future<List<BusinessDeal>> businessDeals(String businessId) async =>
+      _dataList(await _request('GET', '${_business(businessId)}/deals'))
+          .whereType<Map<dynamic, dynamic>>()
+          .map((item) => BusinessDeal.fromJson(item.cast<String, dynamic>()))
+          .toList();
+
+  Future<EditableDeal> businessDeal(String businessId, String dealId) async =>
+      EditableDeal.fromJson(_data(await _request('GET', '${_business(businessId)}/deals/${Uri.encodeComponent(dealId)}')));
+
+  /// A new deal, or changes to a draft; [submit] sends it for review too.
+  Future<DealSaved> saveDeal(String businessId, Map<String, Object?> input, {String? dealId, required bool submit}) async => DealSaved.fromJson(
+    _data(
+      await _request(
+        'POST',
+        _business(businessId),
+        body: dealId == null
+            ? {'type': 'deal.create', 'input': input, 'submit': submit}
+            : {'type': 'deal.update', 'dealId': dealId, 'input': input, 'submit': submit},
+      ),
+    ),
+  );
+
+  /// submit, withdraw, pause, resume, end or delete; returns the new status.
+  Future<String> dealAction(String businessId, String dealId, String action) async {
+    final data = _data(await _request('POST', _business(businessId), body: {'type': 'deal.transition', 'dealId': dealId, 'action': action}));
+    return '${data['status']}';
+  }
+
+  /// A copy as a new draft; returns its id.
+  Future<String> duplicateDeal(String businessId, String dealId) async =>
+      '${_data(await _request('POST', _business(businessId), body: {'type': 'deal.duplicate', 'dealId': dealId}))['id']}';
+
+  /// A photo already made small on the phone (JPEG, at most ~650 KB).
+  Future<UploadedPhoto> uploadPhoto(String businessId, List<int> bytes, {String kind = 'DEAL'}) async => UploadedPhoto.fromJson(
+    _data(
+      await _request(
+        'POST',
+        '${_business(businessId)}/media',
+        body: FormData.fromMap({'kind': kind, 'file': MultipartFile.fromBytes(bytes, filename: 'photo.jpg', contentType: DioMediaType('image', 'jpeg'))}),
+        sendTimeout: const Duration(seconds: 90),
+      ),
+    ),
+  );
 
   // Counter (business staff) -------------------------------------------------
 

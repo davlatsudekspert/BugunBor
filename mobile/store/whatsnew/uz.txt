@@ -4,4 +4,4 @@ BugunBor’ning birinchi versiyasi:
 • Bepul kod oling va kassada QR-kodni ko‘rsating
 • Obuna bo‘lgan bizneslarning yangi aksiyalari haqida xabarnomalar
 • Telegram orqali parolsiz kirish
-• Biznesingizni ilovaning o‘zida qo‘shing va biznes profilini yuriting
+• Biznesingizni va uning aksiyalarini (rasm bilan) ilovaning o‘zida qo‘shing va boshqaring

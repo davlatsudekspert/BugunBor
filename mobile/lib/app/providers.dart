@@ -292,3 +292,15 @@ final workspaceProvider = FutureProvider.autoDispose.family<BusinessWorkspace, S
   ref.watch(sessionProvider.select((session) => session.token));
   return ref.watch(apiProvider).businessWorkspace(businessId);
 });
+
+/// A business's own deals (any status), for its owners and managers.
+final businessDealsProvider = FutureProvider.autoDispose.family<List<BusinessDeal>, String>((ref, businessId) {
+  ref.watch(sessionProvider.select((session) => session.token));
+  return ref.watch(apiProvider).businessDeals(businessId);
+});
+
+/// One deal as the edit form needs it.
+final editableDealProvider = FutureProvider.autoDispose.family<EditableDeal, ({String businessId, String dealId})>((ref, key) {
+  ref.watch(sessionProvider.select((session) => session.token));
+  return ref.watch(apiProvider).businessDeal(key.businessId, key.dealId);
+});

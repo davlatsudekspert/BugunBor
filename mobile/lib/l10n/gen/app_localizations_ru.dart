@@ -1046,4 +1046,331 @@ class LRu extends L {
 
   @override
   String get bizOnSite => 'Добавить на сайте';
+
+  @override
+  String get dealsTitle => 'Акции';
+
+  @override
+  String get dealsNew => 'Новая акция';
+
+  @override
+  String get dealsFilterAll => 'Все';
+
+  @override
+  String get dealsFilterLive => 'Активные';
+
+  @override
+  String get dealsFilterReview => 'На проверке';
+
+  @override
+  String get dealsFilterDraft => 'Черновики';
+
+  @override
+  String get dealsFilterEnded => 'Завершённые';
+
+  @override
+  String get dealsEmpty => 'В этом разделе акций нет.';
+
+  @override
+  String get dealsEmptyTitle => 'Акций пока нет';
+
+  @override
+  String get dealsEmptyText => 'Добавьте первую акцию — покупатели поблизости сразу её увидят.';
+
+  @override
+  String dealsStock(String left, String total) {
+    return 'Остаток: $left из $total';
+  }
+
+  @override
+  String get dealsUnlimited => 'Без ограничения количества';
+
+  @override
+  String dealsClaims(String count) {
+    return 'Брони: $count';
+  }
+
+  @override
+  String dealsRedeemed(String count) {
+    return 'Использовано: $count';
+  }
+
+  @override
+  String dealsViews(String count) {
+    return 'Просмотры: $count';
+  }
+
+  @override
+  String dealsRejected(String reason) {
+    return 'Причина отклонения: $reason';
+  }
+
+  @override
+  String get dealActEdit => 'Изменить';
+
+  @override
+  String get dealActSubmit => 'Отправить на проверку';
+
+  @override
+  String get dealActWithdraw => 'Отозвать';
+
+  @override
+  String get dealActPause => 'Пауза';
+
+  @override
+  String get dealActResume => 'Возобновить';
+
+  @override
+  String get dealActEnd => 'Завершить';
+
+  @override
+  String get dealActDuplicate => 'Копировать';
+
+  @override
+  String get dealActDelete => 'Удалить';
+
+  @override
+  String get dealActView => 'Открыть как у клиентов';
+
+  @override
+  String get dealConfirmEnd => 'Завершить акцию? Это необратимо, выданные коды продолжат действовать.';
+
+  @override
+  String get dealConfirmDelete => 'Удалить черновик?';
+
+  @override
+  String get dealLocked => 'Условия одобренной акции менять нельзя. Чтобы изменить, создайте копию.';
+
+  @override
+  String get dealStLive => 'Активна';
+
+  @override
+  String get dealStScheduled => 'Скоро';
+
+  @override
+  String get dealStSoldOut => 'Закончилась';
+
+  @override
+  String get dealStExpired => 'Срок истёк';
+
+  @override
+  String get dealStPaused => 'На паузе';
+
+  @override
+  String get dealStDraft => 'Черновик';
+
+  @override
+  String get dealStReview => 'На проверке';
+
+  @override
+  String get dealStRejected => 'Отклонена';
+
+  @override
+  String get dealStArchived => 'Завершена';
+
+  @override
+  String get dealSavedLive => 'Акция опубликована — клиенты уже её видят!';
+
+  @override
+  String get dealSavedReview => 'Акция отправлена на проверку. Появится после подтверждения.';
+
+  @override
+  String get dealSavedDraft => 'Черновик сохранён.';
+
+  @override
+  String get dealDonePause => 'Акция на паузе.';
+
+  @override
+  String get dealDoneResume => 'Акция возобновлена.';
+
+  @override
+  String get dealDoneEnd => 'Акция завершена.';
+
+  @override
+  String get dealDoneDuplicate => 'Копия добавлена в черновики.';
+
+  @override
+  String get dealDoneDelete => 'Черновик удалён.';
+
+  @override
+  String get dealDoneWithdraw => 'Акция отозвана с проверки.';
+
+  @override
+  String get dealNewTitle => 'Новая акция';
+
+  @override
+  String get dealEditTitle => 'Редактирование акции';
+
+  @override
+  String get dealTitleLabel => 'Название акции';
+
+  @override
+  String get dealTitleHint => 'Например, Лагман и салат';
+
+  @override
+  String get dealDescriptionLabel => 'Описание';
+
+  @override
+  String get dealDescriptionHint => 'Что получит клиент? Пишите конкретно.';
+
+  @override
+  String get dealTermsHint => 'Например: только в зале. Не суммируется с другими скидками.';
+
+  @override
+  String get dealPhoto => 'Фото акции';
+
+  @override
+  String get dealPhotoHint => 'Настоящее фото вашего товара или услуги, снятое вами. Без фото покажем красивую иконку.';
+
+  @override
+  String get dealPhotoAdd => 'Добавить фото';
+
+  @override
+  String get dealPhotoChange => 'Заменить';
+
+  @override
+  String get dealPhotoRemove => 'Убрать';
+
+  @override
+  String get dealPhotoCamera => 'Камера';
+
+  @override
+  String get dealPhotoGallery => 'Галерея';
+
+  @override
+  String get dealPhotoUploading => 'Загрузка…';
+
+  @override
+  String get dealPhotoUnsupported => 'Не удалось прочитать это изображение. Выберите JPG или PNG.';
+
+  @override
+  String get dealVisualLabel => 'Иконка';
+
+  @override
+  String get dealVisualHint => 'Без фото будет показана эта иконка.';
+
+  @override
+  String get dealOriginalPrice => 'Обычная цена, сум';
+
+  @override
+  String get dealPriceLabel => 'Цена по акции, сум';
+
+  @override
+  String dealDiscountPreview(String percent) {
+    return 'Скидка: $percent%';
+  }
+
+  @override
+  String get dealStarts => 'Начало';
+
+  @override
+  String get dealEnds => 'Окончание';
+
+  @override
+  String get dealTimeHint => 'По времени Ташкента';
+
+  @override
+  String get dealQuick2h => '2 часа';
+
+  @override
+  String get dealQuick4h => '4 часа';
+
+  @override
+  String get dealQuickToday => 'До конца дня';
+
+  @override
+  String get dealQuick1d => '1 день';
+
+  @override
+  String get dealQuick3d => '3 дня';
+
+  @override
+  String get dealQuick7d => '7 дней';
+
+  @override
+  String get dealQuantity => 'Количество';
+
+  @override
+  String get dealUnlimited => 'Без ограничений';
+
+  @override
+  String get dealPerCustomerLabel => 'На одного клиента';
+
+  @override
+  String get dealTtl => 'Срок действия кода';
+
+  @override
+  String get dealTtl30 => '30 минут';
+
+  @override
+  String get dealTtl60 => '1 час';
+
+  @override
+  String get dealTtl120 => '2 часа';
+
+  @override
+  String get dealTtl240 => '4 часа';
+
+  @override
+  String get dealWhere => 'В каких филиалах';
+
+  @override
+  String get dealNoBranches => 'Нет филиалов — сначала добавьте филиал в кабинете на сайте.';
+
+  @override
+  String dealRulesNote(String min) {
+    return 'Правила: скидка от $min%, длительность от 30 минут до 30 дней.';
+  }
+
+  @override
+  String get dealPreview => 'Так увидят клиенты';
+
+  @override
+  String get dealSaveDraft => 'Сохранить черновик';
+
+  @override
+  String get dealSaving => 'Сохранение…';
+
+  @override
+  String get dealAutoNote => 'После отправки акция проверяется автоматически — обычно появляется за несколько секунд.';
+
+  @override
+  String get dealNeedsUpdate => 'Добавление акций в приложении заработает после обновления сервера. Пока добавьте акцию на сайте.';
+
+  @override
+  String get valPriceOrder => 'Цена по акции должна быть ниже обычной';
+
+  @override
+  String valMinDiscount(String min) {
+    return 'Скидка должна быть не меньше $min%';
+  }
+
+  @override
+  String get valEndAfterStart => 'Окончание должно быть позже начала';
+
+  @override
+  String get valDuration => 'Акция может длиться от 30 минут до 30 дней';
+
+  @override
+  String get valEndInPast => 'Время окончания уже прошло';
+
+  @override
+  String get valBranches => 'Выберите хотя бы один филиал';
+
+  @override
+  String valMinAmount(String amount) {
+    return 'Минимум $amount сум';
+  }
+
+  @override
+  String get bizDeals => 'Акции';
+
+  @override
+  String get bizSiteHint => 'Филиалы, команда и фото профиля — в кабинете на сайте';
+
+  @override
+  String get dealPhotoCameraDenied => 'Нет доступа к камере — выберите фото из галереи или разрешите камеру в настройках телефона.';
+
+  @override
+  String get dealWhen => 'Когда';
 }

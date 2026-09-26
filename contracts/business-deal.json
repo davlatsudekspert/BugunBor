@@ -1,0 +1,24 @@
+{
+  "id": "7d03b6b3-5019-4b7e-9a36-222e6629f58b",
+  "status": "ACTIVE",
+  "title": "Somsa va choy",
+  "description": "Tandir somsa va bir choynak ko‘k choy, issiq holda.",
+  "terms": "Faqat zalda. Boshqa chegirmalar bilan qo‘shilmaydi.",
+  "categoryId": "cat_food",
+  "visual": "samsa",
+  "originalPrice": 20000,
+  "price": 14000,
+  "startsAt": "2026-09-25T15:00",
+  "endsAt": "2026-09-25T19:00",
+  "total": 30,
+  "perCustomerLimit": 2,
+  "claimTtlMinutes": 60,
+  "rejectionReason": null,
+  "slug": "somsa-va-choy-9978ac",
+  "isSponsored": false,
+  "photoId": "fe5fca9c-a1fd-4378-95ee-150b43cd5eef",
+  "branchIds": [
+    "br1"
+  ],
+  "photo": "/media/fe5fca9c-a1fd-4378-95ee-150b43cd5eef"
+}

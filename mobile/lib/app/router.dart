@@ -8,6 +8,8 @@ import '../features/cashier/cashier_screen.dart';
 import '../features/codes/code_screen.dart';
 import '../features/codes/codes_screen.dart';
 import '../features/deal/deal_screen.dart';
+import '../features/deals/deal_form_screen.dart';
+import '../features/deals/deals_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/join/join_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
@@ -93,6 +95,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => CashierScreen(businessId: state.uri.queryParameters['business']),
       ),
       GoRoute(path: '/business/new', builder: (context, state) => const JoinScreen()),
+      GoRoute(
+        path: '/business/:businessId/deals',
+        builder: (context, state) => DealsScreen(businessId: state.pathParameters['businessId']!),
+      ),
+      GoRoute(
+        path: '/business/:businessId/deals/new',
+        builder: (context, state) => DealFormScreen(businessId: state.pathParameters['businessId']!),
+      ),
+      GoRoute(
+        path: '/business/:businessId/deals/:dealId/edit',
+        builder: (context, state) => DealFormScreen(businessId: state.pathParameters['businessId']!, dealId: state.pathParameters['dealId']),
+      ),
       GoRoute(
         path: '/r/:code',
         builder: (context, state) => CashierScreen(code: state.pathParameters['code']),

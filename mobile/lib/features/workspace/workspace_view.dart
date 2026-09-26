@@ -8,6 +8,7 @@ import '../../core/format.dart';
 import '../../data/models.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/common.dart';
+import '../../design/widgets/status_pill.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../codes/codes_screen.dart';
 
@@ -24,14 +25,13 @@ String roleLabel(L l, String role) => switch (role) {
   _ => l.roleCashier,
 };
 
-/// Where each profile step is done on the site.
+/// Where each profile step is done on the site (a deal is added in the app).
 const _setupPaths = {
   'logo': '/business/profile',
   'cover': '/business/profile',
   'description': '/business/profile',
   'contacts': '/business/profile',
   'location': '/business/branches',
-  'deal': '/business/deals/new',
 };
 
 /// The "Biznes" side of the Profile tab: what the business needs next,
@@ -156,12 +156,12 @@ class _Workspace extends ConsumerWidget {
       children: [
         _Header(business: business, role: workspace.role),
         if (business.suspended)
-          _Notice(tone: _Tone.danger, text: l.bizSuspendedNote)
+          _Notice(tone: Tone.danger, text: l.bizSuspendedNote)
         else if (business.status == 'PENDING')
-          _Notice(tone: _Tone.warning, text: l.bizPendingNote)
+          _Notice(tone: Tone.warning, text: l.bizPendingNote)
         else if (business.status == 'REJECTED')
           _Notice(
-            tone: _Tone.danger,
+            tone: Tone.danger,
             text: l.bizRejectedNote(business.rejectionReason ?? '—'),
             action: workspace.canEdit ? l.bizRejectedFix : null,
             onAction: () => site('/business/profile'),
@@ -177,10 +177,15 @@ class _Workspace extends ConsumerWidget {
                 primary: true,
                 onTap: () => context.push(Uri(path: '/cashier', queryParameters: {'business': business.id}).toString()),
               ),
-            if (workspace.canDeals)
-              _Action(icon: Icons.add_circle_outline_rounded, label: l.bizAddDeal, external: true, onTap: () => site('/business/deals/new')),
+            if (workspace.canDeals) ...[
+              _Action(icon: Icons.add_circle_outline_rounded, label: l.bizAddDeal, onTap: () => context.push('/business/${business.id}/deals/new')),
+              _Action(
+                icon: Icons.local_offer_outlined,
+                label: stats == null || stats.live == 0 ? l.bizDeals : '${l.bizDeals} · ${stats.live}',
+                onTap: () => context.push('/business/${business.id}/deals'),
+              ),
+            ],
             if (live) _Action(icon: Icons.storefront_outlined, label: l.bizViewPage, onTap: () => context.push('/businesses/${business.slug}')),
-            _Action(icon: Icons.dashboard_outlined, label: l.profileBusiness, external: true, onTap: () => site('/business/dashboard')),
           ],
         ),
         if (workspace.role == 'CASHIER')
@@ -190,17 +195,28 @@ class _Workspace extends ConsumerWidget {
           ),
         if (workspace.setup.isNotEmpty && setupDone < workspace.setup.length) ...[
           const SizedBox(height: Gap.lg),
-          _Setup(items: workspace.setup, done: setupDone, onOpen: (key) => site(_setupPaths[key] ?? '/business/profile')),
+          _Setup(
+            items: workspace.setup,
+            done: setupDone,
+            onOpen: (key) => key == 'deal' ? context.push('/business/${business.id}/deals/new') : site(_setupPaths[key] ?? '/business/profile'),
+          ),
         ],
         if (stats != null) ...[const SizedBox(height: Gap.lg), _Title(l.bizStats), _Stats(stats: stats)],
         if (stats != null) ...[const SizedBox(height: Gap.lg), _Title(l.bizRecent), _Recent(codes: workspace.recent)],
         const SizedBox(height: Gap.lg),
         Text(
-          l.profileBusinessHint,
+          l.bizSiteHint,
           textAlign: TextAlign.center,
           style: TextStyle(color: context.mutedText, fontSize: 13),
         ),
         const SizedBox(height: Gap.xs),
+        Center(
+          child: TextButton.icon(
+            onPressed: () => site('/business/dashboard'),
+            icon: const Icon(Icons.open_in_new_rounded, size: 18),
+            label: Text(l.profileBusiness),
+          ),
+        ),
         Center(
           child: TextButton.icon(onPressed: () => context.push('/business/new'), icon: const Icon(Icons.add_business_outlined), label: Text(l.bizAddAnother)),
         ),
@@ -229,11 +245,11 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = L.of(context);
     final (status, tone) = business.suspended
-        ? (l.bizStatusSuspended, _Tone.danger)
+        ? (l.bizStatusSuspended, Tone.danger)
         : switch (business.status) {
-            'VERIFIED' => (l.bizStatusVerified, _Tone.success),
-            'REJECTED' => (l.bizStatusRejected, _Tone.danger),
-            _ => (l.bizStatusPending, _Tone.warning),
+            'VERIFIED' => (l.bizStatusVerified, Tone.success),
+            'REJECTED' => (l.bizStatusRejected, Tone.danger),
+            _ => (l.bizStatusPending, Tone.warning),
           };
     return Card(
       child: Padding(
@@ -256,7 +272,7 @@ class _Header extends StatelessWidget {
                     runSpacing: Gap.xs,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      _Pill(text: status, tone: tone),
+                      StatusPill(text: status, tone: tone),
                       Text(
                         roleLabel(l, role),
                         style: TextStyle(color: context.mutedText, fontWeight: FontWeight.w600),
@@ -273,45 +289,16 @@ class _Header extends StatelessWidget {
   }
 }
 
-enum _Tone { success, warning, danger, neutral }
-
-/// Text and tint for a tone, readable (4.5:1+) in both themes.
-Color _toneColor(BuildContext context, _Tone tone) => switch (tone) {
-  _Tone.success => context.isDark ? const Color(0xFF34D399) : const Color(0xFF006B47),
-  _Tone.warning => context.isDark ? const Color(0xFFFBBF24) : const Color(0xFF92400E),
-  _Tone.danger => context.isDark ? const Color(0xFFFF8A80) : const Color(0xFFB3261E),
-  _Tone.neutral => context.mutedText,
-};
-
-class _Pill extends StatelessWidget {
-  const _Pill({required this.text, required this.tone});
-  final String text;
-  final _Tone tone;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _toneColor(context, tone);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(999)),
-      child: Text(
-        text,
-        style: TextStyle(color: color, fontSize: 12.5, fontWeight: FontWeight.w800),
-      ),
-    );
-  }
-}
-
 class _Notice extends StatelessWidget {
   const _Notice({required this.tone, required this.text, this.action, this.onAction});
-  final _Tone tone;
+  final Tone tone;
   final String text;
   final String? action;
   final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
-    final color = _toneColor(context, tone);
+    final color = toneColor(context, tone);
     return Padding(
       padding: const EdgeInsets.only(top: Gap.md),
       child: Container(
@@ -327,7 +314,7 @@ class _Notice extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(tone == _Tone.warning ? Icons.hourglass_top_rounded : Icons.error_outline_rounded, color: color, size: 20),
+                Icon(tone == Tone.warning ? Icons.hourglass_top_rounded : Icons.error_outline_rounded, color: color, size: 20),
                 const SizedBox(width: Gap.sm),
                 Expanded(child: Text(text, style: const TextStyle(height: 1.4))),
               ],
@@ -347,13 +334,10 @@ class _Notice extends StatelessWidget {
 }
 
 class _Action {
-  const _Action({required this.icon, required this.label, required this.onTap, this.external = false, this.primary = false});
+  const _Action({required this.icon, required this.label, required this.onTap, this.primary = false});
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-
-  /// Opens the site in the browser.
-  final bool external;
   final bool primary;
 }
 
@@ -430,13 +414,7 @@ class _ActionTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(action.icon, color: filled ? Colors.white : accent, size: 26),
-                    const Spacer(),
-                    if (action.external) Icon(Icons.open_in_new_rounded, size: 16, color: filled ? Colors.white : context.mutedText),
-                  ],
-                ),
+                Icon(action.icon, color: filled ? Colors.white : accent, size: 26),
                 const SizedBox(height: Gap.sm),
                 Text(
                   action.label,
@@ -513,7 +491,10 @@ class _Setup extends StatelessWidget {
                 label(item.key),
                 style: TextStyle(color: item.done ? context.mutedText : null, fontSize: 15, fontWeight: item.done ? FontWeight.w500 : FontWeight.w600),
               ),
-              trailing: item.done ? null : const Icon(Icons.open_in_new_rounded, size: 18),
+              // A deal is added right here; the other steps open the site.
+              trailing: item.done
+                  ? null
+                  : Icon(item.key == 'deal' ? Icons.chevron_right_rounded : Icons.open_in_new_rounded, size: item.key == 'deal' ? 24 : 18),
               onTap: item.done ? null : () => onOpen(item.key),
             ),
           const SizedBox(height: Gap.xs),
@@ -616,7 +597,7 @@ class _Recent extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: Gap.sm),
-                  _Pill(text: statusLabel(l, codes[index].status), tone: codes[index].status == 'CLAIMED' ? _Tone.success : _Tone.neutral),
+                  StatusPill(text: statusLabel(l, codes[index].status), tone: codes[index].status == 'CLAIMED' ? Tone.success : Tone.neutral),
                 ],
               ),
             ),

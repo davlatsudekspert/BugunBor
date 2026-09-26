@@ -66,6 +66,7 @@ class AppConfig {
     required this.categories,
     required this.cities,
     required this.reportReasons,
+    this.deal = const DealRules(),
   });
 
   factory AppConfig.fromJson(Json json) => AppConfig(
@@ -78,6 +79,7 @@ class AppConfig {
     categories: _list(json['categories'], Category.fromJson),
     cities: _list(json['cities'], City.fromJson),
     reportReasons: (json['reportReasons'] as List?)?.map((reason) => '$reason').toList() ?? const [],
+    deal: json['deal'] is Map ? DealRules.fromJson(_map(json['deal'])) : const DealRules(),
   );
 
   final bool demo;
@@ -89,6 +91,9 @@ class AppConfig {
   final List<Category> categories;
   final List<City> cities;
   final List<String> reportReasons;
+
+  /// Rules and pictures for the deal form (empty visuals: an older server).
+  final DealRules deal;
 
   City? city(String? slug) => cities.where((city) => city.slug == slug).firstOrNull;
   Category? category(String? slug) => categories.where((category) => category.slug == slug).firstOrNull;
@@ -755,6 +760,7 @@ class WorkspaceBusiness {
     required this.suspended,
     required this.isDemo,
     required this.logo,
+    this.categoryId,
   });
 
   factory WorkspaceBusiness.fromJson(Json json) => WorkspaceBusiness(
@@ -767,6 +773,7 @@ class WorkspaceBusiness {
     suspended: _bool(json['suspended']),
     isDemo: _bool(json['isDemo']),
     logo: _strOrNull(json['logo']),
+    categoryId: _strOrNull(json['categoryId']),
   );
 
   final String id;
@@ -778,6 +785,9 @@ class WorkspaceBusiness {
   final bool suspended;
   final bool isDemo;
   final String? logo;
+
+  /// The business's own category: where a new deal starts.
+  final String? categoryId;
 }
 
 class WorkspaceStats {
@@ -852,6 +862,7 @@ class BusinessWorkspace {
     required this.stats,
     required this.recent,
     required this.setup,
+    this.branches = const [],
   });
 
   factory BusinessWorkspace.fromJson(Json json) {
@@ -866,6 +877,7 @@ class BusinessWorkspace {
       stats: json['stats'] is Map ? WorkspaceStats.fromJson(_map(json['stats'])) : null,
       recent: _list(json['recent'], WorkspaceCode.fromJson),
       setup: [for (final item in (json['setup'] as List? ?? const []).whereType<Map<dynamic, dynamic>>()) (key: '${item['key']}', done: _bool(item['done']))],
+      branches: _list(json['branches'], WorkspaceBranch.fromJson),
     );
   }
 
@@ -878,4 +890,220 @@ class BusinessWorkspace {
   final WorkspaceStats? stats;
   final List<WorkspaceCode> recent;
   final List<({String key, bool done})> setup;
+
+  /// Where a deal can run (for those who may add deals).
+  final List<WorkspaceBranch> branches;
+}
+
+class WorkspaceBranch {
+  const WorkspaceBranch({required this.id, required this.name, required this.address});
+  factory WorkspaceBranch.fromJson(Json json) => WorkspaceBranch(id: _str(json['id']), name: _str(json['name']), address: _str(json['address']));
+  final String id;
+  final String name;
+  final String address;
+}
+
+/// The deal form's rules (DEAL_RULES in modules/deals/status.ts) and the
+/// pictures a deal without a photo shows.
+class DealRules {
+  const DealRules({
+    this.minDiscountPercent = 10,
+    this.minDurationMinutes = 30,
+    this.maxDurationDays = 30,
+    this.maxQuantity = 10000,
+    this.maxPerCustomer = 10,
+    this.claimTtlOptions = const [30, 60, 120, 240],
+    this.defaultClaimTtl = 120,
+    this.visuals = const [],
+    this.categoryVisuals = const {},
+  });
+
+  factory DealRules.fromJson(Json json) => DealRules(
+    minDiscountPercent: _int(json['minDiscountPercent'], 10),
+    minDurationMinutes: _int(json['minDurationMinutes'], 30),
+    maxDurationDays: _int(json['maxDurationDays'], 30),
+    maxQuantity: _int(json['maxQuantity'], 10000),
+    maxPerCustomer: _int(json['maxPerCustomer'], 10),
+    claimTtlOptions: (json['claimTtlOptions'] as List?)?.map((value) => _int(value)).toList() ?? const [30, 60, 120, 240],
+    defaultClaimTtl: _int(json['defaultClaimTtl'], 120),
+    visuals: _list(json['visuals'], DealVisual.fromJson),
+    categoryVisuals: _map(json['categoryVisuals']).map((key, value) => MapEntry(key, _str(value))),
+  );
+
+  final int minDiscountPercent;
+  final int minDurationMinutes;
+  final int maxDurationDays;
+  final int maxQuantity;
+  final int maxPerCustomer;
+  final List<int> claimTtlOptions;
+  final int defaultClaimTtl;
+  final List<DealVisual> visuals;
+
+  /// Category slug → the picture a new deal in it starts with.
+  final Map<String, String> categoryVisuals;
+
+  String visualFor(String? categorySlug) =>
+      categoryVisuals[categorySlug] ?? (visuals.any((visual) => visual.key == 'gift') ? 'gift' : visuals.firstOrNull?.key ?? 'gift');
+
+  String emojiOf(String? key) => visuals.where((visual) => visual.key == key).firstOrNull?.emoji ?? '🎁';
+}
+
+class DealVisual {
+  const DealVisual({required this.key, required this.emoji});
+  factory DealVisual.fromJson(Json json) => DealVisual(key: _str(json['key']), emoji: _str(json['emoji']));
+  final String key;
+  final String emoji;
+}
+
+/// A deal in the business's own list (any status).
+class BusinessDeal {
+  const BusinessDeal({
+    required this.id,
+    required this.slug,
+    required this.title,
+    required this.status,
+    required this.effective,
+    required this.startsAt,
+    required this.endsAt,
+    required this.originalPrice,
+    required this.price,
+    required this.discountPercent,
+    required this.total,
+    required this.remaining,
+    required this.visual,
+    required this.isSponsored,
+    required this.rejectionReason,
+    required this.claims,
+    required this.redeemed,
+    required this.photo,
+    required this.views,
+  });
+
+  factory BusinessDeal.fromJson(Json json) => BusinessDeal(
+    id: _str(json['id']),
+    slug: _str(json['slug']),
+    title: _str(json['title']),
+    status: _str(json['status'], 'DRAFT'),
+    effective: _str(json['effective'], _str(json['status'], 'DRAFT')),
+    startsAt: parseServerTime(_str(json['startsAt'], '1970-01-01 00:00:00')),
+    endsAt: parseServerTime(_str(json['endsAt'], '1970-01-01 00:00:00')),
+    originalPrice: _intOrNull(json['originalPrice']),
+    price: _int(json['price']),
+    discountPercent: _int(json['discountPercent']),
+    total: _intOrNull(json['total']),
+    remaining: _intOrNull(json['remaining']),
+    visual: _strOrNull(json['visual']),
+    isSponsored: _bool(json['isSponsored']),
+    rejectionReason: _strOrNull(json['rejectionReason']),
+    claims: _int(json['claims']),
+    redeemed: _int(json['redeemed']),
+    photo: _strOrNull(json['photo']),
+    views: _int(json['views']),
+  );
+
+  final String id;
+  final String slug;
+  final String title;
+
+  /// Stored: DRAFT, PENDING_REVIEW, ACTIVE, PAUSED, REJECTED or ARCHIVED.
+  final String status;
+
+  /// What people see: ACTIVE is split into LIVE, SCHEDULED, SOLD_OUT, EXPIRED.
+  final String effective;
+  final DateTime startsAt;
+  final DateTime endsAt;
+  final int? originalPrice;
+  final int price;
+  final int discountPercent;
+  final int? total;
+  final int? remaining;
+  final String? visual;
+  final bool isSponsored;
+  final String? rejectionReason;
+  final int claims;
+  final int redeemed;
+  final String? photo;
+  final int views;
+
+  /// Only drafts and rejected deals can be changed; others are copied.
+  bool get editable => status == 'DRAFT' || status == 'REJECTED';
+}
+
+/// A deal as the edit form needs it; times are Tashkent `YYYY-MM-DDTHH:MM`.
+class EditableDeal {
+  const EditableDeal({
+    required this.id,
+    required this.status,
+    required this.title,
+    required this.description,
+    required this.terms,
+    required this.categoryId,
+    required this.visual,
+    required this.originalPrice,
+    required this.price,
+    required this.startsAt,
+    required this.endsAt,
+    required this.total,
+    required this.perCustomerLimit,
+    required this.claimTtlMinutes,
+    required this.branchIds,
+    required this.rejectionReason,
+    required this.photoId,
+    required this.photo,
+  });
+
+  factory EditableDeal.fromJson(Json json) => EditableDeal(
+    id: _str(json['id']),
+    status: _str(json['status'], 'DRAFT'),
+    title: _str(json['title']),
+    description: _str(json['description']),
+    terms: _str(json['terms']),
+    categoryId: _str(json['categoryId']),
+    visual: _strOrNull(json['visual']),
+    originalPrice: _intOrNull(json['originalPrice']),
+    price: _int(json['price']),
+    startsAt: _str(json['startsAt']),
+    endsAt: _str(json['endsAt']),
+    total: _intOrNull(json['total']),
+    perCustomerLimit: _int(json['perCustomerLimit'], 1),
+    claimTtlMinutes: _int(json['claimTtlMinutes'], 120),
+    branchIds: (json['branchIds'] as List?)?.map((id) => '$id').toList() ?? const [],
+    rejectionReason: _strOrNull(json['rejectionReason']),
+    photoId: _strOrNull(json['photoId']),
+    photo: _strOrNull(json['photo']),
+  );
+
+  final String id;
+  final String status;
+  final String title;
+  final String description;
+  final String terms;
+  final String categoryId;
+  final String? visual;
+  final int? originalPrice;
+  final int price;
+  final String startsAt;
+  final String endsAt;
+  final int? total;
+  final int perCustomerLimit;
+  final int claimTtlMinutes;
+  final List<String> branchIds;
+  final String? rejectionReason;
+  final String? photoId;
+  final String? photo;
+}
+
+/// A deal after saving: DRAFT, or ACTIVE / PENDING_REVIEW after the check.
+class DealSaved {
+  const DealSaved({required this.id, required this.status});
+  factory DealSaved.fromJson(Json json) => DealSaved(id: _str(json['id']), status: _str(json['status'], 'DRAFT'));
+  final String id;
+  final String status;
+}
+
+class UploadedPhoto {
+  const UploadedPhoto({required this.id, required this.url});
+  factory UploadedPhoto.fromJson(Json json) => UploadedPhoto(id: _str(json['id']), url: _str(json['url']));
+  final String id;
+  final String url;
 }

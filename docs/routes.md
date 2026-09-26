@@ -48,7 +48,7 @@ The site authenticates with the session cookie (writes must be same-origin); the
 | `PUT`/`DELETE /favorites/{dealId}` | Save or unsave a deal |
 | `PUT`/`DELETE /follows/{businessId}` | Follow or unfollow a business |
 | `POST /reviews` | Rate a redeemed visit |
-| `GET /config` | App startup: demo and tariff switches, oldest supported build, categories (with `id` for registration), cities, report reasons |
+| `GET /config` | App startup: demo and tariff switches, oldest supported build, categories (with `id` for registration), cities, report reasons, deal rules and the pictures a deal without a photo can show |
 | `GET /feed` | App home: `forYou` (interests), `nearby` (`lat`/`lng` or `city`), `ending` |
 | `GET /deals/{slug}` | Deal page for the app: branches, business, `claimable`, favorite, following, active code |
 | `GET /businesses/{slug}` | Business page for the app: branches, deals, reviews, following |
@@ -60,8 +60,10 @@ The site authenticates with the session cookie (writes must be same-origin); the
 | `POST /reports` | Report a deal, business or review (goes to Admin → Shikoyatlar) |
 | `POST /contact` | Contact form |
 | `POST /businesses` | Create a business (onboarding, site and app); returns `status` after the automatic check |
-| `GET /business/{businessId}` | Business profile for a member: status, role and permissions; owners and managers also get today's numbers, the latest codes and setup steps |
+| `GET /business/{businessId}` | Business profile for a member: status, role and permissions; owners and managers also get today's numbers, the latest codes, setup steps and the branches a deal can run in |
 | `POST /business/{businessId}` | Workspace actions: profile, deals, branches, team, code check and completion, plan requests |
+| `GET /business/{businessId}/deals` | The business's deals for its team (owners and managers): status, window, prices, stock, bookings, uses and views |
+| `GET /business/{businessId}/deals/{dealId}` | One deal as the edit form needs it (times as Tashkent `YYYY-MM-DDTHH:MM`, branch ids, photo) |
 | `POST /business/{businessId}/media` | Upload a photo (multipart `file`, `kind` = DEAL, LOGO or COVER) |
 | `POST /admin` | Moderation and admin actions (including automatic-moderation switches and company details) |
 | `POST /payments/payme` | Payme Merchant API (JSON-RPC, Basic auth) |

@@ -51,9 +51,11 @@ void main() {
     // "Your business was approved" opens its business profile in the app.
     expect(appPathFor('https://bugunbor.uz/business/switch/b1?next=%2Fbusiness%2Fdashboard'), '/profile?business=b1');
     expect(appPathFor('https://bugunbor.uz/business/dashboard'), '/profile');
-    // Billing (payments are only on the site), deal editing and admin stay on the site.
+    // "Deal approved / rejected": the business profile, where the deals are.
+    expect(appPathFor('https://bugunbor.uz/business/deals/d1'), '/profile');
+    // Billing (payments are only on the site) and admin stay on the site.
     expect(appPathFor('https://bugunbor.uz/business/switch/b1?next=%2Fbusiness%2Fbilling'), isNull);
-    expect(appPathFor('https://bugunbor.uz/business/deals/d1'), isNull);
+    expect(appPathFor('https://bugunbor.uz/business/branches'), isNull);
     expect(appPathFor('https://bugunbor.uz/admin/reports'), isNull);
     expect(appPathFor('https://bugunbor.uz/deals/osh/edit'), isNull);
   });

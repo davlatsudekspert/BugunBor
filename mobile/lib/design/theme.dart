@@ -94,7 +94,8 @@ ThemeData buildTheme(Brightness brightness) {
       style: FilledButton.styleFrom(
         minimumSize: const Size(Gap.tap, 52),
         shape: shape,
-        textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+        // Built on the theme's label style: a bare style would drop its font.
+        textStyle: text.labelLarge?.copyWith(fontWeight: FontWeight.w800, fontSize: 16),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
@@ -102,7 +103,7 @@ ThemeData buildTheme(Brightness brightness) {
         foregroundColor: accent,
         minimumSize: const Size(Gap.tap, Gap.tap),
         shape: shape,
-        textStyle: const TextStyle(fontWeight: FontWeight.w700),
+        textStyle: text.labelLarge?.copyWith(fontWeight: FontWeight.w700),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
@@ -141,6 +142,16 @@ ThemeData buildTheme(Brightness brightness) {
       labelTextStyle: WidgetStateProperty.all(const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
     ),
     snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating),
+    // An off switch drawn in the pale border colour is hard to see: its thumb
+    // and outline take the muted text colour (3:1 or more in both themes).
+    switchTheme: SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected) || states.contains(WidgetState.disabled) ? null : (dark ? Brand.darkMuted : Brand.muted),
+      ),
+      trackOutlineColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected) || states.contains(WidgetState.disabled) ? null : (dark ? Brand.darkMuted : Brand.muted),
+      ),
+    ),
   );
 }
 
