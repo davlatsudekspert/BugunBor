@@ -58,12 +58,14 @@ Reja: `docs/ILOVA-REJA.md`.
   - Asosiy ekranda biznes egalari uchun taklif kartochkasi (yopilsa 30 kun ko'rinmaydi, biznesi borlarga chiqmaydi).
   - iOS uslubidagi pastki menyu: ingichka to'q ikonkalar, tanlangani to'ldirilgan.
   - Server: `GET /api/v1/business/{id}`, `/config`da kategoriya `id`, `/me`da Telegram username va a'zolik holati.
-  - Testlar: ilova 75, sayt 158.
+  - Testlar: ilova 77, sayt 158. Emulyator E2E yangi ekranlarni ham suratga oladi.
+- [x] **PR #6 `main`ga birlashtirildi va saytga chiqdi** (2026-09-26, 15:03 UTC)
+  - Tekshirildi: `/config`da kategoriya `id`; `GET /api/v1/business/{id}` kirmasdan 401;
+    qidiruvda «osh» endi 3 ta mos natija (oldin 17); asosiy sahifalar 200.
+  - Ilovadagi biznes ro'yxatdan o'tishi va biznes profili endi haqiqiy server bilan ishlaydi.
 
 ## Navbatda
 
-- [ ] Egasi ruxsat bersa: PR #6 ni `main`ga birlashtirish (saytdagi qidiruv tuzatishi ham chiqadi).
-  Shundan keyin ilovadagi biznes ro'yxatdan o'tishi va biznes profili ishlaydi (yangi API serverga chiqadi).
 - [ ] Egasi kalitlarni qo'ygach: imzolangan build, qo'lda APK sinovi, Internal testing qoralamasi.
 
 ## Egasidan kerak
