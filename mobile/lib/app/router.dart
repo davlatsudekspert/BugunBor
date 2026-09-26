@@ -45,7 +45,31 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, shell) => ShellScreen(shell: shell),
         branches: [
           StatefulShellBranch(
-            routes: [GoRoute(path: '/', builder: (context, state) => const HomeScreen())],
+            routes: [
+              GoRoute(
+                path: '/',
+                builder: (context, state) => const HomeScreen(),
+                // Above the tabs (root navigator), but with Home under them: a
+                // link opened from Telegram or a notification still has a way back.
+                routes: [
+                  GoRoute(
+                    path: 'deals/:slug',
+                    parentNavigatorKey: rootNavigatorKey,
+                    builder: (context, state) => DealScreen(slug: state.pathParameters['slug']!),
+                  ),
+                  GoRoute(
+                    path: 'businesses/:slug',
+                    parentNavigatorKey: rootNavigatorKey,
+                    builder: (context, state) => BusinessScreen(slug: state.pathParameters['slug']!),
+                  ),
+                  GoRoute(
+                    path: 'r/:code',
+                    parentNavigatorKey: rootNavigatorKey,
+                    builder: (context, state) => CashierScreen(code: state.pathParameters['code']),
+                  ),
+                ],
+              ),
+            ],
           ),
           StatefulShellBranch(
             routes: [
@@ -64,7 +88,19 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [GoRoute(path: '/saved', builder: (context, state) => const SavedScreen())],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/codes', builder: (context, state) => const CodesScreen())],
+            routes: [
+              GoRoute(
+                path: '/codes',
+                builder: (context, state) => const CodesScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    parentNavigatorKey: rootNavigatorKey,
+                    builder: (context, state) => CodeScreen(id: state.pathParameters['id']!),
+                  ),
+                ],
+              ),
+            ],
           ),
           StatefulShellBranch(
             routes: [
@@ -75,18 +111,6 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
-      ),
-      GoRoute(
-        path: '/deals/:slug',
-        builder: (context, state) => DealScreen(slug: state.pathParameters['slug']!),
-      ),
-      GoRoute(
-        path: '/businesses/:slug',
-        builder: (context, state) => BusinessScreen(slug: state.pathParameters['slug']!),
-      ),
-      GoRoute(
-        path: '/codes/:id',
-        builder: (context, state) => CodeScreen(id: state.pathParameters['id']!),
       ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/interests', builder: (context, state) => const InterestsScreen()),
@@ -106,10 +130,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/business/:businessId/deals/:dealId/edit',
         builder: (context, state) => DealFormScreen(businessId: state.pathParameters['businessId']!, dealId: state.pathParameters['dealId']),
-      ),
-      GoRoute(
-        path: '/r/:code',
-        builder: (context, state) => CashierScreen(code: state.pathParameters['code']),
       ),
     ],
     errorBuilder: (context, state) => const NotFoundScreen(),

@@ -2,9 +2,11 @@
 // contracts: every main screen at 360, 390 and 430 px wide, the three states
 // (loading → content, empty, error → retry), tap targets, and the flows that
 // matter most (first start, deal → sign-in, codes, session end).
+import 'package:bugunbor/app/router.dart';
 import 'package:bugunbor/features/deal/deal_screen.dart';
 import 'package:bugunbor/features/home/home_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/fakes.dart';
@@ -91,6 +93,24 @@ void main() {
       await pumpApp(tester, server: server, size: phoneSizes['360']!, textScale: 1.3, locale: locale);
       await showDeal(tester);
     }
+  });
+
+  testWidgets('a deal opened from a link has a way back into the app', (tester) async {
+    await pumpApp(tester, server: FakeServer.standard());
+    final container = ProviderScope.containerOf(tester.element(find.byType(MaterialApp)));
+    // As an App Link or a notification opens it: the whole location at once.
+    container.read(routerProvider).go('/deals/osh');
+    await settle(tester);
+    expect(find.byType(DealScreen), findsOneWidget);
+    await tester.tap(find.byType(BackButtonIcon));
+    await settle(tester);
+    expect(find.byType(HomeScreen), findsOneWidget);
+    // The phone's back button does the same.
+    container.read(routerProvider).go('/businesses/kafe');
+    await settle(tester);
+    await tester.binding.handlePopRoute();
+    await settle(tester);
+    expect(find.byType(HomeScreen), findsOneWidget);
   });
 
   testWidgets('first start: language, interests, city — then home', (tester) async {
