@@ -42,9 +42,14 @@ Reja: `docs/ILOVA-REJA.md`.
   - Play: faqat qo'lda (Actions → App → Run workflow → `play_draft`), Internal testing'ga **qoralama**.
     Chiqarish tugmasini faqat egasi bosadi.
 
+- [x] **PR #6, CI yashil** (2026-09-26): check, e2e (emulyator, 13 ta skrinshot), build, verify.
+  - Emulyator skrinshotlari bo'yicha tuzatildi: ko'rinmas chip yozuvlari, rasm ustidagi sarlavha,
+    profildagi kesilgan yozuv, sayt qidiruvi (so'z boshidan), tugmalar kontrasti (WCAG AA).
+  - Test APK va ekranlar egasiga yuborildi.
+
 ## Navbatda
 
-- [ ] PR, CI yashil bo'lishi, egasiga ko'rsatish.
+- [ ] Egasi ruxsat bersa: PR #6 ni `main`ga birlashtirish (saytdagi qidiruv tuzatishi ham chiqadi).
 - [ ] Egasi kalitlarni qo'ygach: imzolangan build, qo'lda APK sinovi, Internal testing qoralamasi.
 
 ## Egasidan kerak
