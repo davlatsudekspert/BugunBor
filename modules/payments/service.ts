@@ -1,7 +1,7 @@
 import type { AppConfig } from '@/lib/env';
 import { toDbTime } from '@/lib/time';
 import { auditStatement, auditStatementIf } from '@/modules/audit';
-import { listPlans, periodPrice } from '@/modules/billing/service';
+import { assertTariffsOpen, listPlans, periodPrice } from '@/modules/billing/service';
 import { DomainError } from '@/modules/errors';
 import { teamStatement } from '@/modules/notifications/service';
 
@@ -155,6 +155,7 @@ export async function refundPayment(db: D1Database, payment: PaymentRow, order: 
  * are replaced unless a payment for them is already in progress.
  */
 export async function createOrder(db: D1Database, input: { businessId: string; userId: string; planCode: string; months: number }, now = new Date()) {
+  await assertTariffsOpen(db);
   const plan = (await listPlans(db)).find((item) => item.code === input.planCode);
   if (!plan) throw new DomainError('VALIDATION');
   const amount = periodPrice(plan, input.months);

@@ -11,12 +11,22 @@ import { getCompanyInfo } from '@/modules/company';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
-  return { title: t.legal.offerTitle, description: t.legal.offerSubtitle, alternates: { canonical: '/oferta' } };
+  const settings = await getBillingSettings(await getDb());
+  return { title: t.legal.offerTitle, description: t.legal.offerSubtitle, alternates: { canonical: '/oferta' }, robots: settings.tariffsEnabled ? undefined : { index: false, follow: true } };
 }
 
 export default async function OfferPage() {
   const [{ t, locale }, db] = await Promise.all([getI18n(), getDb()]);
   const [plans, settings, company] = await Promise.all([listPlans(db), getBillingSettings(db), getCompanyInfo(db)]);
+  // Free launch: there are no paid tariffs yet, so there is no offer to accept.
+  if (!settings.tariffsEnabled) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+        <h1 className="text-4xl font-black tracking-[-.05em] text-navy">{t.legal.offerTitle}</h1>
+        <p className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-6 leading-7 text-emerald-900">{t.legal.offerFree}</p>
+      </main>
+    );
+  }
   const sections = offerSections(locale, {
     company: { ...company, phone: company.phone ? formatPhone(company.phone) : '' },
     plans: plans.map((plan) => ({ ...plan, name: locale === 'ru' ? (plan.nameRu ?? plan.nameUz) : plan.nameUz })),

@@ -39,6 +39,8 @@ describe('business workflow', () => {
   beforeEach(async () => {
     db = createTestD1();
     await applyMigrations(db);
+    // These tests cover the paid model; the free launch has its own tests.
+    await db.prepare(`UPDATE app_settings SET value = '1' WHERE key = 'tariffs_enabled'`).run();
     await db.prepare(`INSERT INTO users(id, role, display_name, phone, locale) VALUES
       ('owner', 'CUSTOMER', 'Owner', '+998900000001', 'uz'),
       ('cashier', 'CUSTOMER', 'Kassir', '+998900000002', 'uz'),

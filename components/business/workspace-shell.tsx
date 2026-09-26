@@ -22,7 +22,9 @@ export function WorkspaceShell({ ws, active, children }: { ws: Workspace; active
   const { t, locale, membership, memberships, subscription } = ws;
   const planName = subscription.plan ? (locale === 'ru' ? subscription.plan.nameRu : subscription.plan.nameUz) : '';
   const chip =
-    subscription.status === 'TRIAL'
+    subscription.status === 'FREE' || (!subscription.tariffs && subscription.status === 'NOT_STARTED')
+      ? { text: fmt(t.billing.chipFree, { plan: planName }), tone: 'bg-emerald-50 text-emerald-700' }
+      : subscription.status === 'TRIAL'
       ? { text: fmt(t.billing.chipTrial, { days: subscription.daysLeft }), tone: 'bg-emerald-50 text-emerald-700' }
       : subscription.status === 'ACTIVE'
         ? { text: fmt(t.billing.chipActive, { plan: planName, days: subscription.daysLeft }), tone: 'bg-sky-50 text-sky-700' }
@@ -70,7 +72,7 @@ export function WorkspaceShell({ ws, active, children }: { ws: Workspace; active
             </div>
           </div>
           <nav className="scrollbar-none -mx-4 mt-5 flex gap-1 overflow-x-auto px-4 sm:mx-0 sm:px-0" aria-label={t.biz.title}>
-            {tabs.filter((tab) => roleCan(membership.role, tab.action)).map(({ key, href, icon: Icon }) => (
+            {tabs.filter((tab) => roleCan(membership.role, tab.action) && (tab.key !== 'billing' || subscription.tariffs)).map(({ key, href, icon: Icon }) => (
               <a key={key} href={href} aria-current={active === key ? 'page' : undefined} className={cn('inline-flex h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-sm font-bold transition', active === key ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-navy')}>
                 <Icon className="size-4" aria-hidden /> {t.biz.nav[key]}
               </a>

@@ -136,7 +136,9 @@ export default async function BusinessDashboardPage() {
           <section className="rounded-2xl bg-navy p-5 text-white">
             <p className="text-xs font-black uppercase tracking-[.14em] text-orange-200">{t.billing.status[subscription.status]}</p>
             <p className="mt-2 text-sm leading-6 text-slate-200">
-              {subscription.status === 'TRIAL'
+              {subscription.status === 'FREE' || (!subscription.tariffs && subscription.status === 'NOT_STARTED')
+                ? fmt(t.billing.freeText, { plan: planName, months: subscription.trialMonths })
+                : subscription.status === 'TRIAL'
                 ? fmt(t.billing.trialText, { plan: planName, date: formatNumericDate(parseDbTime(subscription.endsAt!)) })
                 : subscription.status === 'ACTIVE'
                   ? fmt(t.billing.activeText, { plan: planName, date: formatNumericDate(parseDbTime(subscription.endsAt!)) })
@@ -144,7 +146,7 @@ export default async function BusinessDashboardPage() {
                     ? t.billing.expiredText
                     : t.billing.chipPending}
             </p>
-            {roleCan(membership.role, 'business.edit') ? <a href="/business/billing" className="mt-4 inline-flex h-10 items-center rounded-xl bg-white px-4 text-sm font-bold text-navy">{t.billing.choosePlan}</a> : null}
+            {subscription.tariffs && roleCan(membership.role, 'business.edit') ? <a href="/business/billing" className="mt-4 inline-flex h-10 items-center rounded-xl bg-white px-4 text-sm font-bold text-navy">{t.billing.choosePlan}</a> : null}
           </section>
         </div>
       </div>

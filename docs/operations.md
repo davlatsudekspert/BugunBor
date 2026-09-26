@@ -28,6 +28,8 @@ Migrations run automatically on the first request after a deploy. They are addit
   The system never rejects; people do.
   Obscene, link or card-number reviews are hidden automatically and can be shown again.
   Each switch is in Admin → Sozlamalar → Avtomatik moderatsiya. Admin → Bizneslar / Aksiyalar → «Avto tasdiqlangan» lists last week's automatic approvals for a second look.
+- **Free launch:** tariffs are hidden for now (Admin → Tariflar), so no price shows anywhere and every verified business stays on air with the gifted plan (Premium by default).
+  «Tariflarni ochish» gives every verified, unpaid business a fresh free period from that day before prices apply.
 - **Payments:** Payme and Click switch a plan on by themselves once the payment system confirms (see `docs/TOLOV.md`).
   A manual request (bank transfer) still works: admins get a Telegram message, then confirm it in Admin → Tariflar.
   Admins can also grant 1–3 free months or a plan directly on a business.

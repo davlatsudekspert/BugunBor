@@ -4,7 +4,10 @@ Bizneslar tarifni (Start, Biznes, Premium) Payme yoki Click orqali to‘laydi. T
 serverimizga to‘lovni tasdiqlaganda tarif o‘zi yoqiladi. Qo‘lda to‘lov (bank o‘tkazmasi va admin
 tasdig‘i) avvalgidek ishlaydi.
 
-Hozir to‘lov **o‘chiq**: «Tarif» sahifasida Payme va Click tugmalari rasmiy logotiplar bilan
+Hozir to‘lov **o‘chiq**. Bundan tashqari, tariflarning o‘zi ham yopiq (bepul ishga tushirish, `docs/TIZIM.md` 5.1).
+Shuning uchun onlayn to‘lov tariflar ochilgandan keyin kerak bo‘ladi.
+
+Tariflar ochiq, to‘lov esa o‘chiq bo‘lsa, «Tarif» sahifasida Payme va Click tugmalari rasmiy logotiplar bilan
 ko‘rinadi, lekin bosilmaydi va ustida **«Tez kunda»** yozuvi turadi.
 
 ## Qanday ishlaydi

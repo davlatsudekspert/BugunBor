@@ -36,6 +36,32 @@ export default async function AdminBillingPage() {
 
   return (
     <AdminShell t={t} role={user.role} active="billing">
+      <section id="tariffs" className={cn('mb-8 rounded-2xl border p-5', settings.tariffsEnabled ? 'border-slate-200 bg-white' : 'border-emerald-200 bg-emerald-50/60')}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="max-w-2xl">
+            <h2 className="text-xl font-black text-navy">{b.tariffs}</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-600">{settings.tariffsEnabled ? b.tariffsOn : b.tariffsOff}</p>
+          </div>
+          {settings.tariffsEnabled ? (
+            <ActionButton payload={{ type: 'tariffs.update', on: false }} label={b.tariffsHide} confirmText={b.tariffsHideConfirm} networkError={t.common.networkError} />
+          ) : (
+            <ActionButton payload={{ type: 'tariffs.update', on: true }} label={b.tariffsOpen} confirmText={b.tariffsOpenConfirm} tone="success" networkError={t.common.networkError} />
+          )}
+        </div>
+        {!settings.tariffsEnabled ? (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="text-sm font-bold text-navy">{b.freePlan}:</span>
+            {plans.map((plan) =>
+              plan.code === settings.freePlan ? (
+                <span key={plan.code} className="inline-flex h-9 items-center rounded-lg bg-navy px-3 text-xs font-bold text-white">{planName(plan.code)}</span>
+              ) : (
+                <ActionButton key={plan.code} payload={{ type: 'tariffs.update', freePlan: plan.code }} label={planName(plan.code)} networkError={t.common.networkError} />
+              ),
+            )}
+          </div>
+        ) : null}
+      </section>
+
       <section>
         <h2 className="text-xl font-black text-navy">{b.requests}</h2>
         {pending.length ? (

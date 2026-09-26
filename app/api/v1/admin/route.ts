@@ -6,7 +6,7 @@ import { assertSameOrigin, json, readJson, route } from '@/lib/http';
 import { saveCategory, setMessageStatus, updatePlan, updateSettings, updateUser } from '@/modules/admin/service';
 import { apiModerator } from '@/modules/auth/current';
 import { tryNormalizeUzbekPhone } from '@/modules/auth/phone';
-import { cancelBillingRequest, confirmBillingRequest, grantPlan, grantTrial } from '@/modules/billing/service';
+import { cancelBillingRequest, confirmBillingRequest, grantPlan, grantTrial, setTariffsEnabled } from '@/modules/billing/service';
 import { BILLING_PERIODS, TRIAL_MONTH_OPTIONS } from '@/modules/billing/pricing';
 import { setReviewHidden } from '@/modules/engagement/reviews';
 import { updateCompanyInfo } from '@/modules/company';
@@ -56,6 +56,7 @@ const actionSchema = z.discriminatedUnion('type', [
   }),
   z.object({ type: z.literal('telegram.webhook') }),
   z.object({ type: z.literal('automation.update'), key: z.enum(['businesses', 'deals', 'reviews']), on: z.boolean() }),
+  z.object({ type: z.literal('tariffs.update'), on: z.boolean().optional(), freePlan: planCode.optional() }),
   z.object({
     type: z.literal('company.update'),
     legalName: z.string().trim().max(160),
@@ -129,6 +130,11 @@ export const POST = route(async (request: Request) => {
       return json({ data: { ok: true } });
     case 'category.save':
       return json({ data: await saveCategory(db, { ...action, id: action.id ?? null, actorId }) });
+    case 'tariffs.update': {
+      if (action.freePlan) await updateSettings(db, { actorId, values: { free_plan: action.freePlan } });
+      const result = action.on === undefined ? null : await setTariffsEnabled(db, { actorId, on: action.on });
+      return json({ data: { ok: true, trialsGranted: result?.trialsGranted ?? 0 } });
+    }
     case 'company.update': {
       const phone = action.phone ? tryNormalizeUzbekPhone(action.phone) : '';
       if (phone === null) throw new DomainError('VALIDATION');
