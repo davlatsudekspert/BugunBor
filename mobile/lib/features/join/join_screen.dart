@@ -10,6 +10,7 @@ import '../../data/models.dart';
 import '../../design/icons.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/common.dart';
+import '../../design/widgets/form_fields.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../common/pickers.dart';
 import 'business_draft.dart';
@@ -496,12 +497,12 @@ class _JoinFormState extends ConsumerState<_JoinForm> {
                       ),
                   ],
                 ),
-                if (_message(l, 'categoryId') case final error?) _ErrorLine(error),
+                if (_message(l, 'categoryId') case final error?) FieldError(error),
               ],
             ),
           ),
           gap,
-          field('city', _TapField(label: l.bizCity, value: cityName ?? '', icon: Icons.expand_more_rounded, error: _message(l, 'city'), onTap: _pickCity)),
+          field('city', TapField(label: l.bizCity, value: cityName ?? '', icon: Icons.expand_more_rounded, error: _message(l, 'city'), onTap: _pickCity)),
           const SizedBox(height: Gap.xs),
           Align(
             alignment: AlignmentDirectional.centerStart,
@@ -512,9 +513,9 @@ class _JoinFormState extends ConsumerState<_JoinForm> {
             ),
           ),
           if (_pin != null)
-            _NoteLine(icon: Icons.check_circle_rounded, color: context.successText, text: l.bizLocated(cityName ?? ''))
+            NoteLine(icon: Icons.check_circle_rounded, color: context.successText, text: l.bizLocated(cityName ?? ''))
           else
-            _NoteLine(
+            NoteLine(
               icon: _locateFailed ? Icons.location_off_outlined : Icons.info_outline_rounded,
               color: context.mutedText,
               text: _locateFailed ? l.bizLocateFailed : l.bizLocateNote,
@@ -560,14 +561,14 @@ class _JoinFormState extends ConsumerState<_JoinForm> {
               Expanded(
                 child: field(
                   'open',
-                  _TapField(label: l.bizOpens, value: _open, icon: Icons.schedule_rounded, error: _message(l, 'open'), onTap: () => _pickTime(opening: true)),
+                  TapField(label: l.bizOpens, value: _open, icon: Icons.schedule_rounded, error: _message(l, 'open'), onTap: () => _pickTime(opening: true)),
                 ),
               ),
               const SizedBox(width: Gap.md),
               Expanded(
                 child: field(
                   'close',
-                  _TapField(
+                  TapField(
                     label: l.bizCloses,
                     value: _close,
                     icon: Icons.schedule_rounded,
@@ -688,12 +689,12 @@ class _JoinFormState extends ConsumerState<_JoinForm> {
               decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(14)),
               child: Row(
                 children: [
-                  Icon(Icons.error_outline_rounded, color: _errorColor(context)),
+                  Icon(Icons.error_outline_rounded, color: errorColor(context)),
                   const SizedBox(width: Gap.sm),
                   Expanded(
                     child: Text(
                       error,
-                      style: TextStyle(color: _errorColor(context), fontWeight: FontWeight.w600),
+                      style: TextStyle(color: errorColor(context), fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
@@ -722,67 +723,6 @@ class _JoinFormState extends ConsumerState<_JoinForm> {
   }
 }
 
-Color _errorColor(BuildContext context) => context.isDark ? const Color(0xFFFF8A80) : const Color(0xFFB3261E);
-
-class _ErrorLine extends StatelessWidget {
-  const _ErrorLine(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: Gap.xs, left: Gap.md),
-    child: Text(text, style: TextStyle(color: _errorColor(context), fontSize: 12)),
-  );
-}
-
-class _NoteLine extends StatelessWidget {
-  const _NoteLine({required this.icon, required this.color, required this.text});
-  final IconData icon;
-  final Color color;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: Gap.xs),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 18, color: color),
-        const SizedBox(width: Gap.sm),
-        Expanded(
-          child: Text(text, style: TextStyle(color: color, fontSize: 13, height: 1.35)),
-        ),
-      ],
-    ),
-  );
-}
-
-/// A form field that opens a picker (city, time) instead of the keyboard.
-class _TapField extends StatelessWidget {
-  const _TapField({required this.label, required this.value, required this.icon, required this.onTap, this.error});
-  final String label;
-  final String value;
-  final IconData icon;
-  final VoidCallback onTap;
-  final String? error;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    label: '$label: $value',
-    excludeSemantics: true,
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: InputDecorator(
-        isEmpty: value.isEmpty,
-        decoration: InputDecoration(labelText: label, errorText: error, suffixIcon: Icon(icon)),
-        child: Text(value, style: const TextStyle(fontSize: 16)),
-      ),
-    ),
-  );
-}
-
 class _Created extends ConsumerWidget {
   const _Created({required this.created});
   final BusinessCreated created;
@@ -792,7 +732,6 @@ class _Created extends ConsumerWidget {
     final l = L.of(context);
     final verified = created.verified;
     final color = verified ? context.successText : context.accentText;
-    final locale = ref.watch(settingsProvider.select((settings) => settings.locale));
     return ListView(
       padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.xl, Gap.gutter, Gap.xl),
       children: [
@@ -816,8 +755,8 @@ class _Created extends ConsumerWidget {
         FilledButton.icon(onPressed: () => context.go('/profile'), icon: const Icon(Icons.storefront_rounded), label: Text(l.bizOpenProfile)),
         const SizedBox(height: Gap.sm),
         OutlinedButton.icon(
-          onPressed: () => openSite(workspacePath(created.id, '/business/deals/new'), lang: locale),
-          icon: const Icon(Icons.open_in_new_rounded, size: 20),
+          onPressed: () => context.pushReplacement('/business/${created.id}/deals/new'),
+          icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
           label: Text(l.bizAddFirstDeal),
         ),
         const SizedBox(height: Gap.sm),

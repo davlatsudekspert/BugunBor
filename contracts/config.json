@@ -196,5 +196,335 @@
     "PROHIBITED",
     "SPAM",
     "OTHER"
-  ]
+  ],
+  "deal": {
+    "minDiscountPercent": 10,
+    "minDurationMinutes": 30,
+    "maxDurationDays": 30,
+    "maxQuantity": 10000,
+    "maxPerCustomer": 10,
+    "claimTtlOptions": [
+      30,
+      60,
+      120,
+      240
+    ],
+    "defaultClaimTtl": 120,
+    "visuals": [
+      {
+        "key": "plov",
+        "emoji": "🍚"
+      },
+      {
+        "key": "noodles",
+        "emoji": "🍜"
+      },
+      {
+        "key": "shashlik",
+        "emoji": "🍖"
+      },
+      {
+        "key": "meat",
+        "emoji": "🥘"
+      },
+      {
+        "key": "dumplings",
+        "emoji": "🥟"
+      },
+      {
+        "key": "samsa",
+        "emoji": "🥧"
+      },
+      {
+        "key": "bread",
+        "emoji": "🫓"
+      },
+      {
+        "key": "soup",
+        "emoji": "🍲"
+      },
+      {
+        "key": "chicken",
+        "emoji": "🍗"
+      },
+      {
+        "key": "lunch",
+        "emoji": "🍱"
+      },
+      {
+        "key": "burger",
+        "emoji": "🍔"
+      },
+      {
+        "key": "pizza",
+        "emoji": "🍕"
+      },
+      {
+        "key": "wrap",
+        "emoji": "🌯"
+      },
+      {
+        "key": "salad",
+        "emoji": "🥗"
+      },
+      {
+        "key": "sushi",
+        "emoji": "🍣"
+      },
+      {
+        "key": "coffee",
+        "emoji": "☕"
+      },
+      {
+        "key": "breakfast",
+        "emoji": "🍳"
+      },
+      {
+        "key": "tea",
+        "emoji": "🍵"
+      },
+      {
+        "key": "cake",
+        "emoji": "🍰"
+      },
+      {
+        "key": "dessert",
+        "emoji": "🧁"
+      },
+      {
+        "key": "icecream",
+        "emoji": "🍨"
+      },
+      {
+        "key": "sweets",
+        "emoji": "🍬"
+      },
+      {
+        "key": "shopping",
+        "emoji": "🛍️"
+      },
+      {
+        "key": "clothes",
+        "emoji": "👗"
+      },
+      {
+        "key": "sneakers",
+        "emoji": "👟"
+      },
+      {
+        "key": "backpack",
+        "emoji": "🎒"
+      },
+      {
+        "key": "books",
+        "emoji": "📚"
+      },
+      {
+        "key": "gift",
+        "emoji": "🎁"
+      },
+      {
+        "key": "nuts",
+        "emoji": "🥜"
+      },
+      {
+        "key": "kitchen",
+        "emoji": "🍽️"
+      },
+      {
+        "key": "flowers",
+        "emoji": "💐"
+      },
+      {
+        "key": "phone",
+        "emoji": "📱"
+      },
+      {
+        "key": "crafts",
+        "emoji": "🏺"
+      },
+      {
+        "key": "fabric",
+        "emoji": "🧵"
+      },
+      {
+        "key": "suzani",
+        "emoji": "🪡"
+      },
+      {
+        "key": "doppi",
+        "emoji": "🧢"
+      },
+      {
+        "key": "woodcarving",
+        "emoji": "🪵"
+      },
+      {
+        "key": "doll",
+        "emoji": "🪆"
+      },
+      {
+        "key": "beauty",
+        "emoji": "💅"
+      },
+      {
+        "key": "makeup",
+        "emoji": "💄"
+      },
+      {
+        "key": "hair",
+        "emoji": "💇"
+      },
+      {
+        "key": "barber",
+        "emoji": "💈"
+      },
+      {
+        "key": "spa",
+        "emoji": "💆"
+      },
+      {
+        "key": "facial",
+        "emoji": "🧖"
+      },
+      {
+        "key": "fitness",
+        "emoji": "🏋️"
+      },
+      {
+        "key": "pool",
+        "emoji": "🏊"
+      },
+      {
+        "key": "yoga",
+        "emoji": "🧘"
+      },
+      {
+        "key": "football",
+        "emoji": "⚽"
+      },
+      {
+        "key": "boxing",
+        "emoji": "🥊"
+      },
+      {
+        "key": "kurash",
+        "emoji": "🤼"
+      },
+      {
+        "key": "tennis",
+        "emoji": "🎾"
+      },
+      {
+        "key": "fun",
+        "emoji": "🎉"
+      },
+      {
+        "key": "cinema",
+        "emoji": "🎬"
+      },
+      {
+        "key": "bowling",
+        "emoji": "🎳"
+      },
+      {
+        "key": "quest",
+        "emoji": "🔐"
+      },
+      {
+        "key": "kids",
+        "emoji": "🧸"
+      },
+      {
+        "key": "karaoke",
+        "emoji": "🎤"
+      },
+      {
+        "key": "game",
+        "emoji": "🎮"
+      },
+      {
+        "key": "billiards",
+        "emoji": "🎱"
+      },
+      {
+        "key": "theater",
+        "emoji": "🎭"
+      },
+      {
+        "key": "horse",
+        "emoji": "🐎"
+      },
+      {
+        "key": "service",
+        "emoji": "🛠️"
+      },
+      {
+        "key": "car",
+        "emoji": "🚗"
+      },
+      {
+        "key": "tires",
+        "emoji": "🛞"
+      },
+      {
+        "key": "laundry",
+        "emoji": "👔"
+      },
+      {
+        "key": "repair",
+        "emoji": "🔧"
+      },
+      {
+        "key": "laptop",
+        "emoji": "💻"
+      },
+      {
+        "key": "shoes",
+        "emoji": "👞"
+      },
+      {
+        "key": "sewing",
+        "emoji": "✂️"
+      },
+      {
+        "key": "cleaning",
+        "emoji": "🧹"
+      },
+      {
+        "key": "camera",
+        "emoji": "📸"
+      },
+      {
+        "key": "education",
+        "emoji": "🎓"
+      },
+      {
+        "key": "computer",
+        "emoji": "🖥️"
+      },
+      {
+        "key": "delivery",
+        "emoji": "🛵"
+      },
+      {
+        "key": "fruit",
+        "emoji": "🍎"
+      },
+      {
+        "key": "water",
+        "emoji": "💧"
+      }
+    ],
+    "categoryVisuals": {
+      "taomlar": "plov",
+      "kofe": "coffee",
+      "xaridlar": "shopping",
+      "gozallik": "beauty",
+      "sport": "fitness",
+      "kongilochar": "fun",
+      "xizmatlar": "service",
+      "yetkazish": "delivery"
+    }
+  }
 }

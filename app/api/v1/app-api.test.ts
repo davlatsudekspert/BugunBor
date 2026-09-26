@@ -43,7 +43,10 @@ const { PUT: putDevice, DELETE: deleteDevice } = await import('./me/devices/rout
 const { PUT: block, DELETE: unblock } = await import('./me/blocks/[businessId]/route');
 const { POST: report } = await import('./reports/route');
 const { POST: registerBusiness } = await import('./businesses/route');
-const { GET: workspace } = await import('./business/[businessId]/route');
+const { GET: workspace, POST: businessAction } = await import('./business/[businessId]/route');
+const { GET: businessDeals } = await import('./business/[businessId]/deals/route');
+const { GET: businessDeal } = await import('./business/[businessId]/deals/[dealId]/route');
+const { POST: uploadMedia } = await import('./business/[businessId]/media/route');
 const { POST: reviewLogin } = await import('./auth/review/route');
 const { POST: startLogin } = await import('./auth/telegram/start/route');
 const { GET: loginStatus } = await import('./auth/telegram/status/route');
@@ -257,6 +260,76 @@ describe('app API', () => {
     const counter = await read(await workspace(req('/api/v1/business/biz', { token: cashier }), params({ businessId: 'biz' })));
     expect(counter.body.data).toMatchObject({ role: 'CASHIER', can: { edit: false, validate: true, analytics: false }, stats: null, recent: [], setup: [] });
     expect((await workspace(req('/api/v1/business/biz', { token: alice }), params({ businessId: 'biz' }))).status).toBe(403);
+  });
+
+  it('lets an owner add a deal with a photo from the app and run it; cashiers cannot', async () => {
+    const owner = (await createSession(state.db, 'owner', { client: 'app' })).token;
+    const cashier = (await createSession(state.db, 'cashier', { client: 'app' })).token;
+    // A 640×480 PNG header is enough for the server's checks.
+    const png = new Uint8Array(64);
+    png.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52]);
+    new DataView(png.buffer).setUint32(16, 640);
+    new DataView(png.buffer).setUint32(20, 480);
+    const upload = (token: string) => {
+      const form = new FormData();
+      form.set('kind', 'DEAL');
+      form.set('file', new Blob([png], { type: 'image/png' }), 'photo.png');
+      return uploadMedia(new Request('https://bugunbor.uz/api/v1/business/biz/media', { method: 'POST', headers: { ...APP_HEADERS, authorization: `Bearer ${token}` }, body: form }), params({ businessId: 'biz' }));
+    };
+    expect((await upload(cashier)).status).toBe(403);
+    const media = await read(await upload(owner));
+    expect(media.status).toBe(201);
+    pinContract('media-upload', media.body.data);
+    const photoId = media.body.data.id as string;
+
+    const input = {
+      title: 'Somsa va choy', description: 'Tandir somsa va bir choynak ko‘k choy, issiq holda.', terms: 'Faqat zalda. Boshqa chegirmalar bilan qo‘shilmaydi.',
+      categoryId: 'cat_food', visual: 'samsa', originalPrice: 20000, price: 14000, startsAt: '2026-09-25T15:00', endsAt: '2026-09-25T19:00',
+      quantity: 30, perCustomerLimit: 2, claimTtlMinutes: 60, branchIds: ['br1'], photoId,
+    };
+    const action = (token: string, body: unknown) => businessAction(req('/api/v1/business/biz', { method: 'POST', token, body }), params({ businessId: 'biz' }));
+
+    const invalid = await read(await action(owner, { type: 'deal.create', input: { ...input, price: 20000 }, submit: true }));
+    // Field paths are as sent (the form's fields sit under `input`).
+    expect(invalid).toMatchObject({ status: 422, body: { error: { code: 'VALIDATION', fields: { 'input.price': 'priceOrder' } } } });
+    expect((await action(cashier, { type: 'deal.create', input, submit: true })).status).toBe(403);
+
+    const created = await read(await action(owner, { type: 'deal.create', input, submit: true }));
+    expect(created.status).toBe(201);
+    expect(['ACTIVE', 'PENDING_REVIEW']).toContain(created.body.data.status);
+    pinContract('deal-saved', created.body.data);
+    const dealId = created.body.data.id as string;
+
+    const list = await read(await businessDeals(req('/api/v1/business/biz/deals', { token: owner }), params({ businessId: 'biz' })));
+    expect(list.status).toBe(200);
+    const listed = (list.body.data as unknown as Array<Record<string, unknown>>).find((item) => item.id === dealId);
+    expect(listed).toMatchObject({ title: 'Somsa va choy', price: 14000, originalPrice: 20000, discountPercent: 30, total: 30, remaining: 30, claims: 0, photo: `/media/${photoId}` });
+    expect(listed).not.toHaveProperty('autoNote');
+    pinContract('business-deals', list.body.data);
+    expect((await businessDeals(req('/api/v1/business/biz/deals', { token: cashier }), params({ businessId: 'biz' }))).status).toBe(403);
+
+    // The edit form gets back exactly what it sent.
+    const detail = await read(await businessDeal(req(`/api/v1/business/biz/deals/${dealId}`, { token: owner }), params({ businessId: 'biz', dealId })));
+    expect(detail.body.data).toMatchObject({ title: input.title, startsAt: input.startsAt, endsAt: input.endsAt, branchIds: ['br1'], photoId: input.photoId, total: 30, perCustomerLimit: 2 });
+    pinContract('business-deal', detail.body.data);
+
+    // A draft: saved, changed, sent for review, then taken off the air.
+    const draft = await read(await action(owner, { type: 'deal.create', input: { ...input, title: 'Somsa kombo', photoId: null }, submit: false }));
+    expect(draft.body.data.status).toBe('DRAFT');
+    const draftId = draft.body.data.id as string;
+    const updated = await read(await action(owner, { type: 'deal.update', dealId: draftId, input: { ...input, title: 'Somsa kombo (2 ta)', photoId: null }, submit: false }));
+    expect(updated.body.data.status).toBe('DRAFT');
+    const submitted = await read(await action(owner, { type: 'deal.transition', dealId: draftId, action: 'submit' }));
+    expect(['ACTIVE', 'PENDING_REVIEW']).toContain(submitted.body.data.status);
+    if (submitted.body.data.status === 'ACTIVE') {
+      expect((await read(await action(owner, { type: 'deal.transition', dealId: draftId, action: 'pause' }))).body.data.status).toBe('PAUSED');
+      expect((await read(await action(owner, { type: 'deal.transition', dealId: draftId, action: 'resume' }))).body.data.status).toBe('ACTIVE');
+    }
+    const copy = await read(await action(owner, { type: 'deal.duplicate', dealId: draftId }));
+    expect(copy.status).toBe(201);
+    expect((await read(await action(owner, { type: 'deal.transition', dealId: copy.body.data.id, action: 'delete' }))).body.data.status).toBe('DELETED');
+    const after = await read(await businessDeals(req('/api/v1/business/biz/deals', { token: owner }), params({ businessId: 'biz' })));
+    expect((after.body.data as unknown as Array<{ id: string }>).map((item) => item.id)).not.toContain(copy.body.data.id);
   });
 
   it('lets the only owner close the business together with the account', async () => {

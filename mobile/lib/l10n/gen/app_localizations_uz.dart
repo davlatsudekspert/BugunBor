@@ -1047,4 +1047,334 @@ class LUz extends L {
 
   @override
   String get bizOnSite => 'Saytda qo‘shish';
+
+  @override
+  String get dealsTitle => 'Aksiyalar';
+
+  @override
+  String get dealsNew => 'Yangi aksiya';
+
+  @override
+  String get dealsFilterAll => 'Hammasi';
+
+  @override
+  String get dealsFilterLive => 'Faol';
+
+  @override
+  String get dealsFilterReview => 'Tekshiruvda';
+
+  @override
+  String get dealsFilterDraft => 'Qoralama';
+
+  @override
+  String get dealsFilterEnded => 'Yakunlangan';
+
+  @override
+  String get dealsEmpty => 'Bu bo‘limda aksiya yo‘q.';
+
+  @override
+  String get dealsEmptyTitle => 'Hali aksiya yo‘q';
+
+  @override
+  String get dealsEmptyText => 'Birinchi aksiyangizni qo‘shing — yaqin atrofdagi xaridorlar uni shu zahoti ko‘radi.';
+
+  @override
+  String dealsStock(String left, String total) {
+    return 'Qoldiq: $left / $total';
+  }
+
+  @override
+  String get dealsUnlimited => 'Miqdor cheklanmagan';
+
+  @override
+  String dealsClaims(String count) {
+    return 'Band: $count';
+  }
+
+  @override
+  String dealsRedeemed(String count) {
+    return 'Ishlatilgan: $count';
+  }
+
+  @override
+  String dealsViews(String count) {
+    return 'Ko‘rishlar: $count';
+  }
+
+  @override
+  String dealsRejected(String reason) {
+    return 'Rad etish sababi: $reason';
+  }
+
+  @override
+  String get dealActEdit => 'Tahrirlash';
+
+  @override
+  String get dealActSubmit => 'Tekshiruvga yuborish';
+
+  @override
+  String get dealActWithdraw => 'Qaytarib olish';
+
+  @override
+  String get dealActPause => 'Pauza';
+
+  @override
+  String get dealActResume => 'Davom ettirish';
+
+  @override
+  String get dealActEnd => 'Yakunlash';
+
+  @override
+  String get dealActDuplicate => 'Nusxa olish';
+
+  @override
+  String get dealActDelete => 'O‘chirish';
+
+  @override
+  String get dealActView => 'Mijozlar ko‘rinishida ochish';
+
+  @override
+  String get dealConfirmEnd => 'Aksiyani yakunlaysizmi? Buni qaytarib bo‘lmaydi, berilgan kodlar amal qilishda davom etadi.';
+
+  @override
+  String get dealConfirmDelete => 'Qoralamani o‘chirasizmi?';
+
+  @override
+  String get dealLocked => 'Tasdiqlangan aksiyaning shartlarini o‘zgartirib bo‘lmaydi. O‘zgartirish uchun nusxa oling.';
+
+  @override
+  String get dealStLive => 'Faol';
+
+  @override
+  String get dealStScheduled => 'Tez orada';
+
+  @override
+  String get dealStSoldOut => 'Tugadi';
+
+  @override
+  String get dealStExpired => 'Muddati o‘tgan';
+
+  @override
+  String get dealStPaused => 'Pauzada';
+
+  @override
+  String get dealStDraft => 'Qoralama';
+
+  @override
+  String get dealStReview => 'Tekshiruvda';
+
+  @override
+  String get dealStRejected => 'Rad etilgan';
+
+  @override
+  String get dealStArchived => 'Yakunlangan';
+
+  @override
+  String get dealSavedLive => 'Aksiya chiqdi — mijozlar uni hozir ko‘ryapti!';
+
+  @override
+  String get dealSavedReview => 'Aksiya tekshiruvga yuborildi. Tasdiqlangach chiqadi.';
+
+  @override
+  String get dealSavedDraft => 'Qoralama saqlandi.';
+
+  @override
+  String get dealDonePause => 'Aksiya pauzaga qo‘yildi.';
+
+  @override
+  String get dealDoneResume => 'Aksiya davom etyapti.';
+
+  @override
+  String get dealDoneEnd => 'Aksiya yakunlandi.';
+
+  @override
+  String get dealDoneDuplicate => 'Nusxa qoralamaga qo‘shildi.';
+
+  @override
+  String get dealDoneDelete => 'Qoralama o‘chirildi.';
+
+  @override
+  String get dealDoneWithdraw => 'Aksiya tekshiruvdan qaytarildi.';
+
+  @override
+  String get dealNewTitle => 'Yangi aksiya';
+
+  @override
+  String get dealEditTitle => 'Aksiyani tahrirlash';
+
+  @override
+  String get dealTitleLabel => 'Aksiya nomi';
+
+  @override
+  String get dealTitleHint => 'Masalan, Lag‘mon va salat kombo';
+
+  @override
+  String get dealDescriptionLabel => 'Tavsif';
+
+  @override
+  String get dealDescriptionHint => 'Mijoz nima oladi? Aniq yozing.';
+
+  @override
+  String get dealTermsHint => 'Masalan: Faqat restoranda. Boshqa chegirmalar bilan qo‘shilmaydi.';
+
+  @override
+  String get dealPhoto => 'Aksiya rasmi';
+
+  @override
+  String get dealPhotoHint => 'Mahsulot yoki xizmatingizning o‘zingiz olgan haqiqiy fotosurati. Rasm bo‘lmasa, chiroyli belgi ko‘rsatiladi.';
+
+  @override
+  String get dealPhotoAdd => 'Rasm qo‘shish';
+
+  @override
+  String get dealPhotoChange => 'Almashtirish';
+
+  @override
+  String get dealPhotoRemove => 'Olib tashlash';
+
+  @override
+  String get dealPhotoCamera => 'Kamera';
+
+  @override
+  String get dealPhotoGallery => 'Galereya';
+
+  @override
+  String get dealPhotoUploading => 'Yuklanmoqda…';
+
+  @override
+  String get dealPhotoUnsupported => 'Bu rasmni o‘qib bo‘lmadi. JPG yoki PNG rasm tanlang.';
+
+  @override
+  String get dealVisualLabel => 'Belgi';
+
+  @override
+  String get dealVisualHint => 'Rasm bo‘lmasa, shu belgi ko‘rsatiladi.';
+
+  @override
+  String get dealOriginalPrice => 'Asl narx, so‘m';
+
+  @override
+  String get dealPriceLabel => 'Aksiya narxi, so‘m';
+
+  @override
+  String dealDiscountPreview(String percent) {
+    return 'Chegirma: $percent%';
+  }
+
+  @override
+  String get dealStarts => 'Boshlanish';
+
+  @override
+  String get dealEnds => 'Tugash';
+
+  @override
+  String get dealTimeHint => 'Toshkent vaqti bilan';
+
+  @override
+  String get dealQuick2h => '2 soat';
+
+  @override
+  String get dealQuick4h => '4 soat';
+
+  @override
+  String get dealQuickToday => 'Kun oxirigacha';
+
+  @override
+  String get dealQuick1d => '1 kun';
+
+  @override
+  String get dealQuick3d => '3 kun';
+
+  @override
+  String get dealQuick7d => '7 kun';
+
+  @override
+  String get dealQuantity => 'Miqdor';
+
+  @override
+  String get dealUnlimited => 'Cheklanmagan';
+
+  @override
+  String get dealPerCustomerLabel => 'Bir mijozga';
+
+  @override
+  String get dealTtl => 'Kod amal qilish muddati';
+
+  @override
+  String get dealTtl30 => '30 daqiqa';
+
+  @override
+  String get dealTtl60 => '1 soat';
+
+  @override
+  String get dealTtl120 => '2 soat';
+
+  @override
+  String get dealTtl240 => '4 soat';
+
+  @override
+  String get dealWhere => 'Qaysi filiallarda';
+
+  @override
+  String get dealNoBranches => 'Filial yo‘q — avval saytdagi kabinetda filial qo‘shing.';
+
+  @override
+  String dealRulesNote(String min) {
+    return 'Qoidalar: chegirma kamida $min%, davomiylik 30 daqiqadan 30 kungacha.';
+  }
+
+  @override
+  String get dealPreview => 'Mijozlarga shunday ko‘rinadi';
+
+  @override
+  String get dealSaveDraft => 'Qoralama sifatida saqlash';
+
+  @override
+  String get dealSaving => 'Saqlanmoqda…';
+
+  @override
+  String get dealAutoNote => 'Yuborilgach aksiya avtomatik tekshiriladi — odatda bir necha soniyada chiqadi.';
+
+  @override
+  String get dealNeedsUpdate => 'Ilovadan aksiya qo‘shish server yangilangach ishlaydi. Hozircha saytda qo‘shishingiz mumkin.';
+
+  @override
+  String get valPriceOrder => 'Aksiya narxi asl narxdan past bo‘lishi kerak';
+
+  @override
+  String valMinDiscount(String min) {
+    return 'Chegirma kamida $min% bo‘lishi kerak';
+  }
+
+  @override
+  String get valEndAfterStart => 'Tugash vaqti boshlanishdan keyin bo‘lishi kerak';
+
+  @override
+  String get valDuration => 'Aksiya 30 daqiqadan 30 kungacha davom etishi mumkin';
+
+  @override
+  String get valEndInPast => 'Tugash vaqti o‘tib ketgan';
+
+  @override
+  String get valBranches => 'Kamida bitta filialni tanlang';
+
+  @override
+  String valMinAmount(String amount) {
+    return 'Kamida $amount so‘m';
+  }
+
+  @override
+  String get bizDeals => 'Aksiyalar';
+
+  @override
+  String get bizSiteHint => 'Filiallar, jamoa va profil rasmlari saytdagi kabinetda boshqariladi';
+
+  @override
+  String get dealPhotoCameraDenied => 'Kameraga ruxsat berilmadi — rasmni galereyadan tanlang yoki telefon sozlamalarida kameraga ruxsat bering.';
+
+  @override
+  String get dealWhen => 'Qachon';
+
+  @override
+  String get dealsNeedUpdate => 'Aksiyalarni ilovada ko‘rish va boshqarish server yangilangach ishlaydi. Hozircha saytdagi biznes kabinetidan foydalaning.';
 }

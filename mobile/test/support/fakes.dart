@@ -6,6 +6,7 @@ import 'package:bugunbor/app/app.dart';
 import 'package:bugunbor/app/providers.dart';
 import 'package:bugunbor/core/storage.dart';
 import 'package:bugunbor/data/api.dart';
+import 'package:bugunbor/features/deals/photo.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +17,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 Object? contract(String name) => jsonDecode(File('../contracts/$name.json').readAsStringSync());
 
 Map<String, dynamic> contractMap(String name) => (contract(name) as Map).cast<String, dynamic>();
+
+/// [deal] as the server sends it, but with no photo to load.
+Map<String, dynamic> withoutPhoto(Map<String, dynamic> deal) => {...deal, 'photo': null};
 
 typedef Handler = Object? Function(RequestOptions request);
 
@@ -71,6 +75,35 @@ class FakeServer implements HttpClientAdapter {
       'GET /api/v1/me/follows': (_) => {'data': []},
       'POST /api/v1/businesses': (_) => Reply(201, {'data': contract('business-create')}),
       'GET /api/v1/business/:id': (_) => {'data': contract('business-workspace')},
+      // Widget tests load no network pictures, so the deals come without photos.
+      'GET /api/v1/business/:id/deals': (_) => {
+        'data': [for (final deal in (contract('business-deals') as List).cast<Map<String, dynamic>>()) withoutPhoto(deal)],
+      },
+      'GET /api/v1/business/:id/deals/:dealId': (_) => {'data': withoutPhoto(contractMap('business-deal'))},
+      'POST /api/v1/business/:id/media': (_) => Reply(201, {'data': contract('media-upload')}),
+      // Workspace actions, answered by their type.
+      'POST /api/v1/business/:id': (request) => switch ((request.data as Map)['type']) {
+        'deal.create' => Reply(201, {'data': contract('deal-saved')}),
+        'deal.update' => {'data': contract('deal-saved')},
+        'deal.duplicate' => const Reply(201, {
+          'data': {'id': 'copy'},
+        }),
+        'deal.transition' => {
+          'data': {
+            'status': switch ((request.data as Map)['action']) {
+              'pause' => 'PAUSED',
+              'resume' => 'ACTIVE',
+              'end' => 'ARCHIVED',
+              'withdraw' => 'DRAFT',
+              'delete' => 'DELETED',
+              _ => 'ACTIVE',
+            },
+          },
+        },
+        _ => const Reply(400, {
+          'error': {'code': 'VALIDATION'},
+        }),
+      },
     });
   }
 
@@ -140,6 +173,8 @@ Future<void> pumpApp(
   double textScale = 1,
   String theme = 'light',
   Pin? pin,
+  Uint8List? photo,
+  Future<Uint8List?> Function({required bool camera})? picker,
   Map<String, Object> prefs = const {},
 }) async {
   SharedPreferences.setMockInitialValues({'onboarded': onboarded, 'locale': locale, 'city': 'tashkent', 'theme': theme, ...prefs});
@@ -160,6 +195,8 @@ Future<void> pumpApp(
         prefsProvider.overrideWithValue(stored),
         // Where "use my location" finds the phone (never the real GPS).
         pinLocatorProvider.overrideWithValue(() async => pin),
+        // What the camera or gallery "returns" (never the real picker).
+        photoPickerProvider.overrideWithValue(picker ?? ({required camera}) async => photo),
         initialTokenProvider.overrideWithValue(token),
         sessionStoreProvider.overrideWithValue(MemorySessionStore()..token = token),
         apiProvider.overrideWith(
@@ -186,6 +223,31 @@ FakeServer signedInServer() {
     return {'data': me};
   };
   return server;
+}
+
+/// Kafe's owner, as a membership in /me.
+const owner = {'businessId': 'biz', 'name': 'Kafe', 'slug': 'kafe', 'role': 'OWNER', 'status': 'VERIFIED', 'verified': true};
+
+/// Alice (nothing blocked) with these [memberships]; the contract has none.
+FakeServer memberServer(List<Object?> Function() memberships) {
+  final server = signedInServer();
+  server.routes['GET /api/v1/me'] = (_) {
+    final me = contractMap('me');
+    me['blockedBusinessIds'] = <String>[];
+    me['memberships'] = memberships();
+    return {'data': me};
+  };
+  return server;
+}
+
+/// The workspace answer with some fields replaced.
+Map<String, dynamic> workspace({Map<String, Object?> business = const {}, Map<String, Object?> other = const {}}) {
+  final json = contractMap('business-workspace');
+  return {
+    ...json,
+    'business': {...(json['business'] as Map).cast<String, dynamic>(), ...business},
+    ...other,
+  };
 }
 
 /// Every tappable thing is at least 48 px, and all text is readable

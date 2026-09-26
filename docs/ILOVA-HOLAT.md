@@ -58,13 +58,29 @@ Reja: `docs/ILOVA-REJA.md`.
   - Asosiy ekranda biznes egalari uchun taklif kartochkasi (yopilsa 30 kun ko'rinmaydi, biznesi borlarga chiqmaydi).
   - iOS uslubidagi pastki menyu: ingichka to'q ikonkalar, tanlangani to'ldirilgan.
   - Server: `GET /api/v1/business/{id}`, `/config`da kategoriya `id`, `/me`da Telegram username va a'zolik holati.
-  - Testlar: ilova 75, sayt 158.
+  - Testlar: ilova 77, sayt 158. Emulyator E2E yangi ekranlarni ham suratga oladi.
+- [x] **PR #6 `main`ga birlashtirildi va saytga chiqdi** (2026-09-26, 15:03 UTC)
+  - Tekshirildi: `/config`da kategoriya `id`; `GET /api/v1/business/{id}` kirmasdan 401;
+    qidiruvda «osh» endi 3 ta mos natija (oldin 17); asosiy sahifalar 200.
+  - Ilovadagi biznes ro'yxatdan o'tishi va biznes profili endi haqiqiy server bilan ishlaydi.
+- [x] **Aksiyalar ilovada** (2026-09-26)
+  - Ega va menejer aksiyani ilovaning o'zida qo'shadi: rasm (kamera yoki galereya, telefonda kichraytiriladi,
+    burilishi to'g'rilanadi), nomi, tavsif, shartlar, kategoriya, belgi, narxlar (chegirma darhol ko'rinadi),
+    vaqt (Toshkent vaqti, tezkor tugmalar: 2 soat … 7 kun), soni, bir kishiga nechta, kod muddati, filiallar,
+    mijozlarga qanday ko'rinishi. Tekshiruvlar saytdagi bilan bir xil; server xatosi maydon ostida chiqadi.
+  - «Aksiyalar» ro'yxati: holatlar, filtrlar (hammasi, faol, tekshiruvda, qoralama, tugagan), band qilish,
+    ishlatish va ko'rishlar soni, rad etish sababi. Amallar: tahrirlash, yuborish, qaytarib olish, pauza,
+    davom ettirish, yakunlash (so'raladi), nusxa olish, o'chirish (so'raladi).
+  - Tasdiqlangan aksiya o'zgarmaydi: nusxasi olinadi. Kameraga ruxsat berilmasa, sababi aytiladi.
+  - Server: `GET /api/v1/business/{id}/deals`, `GET /api/v1/business/{id}/deals/{dealId}`;
+    `/config`da aksiya qoidalari va belgilar; biznes profilida kategoriya va filiallar. Kassir ko'ra olmaydi.
+  - Testlar: ilova 97, sayt 159.
 
 ## Navbatda
 
-- [ ] Egasi ruxsat bersa: PR #6 ni `main`ga birlashtirish (saytdagi qidiruv tuzatishi ham chiqadi).
-  Shundan keyin ilovadagi biznes ro'yxatdan o'tishi va biznes profili ishlaydi (yangi API serverga chiqadi).
 - [ ] Egasi kalitlarni qo'ygach: imzolangan build, qo'lda APK sinovi, Internal testing qoralamasi.
+- [ ] Saytda ilova bo'limi: «Android ilova» tugmasi va «App Store — tez kunda» belgisi
+  (Android havolasi qayerga olib borishi egasi bilan kelishiladi).
 
 ## Egasidan kerak
 

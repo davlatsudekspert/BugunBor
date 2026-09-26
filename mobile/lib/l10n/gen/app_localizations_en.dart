@@ -1045,4 +1045,334 @@ class LEn extends L {
 
   @override
   String get bizOnSite => 'Add on the website';
+
+  @override
+  String get dealsTitle => 'Deals';
+
+  @override
+  String get dealsNew => 'New deal';
+
+  @override
+  String get dealsFilterAll => 'All';
+
+  @override
+  String get dealsFilterLive => 'Live';
+
+  @override
+  String get dealsFilterReview => 'In review';
+
+  @override
+  String get dealsFilterDraft => 'Drafts';
+
+  @override
+  String get dealsFilterEnded => 'Ended';
+
+  @override
+  String get dealsEmpty => 'No deals here.';
+
+  @override
+  String get dealsEmptyTitle => 'No deals yet';
+
+  @override
+  String get dealsEmptyText => 'Add your first deal — shoppers nearby will see it right away.';
+
+  @override
+  String dealsStock(String left, String total) {
+    return 'Left: $left of $total';
+  }
+
+  @override
+  String get dealsUnlimited => 'No quantity limit';
+
+  @override
+  String dealsClaims(String count) {
+    return 'Booked: $count';
+  }
+
+  @override
+  String dealsRedeemed(String count) {
+    return 'Used: $count';
+  }
+
+  @override
+  String dealsViews(String count) {
+    return 'Views: $count';
+  }
+
+  @override
+  String dealsRejected(String reason) {
+    return 'Reason for rejection: $reason';
+  }
+
+  @override
+  String get dealActEdit => 'Edit';
+
+  @override
+  String get dealActSubmit => 'Send for review';
+
+  @override
+  String get dealActWithdraw => 'Withdraw';
+
+  @override
+  String get dealActPause => 'Pause';
+
+  @override
+  String get dealActResume => 'Resume';
+
+  @override
+  String get dealActEnd => 'End';
+
+  @override
+  String get dealActDuplicate => 'Duplicate';
+
+  @override
+  String get dealActDelete => 'Delete';
+
+  @override
+  String get dealActView => 'Open as customers see it';
+
+  @override
+  String get dealConfirmEnd => 'End the deal? This cannot be undone; codes already given stay valid.';
+
+  @override
+  String get dealConfirmDelete => 'Delete the draft?';
+
+  @override
+  String get dealLocked => 'An approved deal’s terms cannot be changed. Duplicate it to make changes.';
+
+  @override
+  String get dealStLive => 'Live';
+
+  @override
+  String get dealStScheduled => 'Coming soon';
+
+  @override
+  String get dealStSoldOut => 'Sold out';
+
+  @override
+  String get dealStExpired => 'Expired';
+
+  @override
+  String get dealStPaused => 'Paused';
+
+  @override
+  String get dealStDraft => 'Draft';
+
+  @override
+  String get dealStReview => 'In review';
+
+  @override
+  String get dealStRejected => 'Rejected';
+
+  @override
+  String get dealStArchived => 'Ended';
+
+  @override
+  String get dealSavedLive => 'The deal is live — customers can see it now!';
+
+  @override
+  String get dealSavedReview => 'The deal was sent for review. It goes live once approved.';
+
+  @override
+  String get dealSavedDraft => 'Draft saved.';
+
+  @override
+  String get dealDonePause => 'The deal is paused.';
+
+  @override
+  String get dealDoneResume => 'The deal is running again.';
+
+  @override
+  String get dealDoneEnd => 'The deal has ended.';
+
+  @override
+  String get dealDoneDuplicate => 'A copy was added to drafts.';
+
+  @override
+  String get dealDoneDelete => 'The draft was deleted.';
+
+  @override
+  String get dealDoneWithdraw => 'The deal was withdrawn from review.';
+
+  @override
+  String get dealNewTitle => 'New deal';
+
+  @override
+  String get dealEditTitle => 'Edit deal';
+
+  @override
+  String get dealTitleLabel => 'Deal title';
+
+  @override
+  String get dealTitleHint => 'For example, Lagman and salad combo';
+
+  @override
+  String get dealDescriptionLabel => 'Description';
+
+  @override
+  String get dealDescriptionHint => 'What does the customer get? Be specific.';
+
+  @override
+  String get dealTermsHint => 'For example: dine-in only. Not combined with other discounts.';
+
+  @override
+  String get dealPhoto => 'Deal photo';
+
+  @override
+  String get dealPhotoHint => 'A real photo of your product or service that you took yourself. Without one, a neat icon is shown.';
+
+  @override
+  String get dealPhotoAdd => 'Add a photo';
+
+  @override
+  String get dealPhotoChange => 'Change';
+
+  @override
+  String get dealPhotoRemove => 'Remove';
+
+  @override
+  String get dealPhotoCamera => 'Camera';
+
+  @override
+  String get dealPhotoGallery => 'Gallery';
+
+  @override
+  String get dealPhotoUploading => 'Uploading…';
+
+  @override
+  String get dealPhotoUnsupported => 'This picture could not be read. Choose a JPG or PNG.';
+
+  @override
+  String get dealVisualLabel => 'Icon';
+
+  @override
+  String get dealVisualHint => 'Shown when there is no photo.';
+
+  @override
+  String get dealOriginalPrice => 'Regular price, UZS';
+
+  @override
+  String get dealPriceLabel => 'Deal price, UZS';
+
+  @override
+  String dealDiscountPreview(String percent) {
+    return 'Discount: $percent%';
+  }
+
+  @override
+  String get dealStarts => 'Starts';
+
+  @override
+  String get dealEnds => 'Ends';
+
+  @override
+  String get dealTimeHint => 'Tashkent time';
+
+  @override
+  String get dealQuick2h => '2 hours';
+
+  @override
+  String get dealQuick4h => '4 hours';
+
+  @override
+  String get dealQuickToday => 'Until end of day';
+
+  @override
+  String get dealQuick1d => '1 day';
+
+  @override
+  String get dealQuick3d => '3 days';
+
+  @override
+  String get dealQuick7d => '7 days';
+
+  @override
+  String get dealQuantity => 'Quantity';
+
+  @override
+  String get dealUnlimited => 'Unlimited';
+
+  @override
+  String get dealPerCustomerLabel => 'Per customer';
+
+  @override
+  String get dealTtl => 'Code valid for';
+
+  @override
+  String get dealTtl30 => '30 minutes';
+
+  @override
+  String get dealTtl60 => '1 hour';
+
+  @override
+  String get dealTtl120 => '2 hours';
+
+  @override
+  String get dealTtl240 => '4 hours';
+
+  @override
+  String get dealWhere => 'At which branches';
+
+  @override
+  String get dealNoBranches => 'No branches — add one in the workspace on the website first.';
+
+  @override
+  String dealRulesNote(String min) {
+    return 'Rules: at least $min% off, from 30 minutes to 30 days long.';
+  }
+
+  @override
+  String get dealPreview => 'How customers will see it';
+
+  @override
+  String get dealSaveDraft => 'Save as draft';
+
+  @override
+  String get dealSaving => 'Saving…';
+
+  @override
+  String get dealAutoNote => 'Once sent, the deal is checked automatically — it usually goes live within seconds.';
+
+  @override
+  String get dealNeedsUpdate => 'Adding deals in the app works once the server is updated. For now you can add it on the website.';
+
+  @override
+  String get valPriceOrder => 'The deal price must be below the regular price';
+
+  @override
+  String valMinDiscount(String min) {
+    return 'The discount must be at least $min%';
+  }
+
+  @override
+  String get valEndAfterStart => 'The end must be after the start';
+
+  @override
+  String get valDuration => 'A deal can run from 30 minutes to 30 days';
+
+  @override
+  String get valEndInPast => 'The end time has already passed';
+
+  @override
+  String get valBranches => 'Choose at least one branch';
+
+  @override
+  String valMinAmount(String amount) {
+    return 'At least $amount UZS';
+  }
+
+  @override
+  String get bizDeals => 'Deals';
+
+  @override
+  String get bizSiteHint => 'Branches, team and profile photos are managed in the website workspace';
+
+  @override
+  String get dealPhotoCameraDenied => 'No camera access — pick a photo from the gallery or allow the camera in your phone settings.';
+
+  @override
+  String get dealWhen => 'When';
+
+  @override
+  String get dealsNeedUpdate => 'Viewing and running deals in the app works once the server is updated. For now, use the business workspace on the website.';
 }

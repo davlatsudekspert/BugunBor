@@ -64,7 +64,8 @@ String? appPathFor(String link) {
     final next = uri.queryParameters['next'] ?? '/business/dashboard';
     return next == '/business/dashboard' ? Uri(path: '/profile', queryParameters: {'business': switchTo}).toString() : null;
   }
-  if (path == '/business' || path == '/business/dashboard') return '/profile';
+  // A deal approved or rejected: its business's profile, where the deals are.
+  if (path == '/business' || path == '/business/dashboard' || RegExp(r'^/business/deals(/[^/]+)?/?$').hasMatch(path)) return '/profile';
   if (path == '/' || path.isEmpty) return '/';
   return null;
 }

@@ -8,7 +8,8 @@
     "rejectionReason": null,
     "suspended": false,
     "isDemo": false,
-    "logo": null
+    "logo": null,
+    "categoryId": "cat_food"
   },
   "role": "OWNER",
   "can": {
@@ -29,7 +30,7 @@
   },
   "recent": [
     {
-      "id": "b9a74318-3da0-47d9-a447-c59dbc89d2b1",
+      "id": "8252c1e7-2460-4909-a184-d81ecdd92a81",
       "status": "CLAIMED",
       "createdAt": "2026-09-25 10:00:00",
       "completedAt": null,
@@ -62,6 +63,18 @@
     {
       "key": "deal",
       "done": true
+    }
+  ],
+  "branches": [
+    {
+      "id": "br2",
+      "name": "Chilonzor",
+      "address": "Bunyodkor 2"
+    },
+    {
+      "id": "br1",
+      "name": "Markaz",
+      "address": "Amir Temur 1"
     }
   ]
 }

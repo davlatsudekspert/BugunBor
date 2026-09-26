@@ -11,7 +11,8 @@ import { BILLING_PERIODS, requestPlan } from '@/modules/billing/service';
 import { assertNotSuspended, requireMembership } from '@/modules/businesses/access';
 import { branchSchema, businessProfileSchema, teamAddSchema } from '@/modules/businesses/schema';
 import {
-  addMember, businessDashboard, changeMemberRole, createBranch, deleteBranch, profileChecklist, removeMember, updateBranch, updateBusinessProfile,
+  addMember, businessDashboard, changeMemberRole, createBranch, deleteBranch, listBranches, profileChecklist, removeMember, updateBranch,
+  updateBusinessProfile,
 } from '@/modules/businesses/service';
 import { dealInputSchema } from '@/modules/deals/schema';
 import { createDeal, duplicateDeal, setDealTop, transitionDeal, updateDeal } from '@/modules/deals/service';
@@ -77,7 +78,8 @@ async function checked<T extends { id: string; status: string }>(db: D1Database,
 
 // The app's business profile: the business as its team sees it and what this
 // member may do; owners and managers also get today's numbers, the latest
-// codes and the setup steps. Read-only: changes still go through POST.
+// codes, the setup steps and the branches a deal can run in. Read-only:
+// changes still go through POST.
 export const GET = route(async (request: Request, context: { params: Promise<{ businessId: string }> }) => {
   const db = await getDb();
   const user = await apiUser(request, db);
@@ -89,10 +91,11 @@ export const GET = route(async (request: Request, context: { params: Promise<{ b
     validate: roleCan(membership.role, 'redemption.validate'),
     analytics: roleCan(membership.role, 'analytics.read'),
   };
-  const [row, dashboard, setup] = await Promise.all([
-    db.prepare(`SELECT logo_id AS logoId FROM businesses WHERE id = ?1`).bind(businessId).first<{ logoId: string | null }>(),
+  const [row, dashboard, setup, branches] = await Promise.all([
+    db.prepare(`SELECT logo_id AS logoId, category_id AS categoryId FROM businesses WHERE id = ?1`).bind(businessId).first<{ logoId: string | null; categoryId: string | null }>(),
     can.analytics ? businessDashboard(db, businessId) : Promise.resolve(null),
     can.edit ? profileChecklist(db, businessId) : Promise.resolve([]),
+    can.deals ? listBranches(db, businessId) : Promise.resolve([]),
   ]);
   const { recent, ...stats } = dashboard ?? { recent: [] };
   return json({
@@ -100,12 +103,14 @@ export const GET = route(async (request: Request, context: { params: Promise<{ b
       business: {
         id: membership.businessId, name: membership.name, slug: membership.slug, city: membership.city, status: membership.verificationStatus,
         rejectionReason: membership.rejectionReason, suspended: Boolean(membership.suspendedAt), isDemo: membership.isDemo, logo: mediaUrl(row?.logoId),
+        categoryId: row?.categoryId ?? null,
       },
       role: membership.role,
       can,
       stats: dashboard ? stats : null,
       recent: recent.slice(0, 5),
       setup: setup.map(({ key, done }) => ({ key, done })),
+      branches: branches.map(({ id, name, address }) => ({ id, name, address })),
     },
   });
 });
