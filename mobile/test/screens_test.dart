@@ -9,17 +9,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/fakes.dart';
 
-/// The signed-in person from the contract, with nothing blocked.
-FakeServer signedInServer() {
-  final server = FakeServer.standard();
-  server.routes['GET /api/v1/me'] = (_) {
-    final me = contractMap('me');
-    me['blockedBusinessIds'] = <String>[];
-    return {'data': me};
-  };
-  return server;
-}
-
 /// Scrolls the home screen down to the sample deal.
 Future<void> showDeal(WidgetTester tester) async {
   for (var step = 0; step < 20 && find.text('Osh').hitTestable().evaluate().isEmpty; step++) {
@@ -27,15 +16,6 @@ Future<void> showDeal(WidgetTester tester) async {
     await settle(tester, frames: 4);
   }
   expect(find.text('Osh').hitTestable(), findsWidgets);
-}
-
-/// Every tappable thing is at least 48 px, and all text is readable
-/// against what is behind it (this caught chip labels painted white).
-Future<void> checkTapTargets(WidgetTester tester) async {
-  final handle = tester.ensureSemantics();
-  await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
-  await expectLater(tester, meetsGuideline(textContrastGuideline));
-  handle.dispose();
 }
 
 void main() {

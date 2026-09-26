@@ -48,18 +48,19 @@ The site authenticates with the session cookie (writes must be same-origin); the
 | `PUT`/`DELETE /favorites/{dealId}` | Save or unsave a deal |
 | `PUT`/`DELETE /follows/{businessId}` | Follow or unfollow a business |
 | `POST /reviews` | Rate a redeemed visit |
-| `GET /config` | App startup: demo and tariff switches, oldest supported build, categories, cities, report reasons |
+| `GET /config` | App startup: demo and tariff switches, oldest supported build, categories (with `id` for registration), cities, report reasons |
 | `GET /feed` | App home: `forYou` (interests), `nearby` (`lat`/`lng` or `city`), `ending` |
 | `GET /deals/{slug}` | Deal page for the app: branches, business, `claimable`, favorite, following, active code |
 | `GET /businesses/{slug}` | Business page for the app: branches, deals, reviews, following |
-| `GET /me`, `PATCH /me`, `DELETE /me` | Profile, stats, notification switches (incl. `notifyNearby`), locale, interests, blocks, memberships; delete account (`closeBusinesses: true` closes businesses only this person owns) |
+| `GET /me`, `PATCH /me`, `DELETE /me` | Profile (incl. Telegram username), stats, notification switches (incl. `notifyNearby`), locale, interests, blocks, memberships with review `status`; delete account (`closeBusinesses: true` closes businesses only this person owns) |
 | `GET /me/redemptions`, `GET /me/favorites`, `GET /me/follows` | My codes (with the code while active), saved deals, followed businesses |
 | `PUT /me/interests` | Replace interests (category slugs) |
 | `PUT`/`DELETE /me/devices` | Register or remove a push token (FCM) |
 | `PUT`/`DELETE /me/blocks/{businessId}` | Block or unblock a business |
 | `POST /reports` | Report a deal, business or review (goes to Admin → Shikoyatlar) |
 | `POST /contact` | Contact form |
-| `POST /businesses` | Create a business (onboarding) |
+| `POST /businesses` | Create a business (onboarding, site and app); returns `status` after the automatic check |
+| `GET /business/{businessId}` | Business profile for a member: status, role and permissions; owners and managers also get today's numbers, the latest codes and setup steps |
 | `POST /business/{businessId}` | Workspace actions: profile, deals, branches, team, code check and completion, plan requests |
 | `POST /business/{businessId}/media` | Upload a photo (multipart `file`, `kind` = DEAL, LOGO or COVER) |
 | `POST /admin` | Moderation and admin actions (including automatic-moderation switches and company details) |

@@ -4,3 +4,4 @@ The first version of BugunBor:
 • Get a free code and show the QR code at the counter
 • Notifications about new deals from businesses you follow
 • Sign in with Telegram, no password
+• Add your business right in the app and run its business profile

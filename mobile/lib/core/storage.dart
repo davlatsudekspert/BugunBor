@@ -53,6 +53,22 @@ class Prefs {
   bool get useLocation => _prefs.getBool('use_location') ?? false;
   set useLocation(bool value) => _prefs.setBool('use_location', value);
 
+  /// What the Profile tab shows a business member: 'business' or 'personal'.
+  String? get profileMode => _prefs.getString('profile_mode');
+  set profileMode(String? value) => value == null ? _prefs.remove('profile_mode') : _prefs.setString('profile_mode', value);
+
+  /// The business last chosen in the business profile.
+  String? get businessId => _prefs.getString('business_id');
+  set businessId(String? value) => value == null ? _prefs.remove('business_id') : _prefs.setString('business_id', value);
+
+  /// When the home screen's "add your business" card was hidden.
+  DateTime? get promoHiddenAt {
+    final millis = _prefs.getInt('promo_hidden_at');
+    return millis == null ? null : DateTime.fromMillisecondsSinceEpoch(millis);
+  }
+
+  set promoHiddenAt(DateTime? value) => value == null ? _prefs.remove('promo_hidden_at') : _prefs.setInt('promo_hidden_at', value.millisecondsSinceEpoch);
+
   /// The push token last registered with the server (to remove it on sign-out).
   String? get pushToken => _prefs.getString('push_token');
   set pushToken(String? value) => value == null ? _prefs.remove('push_token') : _prefs.setString('push_token', value);

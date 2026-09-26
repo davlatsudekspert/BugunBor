@@ -702,4 +702,341 @@ class LEn extends L {
 
   @override
   String get homeSamplesNote => 'For now these are sample deals that show how the app works. Real deals will appear here as soon as they are added.';
+
+  @override
+  String get bizJoinTitle => 'Add your business to BugunBor';
+
+  @override
+  String get bizJoinText => 'Enter the basics — once it is checked, you can post deals.';
+
+  @override
+  String get bizJoinLogin => 'Sign in with Telegram to add a business — it will be linked to your account.';
+
+  @override
+  String get bizName => 'Business name';
+
+  @override
+  String get bizNameHint => 'For example, Oqtepa Lavash';
+
+  @override
+  String get bizCategory => 'Category';
+
+  @override
+  String get bizCity => 'City';
+
+  @override
+  String get bizPhone => 'Phone';
+
+  @override
+  String get bizAddress => 'Main branch address';
+
+  @override
+  String get bizAddressHint => 'For example: Chilonzor 9th block, house 12';
+
+  @override
+  String get bizAddressNote => 'Add a landmark so customers find you easily (for example, “next to Korzinka”).';
+
+  @override
+  String get bizHours => 'Opening hours';
+
+  @override
+  String get bizOpens => 'Opens';
+
+  @override
+  String get bizCloses => 'Closes';
+
+  @override
+  String get bizDescription => 'Short description';
+
+  @override
+  String get bizDescriptionHint => 'Tell customers about your business, clearly and simply…';
+
+  @override
+  String get bizTemplate => 'Sample text';
+
+  @override
+  String get bizTemplateAsk => 'Replace what you wrote with the sample?';
+
+  @override
+  String get bizTemplateHint => 'Adjust the sample to fit your business.';
+
+  @override
+  String bizTplFood(String name) {
+    return '$name — national and European dishes, freshly cooked every day, with warm service. Come by for lunch and dinner.';
+  }
+
+  @override
+  String bizTplCoffee(String name) {
+    return '$name — coffee, tea and desserts. A cosy place to meet friends or relax.';
+  }
+
+  @override
+  String bizTplShop(String name) {
+    return '$name — quality goods at fair prices. We help you choose, and new items arrive regularly.';
+  }
+
+  @override
+  String bizTplBeauty(String name) {
+    return '$name — beauty and care services by experienced specialists, with quality products.';
+  }
+
+  @override
+  String bizTplSport(String name) {
+    return '$name — a place for sport and a healthy life. Classes for beginners and experienced athletes.';
+  }
+
+  @override
+  String bizTplFun(String name) {
+    return '$name — a place to have a great time with friends and family. Come and enjoy yourself.';
+  }
+
+  @override
+  String bizTplServices(String name) {
+    return '$name — everyday services done quickly and well. We tell you the price up front.';
+  }
+
+  @override
+  String bizTplDelivery(String name) {
+    return '$name — we deliver orders quickly and on time. Ordering is easy.';
+  }
+
+  @override
+  String bizTplDefault(String name) {
+    return '$name — quality products and friendly service. Come and visit us!';
+  }
+
+  @override
+  String bizCounter(String count, String max) {
+    return '$count / $max';
+  }
+
+  @override
+  String get bizMore => 'Telegram, Instagram and website (optional)';
+
+  @override
+  String get bizHandleHint => 'username (without @)';
+
+  @override
+  String bizMyTelegram(String username) {
+    return 'My Telegram: @$username';
+  }
+
+  @override
+  String get bizLocate => 'Use my location';
+
+  @override
+  String get bizLocating => 'Locating…';
+
+  @override
+  String bizLocated(String city) {
+    return 'Location found: $city. The map pin will be saved.';
+  }
+
+  @override
+  String get bizLocateFailed => 'Couldn’t get your location — choose the city from the list.';
+
+  @override
+  String get bizLocateNote => 'Tap this while you are at the business — customers will find you on the map and under “Near me”.';
+
+  @override
+  String get bizSubmit => 'Send for review';
+
+  @override
+  String get bizSubmitting => 'Sending…';
+
+  @override
+  String get bizConsent => 'By sending, you agree to the details being checked. The business is not published until it is approved.';
+
+  @override
+  String get bizFixErrors => 'Please check the highlighted fields.';
+
+  @override
+  String get bizLimit => 'One account can add at most 5 businesses.';
+
+  @override
+  String get bizSentTitle => 'Application sent';
+
+  @override
+  String get bizVerifiedTitle => 'Your business is approved!';
+
+  @override
+  String get bizVerifiedText => 'Now post your first deal — customers will see it in the app and on the website.';
+
+  @override
+  String get bizPendingText =>
+      'A moderator will review it (usually within 24 hours). Once approved, everyone can see your business — you can prepare deals already.';
+
+  @override
+  String get bizOpenProfile => 'Open the business profile';
+
+  @override
+  String get bizAddFirstDeal => 'Add the first deal';
+
+  @override
+  String valTooShort(String min) {
+    return 'At least $min characters';
+  }
+
+  @override
+  String valTooLong(String max) {
+    return 'At most $max characters';
+  }
+
+  @override
+  String get valInvalid => 'Invalid value';
+
+  @override
+  String get valPhone => 'Enter the number as +998 90 123 45 67';
+
+  @override
+  String get valTime => 'Choose a time';
+
+  @override
+  String get valChoose => 'Choose one';
+
+  @override
+  String get bizProfileTitle => 'Business profile';
+
+  @override
+  String get modeBusiness => 'Business';
+
+  @override
+  String get modePersonal => 'Personal';
+
+  @override
+  String get bizStatusVerified => 'Approved';
+
+  @override
+  String get bizStatusPending => 'In review';
+
+  @override
+  String get bizStatusRejected => 'Rejected';
+
+  @override
+  String get bizStatusSuspended => 'Suspended';
+
+  @override
+  String get roleOwner => 'Owner';
+
+  @override
+  String get roleManager => 'Manager';
+
+  @override
+  String get roleCashier => 'Cashier';
+
+  @override
+  String get bizPendingNote =>
+      'A moderator is reviewing your business (usually within 24 hours). Once approved, your deals become visible — you can prepare them now.';
+
+  @override
+  String bizRejectedNote(String reason) {
+    return 'The business was rejected: $reason';
+  }
+
+  @override
+  String get bizRejectedFix => 'Fix it on the website and resend';
+
+  @override
+  String get bizSuspendedNote => 'The business is suspended for now — its deals are hidden. Contact us if you have questions.';
+
+  @override
+  String get bizQuick => 'Quick actions';
+
+  @override
+  String get bizAddDeal => 'Add a deal';
+
+  @override
+  String get bizViewPage => 'Business page';
+
+  @override
+  String get bizAddAnother => 'Add another business';
+
+  @override
+  String get bizStats => 'Statistics';
+
+  @override
+  String get statLive => 'Live deals';
+
+  @override
+  String get statClaimsToday => 'Booked today';
+
+  @override
+  String get statRedeemedToday => 'Used today';
+
+  @override
+  String get statViews => 'Views';
+
+  @override
+  String get statFollowers => 'Followers';
+
+  @override
+  String get statRating => 'Rating';
+
+  @override
+  String get bizSetupTitle => 'Complete your profile';
+
+  @override
+  String bizSetupProgress(String done, String total) {
+    return '$done of $total done';
+  }
+
+  @override
+  String get bizSetupHint => 'A complete profile earns more trust — your deals get seen more.';
+
+  @override
+  String get setupLogo => 'Upload a logo';
+
+  @override
+  String get setupCover => 'Upload a cover photo';
+
+  @override
+  String get setupDescription => 'Write a fuller description (at least 80 characters)';
+
+  @override
+  String get setupContacts => 'Add Telegram or Instagram';
+
+  @override
+  String get setupLocation => 'Pin your branch on the map';
+
+  @override
+  String get setupDeal => 'Post your first deal';
+
+  @override
+  String get bizRecent => 'Latest codes';
+
+  @override
+  String get bizRecentEmpty => 'No codes yet.';
+
+  @override
+  String get bizCashierOnly => 'You are a cashier here: you check customers’ codes.';
+
+  @override
+  String get promoTitle => 'Have a business? Sell more';
+
+  @override
+  String get promoText => 'Add it to BugunBor — shoppers nearby see your deal and come straight to you with a code.';
+
+  @override
+  String get promoPoint1 => 'Shoppers nearby find you';
+
+  @override
+  String get promoPoint2 => 'Followers hear about your new deals';
+
+  @override
+  String get promoPoint3 => 'You see the results: bookings and codes used';
+
+  @override
+  String get promoPoint4 => 'Signing up is free and takes minutes';
+
+  @override
+  String get promoAction => 'Add my business';
+
+  @override
+  String get promoHide => 'Hide';
+
+  @override
+  String get bizDiscardAsk => 'What you entered will not be saved. Leave?';
+
+  @override
+  String get bizDiscard => 'Leave';
 }

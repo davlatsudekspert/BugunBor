@@ -44,7 +44,8 @@ void main() {
   test('Russian texts are Cyrillic', () {
     for (final key in texts(ru)) {
       final text = (ru[key] as String).replaceAll(RegExp(r'\{\w+\}'), '');
-      final latin = RegExp('[A-Za-z]{4,}').allMatches(text).map((match) => match.group(0)).toSet()..removeAll(['BugunBor', 'Telegram', 'Instagram', 'Play']);
+      final latin = RegExp('[A-Za-z]{4,}').allMatches(text).map((match) => match.group(0)).toSet()
+        ..removeAll(['BugunBor', 'Telegram', 'Instagram', 'Play', 'Oqtepa', 'Lavash', 'Korzinka']);
       expect(latin, isEmpty, reason: 'ru.$key: $text');
     }
   });

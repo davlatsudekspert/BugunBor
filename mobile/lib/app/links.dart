@@ -43,8 +43,12 @@ Uri websiteUri(String site) => Uri.parse(site.startsWith('http') ? site : 'https
 /// The public link of a deal or business (for sharing and App Links).
 String siteUrl(String path) => '${Env.apiBase}$path';
 
+/// A page of the site's business workspace for [businessId] (the site
+/// remembers which business its workspace shows).
+String workspacePath(String businessId, String next) => Uri(path: '/business/switch/$businessId', queryParameters: {'next': next}).toString();
+
 /// Where a link from a notification or App Link opens inside the app, or
-/// null when it belongs to the site (business workspace, admin).
+/// null when it belongs to the site (deal editing, billing, admin).
 String? appPathFor(String link) {
   final uri = Uri.tryParse(link);
   if (uri == null) return null;
@@ -54,6 +58,13 @@ String? appPathFor(String link) {
   if (RegExp(r'^/r/[^/]+/?$').hasMatch(path)) return path;
   if (path.startsWith('/account/codes')) return '/codes';
   if (path.startsWith('/account/favorites')) return '/saved';
+  // "Your business was approved": the business profile in the Profile tab.
+  final switchTo = RegExp(r'^/business/switch/([^/]+)/?$').firstMatch(path)?.group(1);
+  if (switchTo != null) {
+    final next = uri.queryParameters['next'] ?? '/business/dashboard';
+    return next == '/business/dashboard' ? Uri(path: '/profile', queryParameters: {'business': switchTo}).toString() : null;
+  }
+  if (path == '/business' || path == '/business/dashboard') return '/profile';
   if (path == '/' || path.isEmpty) return '/';
   return null;
 }

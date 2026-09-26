@@ -47,9 +47,23 @@ Reja: `docs/ILOVA-REJA.md`.
     profildagi kesilgan yozuv, sayt qidiruvi (so'z boshidan), tugmalar kontrasti (WCAG AA).
   - Test APK va ekranlar egasiga yuborildi.
 
+- [x] **Biznes ilovada** (2026-09-26)
+  - Biznesni ilovaning o'zida ro'yxatdan o'tkazish (`/business/new`): saytdagi forma va tekshiruvlar,
+    joylashuv nuqtasi (tugma bosilgandagina), ish vaqti, kategoriya bo'yicha namuna tavsif,
+    server xatolari maydon ostida, 5 ta biznes chegarasi oldindan aytiladi, chiqishda so'raladi.
+  - Biznes a'zosi uchun Profil «Biznes profili»ga aylanadi: holat (tasdiqlangan / tekshiruvda /
+    rad etilgan sababi bilan), tezkor amallar, statistika, profilni to'ldirish ro'yxati, so'nggi kodlar.
+    Kassir faqat kod tekshirishni ko'radi. «Shaxsiy» tomoni bir bosishda.
+  - «Biznes tasdiqlandi» xabarnomasi ilovada o'sha biznes profilini ochadi (to'lov sahifalari saytda qoladi).
+  - Asosiy ekranda biznes egalari uchun taklif kartochkasi (yopilsa 30 kun ko'rinmaydi, biznesi borlarga chiqmaydi).
+  - iOS uslubidagi pastki menyu: ingichka to'q ikonkalar, tanlangani to'ldirilgan.
+  - Server: `GET /api/v1/business/{id}`, `/config`da kategoriya `id`, `/me`da Telegram username va a'zolik holati.
+  - Testlar: ilova 75, sayt 158.
+
 ## Navbatda
 
 - [ ] Egasi ruxsat bersa: PR #6 ni `main`ga birlashtirish (saytdagi qidiruv tuzatishi ham chiqadi).
+  Shundan keyin ilovadagi biznes ro'yxatdan o'tishi va biznes profili ishlaydi (yangi API serverga chiqadi).
 - [ ] Egasi kalitlarni qo'ygach: imzolangan build, qo'lda APK sinovi, Internal testing qoralamasi.
 
 ## Egasidan kerak

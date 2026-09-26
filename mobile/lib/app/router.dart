@@ -9,6 +9,7 @@ import '../features/codes/code_screen.dart';
 import '../features/codes/codes_screen.dart';
 import '../features/deal/deal_screen.dart';
 import '../features/home/home_screen.dart';
+import '../features/join/join_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/profile/interests_screen.dart';
 import '../features/profile/profile_screen.dart';
@@ -64,7 +65,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [GoRoute(path: '/codes', builder: (context, state) => const CodesScreen())],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen())],
+            routes: [
+              GoRoute(
+                path: '/profile',
+                builder: (context, state) => ProfileScreen(businessId: state.uri.queryParameters['business']),
+              ),
+            ],
           ),
         ],
       ),
@@ -82,7 +88,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/interests', builder: (context, state) => const InterestsScreen()),
-      GoRoute(path: '/cashier', builder: (context, state) => const CashierScreen()),
+      GoRoute(
+        path: '/cashier',
+        builder: (context, state) => CashierScreen(businessId: state.uri.queryParameters['business']),
+      ),
+      GoRoute(path: '/business/new', builder: (context, state) => const JoinScreen()),
       GoRoute(
         path: '/r/:code',
         builder: (context, state) => CashierScreen(code: state.pathParameters['code']),

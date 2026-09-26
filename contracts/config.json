@@ -12,48 +12,56 @@
   "telegramBot": "bugunborbot",
   "categories": [
     {
+      "id": "cat_food",
       "slug": "taomlar",
       "nameUz": "Taomlar",
       "nameRu": "Еда",
       "icon": "utensils"
     },
     {
+      "id": "cat_coffee",
       "slug": "kofe",
       "nameUz": "Kofe",
       "nameRu": "Кофе",
       "icon": "coffee"
     },
     {
+      "id": "cat_shop",
       "slug": "xaridlar",
       "nameUz": "Xaridlar",
       "nameRu": "Покупки",
       "icon": "shopping-bag"
     },
     {
+      "id": "cat_beauty",
       "slug": "gozallik",
       "nameUz": "Go‘zallik",
       "nameRu": "Красота",
       "icon": "sparkles"
     },
     {
+      "id": "cat_sport",
       "slug": "sport",
       "nameUz": "Sport",
       "nameRu": "Спорт",
       "icon": "dumbbell"
     },
     {
+      "id": "cat_fun",
       "slug": "kongilochar",
       "nameUz": "Ko‘ngilochar",
       "nameRu": "Развлечения",
       "icon": "ticket"
     },
     {
+      "id": "cat_services",
       "slug": "xizmatlar",
       "nameUz": "Xizmatlar",
       "nameRu": "Услуги",
       "icon": "wrench"
     },
     {
+      "id": "cat_delivery",
       "slug": "yetkazish",
       "nameUz": "Yetkazish",
       "nameRu": "Доставка",

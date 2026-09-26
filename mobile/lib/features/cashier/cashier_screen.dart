@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
-import '../../app/links.dart';
 import '../../app/providers.dart';
 import '../../core/format.dart';
 import '../../data/models.dart';
@@ -24,8 +24,11 @@ String? codeFromInput(String value) {
 /// Counter staff check a customer's code: scan the QR or type the code,
 /// see what it is for, then confirm it as used. Only the server marks it.
 class CashierScreen extends ConsumerStatefulWidget {
-  const CashierScreen({super.key, this.code});
+  const CashierScreen({super.key, this.code, this.businessId});
   final String? code;
+
+  /// The business to check codes for (from the business profile).
+  final String? businessId;
 
   @override
   ConsumerState<CashierScreen> createState() => _CashierScreenState();
@@ -138,13 +141,13 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
         body: StatePanel(
           icon: Icons.storefront_outlined,
           title: l.cashierNoBusiness,
-          actionLabel: l.profileBusiness,
-          onAction: () => openSite('/business', lang: ref.read(settingsProvider).locale),
+          actionLabel: me.value!.hasBusiness ? l.bizProfileTitle : l.addBusiness,
+          onAction: () => me.value!.hasBusiness ? context.go('/profile') : context.push('/business/new'),
         ),
       );
     }
     if (_businessId == null || !counters.any((item) => item.businessId == _businessId)) {
-      _businessId = counters.first.businessId;
+      _businessId = counters.any((item) => item.businessId == widget.businessId) ? widget.businessId : counters.first.businessId;
     }
     if (!_usedInitial && widget.code != null) {
       _usedInitial = true;

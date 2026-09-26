@@ -17,10 +17,17 @@ List<T> _list<T>(Object? value, T Function(Json) parse) =>
     value is List ? value.whereType<Map<dynamic, dynamic>>().map((item) => parse(item.cast<String, dynamic>())).toList() : <T>[];
 
 class Category {
-  const Category({required this.slug, required this.nameUz, required this.nameRu, this.icon});
-  factory Category.fromJson(Json json) =>
-      Category(slug: _str(json['slug']), nameUz: _str(json['nameUz']), nameRu: _strOrNull(json['nameRu']), icon: _strOrNull(json['icon']));
+  const Category({this.id = '', required this.slug, required this.nameUz, required this.nameRu, this.icon});
+  factory Category.fromJson(Json json) => Category(
+    id: _str(json['id']),
+    slug: _str(json['slug']),
+    nameUz: _str(json['nameUz']),
+    nameRu: _strOrNull(json['nameRu']),
+    icon: _strOrNull(json['icon']),
+  );
 
+  /// What business registration sends (`slug` is used everywhere else).
+  final String id;
   final String slug;
   final String nameUz;
   final String? nameRu;
@@ -478,20 +485,28 @@ class BusinessPage {
 }
 
 class Membership {
-  const Membership({required this.businessId, required this.name, required this.slug, required this.role, required this.verified});
+  const Membership({required this.businessId, required this.name, required this.slug, required this.role, required this.verified, this.status = 'PENDING'});
   factory Membership.fromJson(Json json) => Membership(
     businessId: _str(json['businessId']),
     name: _str(json['name']),
     slug: _str(json['slug']),
     role: _str(json['role']),
     verified: _bool(json['verified']),
+    status: _strOrNull(json['status']) ?? (_bool(json['verified']) ? 'VERIFIED' : 'PENDING'),
   );
 
   final String businessId;
   final String name;
   final String slug;
+
+  /// OWNER, MANAGER or CASHIER.
   final String role;
+
+  /// Verified and not suspended: codes can be checked.
   final bool verified;
+
+  /// Review state: PENDING, VERIFIED or REJECTED.
+  final String status;
 }
 
 class NotificationSettings {
@@ -518,6 +533,7 @@ class Me {
     required this.interests,
     required this.blockedBusinessIds,
     required this.memberships,
+    this.telegramUsername,
   });
 
   factory Me.fromJson(Json json) {
@@ -536,6 +552,7 @@ class Me {
       interests: (json['interests'] as List?)?.map((slug) => '$slug').toList() ?? const [],
       blockedBusinessIds: (json['blockedBusinessIds'] as List?)?.map((id) => '$id').toSet() ?? const {},
       memberships: _list(json['memberships'], Membership.fromJson),
+      telegramUsername: _strOrNull(user['telegramUsername']),
     );
   }
 
@@ -551,6 +568,11 @@ class Me {
   final List<String> interests;
   final Set<String> blockedBusinessIds;
   final List<Membership> memberships;
+
+  /// Offered with one tap as the business's Telegram contact.
+  final String? telegramUsername;
+
+  bool get hasBusiness => memberships.isNotEmpty;
 
   /// Businesses where this person may check codes at the counter.
   List<Membership> get counters => memberships.where((membership) => membership.verified).toList();
@@ -708,4 +730,152 @@ class CodeLookup {
   final String branchName;
   final String customerName;
   final String customerPhone;
+}
+
+/// Answer to a business registration: VERIFIED when the automatic check
+/// passed, otherwise PENDING until a moderator decides.
+class BusinessCreated {
+  const BusinessCreated({required this.id, required this.slug, required this.status});
+  factory BusinessCreated.fromJson(Json json) => BusinessCreated(id: _str(json['id']), slug: _str(json['slug']), status: _str(json['status'], 'PENDING'));
+  final String id;
+  final String slug;
+  final String status;
+
+  bool get verified => status == 'VERIFIED';
+}
+
+class WorkspaceBusiness {
+  const WorkspaceBusiness({
+    required this.id,
+    required this.name,
+    required this.slug,
+    required this.city,
+    required this.status,
+    required this.rejectionReason,
+    required this.suspended,
+    required this.isDemo,
+    required this.logo,
+  });
+
+  factory WorkspaceBusiness.fromJson(Json json) => WorkspaceBusiness(
+    id: _str(json['id']),
+    name: _str(json['name']),
+    slug: _str(json['slug']),
+    city: _str(json['city']),
+    status: _str(json['status'], 'PENDING'),
+    rejectionReason: _strOrNull(json['rejectionReason']),
+    suspended: _bool(json['suspended']),
+    isDemo: _bool(json['isDemo']),
+    logo: _strOrNull(json['logo']),
+  );
+
+  final String id;
+  final String name;
+  final String slug;
+  final String city;
+  final String status;
+  final String? rejectionReason;
+  final bool suspended;
+  final bool isDemo;
+  final String? logo;
+}
+
+class WorkspaceStats {
+  const WorkspaceStats({
+    required this.live,
+    required this.pending,
+    required this.claimsToday,
+    required this.redeemedToday,
+    required this.views,
+    required this.followers,
+    required this.ratingBp,
+    required this.reviewCount,
+  });
+
+  factory WorkspaceStats.fromJson(Json json) => WorkspaceStats(
+    live: _int(json['live']),
+    pending: _int(json['pending']),
+    claimsToday: _int(json['claimsToday']),
+    redeemedToday: _int(json['redeemedToday']),
+    views: _int(json['views']),
+    followers: _int(json['followers']),
+    ratingBp: _int(json['ratingBp']),
+    reviewCount: _int(json['reviewCount']),
+  );
+
+  final int live;
+  final int pending;
+  final int claimsToday;
+  final int redeemedToday;
+  final int views;
+  final int followers;
+  final int ratingBp;
+  final int reviewCount;
+}
+
+/// A code claimed at this business (latest first).
+class WorkspaceCode {
+  const WorkspaceCode({
+    required this.id,
+    required this.status,
+    required this.createdAt,
+    required this.dealTitle,
+    required this.customerName,
+    required this.branchName,
+  });
+  factory WorkspaceCode.fromJson(Json json) => WorkspaceCode(
+    id: _str(json['id']),
+    status: _str(json['status']),
+    createdAt: parseServerTime(_str(json['createdAt'], '1970-01-01 00:00:00')),
+    dealTitle: _str(json['dealTitle']),
+    customerName: _str(json['customerName']),
+    branchName: _str(json['branchName']),
+  );
+  final String id;
+  final String status;
+  final DateTime createdAt;
+  final String dealTitle;
+  final String customerName;
+  final String branchName;
+}
+
+/// The business profile a member sees: what they may do, and for owners
+/// and managers today's numbers, the latest codes and the setup steps.
+class BusinessWorkspace {
+  const BusinessWorkspace({
+    required this.business,
+    required this.role,
+    required this.canEdit,
+    required this.canDeals,
+    required this.canValidate,
+    required this.canAnalytics,
+    required this.stats,
+    required this.recent,
+    required this.setup,
+  });
+
+  factory BusinessWorkspace.fromJson(Json json) {
+    final can = _map(json['can']);
+    return BusinessWorkspace(
+      business: WorkspaceBusiness.fromJson(_map(json['business'])),
+      role: _str(json['role'], 'CASHIER'),
+      canEdit: _bool(can['edit']),
+      canDeals: _bool(can['deals']),
+      canValidate: _bool(can['validate']),
+      canAnalytics: _bool(can['analytics']),
+      stats: json['stats'] is Map ? WorkspaceStats.fromJson(_map(json['stats'])) : null,
+      recent: _list(json['recent'], WorkspaceCode.fromJson),
+      setup: [for (final item in (json['setup'] as List? ?? const []).whereType<Map<dynamic, dynamic>>()) (key: '${item['key']}', done: _bool(item['done']))],
+    );
+  }
+
+  final WorkspaceBusiness business;
+  final String role;
+  final bool canEdit;
+  final bool canDeals;
+  final bool canValidate;
+  final bool canAnalytics;
+  final WorkspaceStats? stats;
+  final List<WorkspaceCode> recent;
+  final List<({String key, bool done})> setup;
 }

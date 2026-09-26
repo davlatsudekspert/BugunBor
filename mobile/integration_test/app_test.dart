@@ -29,6 +29,19 @@ Future<void> shot(IntegrationTestWidgetsFlutterBinding binding, WidgetTester tes
   await binding.takeScreenshot(name);
 }
 
+/// Scrolls the home screen down until [target] can be tapped.
+Future<bool> scrollHomeTo(WidgetTester tester, Finder target) async {
+  for (var step = 0; step < 15 && target.hitTestable().evaluate().isEmpty; step++) {
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
+    await tester.pump(const Duration(milliseconds: 300));
+  }
+  if (target.hitTestable().evaluate().isEmpty) return false;
+  // A little more, so the whole card is in the picture.
+  await tester.drag(find.byType(Scrollable).first, const Offset(0, -150));
+  await tester.pump(const Duration(milliseconds: 300));
+  return target.hitTestable().evaluate().isNotEmpty;
+}
+
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
@@ -83,6 +96,17 @@ void main() {
       await waitFor(tester, find.byType(HomeScreen).hitTestable());
     }
 
+    // The card that invites business owners, and the registration it opens
+    // (a guest sees the sign-in step; nothing is sent).
+    if (await scrollHomeTo(tester, find.text('Biznesimni qo‘shish'))) {
+      await shot(binding, tester, '07a-business-promo');
+      await tester.tap(find.text('Biznesimni qo‘shish').hitTestable());
+      await waitFor(tester, find.text('Biznesingizni BugunBor’ga qo‘shing'));
+      await shot(binding, tester, '07b-business-join');
+      await tester.binding.handlePopRoute();
+      await waitFor(tester, find.byType(HomeScreen).hitTestable());
+    }
+
     await tester.tap(find.text('Qidiruv'));
     await waitFor(tester, find.byType(TextField));
     await tester.enterText(find.byType(TextField), 'osh');
@@ -126,5 +150,8 @@ void main() {
     }
     await waitFor(tester, find.text('Что есть сегодня?'));
     await shot(binding, tester, '13-home-ru-dark');
+    if (await scrollHomeTo(tester, find.text('Добавить мой бизнес'))) {
+      await shot(binding, tester, '14-business-promo-ru-dark');
+    }
   });
 }

@@ -36,7 +36,7 @@ class _BugunBorAppState extends ConsumerState<BugunBorApp> {
     final router = ref.read(routerProvider);
     if (path == null) {
       openExternal(Uri.parse(link));
-    } else if (path == '/' || path == '/codes' || path == '/saved') {
+    } else if (path == '/' || path == '/codes' || path == '/saved' || path.startsWith('/profile')) {
       router.go(path);
     } else {
       router.push(path);

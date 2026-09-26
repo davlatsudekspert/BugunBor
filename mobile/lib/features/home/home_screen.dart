@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/links.dart';
 import '../../app/providers.dart';
 import '../../data/models.dart';
 import '../../design/icons.dart';
@@ -11,6 +10,7 @@ import '../../design/widgets/common.dart';
 import '../../design/widgets/deal_card.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../common/pickers.dart';
+import '../join/promo.dart';
 
 /// Home: what is on today where the person is — deals for their interests
 /// first, then nearby (or in the chosen city), then the ones ending soon.
@@ -24,11 +24,21 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObserver {
   bool _locationFailed = false;
 
+  /// The "add your business" card, hidden for a month when closed.
+  late bool _promoHidden;
+
   @override
   void initState() {
     super.initState();
+    final hiddenAt = ref.read(prefsProvider).promoHiddenAt;
+    _promoHidden = hiddenAt != null && DateTime.now().difference(hiddenAt) < const Duration(days: 30);
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _refreshLocation());
+  }
+
+  void _hidePromo() {
+    ref.read(prefsProvider).promoHiddenAt = DateTime.now();
+    setState(() => _promoHidden = true);
   }
 
   @override
@@ -135,7 +145,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
       return const [SliverToBoxAdapter(child: _HomeSkeleton())];
     }
     final data = feed.requireValue;
-    final blocked = ref.watch(meProvider).value?.blockedBusinessIds ?? const <String>{};
+    final me = ref.watch(meProvider).value;
+    final blocked = me?.blockedBusinessIds ?? const <String>{};
     bool visible(DealCard deal) => !blocked.contains(deal.business.id);
     final hasReal = data.nearby.any((deal) => visible(deal) && !deal.isDemo);
     // Real deals first. Where there are none yet, the sample ones (marked
@@ -148,14 +159,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     final demo = hasReal ? [...data.nearby, ...data.ending, ...data.forYou].where((deal) => deal.isDemo && seen.add(deal.id)).toList() : <DealCard>[];
     final onlySamples = !hasReal && nearby.isNotEmpty;
     final interests = ref.watch(interestsProvider);
+    // For people who may have a business: guests and accounts without one
+    // (for an account, only once it is known, so owners never see it flash).
+    final signedIn = ref.watch(sessionProvider.select((session) => session.signedIn));
+    final promo = _promoHidden || (signedIn ? me == null || me.hasBusiness : false)
+        ? null
+        : SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.xl, Gap.gutter, 0),
+              child: BusinessPromoCard(onOpen: () => context.push('/business/new'), onHide: _hidePromo),
+            ),
+          );
 
     if (nearby.isEmpty) {
-      return [
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: StatePanel(icon: Icons.storefront_outlined, title: l.homeEmptyTitle, text: l.homeEmptyText, actionLabel: l.chooseCity, onAction: _pickPlace),
-        ),
-      ];
+      final empty = StatePanel(
+        icon: Icons.storefront_outlined,
+        title: l.homeEmptyTitle,
+        text: l.homeEmptyText,
+        actionLabel: l.chooseCity,
+        onAction: _pickPlace,
+      );
+      if (promo == null) return [SliverFillRemaining(hasScrollBody: false, child: empty)];
+      return [SliverToBoxAdapter(child: empty), promo];
     }
 
     return [
@@ -169,6 +194,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
       SliverToBoxAdapter(
         child: forYou.isEmpty ? _InterestsPrompt(hasInterests: interests.isNotEmpty) : _DealRow(deals: forYou),
       ),
+      ?promo,
       SliverToBoxAdapter(
         child: SectionTitle(
           located ? l.homeNearby : l.homeInCity(cityName ?? ''),
@@ -191,7 +217,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
         SliverToBoxAdapter(child: _DealRow(deals: ending)),
       ],
       // For business owners: this is how their deals would look.
-      if (demo.isNotEmpty || onlySamples) ...[
+      if (demo.isNotEmpty) ...[
         SliverToBoxAdapter(child: SectionTitle(l.demoCarouselTitle)),
         SliverToBoxAdapter(
           child: Padding(
@@ -199,17 +225,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
             child: Text(l.demoCarouselText, style: TextStyle(color: context.mutedText, height: 1.4)),
           ),
         ),
-        if (demo.isNotEmpty) SliverToBoxAdapter(child: _DealRow(deals: demo)),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.md, Gap.gutter, 0),
-            child: OutlinedButton.icon(
-              onPressed: () => openSite('/business', lang: ref.read(settingsProvider).locale),
-              icon: const Icon(Icons.add_business_outlined),
-              label: Text(l.addBusiness),
-            ),
-          ),
-        ),
+        SliverToBoxAdapter(child: _DealRow(deals: demo)),
       ],
     ];
   }

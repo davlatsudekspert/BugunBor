@@ -69,6 +69,8 @@ class FakeServer implements HttpClientAdapter {
         'data': {'live': nearby, 'ended': []},
       },
       'GET /api/v1/me/follows': (_) => {'data': []},
+      'POST /api/v1/businesses': (_) => Reply(201, {'data': contract('business-create')}),
+      'GET /api/v1/business/:id': (_) => {'data': contract('business-workspace')},
     });
   }
 
@@ -137,9 +139,11 @@ Future<void> pumpApp(
   Size size = const Size(390, 844),
   double textScale = 1,
   String theme = 'light',
+  Pin? pin,
+  Map<String, Object> prefs = const {},
 }) async {
-  SharedPreferences.setMockInitialValues({'onboarded': onboarded, 'locale': locale, 'city': 'tashkent', 'theme': theme});
-  final prefs = Prefs(await SharedPreferences.getInstance());
+  SharedPreferences.setMockInitialValues({'onboarded': onboarded, 'locale': locale, 'city': 'tashkent', 'theme': theme, ...prefs});
+  final stored = Prefs(await SharedPreferences.getInstance());
   tester.view.physicalSize = size * 3;
   tester.view.devicePixelRatio = 3;
   // A phone is used by touch: no keyboard-focus rings after a tap.
@@ -153,7 +157,9 @@ Future<void> pumpApp(
     ProviderScope(
       retry: (retryCount, error) => null,
       overrides: [
-        prefsProvider.overrideWithValue(prefs),
+        prefsProvider.overrideWithValue(stored),
+        // Where "use my location" finds the phone (never the real GPS).
+        pinLocatorProvider.overrideWithValue(() async => pin),
         initialTokenProvider.overrideWithValue(token),
         sessionStoreProvider.overrideWithValue(MemorySessionStore()..token = token),
         apiProvider.overrideWith(
@@ -169,6 +175,26 @@ Future<void> pumpApp(
     ),
   );
   await settle(tester);
+}
+
+/// The signed-in person from the contract, with nothing blocked.
+FakeServer signedInServer() {
+  final server = FakeServer.standard();
+  server.routes['GET /api/v1/me'] = (_) {
+    final me = contractMap('me');
+    me['blockedBusinessIds'] = <String>[];
+    return {'data': me};
+  };
+  return server;
+}
+
+/// Every tappable thing is at least 48 px, and all text is readable
+/// against what is behind it (this caught chip labels painted white).
+Future<void> checkTapTargets(WidgetTester tester) async {
+  final handle = tester.ensureSemantics();
+  await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+  await expectLater(tester, meetsGuideline(textContrastGuideline));
+  handle.dispose();
 }
 
 /// Lets requests finish and frames render. (pumpAndSettle would wait forever

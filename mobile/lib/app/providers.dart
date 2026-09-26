@@ -196,6 +196,28 @@ class LocationNotifier extends Notifier<Position?> {
 
 final locationProvider = NotifierProvider<LocationNotifier, Position?>(LocationNotifier.new);
 
+typedef Pin = ({double latitude, double longitude});
+
+/// One precise reading to pin a business on the map, taken only when the
+/// owner taps the button (asks for the permission if needed). Null when the
+/// phone refuses. Tests override it.
+final pinLocatorProvider = Provider<Future<Pin?> Function()>(
+  (ref) => () async {
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) return null;
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) permission = await Geolocator.requestPermission();
+      if (permission != LocationPermission.always && permission != LocationPermission.whileInUse) return null;
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 15)),
+      );
+      return (latitude: position.latitude, longitude: position.longitude);
+    } catch (_) {
+      return null;
+    }
+  },
+);
+
 final feedProvider = FutureProvider<Feed>((ref) async {
   // Only what changes the answer (not the theme or language).
   final city = ref.watch(settingsProvider.select((settings) => settings.city));
@@ -232,4 +254,41 @@ final followsProvider = FutureProvider<List<FollowedBusiness>>((ref) async {
   final token = ref.watch(sessionProvider.select((session) => session.token));
   if (token == null) return const [];
   return ref.watch(apiProvider).follows();
+});
+
+/// For business members the Profile tab has two faces: the business profile
+/// (default) and the personal one. Also which of their businesses is shown.
+class ProfileView {
+  const ProfileView({required this.mode, required this.businessId});
+  final String mode;
+  final String? businessId;
+  bool get business => mode != 'personal';
+}
+
+class ProfileViewNotifier extends Notifier<ProfileView> {
+  @override
+  ProfileView build() {
+    final prefs = ref.watch(prefsProvider);
+    return ProfileView(mode: prefs.profileMode ?? 'business', businessId: prefs.businessId);
+  }
+
+  void setMode(String mode) {
+    ref.read(prefsProvider).profileMode = mode;
+    state = ProfileView(mode: mode, businessId: state.businessId);
+  }
+
+  /// Shows [businessId] in the business profile (e.g. right after registering it).
+  void showBusiness(String businessId) {
+    final prefs = ref.read(prefsProvider)
+      ..profileMode = 'business'
+      ..businessId = businessId;
+    state = ProfileView(mode: 'business', businessId: prefs.businessId);
+  }
+}
+
+final profileViewProvider = NotifierProvider<ProfileViewNotifier, ProfileView>(ProfileViewNotifier.new);
+
+final workspaceProvider = FutureProvider.autoDispose.family<BusinessWorkspace, String>((ref, businessId) {
+  ref.watch(sessionProvider.select((session) => session.token));
+  return ref.watch(apiProvider).businessWorkspace(businessId);
 });

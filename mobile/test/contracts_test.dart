@@ -20,6 +20,8 @@ void main() {
     expect(config.categories, isNotEmpty);
     expect(config.categories.first.slug, isNotEmpty);
     expect(config.categories.first.nameRu, isNotNull);
+    // Business registration sends the category id.
+    expect(config.categories.first.id, 'cat_food');
     expect(config.cities.map((city) => city.slug), contains('tashkent'));
     expect(config.city('tashkent')!.latitude, isNot(0));
     expect(config.reportReasons, containsAll(['WRONG_INFO', 'SCAM', 'OTHER']));
@@ -102,6 +104,61 @@ void main() {
     expect(me.blockedBusinessIds, {'biz'});
     expect(me.notifications.deals, isTrue);
     expect(me.notifications.nearby, isFalse);
+    expect((json['user'] as Map).containsKey('telegramUsername'), isTrue);
+    expect(me.telegramUsername, isNull);
+    expect(me.hasBusiness, isFalse);
+  });
+
+  test('memberships and business registration', () {
+    final list = (contract('me-memberships') as List).cast<Map<String, dynamic>>();
+    expectKeys(list.first, ['businessId', 'name', 'slug', 'role', 'status', 'verified'], 'membership');
+    final membership = Membership.fromJson(list.first);
+    expect(membership.role, 'OWNER');
+    expect(membership.status, 'VERIFIED');
+    expect(membership.verified, isTrue);
+
+    final json = contractMap('business-create');
+    expectKeys(json, ['id', 'slug', 'status'], 'business-create');
+    final created = BusinessCreated.fromJson(json);
+    expect(created.id, membership.businessId);
+    expect(created.verified, isTrue);
+  });
+
+  test('business workspace', () {
+    final json = contractMap('business-workspace');
+    expectKeys(json, ['business', 'role', 'can', 'stats', 'recent', 'setup'], 'workspace');
+    expectKeys((json['business'] as Map).cast(), [
+      'id',
+      'name',
+      'slug',
+      'city',
+      'status',
+      'rejectionReason',
+      'suspended',
+      'isDemo',
+      'logo',
+    ], 'workspace.business');
+    expectKeys((json['can'] as Map).cast(), ['edit', 'deals', 'validate', 'analytics'], 'workspace.can');
+    expectKeys((json['stats'] as Map).cast(), [
+      'live',
+      'pending',
+      'claimsToday',
+      'redeemedToday',
+      'views',
+      'followers',
+      'ratingBp',
+      'reviewCount',
+    ], 'workspace.stats');
+    expectKeys(((json['recent'] as List).first as Map).cast(), ['id', 'status', 'createdAt', 'dealTitle', 'customerName', 'branchName'], 'workspace.recent');
+    final workspace = BusinessWorkspace.fromJson(json);
+    expect(workspace.business.status, 'VERIFIED');
+    expect(workspace.canEdit && workspace.canDeals && workspace.canValidate && workspace.canAnalytics, isTrue);
+    expect(workspace.stats!.live, 1);
+    expect(workspace.stats!.claimsToday, 1);
+    expect(workspace.recent.single.dealTitle, 'Osh');
+    expect(workspace.recent.single.createdAt, DateTime.utc(2026, 9, 25, 10));
+    expect(workspace.setup.map((item) => item.key), ['logo', 'cover', 'description', 'contacts', 'location', 'deal']);
+    expect(workspace.setup.where((item) => item.done).length, 2);
   });
 
   test('my codes', () {

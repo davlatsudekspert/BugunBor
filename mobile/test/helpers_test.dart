@@ -48,8 +48,12 @@ void main() {
     expect(appPathFor('https://bugunbor.uz/businesses/kafe'), '/businesses/kafe');
     expect(appPathFor('https://bugunbor.uz/r/K7P2QX'), '/r/K7P2QX');
     expect(appPathFor('https://bugunbor.uz/account/codes#review-1'), '/codes');
-    // The business workspace and admin stay on the site.
-    expect(appPathFor('https://bugunbor.uz/business/switch/b1?next=%2Fbusiness%2Fdashboard'), isNull);
+    // "Your business was approved" opens its business profile in the app.
+    expect(appPathFor('https://bugunbor.uz/business/switch/b1?next=%2Fbusiness%2Fdashboard'), '/profile?business=b1');
+    expect(appPathFor('https://bugunbor.uz/business/dashboard'), '/profile');
+    // Billing (payments are only on the site), deal editing and admin stay on the site.
+    expect(appPathFor('https://bugunbor.uz/business/switch/b1?next=%2Fbusiness%2Fbilling'), isNull);
+    expect(appPathFor('https://bugunbor.uz/business/deals/d1'), isNull);
     expect(appPathFor('https://bugunbor.uz/admin/reports'), isNull);
     expect(appPathFor('https://bugunbor.uz/deals/osh/edit'), isNull);
   });

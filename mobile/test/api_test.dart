@@ -112,6 +112,39 @@ void main() {
     await expectLater(offline.config(), throwsA(isA<ApiError>().having((error) => error.isNetwork, 'network', isTrue)));
   });
 
+  test('business registration sends the form with the token; field errors come back per field', () async {
+    token = 't';
+    final created = await api().createBusiness({'name': 'Alisa', 'categoryId': 'cat_food'});
+    expect(created.verified, isTrue);
+    final request = server.requests.single;
+    expect(request.method, 'POST');
+    expect(request.path, '/api/v1/businesses');
+    expect(request.headers['authorization'], 'Bearer t');
+    expect(request.data, {'name': 'Alisa', 'categoryId': 'cat_food'});
+
+    server.routes['POST /api/v1/businesses'] = (_) => const Reply(422, {
+      'error': {
+        'code': 'VALIDATION',
+        'message': 'Xato',
+        'fields': {'phone': 'phone', 'name': 'tooShort'},
+      },
+    });
+    await expectLater(
+      api().createBusiness({}),
+      throwsA(
+        isA<ApiError>().having((error) => error.code, 'code', 'VALIDATION').having((error) => error.fields, 'fields', {'phone': 'phone', 'name': 'tooShort'}),
+      ),
+    );
+  });
+
+  test('the business profile of a member', () async {
+    token = 't';
+    final workspace = await api().businessWorkspace('biz');
+    expect(server.requests.single.path, '/api/v1/business/biz');
+    expect(workspace.business.name, 'Kafe');
+    expect(workspace.role, 'OWNER');
+  });
+
   test('a list page reads items and the total', () async {
     final page = await api().deals(city: 'tashkent', query: '  ', sort: 'ending');
     expect(page.items, isNotEmpty);

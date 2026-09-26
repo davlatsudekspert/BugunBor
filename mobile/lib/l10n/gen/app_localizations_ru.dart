@@ -703,4 +703,341 @@ class LRu extends L {
 
   @override
   String get homeSamplesNote => 'Здесь пока примеры акций: они показывают, как работает приложение. Настоящие акции появятся здесь, как только их добавят.';
+
+  @override
+  String get bizJoinTitle => 'Добавьте свой бизнес в BugunBor';
+
+  @override
+  String get bizJoinText => 'Укажите основную информацию — после проверки сможете размещать акции.';
+
+  @override
+  String get bizJoinLogin => 'Чтобы добавить бизнес, войдите через Telegram — бизнес будет привязан к вашему аккаунту.';
+
+  @override
+  String get bizName => 'Название бизнеса';
+
+  @override
+  String get bizNameHint => 'Например, Oqtepa Lavash';
+
+  @override
+  String get bizCategory => 'Категория';
+
+  @override
+  String get bizCity => 'Город';
+
+  @override
+  String get bizPhone => 'Телефон';
+
+  @override
+  String get bizAddress => 'Адрес основного филиала';
+
+  @override
+  String get bizAddressHint => 'Например: Чиланзар 9-й квартал, дом 12';
+
+  @override
+  String get bizAddressNote => 'Добавьте ориентир — клиенту будет проще найти (например, «рядом с Korzinka»).';
+
+  @override
+  String get bizHours => 'Часы работы';
+
+  @override
+  String get bizOpens => 'Открытие';
+
+  @override
+  String get bizCloses => 'Закрытие';
+
+  @override
+  String get bizDescription => 'Краткое описание';
+
+  @override
+  String get bizDescriptionHint => 'Расскажите клиентам о своём бизнесе коротко и понятно…';
+
+  @override
+  String get bizTemplate => 'Пример текста';
+
+  @override
+  String get bizTemplateAsk => 'Заменить написанное описание примером?';
+
+  @override
+  String get bizTemplateHint => 'Измените пример под свой бизнес.';
+
+  @override
+  String bizTplFood(String name) {
+    return '$name — национальная и европейская кухня. Каждый день свежие блюда и доброжелательное обслуживание. Ждём вас на обед и ужин.';
+  }
+
+  @override
+  String bizTplCoffee(String name) {
+    return '$name — кофе, чай и десерты. Уютное место для встреч с друзьями и отдыха.';
+  }
+
+  @override
+  String bizTplShop(String name) {
+    return '$name — качественные товары и доступные цены. Поможем с выбором, новинки поступают регулярно.';
+  }
+
+  @override
+  String bizTplBeauty(String name) {
+    return '$name — услуги красоты и ухода. Работают опытные мастера, используем качественные средства.';
+  }
+
+  @override
+  String bizTplSport(String name) {
+    return '$name — место для спорта и здорового образа жизни. Занятия для новичков и опытных спортсменов.';
+  }
+
+  @override
+  String bizTplFun(String name) {
+    return '$name — место, где весело провести время с друзьями и семьёй. Приглашаем отдохнуть.';
+  }
+
+  @override
+  String bizTplServices(String name) {
+    return '$name — быстро и качественно выполняем бытовые услуги. Цену называем заранее.';
+  }
+
+  @override
+  String bizTplDelivery(String name) {
+    return '$name — быстро и вовремя доставляем заказы. Заказать просто.';
+  }
+
+  @override
+  String bizTplDefault(String name) {
+    return '$name — качественные товары и доброжелательный сервис. Приходите к нам!';
+  }
+
+  @override
+  String bizCounter(String count, String max) {
+    return '$count / $max';
+  }
+
+  @override
+  String get bizMore => 'Telegram, Instagram и сайт (необязательно)';
+
+  @override
+  String get bizHandleHint => 'имя пользователя (без @)';
+
+  @override
+  String bizMyTelegram(String username) {
+    return 'Мой Telegram: @$username';
+  }
+
+  @override
+  String get bizLocate => 'Определить моё местоположение';
+
+  @override
+  String get bizLocating => 'Определяем…';
+
+  @override
+  String bizLocated(String city) {
+    return 'Местоположение определено: $city. Точка на карте сохранится.';
+  }
+
+  @override
+  String get bizLocateFailed => 'Не удалось определить местоположение — выберите город из списка.';
+
+  @override
+  String get bizLocateNote => 'Нажмите, если вы сейчас на месте бизнеса — клиенты найдут вас на карте и в разделе «Рядом со мной».';
+
+  @override
+  String get bizSubmit => 'Отправить на проверку';
+
+  @override
+  String get bizSubmitting => 'Отправка…';
+
+  @override
+  String get bizConsent => 'Отправляя заявку, вы соглашаетесь на проверку данных. До подтверждения бизнес не публикуется.';
+
+  @override
+  String get bizFixErrors => 'Проверьте отмеченные поля.';
+
+  @override
+  String get bizLimit => 'С одного аккаунта можно добавить не больше 5 бизнесов.';
+
+  @override
+  String get bizSentTitle => 'Заявка отправлена';
+
+  @override
+  String get bizVerifiedTitle => 'Ваш бизнес подтверждён!';
+
+  @override
+  String get bizVerifiedText => 'Теперь разместите первую акцию — клиенты увидят её в приложении и на сайте.';
+
+  @override
+  String get bizPendingText =>
+      'Модератор рассмотрит заявку (обычно в течение 24 часов). После подтверждения бизнес увидят все — акции можно подготовить уже сейчас.';
+
+  @override
+  String get bizOpenProfile => 'Перейти в профиль бизнеса';
+
+  @override
+  String get bizAddFirstDeal => 'Добавить первую акцию';
+
+  @override
+  String valTooShort(String min) {
+    return 'Минимум символов: $min';
+  }
+
+  @override
+  String valTooLong(String max) {
+    return 'Максимум символов: $max';
+  }
+
+  @override
+  String get valInvalid => 'Неверное значение';
+
+  @override
+  String get valPhone => 'Введите номер в формате +998 90 123 45 67';
+
+  @override
+  String get valTime => 'Выберите время';
+
+  @override
+  String get valChoose => 'Выберите вариант';
+
+  @override
+  String get bizProfileTitle => 'Профиль бизнеса';
+
+  @override
+  String get modeBusiness => 'Бизнес';
+
+  @override
+  String get modePersonal => 'Личный';
+
+  @override
+  String get bizStatusVerified => 'Подтверждён';
+
+  @override
+  String get bizStatusPending => 'На проверке';
+
+  @override
+  String get bizStatusRejected => 'Отклонён';
+
+  @override
+  String get bizStatusSuspended => 'Приостановлен';
+
+  @override
+  String get roleOwner => 'Владелец';
+
+  @override
+  String get roleManager => 'Менеджер';
+
+  @override
+  String get roleCashier => 'Кассир';
+
+  @override
+  String get bizPendingNote =>
+      'Ваш бизнес проверяет модератор (обычно в течение 24 часов). После подтверждения акции станут видны — их можно подготовить уже сейчас.';
+
+  @override
+  String bizRejectedNote(String reason) {
+    return 'Бизнес отклонён: $reason';
+  }
+
+  @override
+  String get bizRejectedFix => 'Исправить на сайте и отправить снова';
+
+  @override
+  String get bizSuspendedNote => 'Бизнес временно приостановлен — его акции не показываются. Если есть вопросы, свяжитесь с нами.';
+
+  @override
+  String get bizQuick => 'Быстрые действия';
+
+  @override
+  String get bizAddDeal => 'Добавить акцию';
+
+  @override
+  String get bizViewPage => 'Страница бизнеса';
+
+  @override
+  String get bizAddAnother => 'Добавить ещё бизнес';
+
+  @override
+  String get bizStats => 'Статистика';
+
+  @override
+  String get statLive => 'Активные акции';
+
+  @override
+  String get statClaimsToday => 'Забронировано сегодня';
+
+  @override
+  String get statRedeemedToday => 'Использовано сегодня';
+
+  @override
+  String get statViews => 'Просмотры';
+
+  @override
+  String get statFollowers => 'Подписчики';
+
+  @override
+  String get statRating => 'Рейтинг';
+
+  @override
+  String get bizSetupTitle => 'Заполните профиль';
+
+  @override
+  String bizSetupProgress(String done, String total) {
+    return 'Выполнено $done из $total';
+  }
+
+  @override
+  String get bizSetupHint => 'Полный профиль вызывает больше доверия — ваши акции увидят чаще.';
+
+  @override
+  String get setupLogo => 'Загрузите логотип';
+
+  @override
+  String get setupCover => 'Загрузите обложку';
+
+  @override
+  String get setupDescription => 'Опишите бизнес подробнее (не меньше 80 символов)';
+
+  @override
+  String get setupContacts => 'Добавьте Telegram или Instagram';
+
+  @override
+  String get setupLocation => 'Отметьте филиал на карте';
+
+  @override
+  String get setupDeal => 'Разместите первую акцию';
+
+  @override
+  String get bizRecent => 'Последние коды';
+
+  @override
+  String get bizRecentEmpty => 'Кодов пока нет.';
+
+  @override
+  String get bizCashierOnly => 'Вы кассир этого бизнеса: проверяете коды клиентов.';
+
+  @override
+  String get promoTitle => 'Есть бизнес? Продавайте больше';
+
+  @override
+  String get promoText => 'Добавьте его в BugunBor — вашу акцию увидят покупатели поблизости и придут к вам с кодом.';
+
+  @override
+  String get promoPoint1 => 'Покупатели рядом найдут вас';
+
+  @override
+  String get promoPoint2 => 'Подписчики узнают о ваших новых акциях';
+
+  @override
+  String get promoPoint3 => 'Результат виден: брони и использованные коды';
+
+  @override
+  String get promoPoint4 => 'Регистрация бесплатная — пара минут';
+
+  @override
+  String get promoAction => 'Добавить мой бизнес';
+
+  @override
+  String get promoHide => 'Скрыть';
+
+  @override
+  String get bizDiscardAsk => 'Введённые данные не сохранятся. Выйти?';
+
+  @override
+  String get bizDiscard => 'Выйти';
 }

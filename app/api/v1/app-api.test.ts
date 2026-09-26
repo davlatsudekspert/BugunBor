@@ -42,6 +42,8 @@ const { PUT: putInterests } = await import('./me/interests/route');
 const { PUT: putDevice, DELETE: deleteDevice } = await import('./me/devices/route');
 const { PUT: block, DELETE: unblock } = await import('./me/blocks/[businessId]/route');
 const { POST: report } = await import('./reports/route');
+const { POST: registerBusiness } = await import('./businesses/route');
+const { GET: workspace } = await import('./business/[businessId]/route');
 const { POST: reviewLogin } = await import('./auth/review/route');
 const { POST: startLogin } = await import('./auth/telegram/start/route');
 const { GET: loginStatus } = await import('./auth/telegram/status/route');
@@ -201,6 +203,60 @@ describe('app API', () => {
     expect([first.status, again.status]).toEqual([201, 200]);
     expect(await state.db.prepare(`SELECT COUNT(*) AS n, MAX(reason) AS reason FROM reports`).first()).toEqual({ n: 1, reason: 'SCAM' });
     expect((await report(req('/api/v1/reports', { method: 'POST', token: alice, body: { targetType: 'BUSINESS', targetId: 'nope', reason: 'SPAM' } }))).status).toBe(404);
+  });
+
+  it('registers a business from the app, with field errors the form can show', async () => {
+    const invalid = await read(await registerBusiness(req('/api/v1/businesses', {
+      method: 'POST',
+      token: alice,
+      body: { name: 'K', description: 'Qisqa', categoryId: 'cat_food', city: 'tashkent', phone: '123', address: 'Uy' },
+    })));
+    expect(invalid.status).toBe(422);
+    expect(invalid.body.error).toMatchObject({ code: 'VALIDATION', fields: { name: 'tooShort', description: 'tooShort', phone: 'phone', address: 'tooShort' } });
+
+    const created = await read(await registerBusiness(req('/api/v1/businesses', {
+      method: 'POST',
+      token: alice,
+      body: {
+        name: 'Alisa Nonvoyxonasi', description: 'Har kuni issiq tandir non va shirinliklar. Oldindan buyurtma ham olamiz.',
+        categoryId: 'cat_food', city: 'tashkent', phone: '90 123 45 67', address: 'Chilonzor 9-kvartal, 12-uy',
+        latitude: 41.28, longitude: 69.21, open: '08:00', close: '20:00', telegram: '@alisa_non', instagram: null, website: '',
+      },
+    })));
+    expect(created.status).toBe(201);
+    expect(['VERIFIED', 'PENDING']).toContain(created.body.data.status);
+    pinContract('business-create', created.body.data);
+    const branch = await state.db.prepare(`SELECT name, address, latitude_e6 AS lat, working_hours_json AS hours FROM branches WHERE business_id = ?1`)
+      .bind(created.body.data.id).first();
+    expect(branch).toEqual({ name: 'Asosiy filial', address: 'Chilonzor 9-kvartal, 12-uy', lat: 41280000, hours: '{"open":"08:00","close":"20:00"}' });
+
+    // The profile lists it right away, with its review state.
+    const profile = await read(await me(req('/api/v1/me', { token: alice })));
+    const memberships = profile.body.data.memberships as unknown as Array<Record<string, unknown>>;
+    expect(memberships).toEqual([expect.objectContaining({ businessId: created.body.data.id, role: 'OWNER', status: created.body.data.status })]);
+    pinContract('me-memberships', memberships);
+  });
+
+  it('shows each member the business profile their role allows', async () => {
+    const owner = (await createSession(state.db, 'owner', { client: 'app' })).token;
+    const cashier = (await createSession(state.db, 'cashier', { client: 'app' })).token;
+    const { claimDeal } = await import('@/modules/redemptions/service');
+    await claimDeal(state.db, { dealId: 'deal', userId: 'alice', branchId: 'br1', idempotencyKey: 'app-test-2', secret: 'test-secret', now: NOW });
+    const own = await read(await workspace(req('/api/v1/business/biz', { token: owner }), params({ businessId: 'biz' })));
+    expect(own.status).toBe(200);
+    expect(own.body.data).toMatchObject({
+      business: { id: 'biz', slug: 'kafe', status: 'VERIFIED', suspended: false },
+      role: 'OWNER',
+      can: { edit: true, deals: true, validate: true, analytics: true },
+      stats: { live: 1, claimsToday: 1 },
+      recent: [{ status: 'CLAIMED', dealTitle: 'Osh', customerName: 'Alice Karimova' }],
+    });
+    expect((own.body.data.setup as unknown as Array<{ key: string }>).map((item) => item.key)).toContain('deal');
+    pinContract('business-workspace', own.body.data);
+
+    const counter = await read(await workspace(req('/api/v1/business/biz', { token: cashier }), params({ businessId: 'biz' })));
+    expect(counter.body.data).toMatchObject({ role: 'CASHIER', can: { edit: false, validate: true, analytics: false }, stats: null, recent: [], setup: [] });
+    expect((await workspace(req('/api/v1/business/biz', { token: alice }), params({ businessId: 'biz' }))).status).toBe(403);
   });
 
   it('lets the only owner close the business together with the account', async () => {

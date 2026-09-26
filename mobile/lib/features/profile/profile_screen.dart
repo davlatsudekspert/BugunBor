@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,53 +15,128 @@ import '../../design/theme.dart';
 import '../../design/widgets/common.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../common/pickers.dart';
+import '../workspace/workspace_view.dart';
 
 const _languages = {'uz': 'O‘zbekcha', 'ru': 'Русский', 'en': 'English'};
 
-class ProfileScreen extends ConsumerWidget {
-  const ProfileScreen({super.key});
+/// The Profile tab. For business members it has two sides: the business
+/// profile (shown first) and the personal one.
+class ProfileScreen extends ConsumerStatefulWidget {
+  const ProfileScreen({super.key, this.businessId});
+
+  /// Opens this business's profile (from an "approved" notification).
+  final String? businessId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  String? _shown;
+
+  void _showRequested(Me? me) {
+    final id = widget.businessId;
+    if (id == null || id == _shown || me == null || !me.memberships.any((item) => item.businessId == id)) return;
+    _shown = id;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(profileViewProvider.notifier).showBusiness(id);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l = L.of(context);
     final signedIn = ref.watch(sessionProvider.select((session) => session.signedIn));
     final me = ref.watch(meProvider);
+    final account = signedIn ? me.value : null;
+    _showRequested(account);
+    final member = account != null && account.hasBusiness;
+    final business = member && ref.watch(profileViewProvider.select((view) => view.business));
     return Scaffold(
-      appBar: AppBar(title: Text(l.navProfile)),
+      appBar: AppBar(title: Text(business ? l.bizProfileTitle : l.navProfile)),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(configProvider);
           ref.invalidate(pushAllowedProvider);
+          if (business) ref.invalidate(workspaceProvider);
           if (signedIn) await ref.refresh(meProvider.future).then((_) {}, onError: (_) {});
         },
         child: ListView(
           padding: const EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.xl),
           children: [
-            if (!signedIn)
-              const _GuestCard()
-            else
-              switch (me) {
-                AsyncValue(:final value?) => _AccountCard(me: value),
-                AsyncValue(:final error?) => StatePanel.error(context, error, onRetry: () => ref.invalidate(meProvider)),
-                _ => const Skeleton(height: 150),
-              },
-            const SizedBox(height: Gap.lg),
-            const _Preferences(),
-            if (signedIn && me.value != null) ...[
+            if (member) _ModeSwitch(business: business),
+            if (business)
+              WorkspaceView(me: account)
+            else ...[
+              if (!signedIn)
+                const _GuestCard()
+              else
+                switch (me) {
+                  AsyncValue(:final value?) => _AccountCard(me: value),
+                  AsyncValue(:final error?) => StatePanel.error(context, error, onRetry: () => ref.invalidate(meProvider)),
+                  _ => const Skeleton(height: 150),
+                },
               const SizedBox(height: Gap.lg),
-              _Notifications(me: me.value!),
+              const _Preferences(),
+              if (account != null) ...[
+                const SizedBox(height: Gap.lg),
+                _Notifications(me: account),
+                if (!account.hasBusiness) ...[const SizedBox(height: Gap.lg), const _BusinessSection()],
+              ],
               const SizedBox(height: Gap.lg),
-              _BusinessSection(me: me.value!),
+              const _Links(),
+              if (signedIn) ...[const SizedBox(height: Gap.lg), const _AccountActions()],
+              const SizedBox(height: Gap.lg),
+              Center(
+                child: Text(l.appVersion('${Env.version} (${Env.build})'), style: TextStyle(color: context.mutedText, fontSize: 12)),
+              ),
             ],
-            const SizedBox(height: Gap.lg),
-            const _Links(),
-            if (signedIn) ...[const SizedBox(height: Gap.lg), const _AccountActions()],
-            const SizedBox(height: Gap.lg),
-            Center(
-              child: Text(l.appVersion('${Env.version} (${Env.build})'), style: TextStyle(color: context.mutedText, fontSize: 12)),
-            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Business / Personal, like the iOS segmented control.
+class _ModeSwitch extends ConsumerWidget {
+  const _ModeSwitch({required this.business});
+  final bool business;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = L.of(context);
+    final dark = context.isDark;
+    final color = dark ? Brand.darkText : Brand.navy;
+    Widget segment(IconData icon, String label) => ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: Gap.tap),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: color, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: Gap.xs, bottom: Gap.lg),
+      child: CupertinoSlidingSegmentedControl<String>(
+        groupValue: business ? 'business' : 'personal',
+        thumbColor: dark ? Brand.darkBorder : Colors.white,
+        backgroundColor: dark ? Brand.darkSurface : const Color(0xFFEDE6DC),
+        padding: const EdgeInsets.all(3),
+        children: {'business': segment(CupertinoIcons.briefcase, l.modeBusiness), 'personal': segment(CupertinoIcons.person, l.modePersonal)},
+        onValueChanged: (mode) {
+          if (mode != null) ref.read(profileViewProvider.notifier).setMode(mode);
+        },
       ),
     );
   }
@@ -394,30 +470,25 @@ class _NotificationsState extends ConsumerState<_Notifications> {
   }
 }
 
-class _BusinessSection extends ConsumerWidget {
-  const _BusinessSection({required this.me});
-  final Me me;
+/// For people without a business yet: registering one is in the app.
+class _BusinessSection extends StatelessWidget {
+  const _BusinessSection();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l = L.of(context);
-    final locale = ref.watch(settingsProvider.select((settings) => settings.locale));
     return _Section(
       title: l.profileForBusiness,
       children: [
-        if (me.counters.isNotEmpty)
-          ListTile(
-            leading: const Icon(Icons.qr_code_scanner_rounded, color: Brand.primary),
-            title: Text(l.profileCashier, style: const TextStyle(fontWeight: FontWeight.w700)),
-            trailing: const Icon(Icons.chevron_right_rounded),
-            onTap: () => context.push('/cashier'),
-          ),
         ListTile(
-          leading: const Icon(Icons.storefront_outlined),
-          title: Text(me.memberships.isEmpty ? l.addBusiness : l.profileBusiness),
-          subtitle: Text(l.profileBusinessHint),
-          trailing: const Icon(Icons.open_in_new_rounded, size: 20),
-          onTap: () => openSite('/business', lang: locale),
+          leading: CircleAvatar(
+            backgroundColor: Brand.primary.withValues(alpha: 0.12),
+            child: Icon(Icons.add_business_rounded, color: context.accentText),
+          ),
+          title: Text(l.addBusiness, style: const TextStyle(fontWeight: FontWeight.w700)),
+          subtitle: Text(l.promoPoint1),
+          trailing: const Icon(Icons.chevron_right_rounded),
+          onTap: () => context.push('/business/new'),
         ),
       ],
     );
@@ -443,10 +514,10 @@ class _Links extends ConsumerWidget {
       children: [
         if (!signedIn)
           ListTile(
-            leading: const Icon(Icons.storefront_outlined),
+            leading: const Icon(Icons.add_business_outlined),
             title: Text(l.addBusiness),
-            trailing: const Icon(Icons.open_in_new_rounded, size: 20),
-            onTap: () => openSite('/business', lang: locale),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () => context.push('/business/new'),
           ),
         link(Icons.privacy_tip_outlined, l.privacyPolicy, '/privacy'),
         link(Icons.description_outlined, l.terms, '/terms'),

@@ -88,7 +88,10 @@ class BugunBorApi {
               : status == 404
               ? 'NOT_FOUND'
               : 'SERVER');
-    final apiError = ApiError(code, message: error['message'] as String?, status: status);
+    final fields = error['fields'] is Map
+        ? {for (final entry in (error['fields'] as Map<dynamic, dynamic>).entries) '${entry.key}': '${entry.value}'}
+        : const <String, String>{};
+    final apiError = ApiError(code, message: error['message'] as String?, status: status, fields: fields);
     if (code == 'UNAUTHENTICATED' && _token() != null) _onUnauthorized();
     return apiError;
   }
@@ -217,6 +220,15 @@ class BugunBorApi {
     '/api/v1/reports',
     body: {'targetType': targetType, 'targetId': targetId, 'reason': reason, if (comment != null && comment.trim().isNotEmpty) 'comment': comment.trim()},
   );
+
+  // Business ----------------------------------------------------------------
+
+  /// Registration: [body] is what the site's onboarding form sends.
+  Future<BusinessCreated> createBusiness(Map<String, Object?> body) async =>
+      BusinessCreated.fromJson(_data(await _request('POST', '/api/v1/businesses', body: body)));
+
+  Future<BusinessWorkspace> businessWorkspace(String businessId) async =>
+      BusinessWorkspace.fromJson(_data(await _request('GET', '/api/v1/business/${Uri.encodeComponent(businessId)}')));
 
   // Counter (business staff) -------------------------------------------------
 

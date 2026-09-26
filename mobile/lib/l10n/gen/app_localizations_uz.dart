@@ -704,4 +704,341 @@ class LUz extends L {
   @override
   String get homeSamplesNote =>
       'Bu hududda hozircha namuna aksiyalar: ular ilova qanday ishlashini ko‘rsatadi. Haqiqiy aksiyalar paydo bo‘lishi bilan shu yerda chiqadi.';
+
+  @override
+  String get bizJoinTitle => 'Biznesingizni BugunBor’ga qo‘shing';
+
+  @override
+  String get bizJoinText => 'Asosiy ma’lumotni kiriting — tekshiruvdan so‘ng aksiya joylay olasiz.';
+
+  @override
+  String get bizJoinLogin => 'Biznes qo‘shish uchun Telegram orqali kiring — biznes hisobingizga bog‘lanadi.';
+
+  @override
+  String get bizName => 'Biznes nomi';
+
+  @override
+  String get bizNameHint => 'Masalan, Oqtepa Lavash';
+
+  @override
+  String get bizCategory => 'Kategoriya';
+
+  @override
+  String get bizCity => 'Shahar';
+
+  @override
+  String get bizPhone => 'Telefon';
+
+  @override
+  String get bizAddress => 'Asosiy filial manzili';
+
+  @override
+  String get bizAddressHint => 'Masalan: Chilonzor 9-kvartal, 12-uy';
+
+  @override
+  String get bizAddressNote => 'Mo‘ljalni ham yozing — mijoz oson topadi (masalan, «Korzinka yonida»).';
+
+  @override
+  String get bizHours => 'Ish vaqti';
+
+  @override
+  String get bizOpens => 'Ochiladi';
+
+  @override
+  String get bizCloses => 'Yopiladi';
+
+  @override
+  String get bizDescription => 'Qisqa tavsif';
+
+  @override
+  String get bizDescriptionHint => 'Mijozlarga biznesingiz haqida aniq va tabiiy yozing…';
+
+  @override
+  String get bizTemplate => 'Namuna matn';
+
+  @override
+  String get bizTemplateAsk => 'Yozilgan tavsif namuna bilan almashtirilsinmi?';
+
+  @override
+  String get bizTemplateHint => 'Namunani o‘zingizga moslab o‘zgartiring.';
+
+  @override
+  String bizTplFood(String name) {
+    return '$name — milliy va yevropa taomlari. Har kuni yangi tayyorlangan taomlar va samimiy xizmat. Tushlik va kechki ovqatga kutib qolamiz.';
+  }
+
+  @override
+  String bizTplCoffee(String name) {
+    return '$name — kofe, choy va shirinliklar. Do‘stlar bilan uchrashish yoki dam olish uchun shinam joy.';
+  }
+
+  @override
+  String bizTplShop(String name) {
+    return '$name — sifatli mahsulotlar va qulay narxlar. Tanlashda yordam beramiz, yangi mahsulotlar muntazam keladi.';
+  }
+
+  @override
+  String bizTplBeauty(String name) {
+    return '$name — go‘zallik va parvarish xizmatlari. Tajribali ustalar va sifatli vositalar bilan ishlaymiz.';
+  }
+
+  @override
+  String bizTplSport(String name) {
+    return '$name — sport va sog‘lom turmush uchun joy. Mashg‘ulotlar yangi boshlovchilar va tajribali sportchilar uchun.';
+  }
+
+  @override
+  String bizTplFun(String name) {
+    return '$name — do‘stlar va oila bilan maroqli vaqt o‘tkazish uchun joy. Sizni quvnoq dam olishga taklif qilamiz.';
+  }
+
+  @override
+  String bizTplServices(String name) {
+    return '$name — kundalik xizmatlarni tez va sifatli bajaramiz. Narxni oldindan aniq aytamiz.';
+  }
+
+  @override
+  String bizTplDelivery(String name) {
+    return '$name — buyurtmalarni tez va o‘z vaqtida yetkazib beramiz. Buyurtma berish oson.';
+  }
+
+  @override
+  String bizTplDefault(String name) {
+    return '$name — sifatli mahsulot va samimiy xizmat. Bizga tashrif buyuring!';
+  }
+
+  @override
+  String bizCounter(String count, String max) {
+    return '$count / $max';
+  }
+
+  @override
+  String get bizMore => 'Telegram, Instagram va sayt (ixtiyoriy)';
+
+  @override
+  String get bizHandleHint => 'username (@ siz)';
+
+  @override
+  String bizMyTelegram(String username) {
+    return 'Mening Telegramim: @$username';
+  }
+
+  @override
+  String get bizLocate => 'Joylashuvimni aniqlash';
+
+  @override
+  String get bizLocating => 'Aniqlanmoqda…';
+
+  @override
+  String bizLocated(String city) {
+    return 'Joylashuv aniqlandi: $city. Xaritadagi nuqta saqlanadi.';
+  }
+
+  @override
+  String get bizLocateFailed => 'Joylashuvni aniqlab bo‘lmadi — shaharni ro‘yxatdan tanlang.';
+
+  @override
+  String get bizLocateNote => 'Biznes joyida turgan bo‘lsangiz bosing — mijozlar sizni xaritada va «Yaqinimda» bo‘limida topadi.';
+
+  @override
+  String get bizSubmit => 'Tekshiruvga yuborish';
+
+  @override
+  String get bizSubmitting => 'Yuborilmoqda…';
+
+  @override
+  String get bizConsent => 'Yuborish orqali ma’lumotlar tekshirilishiga rozilik bildirasiz. Biznes tasdiqlanmaguncha ochiq e’lon qilinmaydi.';
+
+  @override
+  String get bizFixErrors => 'Belgilangan maydonlarni tekshiring.';
+
+  @override
+  String get bizLimit => 'Bitta hisobdan ko‘pi bilan 5 ta biznes qo‘shish mumkin.';
+
+  @override
+  String get bizSentTitle => 'Ariza yuborildi';
+
+  @override
+  String get bizVerifiedTitle => 'Biznesingiz tasdiqlandi!';
+
+  @override
+  String get bizVerifiedText => 'Endi birinchi aksiyani joylang — mijozlar uni ilovada va saytda ko‘radi.';
+
+  @override
+  String get bizPendingText =>
+      'Moderator arizani ko‘rib chiqadi (odatda 24 soat ichida). Tasdiqlangach biznesingiz hammaga ko‘rinadi — aksiyalarni hozirdan tayyorlab qo‘yishingiz mumkin.';
+
+  @override
+  String get bizOpenProfile => 'Biznes profiliga o‘tish';
+
+  @override
+  String get bizAddFirstDeal => 'Birinchi aksiyani qo‘shish';
+
+  @override
+  String valTooShort(String min) {
+    return 'Kamida $min ta belgi';
+  }
+
+  @override
+  String valTooLong(String max) {
+    return 'Ko‘pi bilan $max ta belgi';
+  }
+
+  @override
+  String get valInvalid => 'Noto‘g‘ri qiymat';
+
+  @override
+  String get valPhone => 'Raqamni +998 90 123 45 67 ko‘rinishida kiriting';
+
+  @override
+  String get valTime => 'Vaqtni tanlang';
+
+  @override
+  String get valChoose => 'Birini tanlang';
+
+  @override
+  String get bizProfileTitle => 'Biznes profili';
+
+  @override
+  String get modeBusiness => 'Biznes';
+
+  @override
+  String get modePersonal => 'Shaxsiy';
+
+  @override
+  String get bizStatusVerified => 'Tasdiqlangan';
+
+  @override
+  String get bizStatusPending => 'Tekshiruvda';
+
+  @override
+  String get bizStatusRejected => 'Rad etilgan';
+
+  @override
+  String get bizStatusSuspended => 'To‘xtatilgan';
+
+  @override
+  String get roleOwner => 'Egasi';
+
+  @override
+  String get roleManager => 'Menejer';
+
+  @override
+  String get roleCashier => 'Kassir';
+
+  @override
+  String get bizPendingNote =>
+      'Biznesingizni moderator ko‘rib chiqmoqda (odatda 24 soat ichida). Tasdiqlangach aksiyalaringiz ko‘rinadi — ularni hozir tayyorlab qo‘yishingiz mumkin.';
+
+  @override
+  String bizRejectedNote(String reason) {
+    return 'Biznes rad etildi: $reason';
+  }
+
+  @override
+  String get bizRejectedFix => 'Saytda tuzatib, qayta yuborish';
+
+  @override
+  String get bizSuspendedNote => 'Biznes vaqtincha to‘xtatilgan — aksiyalari ko‘rinmaydi. Savol bo‘lsa, biz bilan bog‘laning.';
+
+  @override
+  String get bizQuick => 'Tezkor amallar';
+
+  @override
+  String get bizAddDeal => 'Aksiya qo‘shish';
+
+  @override
+  String get bizViewPage => 'Biznes sahifasi';
+
+  @override
+  String get bizAddAnother => 'Yana biznes qo‘shish';
+
+  @override
+  String get bizStats => 'Statistika';
+
+  @override
+  String get statLive => 'Faol aksiyalar';
+
+  @override
+  String get statClaimsToday => 'Bugun band qilindi';
+
+  @override
+  String get statRedeemedToday => 'Bugun ishlatildi';
+
+  @override
+  String get statViews => 'Ko‘rishlar';
+
+  @override
+  String get statFollowers => 'Obunachilar';
+
+  @override
+  String get statRating => 'Reyting';
+
+  @override
+  String get bizSetupTitle => 'Profilni to‘ldiring';
+
+  @override
+  String bizSetupProgress(String done, String total) {
+    return '$done / $total bajarildi';
+  }
+
+  @override
+  String get bizSetupHint => 'To‘liq profil mijozlar ishonchini oshiradi — aksiyalaringiz ko‘proq ko‘riladi.';
+
+  @override
+  String get setupLogo => 'Logotip yuklang';
+
+  @override
+  String get setupCover => 'Muqova rasmini yuklang';
+
+  @override
+  String get setupDescription => 'Tavsifni batafsilroq yozing (kamida 80 belgi)';
+
+  @override
+  String get setupContacts => 'Telegram yoki Instagram qo‘shing';
+
+  @override
+  String get setupLocation => 'Filialni xaritada belgilang';
+
+  @override
+  String get setupDeal => 'Birinchi aksiyani joylang';
+
+  @override
+  String get bizRecent => 'So‘nggi kodlar';
+
+  @override
+  String get bizRecentEmpty => 'Hali kod olinmagan.';
+
+  @override
+  String get bizCashierOnly => 'Siz bu biznesda kassirsiz: mijozlarning kodlarini tekshirasiz.';
+
+  @override
+  String get promoTitle => 'Biznesingiz bormi? Ko‘proq soting';
+
+  @override
+  String get promoText => 'BugunBor’ga qo‘shing — aksiyangizni yaqin atrofdagi xaridorlar ko‘radi va kod bilan to‘g‘ri sizga keladi.';
+
+  @override
+  String get promoPoint1 => 'Yaqin atrofdagi xaridorlar sizni topadi';
+
+  @override
+  String get promoPoint2 => 'Obunachilar yangi aksiyangizdan xabar topadi';
+
+  @override
+  String get promoPoint3 => 'Natijani ko‘rasiz: band qilingan va ishlatilgan kodlar';
+
+  @override
+  String get promoPoint4 => 'Ro‘yxatdan o‘tish bepul — bir necha daqiqa';
+
+  @override
+  String get promoAction => 'Biznesimni qo‘shish';
+
+  @override
+  String get promoHide => 'Yashirish';
+
+  @override
+  String get bizDiscardAsk => 'Kiritilgan ma’lumotlar saqlanmaydi. Chiqasizmi?';
+
+  @override
+  String get bizDiscard => 'Chiqish';
 }
