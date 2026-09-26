@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getDb } from '@/db/client';
 import { getConfig } from '@/lib/env';
 import { assertSameOrigin, json, readJson, route } from '@/lib/http';
-import { apiUser } from '@/modules/auth/current';
+import { apiUser } from '@/modules/auth/api-user';
 import { DomainError } from '@/modules/errors';
 import { RATE_RULES, enforceRateLimit } from '@/modules/rate-limit';
 import { claimDeal, runMaintenance } from '@/modules/redemptions/service';

@@ -34,7 +34,7 @@ export default async function DeleteAccountPage() {
           {user ? (
             <>
               <p className="mb-3 text-sm font-semibold text-slate-600">{d.signedIn}</p>
-              <DeleteAccountButton labels={{ button: t.account.deleteTitle, ask: t.account.deleteAsk, error: t.common.unknownError }} />
+              <DeleteAccountButton labels={{ button: t.account.deleteTitle, ask: t.account.deleteAsk, error: t.common.unknownError, closeAndDelete: t.account.closeAndDelete, closeAsk: t.account.closeAsk }} />
             </>
           ) : (
             <a href="/login?returnTo=%2Fdelete-account" className="inline-flex h-11 items-center gap-2 rounded-xl bg-navy px-5 text-sm font-bold text-white hover:bg-navy/90">

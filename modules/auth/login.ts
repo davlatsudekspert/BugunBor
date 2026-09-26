@@ -33,11 +33,13 @@ export type LoginRequestRow = {
   browserHash: string;
   consentAt: string | null;
   consentVersion: string | null;
+  /** 'app' when the mobile app started the request (it polls with the secret, not a cookie). */
+  client: string | null;
 };
 
 const COLUMNS = `id, status, match_code AS matchCode, return_to AS returnTo, locale, user_agent AS userAgent,
   telegram_user_id AS telegramUserId, telegram_chat_id AS telegramChatId, user_id AS userId,
-  expires_at AS expiresAt, browser_hash AS browserHash, consent_at AS consentAt, consent_version AS consentVersion`;
+  expires_at AS expiresAt, browser_hash AS browserHash, consent_at AS consentAt, consent_version AS consentVersion, client`;
 
 function randomMatchCode() {
   const value = crypto.getRandomValues(new Uint32Array(1))[0] % 9000;
@@ -50,7 +52,7 @@ function isOpen(row: LoginRequestRow, now: Date) {
 
 export async function startLogin(
   db: D1Database,
-  input: { returnTo?: string | null; locale: 'uz' | 'ru'; userAgent?: string | null; ipHash?: string | null; consent: true },
+  input: { returnTo?: string | null; locale: 'uz' | 'ru'; userAgent?: string | null; ipHash?: string | null; consent: true; client?: 'web' | 'app' },
   now = new Date(),
 ) {
   if (input.consent !== true) throw new DomainError('CONSENT_REQUIRED');
@@ -60,8 +62,8 @@ export async function startLogin(
   const matchCode = randomMatchCode();
   const expiresAt = addMinutes(now, LOGIN_TTL_MINUTES);
   await db
-    .prepare(`INSERT INTO login_requests(id, token_hash, browser_hash, match_code, status, return_to, locale, user_agent, ip_hash, created_at, expires_at, consent_at, consent_version)
-      VALUES (?1, ?2, ?3, ?4, 'PENDING', ?5, ?6, ?7, ?8, ?9, ?10, ?9, ?11)`)
+    .prepare(`INSERT INTO login_requests(id, token_hash, browser_hash, match_code, status, return_to, locale, user_agent, ip_hash, created_at, expires_at, consent_at, consent_version, client)
+      VALUES (?1, ?2, ?3, ?4, 'PENDING', ?5, ?6, ?7, ?8, ?9, ?10, ?9, ?11, ?12)`)
     .bind(
       id,
       await sha256Hex(token),
@@ -74,6 +76,7 @@ export async function startLogin(
       toDbTime(now),
       toDbTime(expiresAt),
       PRIVACY_VERSION,
+      input.client ?? 'web',
     )
     .run();
   return { id, token, browserSecret, matchCode, expiresAt };

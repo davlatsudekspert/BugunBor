@@ -5,7 +5,7 @@ import { getConfig } from '@/lib/env';
 import { maskPhone } from '@/lib/format';
 import { assertSameOrigin, json, readJson, requestLocale, route } from '@/lib/http';
 import type { BusinessAction } from '@/modules/auth/authorization';
-import { apiUser } from '@/modules/auth/current';
+import { apiUser } from '@/modules/auth/api-user';
 import { BILLING_PERIODS, requestPlan } from '@/modules/billing/service';
 import { assertNotSuspended, requireMembership } from '@/modules/businesses/access';
 import { branchSchema, businessProfileSchema, teamAddSchema } from '@/modules/businesses/schema';

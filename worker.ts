@@ -1,5 +1,6 @@
 import handler from 'vinext/server/fetch-handler';
 
+import { assetLinks } from '@/lib/app-links';
 import { PAGE_CACHE_SECONDS, cacheablePage, pageCacheKey } from '@/lib/page-cache';
 
 // The Worker entry: vinext renders the app; guests' public pages are served
@@ -21,6 +22,9 @@ function forBrowser(response: Response, state: 'HIT' | 'MISS') {
 
 export default {
   async fetch(request: Request, env: Cloudflare.Env, ctx: ExecutionContext): Promise<Response> {
+    if (new URL(request.url).pathname === '/.well-known/assetlinks.json') {
+      return Response.json(assetLinks(env.ANDROID_CERT_SHA256), { headers: { 'cache-control': 'public, max-age=3600' } });
+    }
     const key = pageCacheKey(request, BUILD);
     const cache = key ? edgeCache() : undefined;
     if (!key || !cache) return handler.fetch(request, env, ctx);

@@ -1,6 +1,6 @@
 import { getDb } from '@/db/client';
 import { assertSameOrigin, json, route } from '@/lib/http';
-import { apiUser } from '@/modules/auth/current';
+import { apiUser } from '@/modules/auth/api-user';
 import { followBusiness, followState, unfollowBusiness } from '@/modules/engagement/follows';
 import { RATE_RULES, enforceRateLimit } from '@/modules/rate-limit';
 

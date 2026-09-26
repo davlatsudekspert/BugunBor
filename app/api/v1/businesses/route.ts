@@ -1,6 +1,6 @@
 import { getDb } from '@/db/client';
 import { assertSameOrigin, json, readJson, requestLocale, route } from '@/lib/http';
-import { apiUser } from '@/modules/auth/current';
+import { apiUser } from '@/modules/auth/api-user';
 import { onboardingSchema } from '@/modules/businesses/schema';
 import { createBusiness } from '@/modules/businesses/service';
 import { autoModerateBusiness } from '@/modules/moderation/auto';

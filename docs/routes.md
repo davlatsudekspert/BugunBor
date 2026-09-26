@@ -32,11 +32,12 @@ Moderators: overview, businesses, deals, reviews, messages, audit. Admins also: 
 
 ## API (`/api/v1`)
 
-All writes require a same-origin request; authenticated routes use the session cookie. Errors are `{ error: { code, message, fields? } }` with a localized message.
+The site authenticates with the session cookie (writes must be same-origin); the mobile app sends `Authorization: Bearer <token>` plus `x-app: bugunbor` and `x-app-build` (and `x-locale`). Errors are `{ error: { code, message, fields? } }` with a localized message; the app maps `code` to its own texts. Response shapes the app relies on are pinned in `contracts/*.json` (checked by `app/api/v1/app-api.test.ts`).
 
 | Method and path | Purpose |
 | --- | --- |
-| `POST /auth/telegram/start`, `GET /auth/telegram/status` | Telegram login device flow |
+| `POST /auth/telegram/start`, `GET /auth/telegram/status` | Telegram login device flow (`consent: true` required). The app sends `client: 'app'`, gets `loginSecret`, polls with `x-login-secret` and receives `token` |
+| `POST /auth/review` | Store reviewer sign-in (only when `REVIEW_LOGIN_CODE` is set) |
 | `POST /auth/logout` | End the session |
 | `POST /auth/dev-login` | Demo login (development only) |
 | `POST /telegram/webhook` | Telegram updates (secret header required) |
@@ -47,7 +48,16 @@ All writes require a same-origin request; authenticated routes use the session c
 | `PUT`/`DELETE /favorites/{dealId}` | Save or unsave a deal |
 | `PUT`/`DELETE /follows/{businessId}` | Follow or unfollow a business |
 | `POST /reviews` | Rate a redeemed visit |
-| `PATCH /me`, `DELETE /me` | Name and notification settings; delete account |
+| `GET /config` | App startup: demo and tariff switches, oldest supported build, categories, cities, report reasons |
+| `GET /feed` | App home: `forYou` (interests), `nearby` (`lat`/`lng` or `city`), `ending` |
+| `GET /deals/{slug}` | Deal page for the app: branches, business, `claimable`, favorite, following, active code |
+| `GET /businesses/{slug}` | Business page for the app: branches, deals, reviews, following |
+| `GET /me`, `PATCH /me`, `DELETE /me` | Profile, stats, notification switches (incl. `notifyNearby`), locale, interests, blocks, memberships; delete account (`closeBusinesses: true` closes businesses only this person owns) |
+| `GET /me/redemptions`, `GET /me/favorites`, `GET /me/follows` | My codes (with the code while active), saved deals, followed businesses |
+| `PUT /me/interests` | Replace interests (category slugs) |
+| `PUT`/`DELETE /me/devices` | Register or remove a push token (FCM) |
+| `PUT`/`DELETE /me/blocks/{businessId}` | Block or unblock a business |
+| `POST /reports` | Report a deal, business or review (goes to Admin → Shikoyatlar) |
 | `POST /contact` | Contact form |
 | `POST /businesses` | Create a business (onboarding) |
 | `POST /business/{businessId}` | Workspace actions: profile, deals, branches, team, code check and completion, plan requests |
@@ -58,4 +68,4 @@ All writes require a same-origin request; authenticated routes use the session c
 | `GET /openapi.json` | Machine-readable summary of the public API |
 | `POST /dev/reset` | Restore demo data (development only) |
 
-Other handlers: `GET /media/{id}` (uploaded photos), `GET /manifest.webmanifest`, `GET /sitemap.xml`, `GET /robots.txt`.
+Other handlers: `GET /media/{id}` (uploaded photos), `GET /manifest.webmanifest`, `GET /sitemap.xml`, `GET /robots.txt`, `GET /.well-known/assetlinks.json` (Android App Links from `ANDROID_CERT_SHA256`).

@@ -460,4 +460,55 @@ const privacyConsent: Migration = {
   },
 };
 
-export const migrations: readonly Migration[] = [baseline, systemV1, billing, media, engagement, payments, autoModeration, freeLaunch, privacyConsent];
+/**
+ * The mobile app: sessions and login requests remember the client (web/app)
+ * and app build; users choose interests and may let us keep a rough
+ * notification area (~1 km) for "new deal near you"; push devices, business
+ * blocks and content reports get their own tables. Additive only.
+ */
+const appSupport: Migration = {
+  id: '0010_app_support',
+  async build({ db, columns }) {
+    const statements: D1PreparedStatement[] = [];
+    const add = async (table: string, column: string, definition: string) => {
+      if (!(await columns(table)).has(column)) statements.push(db.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`));
+    };
+    await add('sessions', 'client', 'TEXT');
+    await add('sessions', 'app_build', 'TEXT');
+    await add('login_requests', 'client', 'TEXT');
+    await add('users', 'notify_nearby', 'INTEGER NOT NULL DEFAULT 0');
+    await add('users', 'notify_lat_e2', 'INTEGER');
+    await add('users', 'notify_lng_e2', 'INTEGER');
+    await add('users', 'notify_city', 'TEXT');
+    await add('users', 'notify_area_at', 'TEXT');
+    statements.push(...sql(db, [
+      `CREATE TABLE IF NOT EXISTS user_interests (
+        user_id TEXT NOT NULL, category_id TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY(user_id, category_id), FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(category_id) REFERENCES categories(id)
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_user_interests_category ON user_interests(category_id)`,
+      `CREATE TABLE IF NOT EXISTS user_blocks (
+        user_id TEXT NOT NULL, business_id TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY(user_id, business_id), FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(business_id) REFERENCES businesses(id)
+      )`,
+      `CREATE TABLE IF NOT EXISTS devices (
+        token TEXT PRIMARY KEY, user_id TEXT NOT NULL, platform TEXT NOT NULL, locale TEXT, app_build TEXT,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, last_seen_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_devices_user ON devices(user_id)`,
+      `CREATE TABLE IF NOT EXISTS reports (
+        id TEXT PRIMARY KEY, reporter_id TEXT NOT NULL, target_type TEXT NOT NULL, target_id TEXT NOT NULL,
+        reason TEXT NOT NULL, comment TEXT, status TEXT NOT NULL DEFAULT 'NEW',
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, handled_at TEXT, handled_by TEXT,
+        FOREIGN KEY(reporter_id) REFERENCES users(id)
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status, created_at)`,
+      `CREATE INDEX IF NOT EXISTS idx_reports_created ON reports(created_at)`,
+      `CREATE INDEX IF NOT EXISTS idx_sessions_client ON sessions(client, last_seen_at)`,
+    ]));
+    return statements;
+  },
+};
+
+export const migrations: readonly Migration[] = [baseline, systemV1, billing, media, engagement, payments, autoModeration, freeLaunch, privacyConsent, appSupport];

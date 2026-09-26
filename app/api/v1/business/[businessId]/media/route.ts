@@ -1,6 +1,6 @@
 import { getDb } from '@/db/client';
 import { assertSameOrigin, json, route } from '@/lib/http';
-import { apiUser } from '@/modules/auth/current';
+import { apiUser } from '@/modules/auth/api-user';
 import { requireMembership } from '@/modules/businesses/access';
 import { DomainError } from '@/modules/errors';
 import { MEDIA_KINDS, MEDIA_RULES, saveMedia, type MediaKind } from '@/modules/media/service';

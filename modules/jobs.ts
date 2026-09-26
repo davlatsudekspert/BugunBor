@@ -1,6 +1,7 @@
 import { waitUntil } from 'cloudflare:workers';
 
 import { getConfig, isTelegramConfigured } from '@/lib/env';
+import { createFcmSender } from '@/modules/notifications/push';
 import { processNotifications } from '@/modules/notifications/service';
 import { createTelegramApi } from '@/modules/telegram/api';
 import { ensureTelegramWebhook } from '@/modules/telegram/setup';
@@ -30,7 +31,10 @@ export function tickBackgroundJobs(db: D1Database, now = Date.now()) {
   if (!isTelegramConfigured(config)) return;
   const task = ensureTelegramWebhook(db, config)
     .catch((error: unknown) => console.error('Telegram webhook setup failed', error))
-    .then(() => processNotifications(db, createTelegramApi(config.telegram.botToken!).sender, { appUrl: config.appUrl ?? 'https://bugunbor.uz' }))
+    .then(() => processNotifications(db, createTelegramApi(config.telegram.botToken!).sender, {
+      appUrl: config.appUrl ?? 'https://bugunbor.uz',
+      push: config.app.fcmServiceAccount ? createFcmSender(config.app.fcmServiceAccount) : null,
+    }))
     .catch((error: unknown) => console.error('Notification job failed', error));
   try {
     waitUntil(task);

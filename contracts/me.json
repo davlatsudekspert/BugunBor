@@ -1,0 +1,30 @@
+{
+  "user": {
+    "id": "alice",
+    "displayName": "Alice Karimova",
+    "phone": "+998901234567",
+    "locale": "uz",
+    "role": "CUSTOMER"
+  },
+  "stats": {
+    "redeemed": 0,
+    "savedUzs": 0,
+    "active": 0
+  },
+  "notifications": {
+    "notifyDeals": true,
+    "notifyReminders": true,
+    "notifyNearby": false
+  },
+  "interests": [
+    "taomlar"
+  ],
+  "blockedBusinessIds": [
+    "biz"
+  ],
+  "memberships": [],
+  "privacy": {
+    "acceptedVersion": null,
+    "currentVersion": "2026-09-26"
+  }
+}

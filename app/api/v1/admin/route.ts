@@ -5,7 +5,7 @@ import { seedDemoData } from '@/db/seed';
 import { getConfig, isTelegramConfigured } from '@/lib/env';
 import { assertSameOrigin, json, readJson, route } from '@/lib/http';
 import { saveCategory, setMessageStatus, updatePlan, updateSettings, updateUser } from '@/modules/admin/service';
-import { apiModerator } from '@/modules/auth/current';
+import { apiModerator } from '@/modules/auth/api-user';
 import { tryNormalizeUzbekPhone } from '@/modules/auth/phone';
 import { cancelBillingRequest, confirmBillingRequest, grantPlan, grantTrial, setTariffsEnabled } from '@/modules/billing/service';
 import { BILLING_PERIODS, TRIAL_MONTH_OPTIONS } from '@/modules/billing/pricing';
@@ -15,6 +15,7 @@ import { DEMO_SETTING, forgetDemoSetting } from '@/modules/demo';
 import { DomainError } from '@/modules/errors';
 import { AUTO_SETTING_KEYS, autoModerateBusiness, autoModerateDeal, autoModeratePendingDeals } from '@/modules/moderation/auto';
 import { archiveDealByModerator, decideBusiness, decideDeal, removeImagesByModerator, setBusinessSuspended } from '@/modules/moderation/service';
+import { resolveReport } from '@/modules/reports';
 import { createTelegramApi } from '@/modules/telegram/api';
 import { ensureTelegramWebhook } from '@/modules/telegram/setup';
 
@@ -31,6 +32,7 @@ const actionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('message.status'), messageId: id, status: z.enum(['NEW', 'READ', 'ARCHIVED']) }),
   z.object({ type: z.literal('images.remove'), target: z.enum(['BUSINESS', 'DEAL']), id, reason }),
   z.object({ type: z.literal('review.visibility'), reviewId: id, hidden: z.boolean(), reason }),
+  z.object({ type: z.literal('report.resolve'), reportId: id, status: z.enum(['RESOLVED', 'DISMISSED']) }),
   // Admin only below.
   z.object({ type: z.literal('business.suspend'), businessId: id, suspended: z.boolean(), reason }),
   z.object({ type: z.literal('business.trial'), businessId: id, months: z.number().int().refine((value) => (TRIAL_MONTH_OPTIONS as readonly number[]).includes(value)) }),
@@ -73,7 +75,7 @@ const actionSchema = z.discriminatedUnion('type', [
   }),
 ]);
 
-const moderatorActions = new Set(['deal.decide', 'deal.archive', 'business.decide', 'message.status', 'images.remove', 'review.visibility']);
+const moderatorActions = new Set(['deal.decide', 'deal.archive', 'business.decide', 'message.status', 'images.remove', 'review.visibility', 'report.resolve']);
 
 export const POST = route(async (request: Request) => {
   assertSameOrigin(request);
@@ -100,6 +102,9 @@ export const POST = route(async (request: Request) => {
       return json({ data: { ok: true } });
     case 'review.visibility':
       await setReviewHidden(db, { actorId, reviewId: action.reviewId, hidden: action.hidden, reason: action.reason });
+      return json({ data: { ok: true } });
+    case 'report.resolve':
+      await resolveReport(db, { actorId, reportId: action.reportId, status: action.status });
       return json({ data: { ok: true } });
     case 'images.remove':
       await removeImagesByModerator(db, { actorId, target: action.target, id: action.id, reason: action.reason });

@@ -17,15 +17,15 @@ export type SessionUser = {
   status: UserStatus;
 };
 
-export async function createSession(db: D1Database, userId: string, meta: { userAgent?: string | null; ipHash?: string | null }, now = new Date()) {
+export async function createSession(db: D1Database, userId: string, meta: { userAgent?: string | null; ipHash?: string | null; client?: 'web' | 'app'; appBuild?: string | null }, now = new Date()) {
   const token = randomToken(32);
   const id = crypto.randomUUID();
   const expiresAt = addMinutes(now, SESSION_DAYS * 24 * 60);
   const nowDb = toDbTime(now);
   await db
-    .prepare(`INSERT INTO sessions(id, user_id, token_hash, created_at, expires_at, last_seen_at, user_agent, ip_hash)
-      VALUES (?1, ?2, ?3, ?4, ?5, ?4, ?6, ?7)`)
-    .bind(id, userId, await sha256Hex(token), nowDb, toDbTime(expiresAt), meta.userAgent?.slice(0, 300) ?? null, meta.ipHash ?? null)
+    .prepare(`INSERT INTO sessions(id, user_id, token_hash, created_at, expires_at, last_seen_at, user_agent, ip_hash, client, app_build)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?4, ?6, ?7, ?8, ?9)`)
+    .bind(id, userId, await sha256Hex(token), nowDb, toDbTime(expiresAt), meta.userAgent?.slice(0, 300) ?? null, meta.ipHash ?? null, meta.client ?? 'web', meta.appBuild ?? null)
     .run();
   return { id, token, expiresAt };
 }

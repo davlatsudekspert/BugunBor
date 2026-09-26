@@ -19,6 +19,11 @@ export type AppConfig = {
    * a provider exists only when all its secrets are set. `sandbox` keeps its
    * callback endpoint answering for provider tests while payments are off.
    */
+  app: {
+    fcmServiceAccount: string | null;
+    reviewLoginCode: string | null;
+    minBuild: number;
+  };
   payments: {
     enabled: boolean;
     payme: { merchantId: string; key: string; sandbox: boolean; fiscal: PaymeFiscal | null } | null;
@@ -49,6 +54,11 @@ export function getConfig(): AppConfig {
       botToken: clean(env.TELEGRAM_BOT_TOKEN),
       botUsername: clean(env.TELEGRAM_BOT_USERNAME)?.replace(/^@/, '') ?? null,
       webhookSecret: clean(env.TELEGRAM_WEBHOOK_SECRET),
+    },
+    app: {
+      fcmServiceAccount: clean(env.FCM_SERVICE_ACCOUNT),
+      reviewLoginCode: (clean(env.REVIEW_LOGIN_CODE)?.length ?? 0) >= 12 ? clean(env.REVIEW_LOGIN_CODE) : null,
+      minBuild: Number.parseInt(clean(env.MIN_APP_BUILD) ?? '0', 10) || 0,
     },
     payments: paymentsConfig(),
   };

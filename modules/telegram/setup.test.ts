@@ -16,6 +16,7 @@ function config(overrides: Partial<AppConfig['telegram']> & { appUrl?: string | 
     adminPhones: [],
     hashSecret: 'secret',
     payments: { enabled: false, payme: null, click: null },
+    app: { fcmServiceAccount: null, reviewLoginCode: null, minBuild: 0 },
     telegram: { botToken: '1:token-a', botUsername: 'bugunborbot', webhookSecret: 'hook-secret', ...telegram },
   };
 }

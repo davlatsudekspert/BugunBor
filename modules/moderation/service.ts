@@ -1,7 +1,8 @@
-import { toDbTime } from '@/lib/time';
+import { parseDbTime, toDbTime } from '@/lib/time';
 import { auditStatement } from '@/modules/audit';
 import { getBillingSettings, trialStartStatement } from '@/modules/billing/service';
 import { DomainError } from '@/modules/errors';
+import { interestDealStatement } from '@/modules/notifications/nearby';
 import { followersNewDealStatement, teamStatement } from '@/modules/notifications/service';
 
 export type Decision = 'APPROVE' | 'REJECT';
@@ -44,6 +45,7 @@ export async function decideDeal(db: D1Database, input: { actorId: string; dealI
       ? [
           // Followers hear about it when it actually starts.
           followersNewDealStatement(db, { dealId: input.dealId, sendAfter: deal.startsAt > nowDb ? deal.startsAt : nowDb, nowDb }),
+          interestDealStatement(db, { dealId: input.dealId, sendAfter: deal.startsAt > nowDb ? parseDbTime(deal.startsAt) : now, nowDb }),
           teamStatement(db, { businessId: deal.businessId, kind: 'DEAL_APPROVED', key: input.dealId, payload: { dealId: input.dealId }, nowDb }),
         ]
       : [teamStatement(db, { businessId: deal.businessId, kind: 'DEAL_REJECTED', key: `${input.dealId}:${nowDb}`, payload: { dealId: input.dealId, reason }, nowDb })]),

@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { getDb } from '@/db/client';
 import { assertSameOrigin, json, readJson, route } from '@/lib/http';
-import { apiUser } from '@/modules/auth/current';
+import { apiUser } from '@/modules/auth/api-user';
 import { REVIEW_RULES, createReview } from '@/modules/engagement/reviews';
 import { RATE_RULES, enforceRateLimit } from '@/modules/rate-limit';
 

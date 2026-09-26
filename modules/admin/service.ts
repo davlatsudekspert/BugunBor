@@ -235,3 +235,19 @@ export async function listBillingRequests(db: D1Database, status: string | null)
     .all<BillingRequestRow>();
   return rows.results;
 }
+
+export type AppUsage = { activeUsers: number; devices: number; latestBuild: string | null; openReports: number };
+
+/** Who uses the mobile app (sessions seen in the last 30 days), push devices and open reports. */
+export async function appUsage(db: D1Database, now = new Date()): Promise<AppUsage> {
+  const since = toDbTime(new Date(now.getTime() - 30 * 24 * 60 * 60_000));
+  const row = await db
+    .prepare(`SELECT
+        (SELECT COUNT(DISTINCT user_id) FROM sessions WHERE client = 'app' AND last_seen_at >= ?1) AS activeUsers,
+        (SELECT COUNT(*) FROM devices) AS devices,
+        (SELECT app_build FROM sessions WHERE client = 'app' AND app_build IS NOT NULL ORDER BY CAST(app_build AS INTEGER) DESC LIMIT 1) AS latestBuild,
+        (SELECT COUNT(*) FROM reports WHERE status = 'NEW') AS openReports`)
+    .bind(since)
+    .first<AppUsage>();
+  return row ?? { activeUsers: 0, devices: 0, latestBuild: null, openReports: 0 };
+}

@@ -3,14 +3,17 @@ import { fmt, getDictionary, isLocale, type Dictionary } from '@/lib/i18n';
 import { RETENTION } from '@/lib/retention';
 import { formatClock, formatNumericDate, isSameTashkentDay, parseDbTime, toDbTime } from '@/lib/time';
 import type { BotSender } from '@/modules/telegram/api';
+import { forgetDeviceToken, listDevices } from './devices';
+import { pushFromTelegram, type PushSender } from './push';
 
-// Telegram notifications go through an outbox table: domain code only adds
-// rows (inside its own transaction, deduplicated by key), and a background
-// job sends them later. A failed send never breaks a claim or a decision.
+// Notifications go through an outbox table: domain code only adds rows
+// (inside its own transaction, deduplicated by key), and a background job
+// sends them later. A failed send never breaks a claim or a decision. People
+// with the app get a push on their phone; everyone else gets Telegram.
 
 export type NotificationKind =
   | 'NEW_DEAL' | 'CODE_REMINDER' | 'REDEEMED' | 'DEAL_APPROVED' | 'DEAL_REJECTED' | 'BUSINESS_APPROVED' | 'BUSINESS_REJECTED' | 'PAYMENT_RECEIVED'
-  | 'REVIEW_NEEDED' | 'PAYMENT_REQUEST';
+  | 'REVIEW_NEEDED' | 'PAYMENT_REQUEST' | 'INTEREST_DEAL' | 'REPORT';
 
 const RETRY_LIMIT = 3;
 const REMINDER_BEFORE_MINUTES = 30;
@@ -63,12 +66,12 @@ export function teamStatement(db: D1Database, input: { businessId: string; kind:
  * the automatic checks held back go to moderators and admins, manual payment
  * requests to admins. Once per key.
  */
-export function staffAlertStatement(db: D1Database, input: { kind: 'REVIEW_NEEDED' | 'PAYMENT_REQUEST'; key: string; payload: Record<string, string>; nowDb: string }) {
+export function staffAlertStatement(db: D1Database, input: { kind: 'REVIEW_NEEDED' | 'PAYMENT_REQUEST' | 'REPORT'; key: string; payload: Record<string, string>; nowDb: string }) {
   return db
     .prepare(`INSERT OR IGNORE INTO notifications(id, user_id, kind, dedupe_key, payload_json, send_after, created_at)
       SELECT lower(hex(randomblob(16))), u.id, ?1, ?1 || ':' || ?2 || ':' || u.id, ?3, ?4, ?4
       FROM users u WHERE u.status = 'ACTIVE' AND u.telegram_user_id IS NOT NULL
-        AND (u.role = 'ADMIN' OR (u.role = 'MODERATOR' AND ?1 = 'REVIEW_NEEDED'))`)
+        AND (u.role = 'ADMIN' OR (u.role = 'MODERATOR' AND ?1 IN ('REVIEW_NEEDED', 'REPORT')))`)
     .bind(input.kind, input.key, JSON.stringify(input.payload), input.nowDb);
 }
 
@@ -87,7 +90,8 @@ async function render(db: D1Database, row: Row, t: Dictionary, now: Date, locale
   const n = t.notify;
   const nowDb = toDbTime(now);
   switch (row.kind) {
-    case 'NEW_DEAL': {
+    case 'NEW_DEAL':
+    case 'INTEREST_DEAL': {
       const deal = await db
         .prepare(`SELECT d.slug, d.title, d.discounted_price_uzs AS price, d.discount_percent AS percent, d.ends_at AS endsAt, b.name AS business
           FROM deals d JOIN businesses b ON b.id = d.business_id
@@ -96,7 +100,7 @@ async function render(db: D1Database, row: Row, t: Dictionary, now: Date, locale
         .first<{ slug: string; title: string; price: number; percent: number; endsAt: string; business: string }>();
       if (!deal) return null;
       return {
-        text: fmt(n.newDeal, { business: escapeHtml(deal.business), title: escapeHtml(deal.title), price: formatNumber(deal.price), percent: deal.percent, until: until(deal.endsAt, now) }),
+        text: fmt(row.kind === 'INTEREST_DEAL' ? n.interestDeal : n.newDeal, { business: escapeHtml(deal.business), title: escapeHtml(deal.title), price: formatNumber(deal.price), percent: deal.percent, until: until(deal.endsAt, now) }),
         button: n.newDealButton,
         path: `/deals/${deal.slug}`,
       };
@@ -182,6 +186,20 @@ async function render(db: D1Database, row: Row, t: Dictionary, now: Date, locale
         path: '/admin/billing',
       };
     }
+    case 'REPORT': {
+      const report = await db
+        .prepare(`SELECT target_type AS targetType, reason, comment FROM reports WHERE id = ?1 AND status = 'NEW'`)
+        .bind(payload.reportId)
+        .first<{ targetType: string; reason: string; comment: string | null }>();
+      if (!report) return null;
+      const reasons = t.reports.reasons as Record<string, string>;
+      const targets = t.reports.targets as Record<string, string>;
+      return {
+        text: fmt(n.report, { target: targets[report.targetType] ?? report.targetType, reason: reasons[report.reason] ?? report.reason, comment: escapeHtml(report.comment ?? '—') }),
+        button: n.reviewButton,
+        path: '/admin/reports',
+      };
+    }
     default:
       return null;
   }
@@ -194,7 +212,7 @@ const permanentError = (message: string) => /blocked by the user|chat not found|
  * Sends due notifications. Rows are claimed atomically (status SENDING), so
  * two isolates never send the same message; stuck claims are retried later.
  */
-export async function processNotifications(db: D1Database, sender: Pick<BotSender, 'sendMessage'>, options: { appUrl: string; now?: Date; limit?: number }) {
+export async function processNotifications(db: D1Database, sender: Pick<BotSender, 'sendMessage'>, options: { appUrl: string; now?: Date; limit?: number; push?: PushSender | null }) {
   const now = options.now ?? new Date();
   const nowDb = toDbTime(now);
   const stale = toDbTime(new Date(now.getTime() - 10 * 60_000));
@@ -220,7 +238,8 @@ export async function processNotifications(db: D1Database, sender: Pick<BotSende
       .prepare(`SELECT telegram_user_id AS chatId, locale, status FROM users WHERE id = ?1`)
       .bind(row.userId)
       .first<{ chatId: string | null; locale: string; status: string }>();
-    if (!user?.chatId || user.status !== 'ACTIVE') {
+    const devices = options.push ? await listDevices(db, row.userId) : [];
+    if ((!user?.chatId && !devices.length) || user?.status !== 'ACTIVE') {
       await finish('SKIPPED');
       summary.skipped += 1;
       continue;
@@ -235,6 +254,26 @@ export async function processNotifications(db: D1Database, sender: Pick<BotSende
       console.error('Notification render failed', row.id, error);
     }
     if (!message) {
+      await finish('SKIPPED');
+      summary.skipped += 1;
+      continue;
+    }
+    // The app first: one delivered push is enough; dead tokens are forgotten.
+    if (options.push && devices.length) {
+      const push = pushFromTelegram(message.text, `${options.appUrl}${message.path}`);
+      let delivered = false;
+      for (const device of devices) {
+        const result = await options.push.send(device.token, push).catch(() => 'failed' as const);
+        if (result === 'sent') delivered = true;
+        if (result === 'invalid-token') await forgetDeviceToken(db, device.token);
+      }
+      if (delivered) {
+        await finish('SENT');
+        summary.sent += 1;
+        continue;
+      }
+    }
+    if (!user.chatId) {
       await finish('SKIPPED');
       summary.skipped += 1;
       continue;
