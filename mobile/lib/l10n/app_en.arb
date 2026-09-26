@@ -217,5 +217,6 @@
   "profileBusinessHint": "Deals, branches and team are managed on the website",
   "profileAbout": "About",
   "cashierBadCode": "Invalid code. Check the 6 characters.",
-  "cashierNoBusiness": "Only staff of a verified business can check codes."
+  "cashierNoBusiness": "Only staff of a verified business can check codes.",
+  "homeSamplesNote": "For now these are sample deals that show how the app works. Real deals will appear here as soon as they are added."
 }

@@ -1400,6 +1400,12 @@ abstract class L {
   /// In uz, this message translates to:
   /// **'Kodlarni faqat tasdiqlangan biznes xodimlari tekshira oladi.'**
   String get cashierNoBusiness;
+
+  /// No description provided for @homeSamplesNote.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bu hududda hozircha namuna aksiyalar: ular ilova qanday ishlashini ko‘rsatadi. Haqiqiy aksiyalar paydo bo‘lishi bilan shu yerda chiqadi.'**
+  String get homeSamplesNote;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

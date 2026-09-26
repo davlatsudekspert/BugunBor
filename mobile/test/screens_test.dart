@@ -276,4 +276,27 @@ void main() {
     expect(find.text('Aksiyalar'), findsWidgets);
     await checkTapTargets(tester);
   });
+
+  testWidgets('only sample deals: shown with the «Namuna» mark, never bookable', (tester) async {
+    final server = FakeServer.standard();
+    final feed = contractMap('feed');
+    List<Map<String, dynamic>> samples(Object? list) => [
+      for (final deal in (list as List).cast<Map<String, dynamic>>()) {...deal, 'isDemo': true},
+    ];
+    server.routes['GET /api/v1/feed'] = (_) => {
+      'data': {...feed, 'located': false, 'forYou': samples(feed['nearby']), 'nearby': samples(feed['nearby']), 'ending': samples(feed['ending'])},
+    };
+    server.routes['GET /api/v1/deals/:slug'] = (_) => {
+      'data': {...contractMap('deal'), 'isDemo': true, 'claimable': false},
+    };
+    await pumpApp(tester, server: server);
+    expect(find.textContaining('namuna aksiyalar'), findsOneWidget);
+    expect(find.text('Namuna'), findsWidgets);
+    await showDeal(tester);
+    await tester.tap(find.text('Osh').hitTestable().first);
+    await settle(tester);
+    expect(find.textContaining('Bu namuna aksiya'), findsOneWidget);
+    expect(find.text('Band qilish'), findsNothing);
+    expect(find.text('Band qilish uchun kiring'), findsNothing);
+  });
 }

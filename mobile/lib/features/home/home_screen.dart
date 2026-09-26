@@ -137,14 +137,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     final data = feed.requireValue;
     final blocked = ref.watch(meProvider).value?.blockedBusinessIds ?? const <String>{};
     bool visible(DealCard deal) => !blocked.contains(deal.business.id);
-    final forYou = data.forYou.where((deal) => visible(deal) && !deal.isDemo).toList();
-    final nearby = data.nearby.where((deal) => visible(deal) && !deal.isDemo).toList();
-    final ending = data.ending.where((deal) => visible(deal) && !deal.isDemo).toList();
+    final hasReal = data.nearby.any((deal) => visible(deal) && !deal.isDemo);
+    // Real deals first. Where there are none yet, the sample ones (marked
+    // «Namuna», never bookable) fill the sections to show how it works.
+    List<DealCard> pick(List<DealCard> deals) => deals.where((deal) => visible(deal) && (!hasReal || !deal.isDemo)).toList();
+    final forYou = pick(data.forYou);
+    final nearby = pick(data.nearby);
+    final ending = pick(data.ending);
     final seen = <String>{};
-    final demo = [...data.nearby, ...data.ending, ...data.forYou].where((deal) => deal.isDemo && seen.add(deal.id)).toList();
+    final demo = hasReal ? [...data.nearby, ...data.ending, ...data.forYou].where((deal) => deal.isDemo && seen.add(deal.id)).toList() : <DealCard>[];
+    final onlySamples = !hasReal && nearby.isNotEmpty;
     final interests = ref.watch(interestsProvider);
 
-    if (nearby.isEmpty && demo.isEmpty) {
+    if (nearby.isEmpty) {
       return [
         SliverFillRemaining(
           hasScrollBody: false,
@@ -154,39 +159,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     }
 
     return [
-      if (nearby.isNotEmpty) ...[
+      if (onlySamples)
         SliverToBoxAdapter(
-          child: SectionTitle(l.homeForYou, action: interests.isEmpty ? null : l.profileInterests, onAction: () => context.push('/interests')),
+          child: _Note(icon: Icons.info_outline_rounded, text: l.homeSamplesNote),
         ),
+      SliverToBoxAdapter(
+        child: SectionTitle(l.homeForYou, action: interests.isEmpty ? null : l.profileInterests, onAction: () => context.push('/interests')),
+      ),
+      SliverToBoxAdapter(
+        child: forYou.isEmpty ? _InterestsPrompt(hasInterests: interests.isNotEmpty) : _DealRow(deals: forYou),
+      ),
+      SliverToBoxAdapter(
+        child: SectionTitle(
+          located ? l.homeNearby : l.homeInCity(cityName ?? ''),
+          action: data.total > nearby.length || nearby.length > 8 ? l.homeAll : null,
+          onAction: () => context.go('/search?sort=${located ? 'near' : 'ending'}'),
+        ),
+      ),
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: Gap.gutter),
+        sliver: SliverList.separated(
+          itemCount: nearby.length.clamp(0, 8),
+          separatorBuilder: (_, _) => const SizedBox(height: Gap.md),
+          itemBuilder: (context, index) => DealTile(nearby[index]),
+        ),
+      ),
+      if (ending.length > 3 && data.total > 4) ...[
         SliverToBoxAdapter(
-          child: forYou.isEmpty ? _InterestsPrompt(hasInterests: interests.isNotEmpty) : _DealRow(deals: forYou),
+          child: SectionTitle(l.homeEnding, action: l.homeAll, onAction: () => context.go('/search?sort=ending')),
         ),
-        SliverToBoxAdapter(
-          child: SectionTitle(
-            located ? l.homeNearby : l.homeInCity(cityName ?? ''),
-            action: data.total > nearby.length || nearby.length > 8 ? l.homeAll : null,
-            onAction: () => context.go('/search?sort=${located ? 'near' : 'ending'}'),
-          ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: Gap.gutter),
-          sliver: SliverList.separated(
-            itemCount: nearby.length.clamp(0, 8),
-            separatorBuilder: (_, _) => const SizedBox(height: Gap.md),
-            itemBuilder: (context, index) => DealTile(nearby[index]),
-          ),
-        ),
-        if (ending.length > 3 && data.total > 4) ...[
-          SliverToBoxAdapter(
-            child: SectionTitle(l.homeEnding, action: l.homeAll, onAction: () => context.go('/search?sort=ending')),
-          ),
-          SliverToBoxAdapter(child: _DealRow(deals: ending)),
-        ],
-      ] else
-        SliverToBoxAdapter(
-          child: _Note(icon: Icons.storefront_outlined, text: '${l.homeEmptyTitle}. ${l.homeEmptyText}'),
-        ),
-      if (demo.isNotEmpty) ...[
+        SliverToBoxAdapter(child: _DealRow(deals: ending)),
+      ],
+      // For business owners: this is how their deals would look.
+      if (demo.isNotEmpty || onlySamples) ...[
         SliverToBoxAdapter(child: SectionTitle(l.demoCarouselTitle)),
         SliverToBoxAdapter(
           child: Padding(
@@ -194,7 +199,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
             child: Text(l.demoCarouselText, style: TextStyle(color: context.mutedText, height: 1.4)),
           ),
         ),
-        SliverToBoxAdapter(child: _DealRow(deals: demo)),
+        if (demo.isNotEmpty) SliverToBoxAdapter(child: _DealRow(deals: demo)),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.md, Gap.gutter, 0),
@@ -283,14 +288,16 @@ class _DealRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final width = (MediaQuery.sizeOf(context).width * 0.72).clamp(220.0, 300.0);
-    return SizedBox(
-      height: width * 10 / 16 + 118 * MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.4),
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: Gap.gutter),
-        itemCount: deals.length,
-        separatorBuilder: (_, _) => const SizedBox(width: Gap.md),
-        itemBuilder: (context, index) => DealCompactCard(deals[index], width: width),
+    // At most a dozen cards (the server's limit), so a plain row: its height
+    // follows the content at any text size instead of a guessed number.
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: Gap.gutter),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var index = 0; index < deals.length; index++) ...[if (index > 0) const SizedBox(width: Gap.md), DealCompactCard(deals[index], width: width)],
+        ],
       ),
     );
   }

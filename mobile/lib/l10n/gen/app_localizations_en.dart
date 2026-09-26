@@ -699,4 +699,7 @@ class LEn extends L {
 
   @override
   String get cashierNoBusiness => 'Only staff of a verified business can check codes.';
+
+  @override
+  String get homeSamplesNote => 'For now these are sample deals that show how the app works. Real deals will appear here as soon as they are added.';
 }

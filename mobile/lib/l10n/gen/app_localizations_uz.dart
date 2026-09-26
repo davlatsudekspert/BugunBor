@@ -700,4 +700,8 @@ class LUz extends L {
 
   @override
   String get cashierNoBusiness => 'Kodlarni faqat tasdiqlangan biznes xodimlari tekshira oladi.';
+
+  @override
+  String get homeSamplesNote =>
+      'Bu hududda hozircha namuna aksiyalar: ular ilova qanday ishlashini ko‘rsatadi. Haqiqiy aksiyalar paydo bo‘lishi bilan shu yerda chiqadi.';
 }
