@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
+import { toDbTime } from '@/lib/time';
 import { NOW, marketplace } from '@/test/fixtures';
 import { updateBusinessProfile } from '@/modules/businesses/service';
-import { assertOwnMedia, base64ToBytes, bytesToBase64, detectImageType, getMedia, imageSize, pruneOrphanMediaStatement, saveMedia } from './service';
+import { removeImagesByModerator } from '@/modules/moderation/service';
+import { MEDIA_RULES, assertOwnMedia, base64ToBytes, bytesToBase64, detectImageType, getMedia, imageSize, pruneOrphanMediaStatement, saveMedia } from './service';
 
 const errorCode = async (promise: Promise<unknown>) => promise.then(() => 'OK', (error: { code?: string; message?: string }) => error.code ?? error.message ?? 'UNKNOWN');
 
@@ -102,5 +104,46 @@ describe('saving media', () => {
     await pruneOrphanMediaStatement(db, new Date(NOW.getTime() + 2 * 24 * 60 * 60_000)).run();
     expect(await getMedia(db, used.id)).not.toBeNull();
     expect(await getMedia(db, orphan.id)).toBeNull();
+  });
+
+  it('a photo a moderator takes down is deleted everywhere it was used', async () => {
+    const db = await marketplace();
+    const photo = await saveMedia(db, { businessId: 'biz', userId: 'owner', kind: 'DEAL', bytes: webp(800, 600) }, NOW);
+    const logo = await saveMedia(db, { businessId: 'biz', userId: 'owner', kind: 'LOGO', bytes: webp(400, 400) }, NOW);
+    await db.prepare(`UPDATE deals SET photo_id = ?1 WHERE id = 'deal'`).bind(photo.id).run();
+    // The same picture also serves as the cover, and the logo stays.
+    await db.prepare(`UPDATE businesses SET logo_id = ?1, cover_id = ?2 WHERE id = 'biz'`).bind(logo.id, photo.id).run();
+
+    expect(await errorCode(removeImagesByModerator(db, { actorId: 'mod', target: 'DEAL', id: 'deal', reason: 'Nomaqbul' }, NOW))).toBe('REASON_REQUIRED');
+    expect(await removeImagesByModerator(db, { actorId: 'mod', target: 'DEAL', id: 'deal', reason: 'Nomaqbul rasm bor' }, NOW)).toEqual([photo.id]);
+    expect(await getMedia(db, photo.id)).toBeNull();
+    expect(await db.prepare(`SELECT photo_id AS photo FROM deals WHERE id = 'deal'`).first()).toEqual({ photo: null });
+    expect(await db.prepare(`SELECT logo_id AS logo, cover_id AS cover FROM businesses WHERE id = 'biz'`).first()).toEqual({ logo: logo.id, cover: null });
+    expect(await getMedia(db, logo.id)).not.toBeNull();
+    expect(await errorCode(removeImagesByModerator(db, { actorId: 'mod', target: 'DEAL', id: 'nope', reason: 'Nomaqbul rasm bor' }, NOW))).toBe('NOT_FOUND');
+  });
+
+  it('frees the photo of a deleted draft', async () => {
+    const db = await marketplace();
+    const photo = await saveMedia(db, { businessId: 'biz', userId: 'owner', kind: 'DEAL', bytes: webp(800, 600) }, NOW);
+    await db.prepare(`UPDATE deals SET photo_id = ?1, deleted_at = ?2 WHERE id = 'deal'`).bind(photo.id, '2026-01-01 00:00:00').run();
+    await pruneOrphanMediaStatement(db, new Date(NOW.getTime() + 2 * 24 * 60 * 60_000)).run();
+    expect(await getMedia(db, photo.id)).toBeNull();
+  });
+
+  it('limits uploads per day, not for the life of the business', async () => {
+    const db = await marketplace();
+    const bytes = webp(800, 600);
+    const longAgo = '2000-01-01 00:00:00';
+    // Photos from long ago never count.
+    await db.prepare(`INSERT INTO media(id, business_id, kind, mime, data_base64, size, sha256, created_at)
+        WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < ?1)
+        SELECT printf('old-%d', i), 'biz', 'DEAL', 'image/webp', '', 1, '', ?2 FROM n`).bind(MEDIA_RULES.maxPerDay, longAgo).run();
+    await saveMedia(db, { businessId: 'biz', userId: 'owner', kind: 'DEAL', bytes }, NOW);
+    await db.prepare(`INSERT INTO media(id, business_id, kind, mime, data_base64, size, sha256, created_at)
+        WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < ?1)
+        SELECT printf('today-%d', i), 'biz', 'DEAL', 'image/webp', '', 1, '', ?2 FROM n`).bind(MEDIA_RULES.maxPerDay - 1, toDbTime(NOW)).run();
+    expect(await errorCode(saveMedia(db, { businessId: 'biz', userId: 'owner', kind: 'DEAL', bytes }, NOW))).toBe('MEDIA_LIMIT');
+    expect(await errorCode(saveMedia(db, { businessId: 'biz', userId: 'owner', kind: 'DEAL', bytes }, new Date(NOW.getTime() + 25 * 60 * 60_000)))).toBe('OK');
   });
 });

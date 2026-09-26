@@ -2,6 +2,8 @@ import { toDbTime } from '@/lib/time';
 import { auditStatement } from '@/modules/audit';
 import { DomainError } from '@/modules/errors';
 import { getAutoModerationSettings, reviewFlags, SYSTEM_MODERATOR_ID } from '@/modules/moderation/auto';
+import { MIN_REASON_LENGTH } from '@/modules/moderation/service';
+import { DELETED_USER_NAME } from '@/modules/auth/account';
 
 // Only customers whose code was actually redeemed can rate the business,
 // once per redemption and within a month, so ratings reflect real visits.
@@ -52,6 +54,8 @@ export async function createReview(db: D1Database, input: { userId: string; rede
 
 /** Moderators hide abusive reviews (or show them again); ratings follow. */
 export async function setReviewHidden(db: D1Database, input: { actorId: string; reviewId: string; hidden: boolean; reason: string }, now = new Date()) {
+  // A moderator says why (the automatic check writes its flags instead).
+  if (input.hidden && input.actorId !== SYSTEM_MODERATOR_ID && input.reason.trim().length < MIN_REASON_LENGTH) throw new DomainError('REASON_REQUIRED');
   const review = await db.prepare(`SELECT business_id AS businessId FROM reviews WHERE id = ?1`).bind(input.reviewId).first<{ businessId: string }>();
   if (!review) throw new DomainError('NOT_FOUND');
   const nowDb = toDbTime(now);
@@ -65,6 +69,8 @@ export async function setReviewHidden(db: D1Database, input: { actorId: string; 
 
 /** "Aziza Karimova" → "Aziza K." so reviews never expose full names. */
 export function reviewerName(displayName: string | null) {
+  // A deleted account's review stays, without a name.
+  if (displayName === DELETED_USER_NAME) return null;
   const parts = (displayName ?? '').trim().split(/\s+/).filter(Boolean);
   if (!parts.length) return null;
   return parts.length > 1 ? `${parts[0]} ${parts[1][0]}.` : parts[0];

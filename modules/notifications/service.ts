@@ -16,6 +16,8 @@ export type NotificationKind =
   | 'REVIEW_NEEDED' | 'PAYMENT_REQUEST' | 'INTEREST_DEAL' | 'REPORT';
 
 const RETRY_LIMIT = 3;
+/** Alerts a person can switch off in the profile; only these say so under the message. */
+const SWITCHABLE: ReadonlySet<NotificationKind> = new Set(['NEW_DEAL', 'CODE_REMINDER', 'INTEREST_DEAL']);
 const REMINDER_BEFORE_MINUTES = 30;
 
 /** New deal from a followed business, for every follower who wants deal alerts. */
@@ -279,7 +281,7 @@ export async function processNotifications(db: D1Database, sender: Pick<BotSende
       continue;
     }
     try {
-      await sender.sendMessage(user.chatId, `${message.text}\n\n<i>${t.notify.footer}</i>`, {
+      await sender.sendMessage(user.chatId, SWITCHABLE.has(row.kind) ? `${message.text}\n\n<i>${t.notify.footer}</i>` : message.text, {
         inline_keyboard: [[{ text: message.button, url: `${options.appUrl}${message.path}` }]],
       });
       await finish('SENT');

@@ -9,6 +9,7 @@ import { requireWorkspace } from '@/modules/businesses/current';
 import { redeemedToday } from '@/modules/businesses/service';
 import { normalizeRedemptionCode } from '@/modules/redemptions/codes';
 import { firstValues } from '@/lib/search-params';
+import { DELETED_USER_NAME } from '@/modules/auth/account';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -48,7 +49,7 @@ export default async function RedeemPage({ searchParams }: { searchParams: Promi
                 <li key={row.id} className="flex items-center justify-between gap-3 py-3 text-sm">
                   <div className="min-w-0">
                     <p className="truncate font-bold text-navy">{row.dealTitle}</p>
-                    <p className="truncate text-xs text-slate-500">{row.customerName} · {row.branchName}</p>
+                    <p className="truncate text-xs text-slate-500">{row.customerName === DELETED_USER_NAME ? t.common.deletedUser : row.customerName} · {row.branchName}</p>
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="font-bold text-primary">{formatSum(row.price, t)}</p>

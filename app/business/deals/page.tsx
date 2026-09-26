@@ -80,7 +80,7 @@ export default async function BusinessDealsPage({ searchParams }: { searchParams
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className={cn('rounded-full px-2.5 py-1 text-xs font-bold', tone[deal.effective] ?? 'bg-slate-100 text-slate-600')}>{t.deal.status[deal.effective]}</span>
-                    {deal.isSponsored ? <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800"><Crown className="size-3.5" aria-hidden /> TOP</span> : null}
+                    {deal.isSponsored ? <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800"><Crown className="size-3.5" aria-hidden /> {t.billing.topBadge}</span> : null}
                     <span className="text-xs text-slate-500">{fmt(d.window, { from: formatMoment(parseDbTime(deal.startsAt), t, locale), to: formatMoment(parseDbTime(deal.endsAt), t, locale) })}</span>
                   </div>
                   <p className="mt-1.5 truncate text-lg font-black text-navy">{deal.title}</p>

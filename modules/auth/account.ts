@@ -5,6 +5,9 @@ import { cancelRedemption } from '@/modules/redemptions/service';
 import { revokeAllSessionsStatement } from './sessions';
 import { removeAvatarStatement } from './avatar';
 
+/** What a deleted account is called in the database; pages show a translated word instead. */
+export const DELETED_USER_NAME = 'Deleted user';
+
 export async function updateDisplayName(db: D1Database, userId: string, displayName: string, now = new Date()) {
   await db.prepare(`UPDATE users SET display_name = ?2, updated_at = ?3 WHERE id = ?1`).bind(userId, displayName, toDbTime(now)).run();
 }
@@ -59,7 +62,7 @@ export async function deleteAccount(db: D1Database, userId: string, now = new Da
       auditStatement(db, { actorUserId: userId, businessId: id, action: 'business.closed', targetType: 'Business', targetId: id, reason: 'Owner deleted the account' }, nowDb),
     ]),
     db.prepare(`UPDATE users SET status = 'DELETED', phone = NULL, email = NULL, telegram_user_id = NULL, telegram_username = NULL,
-        display_name = 'Deleted user', notify_nearby = 0, notify_lat_e2 = NULL, notify_lng_e2 = NULL, notify_city = NULL, notify_area_at = NULL,
+        display_name = '${DELETED_USER_NAME}', notify_nearby = 0, notify_lat_e2 = NULL, notify_lng_e2 = NULL, notify_city = NULL, notify_area_at = NULL,
         deleted_at = ?2, updated_at = ?2 WHERE id = ?1`).bind(userId, nowDb),
     revokeAllSessionsStatement(db, userId, nowDb),
     db.prepare(`DELETE FROM favorites WHERE user_id = ?1`).bind(userId),

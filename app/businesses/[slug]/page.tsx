@@ -102,7 +102,7 @@ export default async function BusinessPage({ params }: { params: Promise<{ slug:
               <h1 className="mt-1 text-4xl font-black tracking-[-.05em] text-navy">{business.name}</h1>
               {business.rating ? (
                 <a href="#reviews" className="mt-2 inline-flex items-center gap-2 text-sm font-bold text-navy">
-                  <RatingStars value={business.rating.basisPoints / 100} />
+                  <RatingStars value={business.rating.basisPoints / 100} decorative />
                   {ratingText(business.rating.basisPoints)}
                   <span className="font-semibold text-slate-500">· {fmt(t.business.ratingCount, { count: business.rating.count })}</span>
                 </a>
@@ -117,7 +117,7 @@ export default async function BusinessPage({ params }: { params: Promise<{ slug:
                   businessId={business.id}
                   initial={follow}
                   loggedIn={Boolean(user)}
-                  labels={{ follow: t.business.follow, following: t.business.following, followers: t.business.followers, hint: t.business.followHint }}
+                  labels={{ follow: t.business.follow, following: t.business.following, followers: t.business.followers, hint: t.business.followHint, error: t.common.networkError }}
                 />
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -156,7 +156,7 @@ export default async function BusinessPage({ params }: { params: Promise<{ slug:
                 </div>
                 {review.comment ? <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">{review.comment}</p> : null}
                 <p className="mt-2 flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
-                  <span className="font-bold text-navy">{review.author ?? '—'}</span>
+                  <span className="font-bold text-navy">{review.author ?? t.common.anonymous}</span>
                   <span>· {review.dealTitle}</span>
                   <span className="inline-flex items-center gap-1 text-emerald-700"><BadgeCheck className="size-3.5" aria-hidden /> {t.business.verifiedReview}</span>
                 </p>

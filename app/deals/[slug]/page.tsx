@@ -135,13 +135,13 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
               </a>
               {deal.business.rating ? (
                 <a href={`/businesses/${deal.business.slug}#reviews`} className="ml-10 mt-0.5 flex items-center gap-1.5 text-xs font-bold text-navy">
-                  <RatingStars value={deal.business.rating.basisPoints / 100} className="[&>svg]:size-3.5" />
+                  <RatingStars value={deal.business.rating.basisPoints / 100} className="[&>svg]:size-3.5" decorative />
                   {ratingText(deal.business.rating.basisPoints)} <span className="font-semibold text-slate-500">· {fmt(t.business.ratingCount, { count: deal.business.rating.count })}</span>
                 </a>
               ) : null}
             </div>
             {deal.isPublic ? (
-              <FollowButton businessId={deal.business.id} initial={follow} loggedIn={Boolean(user)} compact labels={{ follow: t.business.follow, following: t.business.following, followers: t.business.followers, hint: t.business.followHint }} />
+              <FollowButton businessId={deal.business.id} initial={follow} loggedIn={Boolean(user)} compact labels={{ follow: t.business.follow, following: t.business.following, followers: t.business.followers, hint: t.business.followHint, error: t.common.networkError }} />
             ) : null}
           </div>
           {deal.isDemo || deal.business.isDemo ? <span className="mt-4 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-900">{t.common.sample}</span> : null}

@@ -36,6 +36,7 @@ export default async function SavedPage() {
       ) : null}
       {live.length ? (
         <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <h2 className="sr-only">{t.nav.deals}</h2>
           {live.map((deal) => <DealCard key={deal.id} deal={deal} t={t} locale={locale} favorite loggedIn showCity />)}
         </div>
       ) : null}

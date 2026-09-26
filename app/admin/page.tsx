@@ -15,6 +15,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t.admin.title, robots: { index: false, follow: false } };
 }
 
+/** Pages only an admin opens: a moderator is not shown cards that would lead to a 404. */
+const ADMIN_ONLY = ['/admin/billing', '/admin/users'];
+
 export default async function AdminOverviewPage() {
   const user = await requireModerator('/admin');
   const [{ t }, db] = await Promise.all([getI18n(), getDb()]);
@@ -34,7 +37,7 @@ export default async function AdminOverviewPage() {
   return (
     <AdminShell t={t} role={user.role} active="overview">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {cards.map((card) => (
+        {cards.filter((card) => user.role === 'ADMIN' || !ADMIN_ONLY.includes(card.href)).map((card) => (
           <a key={card.label} href={card.href} className={`group rounded-2xl border bg-white p-5 transition hover:shadow-md ${card.urgent ? 'border-primary/50' : 'border-slate-200'}`}>
             <span className="text-sm text-slate-500">{card.label}</span>
             <strong className={`mt-4 block text-3xl font-black ${card.urgent ? 'text-primary' : 'text-navy'}`}>{card.value}</strong>

@@ -119,8 +119,8 @@ export function DealForm({ businessId, businessName, dealId, categories, branche
             <span className="mb-1.5 block text-sm font-bold text-navy">{f.visual}</span>
             <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={f.visual}>
               {DEAL_VISUAL_KEYS.map((key) => (
-                <label key={key} title={key} className={cn('grid size-10 cursor-pointer place-items-center rounded-xl border text-xl transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/40', values.visual === key ? 'border-primary bg-primary/10 ring-2 ring-primary/30' : 'border-slate-200 hover:border-primary/40')}>
-                  <input type="radio" name="deal-visual" value={key} checked={values.visual === key} onChange={() => set('visual', key)} aria-label={key} className="sr-only" />
+                <label key={key} className={cn('grid size-10 cursor-pointer place-items-center rounded-xl border text-xl transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/40', values.visual === key ? 'border-primary bg-primary/10 ring-2 ring-primary/30' : 'border-slate-200 hover:border-primary/40')}>
+                  <input type="radio" name="deal-visual" value={key} checked={values.visual === key} onChange={() => set('visual', key)} aria-label={DEAL_VISUALS[key].emoji} className="sr-only" />
                   <span aria-hidden>{DEAL_VISUALS[key].emoji}</span>
                 </label>
               ))}
@@ -130,10 +130,10 @@ export function DealForm({ businessId, businessName, dealId, categories, branche
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label={`${f.originalPrice}, ${t.common.sum}`} error={errors.originalPrice}>
-            <input value={values.originalPrice} onChange={(event) => set('originalPrice', event.target.value.replace(/\D/g, ''))} inputMode="numeric" aria-invalid={Boolean(errors.originalPrice)} className={inputClass} />
+            <input value={values.originalPrice} onChange={(event) => set('originalPrice', event.target.value.replace(/\D/g, ''))} inputMode="numeric" maxLength={11} aria-invalid={Boolean(errors.originalPrice)} className={inputClass} />
           </Field>
           <Field label={`${f.price}, ${t.common.sum}`} error={errors.price} hint={percent ? fmt(f.discountPreview, { percent }) : undefined}>
-            <input value={values.price} onChange={(event) => set('price', event.target.value.replace(/\D/g, ''))} inputMode="numeric" aria-invalid={Boolean(errors.price)} className={inputClass} />
+            <input value={values.price} onChange={(event) => set('price', event.target.value.replace(/\D/g, ''))} inputMode="numeric" maxLength={11} aria-invalid={Boolean(errors.price)} className={inputClass} />
           </Field>
         </div>
 
@@ -147,12 +147,14 @@ export function DealForm({ businessId, businessName, dealId, categories, branche
         </div>
 
         <div className="grid gap-5 sm:grid-cols-3">
-          <Field label={f.quantity} error={errors.quantity}>
-            <input value={values.unlimited ? '' : values.quantity} disabled={values.unlimited} onChange={(event) => set('quantity', event.target.value.replace(/\D/g, ''))} inputMode="numeric" aria-invalid={Boolean(errors.quantity)} className={inputClass} />
-            <span className="mt-2 flex items-center gap-2 text-sm text-slate-600">
+          <div>
+            <Field label={f.quantity} error={errors.quantity}>
+              <input value={values.unlimited ? '' : values.quantity} disabled={values.unlimited} onChange={(event) => set('quantity', event.target.value.replace(/\D/g, ''))} inputMode="numeric" aria-invalid={Boolean(errors.quantity)} className={inputClass} />
+            </Field>
+            <label className="mt-2 flex min-h-8 cursor-pointer items-center gap-2 text-sm text-slate-600">
               <input type="checkbox" checked={values.unlimited} onChange={(event) => set('unlimited', event.target.checked)} className="size-4 accent-[var(--primary)]" /> {f.unlimited}
-            </span>
-          </Field>
+            </label>
+          </div>
           <Field label={f.perCustomer} error={errors.perCustomerLimit}>
             <select value={values.perCustomerLimit} onChange={(event) => set('perCustomerLimit', event.target.value)} className={inputClass}>
               {Array.from({ length: DEAL_RULES.maxPerCustomer }, (_, index) => index + 1).map((count) => <option key={count} value={count}>{count}</option>)}

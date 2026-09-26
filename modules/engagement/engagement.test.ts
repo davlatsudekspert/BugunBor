@@ -80,6 +80,9 @@ describe('notifications', () => {
     expect(alert.text).toContain('Somsa &lt;3');
     expect(alert.text).toContain('14');
     expect(alert.url).toBe('https://bugunbor.uz/deals/somsa');
+    // Only alerts a person can switch off say how; the team's decision message does not.
+    expect(alert.text).toContain('profilingizda o‘chirishingiz');
+    expect(sent.find((message) => message.chatId !== '1001')!.text).not.toContain('profilingizda o‘chirishingiz');
     // Nothing is sent twice.
     expect(await processNotifications(db, sender, { appUrl: 'https://bugunbor.uz', now: later(5) })).toEqual({ sent: 0, skipped: 0, failed: 0 });
   });
@@ -124,9 +127,15 @@ describe('reviews', () => {
     expect(await db.prepare(`SELECT rating_basis_points AS rating, review_count AS count FROM businesses WHERE id = 'biz'`).first()).toEqual({ rating: 400, count: 1 });
     expect(await listBusinessReviews(db, 'biz')).toMatchObject([{ rating: 4, comment: 'Osh juda mazali!', author: 'Alice K.', dealTitle: 'Osh' }]);
 
-    await setReviewHidden(db, { actorId: 'mod', reviewId: review.id, hidden: true, reason: 'Spam' }, later(20));
+    // A moderator says why a review is hidden.
+    expect(await errorCode(setReviewHidden(db, { actorId: 'mod', reviewId: review.id, hidden: true, reason: 'Spam' }, later(20)))).toBe('REASON_REQUIRED');
+    expect(await listBusinessReviews(db, 'biz')).toHaveLength(1);
+    await setReviewHidden(db, { actorId: 'mod', reviewId: review.id, hidden: true, reason: 'Reklama havolasi bor' }, later(20));
     expect(await db.prepare(`SELECT rating_basis_points AS rating, review_count AS count FROM businesses WHERE id = 'biz'`).first()).toEqual({ rating: 0, count: 0 });
     expect(await listBusinessReviews(db, 'biz')).toEqual([]);
+    // Showing it again needs no reason.
+    await setReviewHidden(db, { actorId: 'mod', reviewId: review.id, hidden: false, reason: '' }, later(21));
+    expect(await listBusinessReviews(db, 'biz')).toHaveLength(1);
   });
 
   it('closes the rating window after 30 days', async () => {
@@ -139,6 +148,8 @@ describe('reviews', () => {
   it('masks reviewer names', () => {
     expect(reviewerName('Aziza Karimova')).toBe('Aziza K.');
     expect(reviewerName('Jasur')).toBe('Jasur');
+    // A deleted account keeps its review but loses its name.
+    expect(reviewerName('Deleted user')).toBeNull();
     expect(reviewerName('  ')).toBeNull();
   });
 });

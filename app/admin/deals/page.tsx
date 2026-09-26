@@ -79,7 +79,7 @@ export default async function AdminDealsPage({ searchParams }: { searchParams: P
                     <ActionButton payload={{ type: 'images.remove', target: 'DEAL', id: deal.id }} label={a.removePhoto} reasonPrompt={a.removeImagesReason} tone="danger" networkError={t.common.networkError} />
                   ) : null}
                   {deal.status === 'ACTIVE' || deal.status === 'PAUSED' ? (
-                    <ActionButton payload={{ type: 'deal.archive', dealId: deal.id }} label={a.deals.archive} reasonPrompt={a.reasonHint} tone="danger" networkError={t.common.networkError} />
+                    <ActionButton payload={{ type: 'deal.archive', dealId: deal.id }} label={a.deals.archive} reasonPrompt={a.deals.archiveReason} tone="danger" networkError={t.common.networkError} />
                   ) : null}
                 </div>
               )}

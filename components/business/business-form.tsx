@@ -233,7 +233,7 @@ export function BusinessForm({ mode, businessId, canResubmit, pending, categorie
         </summary>
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
           <Field label={f.telegram} error={errors.telegram}>
-            <input name="telegram" value={telegram} onChange={(event) => setTelegram(event.target.value)} placeholder={f.telegramPlaceholder} className={inputClass} />
+            <input name="telegram" value={telegram} onChange={(event) => setTelegram(event.target.value)} maxLength={64} placeholder={f.telegramPlaceholder} className={inputClass} />
             {telegramUsername && !telegram ? (
               <button type="button" onClick={() => setTelegram(telegramUsername)} className="mt-2 inline-flex h-8 items-center gap-1.5 rounded-full bg-sky-50 px-3 text-xs font-bold text-sky-700">
                 <Send className="size-3.5" aria-hidden /> {fmt(f.myTelegram, { username: telegramUsername })}
@@ -241,10 +241,10 @@ export function BusinessForm({ mode, businessId, canResubmit, pending, categorie
             ) : null}
           </Field>
           <Field label={f.instagram} error={errors.instagram}>
-            <input name="instagram" defaultValue={initial.instagram ?? ''} placeholder={f.instagramPlaceholder} className={inputClass} />
+            <input name="instagram" defaultValue={initial.instagram ?? ''} maxLength={64} placeholder={f.instagramPlaceholder} className={inputClass} />
           </Field>
           <Field label={f.website} error={errors.website} className="sm:col-span-2">
-            <input name="website" type="url" defaultValue={initial.website ?? ''} placeholder={f.websitePlaceholder} className={inputClass} />
+            <input name="website" type="url" defaultValue={initial.website ?? ''} maxLength={200} placeholder={f.websitePlaceholder} className={inputClass} />
           </Field>
         </div>
       </details>

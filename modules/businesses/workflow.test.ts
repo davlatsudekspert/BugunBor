@@ -65,7 +65,7 @@ describe('business workflow', () => {
 
     const { id: dealId } = await createDeal(db, { businessId, userId: 'owner', input: dealInput([branchId]), submit: true }, NOW);
     expect(await errorCode(decideDeal(db, { actorId: 'mod', dealId, decision: 'APPROVE', reason: '' }, NOW))).toBe('BUSINESS_NOT_VERIFIED');
-    expect(await errorCode(decideBusiness(db, { actorId: 'mod', businessId, decision: 'REJECT', reason: 'short' }, NOW))).toBe('VALIDATION');
+    expect(await errorCode(decideBusiness(db, { actorId: 'mod', businessId, decision: 'REJECT', reason: 'short' }, NOW))).toBe('REASON_REQUIRED');
 
     await decideBusiness(db, { actorId: 'mod', businessId, decision: 'APPROVE', reason: '' }, NOW);
     const trial = await loadSubscription(db, businessId, NOW);

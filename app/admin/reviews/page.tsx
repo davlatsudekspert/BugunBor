@@ -32,7 +32,7 @@ export default async function AdminReviewsPage() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <a href={`/businesses/${review.businessSlug}#reviews`} className="font-black text-navy hover:text-primary">{review.businessName}</a>
-                  <p className="text-xs text-slate-500">{review.dealTitle} · {review.author ?? '—'} · {formatMoment(parseDbTime(review.createdAt), t, locale)}</p>
+                  <p className="text-xs text-slate-500">{review.dealTitle} · {review.author ?? t.common.anonymous} · {formatMoment(parseDbTime(review.createdAt), t, locale)}</p>
                 </div>
                 <RatingStars value={review.rating} />
               </div>

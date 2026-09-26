@@ -3,14 +3,19 @@
 import { LoaderCircle, LogOut, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
+/** Never throws: without a connection it answers { ok: false } and the caller shows its own error text. */
 async function send(url: string, method: string, body?: unknown) {
-  const response = await fetch(url, {
-    method,
-    headers: body === undefined ? undefined : { 'content-type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-  const payload = (await response.json().catch(() => ({}))) as { error?: { code: string; message: string } };
-  return { ok: response.ok, message: payload.error?.message, code: payload.error?.code };
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: body === undefined ? undefined : { 'content-type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const payload = (await response.json().catch(() => ({}))) as { error?: { code: string; message: string } };
+    return { ok: response.ok, message: payload.error?.message, code: payload.error?.code };
+  } catch {
+    return { ok: false, message: undefined, code: 'NETWORK' };
+  }
 }
 
 export function NameForm({ initial, labels }: { initial: string; labels: { name: string; placeholder: string; save: string; saved: string; error: string } }) {

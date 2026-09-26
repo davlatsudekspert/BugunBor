@@ -98,7 +98,7 @@ export function TeamManager({ businessId, currentUserId, members, t }: { busines
       >
         <h3 className="flex items-center gap-2 font-black text-navy"><UserPlus className="size-5 text-primary" aria-hidden /> {team.add}</h3>
         <Field label={team.phone} error={errors.phone} hint={team.hint}>
-          <input name="phone" type="tel" inputMode="tel" defaultValue="+998" className={inputClass} />
+          <input name="phone" type="tel" inputMode="tel" defaultValue="+998" maxLength={20} className={inputClass} />
         </Field>
         <fieldset>
           <legend className="mb-1.5 text-sm font-bold text-navy">{team.role}</legend>

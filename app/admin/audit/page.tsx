@@ -30,7 +30,7 @@ export default async function AdminAuditPage() {
               {rows.map((row) => (
                 <tr key={row.id} className="align-top">
                   <td className="whitespace-nowrap px-4 py-3 text-slate-500">{formatMoment(parseDbTime(row.createdAt), t, locale)}</td>
-                  <td className="px-4 py-3 font-semibold text-navy">{row.actorName ?? 'system'}</td>
+                  <td className="px-4 py-3 font-semibold text-navy">{row.actorName ?? t.common.system}</td>
                   <td className="px-4 py-3 font-mono text-xs text-navy">{row.action}</td>
                   <td className="px-4 py-3 text-slate-600">{row.businessName ? `${row.businessName} · ` : ''}{row.targetType}</td>
                   <td className="max-w-xs px-4 py-3 text-slate-600">{row.reason ?? ''}</td>

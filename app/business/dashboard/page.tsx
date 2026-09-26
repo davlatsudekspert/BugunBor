@@ -12,6 +12,7 @@ import { roleCan } from '@/modules/auth/authorization';
 import { requireWorkspace } from '@/modules/businesses/current';
 import { businessDashboard, profileChecklist } from '@/modules/businesses/service';
 import { listBusinessReviews } from '@/modules/engagement/reviews';
+import { DELETED_USER_NAME } from '@/modules/auth/account';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -90,7 +91,7 @@ export default async function BusinessDashboardPage() {
                 <li key={row.id} className="flex items-center justify-between gap-3 py-3">
                   <div className="min-w-0">
                     <p className="truncate font-bold text-navy">{row.dealTitle}</p>
-                    <p className="truncate text-xs text-slate-500">{row.customerName} · {row.branchName} · {formatMoment(parseDbTime(row.completedAt ?? row.createdAt), t, locale)}</p>
+                    <p className="truncate text-xs text-slate-500">{row.customerName === DELETED_USER_NAME ? t.common.deletedUser : row.customerName} · {row.branchName} · {formatMoment(parseDbTime(row.completedAt ?? row.createdAt), t, locale)}</p>
                   </div>
                   <span className={cn('shrink-0 rounded-full px-2.5 py-1 text-xs font-bold', statusTone[row.status] ?? statusTone.EXPIRED)}>{t.codes.status[row.status as keyof typeof t.codes.status] ?? row.status}</span>
                 </li>
@@ -124,7 +125,7 @@ export default async function BusinessDashboardPage() {
                   <li key={review.id} className="text-sm">
                     <RatingStars value={review.rating} className="[&>svg]:size-3.5" />
                     {review.comment ? <p className="mt-1 text-slate-700">{review.comment}</p> : null}
-                    <p className="mt-0.5 text-xs text-slate-500">{review.author ?? '—'} · {review.dealTitle}</p>
+                    <p className="mt-0.5 text-xs text-slate-500">{review.author ?? t.common.anonymous} · {review.dealTitle}</p>
                   </li>
                 ))}
               </ul>

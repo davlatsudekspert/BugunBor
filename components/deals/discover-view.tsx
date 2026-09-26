@@ -105,9 +105,9 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
 
           {!category && categories.length ? (
             <div className="scrollbar-none -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
-              <a href={href(basePath, params, { category: null, page: null })} className={cn('inline-flex h-9 shrink-0 items-center rounded-full border px-4 text-xs font-bold', !params.category ? 'border-primary bg-primary text-white' : 'border-slate-200 bg-white text-slate-600')}>{t.discover.allCategories}</a>
+              <a href={href(basePath, params, { category: null, page: null })} aria-current={!params.category ? 'true' : undefined} className={cn('inline-flex h-9 shrink-0 items-center rounded-full border px-4 text-xs font-bold', !params.category ? 'border-primary bg-primary text-white' : 'border-slate-200 bg-white text-slate-600')}>{t.discover.allCategories}</a>
               {categories.map((item) => (
-                <a key={item.slug} href={href(basePath, params, { category: item.slug, page: null })} className={cn('inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-4 text-xs font-bold', params.category === item.slug ? 'border-primary bg-primary text-white' : 'border-slate-200 bg-white text-slate-600')}>
+                <a key={item.slug} href={href(basePath, params, { category: item.slug, page: null })} aria-current={params.category === item.slug ? 'true' : undefined} className={cn('inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-4 text-xs font-bold', params.category === item.slug ? 'border-primary bg-primary text-white' : 'border-slate-200 bg-white text-slate-600')}>
                   <CategoryIcon icon={item.icon} className="size-3.5" /> {categoryName(item, locale)}
                 </a>
               ))}
@@ -123,6 +123,7 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         {visible.length ? (
           <>
+            <h2 className="sr-only">{t.nav.deals}</h2>
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {visible.map((deal) => (
                 <DealCard key={deal.id} deal={deal} t={t} locale={locale} favorite={favorites.has(deal.id)} loggedIn={Boolean(user)} />

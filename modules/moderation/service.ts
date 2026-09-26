@@ -9,7 +9,7 @@ export type Decision = 'APPROVE' | 'REJECT';
 export const MIN_REASON_LENGTH = 10;
 
 function checkReason(decision: Decision, reason: string) {
-  if (decision === 'REJECT' && reason.trim().length < MIN_REASON_LENGTH) throw new DomainError('VALIDATION');
+  if (decision === 'REJECT' && reason.trim().length < MIN_REASON_LENGTH) throw new DomainError('REASON_REQUIRED');
 }
 
 function moderationStatement(db: D1Database, input: { actorId: string; targetType: string; targetId: string; action: string; reason: string; before: unknown; after: unknown }, nowDb: string) {
@@ -88,7 +88,7 @@ export async function decideBusiness(db: D1Database, input: { actorId: string; b
 }
 
 export async function setBusinessSuspended(db: D1Database, input: { actorId: string; businessId: string; suspended: boolean; reason: string }, now = new Date()) {
-  if (input.suspended && input.reason.trim().length < MIN_REASON_LENGTH) throw new DomainError('VALIDATION');
+  if (input.suspended && input.reason.trim().length < MIN_REASON_LENGTH) throw new DomainError('REASON_REQUIRED');
   const nowDb = toDbTime(now);
   const results = await db.batch([
     db.prepare(`UPDATE businesses SET suspended_at = ?2, suspended_reason = ?3, updated_at = ?4 WHERE id = ?1 AND deleted_at IS NULL`)
@@ -100,7 +100,7 @@ export async function setBusinessSuspended(db: D1Database, input: { actorId: str
 
 /** Moderators can end a live deal that breaks the rules. */
 export async function archiveDealByModerator(db: D1Database, input: { actorId: string; dealId: string; reason: string }, now = new Date()) {
-  if (input.reason.trim().length < MIN_REASON_LENGTH) throw new DomainError('VALIDATION');
+  if (input.reason.trim().length < MIN_REASON_LENGTH) throw new DomainError('REASON_REQUIRED');
   const deal = await db.prepare(`SELECT status, business_id AS businessId FROM deals WHERE id = ?1 AND deleted_at IS NULL`).bind(input.dealId).first<{ status: string; businessId: string }>();
   if (!deal) throw new DomainError('NOT_FOUND');
   if (deal.status !== 'ACTIVE' && deal.status !== 'PAUSED') throw new DomainError('INVALID_TRANSITION');
@@ -112,17 +112,36 @@ export async function archiveDealByModerator(db: D1Database, input: { actorId: s
   ]);
 }
 
-/** Moderators can take down an inappropriate logo, cover or deal photo without touching anything else. */
+/**
+ * Moderators can take down an inappropriate logo, cover or deal photo without
+ * touching anything else. The image itself is deleted at once, together with
+ * every other place it was used (a copied deal), so its link stops working.
+ * Returns the ids of the deleted images.
+ */
 export async function removeImagesByModerator(db: D1Database, input: { actorId: string; target: 'BUSINESS' | 'DEAL'; id: string; reason: string }, now = new Date()) {
-  if (input.reason.trim().length < MIN_REASON_LENGTH) throw new DomainError('VALIDATION');
+  if (input.reason.trim().length < MIN_REASON_LENGTH) throw new DomainError('REASON_REQUIRED');
   const nowDb = toDbTime(now);
+  const current =
+    input.target === 'BUSINESS'
+      ? await db.prepare(`SELECT logo_id AS first, cover_id AS second FROM businesses WHERE id = ?1 AND deleted_at IS NULL`).bind(input.id).first<{ first: string | null; second: string | null }>()
+      : await db.prepare(`SELECT photo_id AS first, NULL AS second FROM deals WHERE id = ?1 AND deleted_at IS NULL`).bind(input.id).first<{ first: string | null; second: string | null }>();
+  if (!current) throw new DomainError('NOT_FOUND');
+  const images = [...new Set([current.first, current.second].filter((image): image is string => Boolean(image)))];
   const update =
     input.target === 'BUSINESS'
       ? db.prepare(`UPDATE businesses SET logo_id = NULL, cover_id = NULL, updated_at = ?2 WHERE id = ?1 AND deleted_at IS NULL`).bind(input.id, nowDb)
       : db.prepare(`UPDATE deals SET photo_id = NULL, updated_at = ?2 WHERE id = ?1 AND deleted_at IS NULL`).bind(input.id, nowDb);
   const results = await db.batch([
     update,
-    moderationStatement(db, { actorId: input.actorId, targetType: input.target === 'BUSINESS' ? 'Business' : 'Deal', targetId: input.id, action: 'REMOVE_IMAGES', reason: input.reason.trim(), before: {}, after: {} }, nowDb),
+    ...images.flatMap((image) => [
+      db.prepare(`UPDATE deals SET photo_id = NULL, updated_at = ?2 WHERE photo_id = ?1`).bind(image, nowDb),
+      db.prepare(`UPDATE businesses SET logo_id = CASE WHEN logo_id = ?1 THEN NULL ELSE logo_id END,
+          cover_id = CASE WHEN cover_id = ?1 THEN NULL ELSE cover_id END, updated_at = ?2
+        WHERE logo_id = ?1 OR cover_id = ?1`).bind(image, nowDb),
+      db.prepare(`DELETE FROM media WHERE id = ?1`).bind(image),
+    ]),
+    moderationStatement(db, { actorId: input.actorId, targetType: input.target === 'BUSINESS' ? 'Business' : 'Deal', targetId: input.id, action: 'REMOVE_IMAGES', reason: input.reason.trim(), before: { images }, after: {} }, nowDb),
   ]);
   if ((results[0].meta.changes ?? 0) !== 1) throw new DomainError('NOT_FOUND');
+  return images;
 }
