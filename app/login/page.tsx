@@ -43,6 +43,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <section className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-7 shadow-[0_20px_70px_rgba(20,40,55,.12)]">
         <h1 className="text-3xl font-black tracking-[-.04em] text-navy">{t.login.title}</h1>
         <p className="mt-3 leading-7 text-slate-600">{t.login.text}</p>
+        {target.startsWith('/business') ? (
+          <p className="mt-4 rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm font-semibold leading-6 text-orange-900">{t.login.businessNote}</p>
+        ) : null}
         <ol className="mt-5 space-y-2.5 text-sm text-slate-700">
           {t.login.steps.map((step, index) => (
             <li key={step} className="flex gap-3"><span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-black text-primary">{index + 1}</span>{step}</li>

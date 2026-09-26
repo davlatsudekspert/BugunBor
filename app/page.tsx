@@ -92,14 +92,15 @@ export default async function Home() {
               <button className="h-12 rounded-xl bg-primary px-6 text-sm font-bold text-white transition hover:bg-primary/90" type="submit">{t.home.find}</button>
             </form>
 
+            <a href="/business" className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl border border-orange-200 bg-white px-4 text-sm font-bold text-primary shadow-sm hover:border-primary/50">
+              <Store className="size-4" aria-hidden /> {t.home.heroBusiness} <ArrowRight className="size-4" aria-hidden />
+            </a>
+
             <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-500">
               <a href="/discover?sort=near" className="flex items-center gap-1.5 font-semibold text-navy hover:text-primary"><LocateFixed className="size-4 text-primary" aria-hidden /> {t.discover.nearMe}</a>
               <span className="flex items-center gap-1.5"><ShieldCheck className="size-4 text-emerald-600" aria-hidden /> {t.home.trustVerified}</span>
               <span className="flex items-center gap-1.5"><Sparkles className="size-4 text-amber-500" aria-hidden /> {t.home.trustFree}</span>
             </div>
-            <a href="/business" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline">
-              <Store className="size-4" aria-hidden /> {t.home.heroBusiness} <ArrowRight className="size-4" aria-hidden />
-            </a>
           </div>
 
           <div className="relative mx-auto w-full max-w-[520px] lg:justify-self-end">

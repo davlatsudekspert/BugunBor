@@ -259,6 +259,7 @@ export const uz = {
     notConfigured: 'Telegram orqali kirish hali sozlanmagan. Administrator bot sozlamalarini kiritishi kerak.',
     consent: '{privacy} va {terms}ga roziman',
     consentHint: 'Kirish uchun avval rozilik belgisini qo‘ying.',
+    businessNote: 'Biznes uchun alohida ro‘yxatdan o‘tish shart emas: Telegram orqali kiring, keyin biznes ma’lumotlarini to‘ldirasiz.',
     termsLink: 'foydalanish shartlari',
     privacyLink: 'Maxfiylik siyosati',
     devTitle: 'Test rejimi',
