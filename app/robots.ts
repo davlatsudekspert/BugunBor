@@ -1,5 +1,7 @@
 import type { MetadataRoute } from 'next';
 
+import { getConfig } from '@/lib/env';
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
@@ -9,6 +11,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/account', '/admin', '/business/', '/api/', '/login', '/lang/', '/r/'],
       },
     ],
-    sitemap: 'https://bugunbor.uz/sitemap.xml',
+    sitemap: `${getConfig().appUrl ?? 'https://bugunbor.uz'}/sitemap.xml`,
   };
 }

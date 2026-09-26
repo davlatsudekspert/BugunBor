@@ -17,11 +17,16 @@ async function chosenLocale(searchParams: Props['searchParams']): Promise<Privac
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const { lang } = firstValues(await searchParams);
   const policy = privacyPolicy(await chosenLocale(searchParams));
   return {
     title: policy.title,
     description: policy.intro,
-    alternates: { canonical: '/privacy', languages: { 'uz-Latn': '/privacy?lang=uz', ru: '/privacy?lang=ru', en: '/privacy?lang=en' } },
+    // A chosen language version is its own page; the plain address follows the site's language.
+    alternates: {
+      canonical: isPrivacyLocale(lang) ? `/privacy?lang=${lang}` : '/privacy',
+      languages: { 'uz-Latn': '/privacy?lang=uz', ru: '/privacy?lang=ru', en: '/privacy?lang=en' },
+    },
   };
 }
 

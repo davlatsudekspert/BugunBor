@@ -8,7 +8,7 @@ import { getBillingSettings, listPlans } from '@/modules/billing/service';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
-  return { title: t.faq.title, alternates: { canonical: '/faq' } };
+  return { title: t.faq.title, description: t.faq.metaDescription, alternates: { canonical: '/faq' } };
 }
 
 export default async function FaqPage() {

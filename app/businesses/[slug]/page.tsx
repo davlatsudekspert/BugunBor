@@ -42,7 +42,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const [{ t }, business] = await Promise.all([getI18n(), load(slug)]);
   if (!business) return { title: t.business.notFoundTitle, robots: { index: false } };
-  return { title: business.name, description: business.description.slice(0, 200), alternates: { canonical: `/businesses/${business.slug}` } };
+  return {
+    title: business.name,
+    description: business.description.slice(0, 200),
+    alternates: { canonical: `/businesses/${business.slug}` },
+    // Sample (demo) businesses are made up: shown to people, not to search engines.
+    robots: { index: !business.isDemo, follow: true },
+  };
 }
 
 export default async function BusinessPage({ params }: { params: Promise<{ slug: string }> }) {

@@ -886,6 +886,7 @@ export const uz = {
   },
   faq: {
     title: 'Savol-javoblar',
+    metaDescription: 'BugunBor haqida ko‘p so‘raladigan savollar: aksiya qanday band qilinadi, kod qancha amal qiladi, to‘lov qayerda qilinadi va biznes qanday qo‘shiladi.',
     freeAnswer: 'Hozircha bepul — mijozlar uchun ham, bizneslar uchun ham. Ro‘yxatdan o‘tgan bizneslarga {plan} tarifi imkoniyatlari sovg‘a qilinadi. Tariflar joriy etilsa, kamida {months} oy bepul beriladi va oldindan xabar qilamiz.',
     items: [
       { q: 'BugunBor pullikmi?', a: 'Mijozlar uchun butunlay bepul. Bizneslar tasdiqlangandan so‘ng bepul davrdan foydalanadi, keyin Start, Biznes yoki Premium tarifini tanlaydi.' },
@@ -918,6 +919,7 @@ export const uz = {
   legal: {
     updated: 'Oxirgi yangilanish: {date}',
     termsTitle: 'Foydalanish shartlari',
+    termsDescription: 'BugunBor’dan foydalanish shartlari: mijozlar va bizneslar uchun qoidalar, kodlar, sharhlar va javobgarlik.',
     offerTitle: 'Ommaviy oferta',
     offerSubtitle: 'BugunBor platformasida tarif xizmatlarini ko‘rsatish shartnomasi',
     offerFree: 'Hozircha BugunBor barcha bizneslar uchun bepul — pullik tariflar yo‘q. Tariflar ishga tushganda ommaviy oferta shu sahifada e’lon qilinadi va bizneslarga oldindan xabar beriladi.',

@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!deal || !deal.isPublic) return { title: t.deal.notFoundTitle, robots: { index: false, follow: false } };
   const title = fmt(t.deal.shareText, { title: deal.title, percent: deal.discountPercent });
   const description = `${deal.business.name}: ${deal.description}`.slice(0, 200);
-  const indexable = deal.effective === 'LIVE' || deal.effective === 'SCHEDULED';
+  const indexable = (deal.effective === 'LIVE' || deal.effective === 'SCHEDULED') && !deal.isDemo && !deal.business.isDemo;
   return {
     title,
     description,
@@ -98,9 +98,10 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
           url: `${origin}/deals/${deal.slug}`,
           price: deal.price,
           priceCurrency: 'UZS',
-          availability: deal.effective === 'LIVE' ? 'https://schema.org/InStock' : deal.effective === 'SOLD_OUT' ? 'https://schema.org/SoldOut' : 'https://schema.org/PreOrder',
+          availability: `https://schema.org/${{ LIVE: 'InStock', SOLD_OUT: 'SoldOut', SCHEDULED: 'PreOrder' }[deal.effective as string] ?? 'Discontinued'}`,
           validFrom: parseDbTime(deal.startsAt).toISOString(),
-          priceValidUntil: parseDbTime(deal.endsAt).toISOString().slice(0, 10),
+          // The last day in Tashkent (UTC+5): a deal ending at 02:00 there ends on that day, not the day before.
+          priceValidUntil: new Date(parseDbTime(deal.endsAt).getTime() + 5 * 3_600_000).toISOString().slice(0, 10),
           seller: { '@type': 'LocalBusiness', name: deal.business.name },
         },
         ...(deal.business.rating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: (deal.business.rating.basisPoints / 100).toFixed(1), reviewCount: deal.business.rating.count } } : {}),
