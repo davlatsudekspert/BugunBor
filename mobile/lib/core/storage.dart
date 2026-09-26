@@ -46,6 +46,10 @@ class Prefs {
   List<String> get guestInterests => _prefs.getStringList('interests') ?? const [];
   set guestInterests(List<String> value) => _prefs.setStringList('interests', value);
 
+  /// The home card explaining how BugunBor works was closed.
+  bool get howHidden => _prefs.getBool('how_hidden') ?? false;
+  set howHidden(bool value) => _prefs.setBool('how_hidden', value);
+
   bool get onboarded => _prefs.getBool('onboarded') ?? false;
   set onboarded(bool value) => _prefs.setBool('onboarded', value);
 

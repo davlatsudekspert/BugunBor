@@ -433,5 +433,13 @@
   "profilePhotoAdd": "Добавить фото",
   "profilePhotoChange": "Сменить фото",
   "profilePhotoRemove": "Удалить фото",
-  "profilePhotoHint": "Фото видите только вы."
+  "profilePhotoHint": "Фото видите только вы.",
+  "homeHowTitle": "Как работает BugunBor",
+  "homeHowText": "Скидки кафе, магазинов и услуг рядом — в одном месте.",
+  "homeAllDeals": "Все акции",
+  "homePromoText": "Разместите акцию — её увидят покупатели рядом.",
+  "timeLeftMinutes": "Осталось {count} мин",
+  "timeLeftHours": "Осталось {count} ч",
+  "timeLeftDays": "Осталось {count} дн.",
+  "timeLeftHoursMinutes": "Осталось {hours} ч {minutes} мин"
 }

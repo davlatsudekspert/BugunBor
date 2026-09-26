@@ -202,12 +202,15 @@ class DemoBadge extends StatelessWidget {
 }
 
 class DiscountBadge extends StatelessWidget {
-  const DiscountBadge(this.percent, {super.key});
+  const DiscountBadge(this.percent, {super.key, this.small = false});
   final int percent;
+
+  /// For a small photo (list tiles).
+  final bool small;
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+    padding: small ? const EdgeInsets.symmetric(horizontal: 7, vertical: 3) : const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(999),
@@ -215,7 +218,7 @@ class DiscountBadge extends StatelessWidget {
     ),
     child: Text(
       L.of(context).percentOff('$percent'),
-      style: const TextStyle(color: Brand.navy, fontWeight: FontWeight.w900),
+      style: TextStyle(color: Brand.navy, fontWeight: FontWeight.w900, fontSize: small ? 12.5 : null),
     ),
   );
 }
@@ -280,6 +283,56 @@ class _CountdownState extends State<Countdown> {
     return Text(
       text,
       style: widget.style ?? const TextStyle(fontFeatures: [FontFeature.tabularFigures()], fontWeight: FontWeight.w800),
+    );
+  }
+}
+
+/// Time until [target] in words for cards: "45 daqiqa qoldi", "3 soat qoldi",
+/// "2 kun qoldi". Refreshed every half minute; the last hour stands out.
+class TimeLeft extends StatefulWidget {
+  const TimeLeft(this.target, {super.key, this.style});
+  final DateTime target;
+  final TextStyle? style;
+
+  @override
+  State<TimeLeft> createState() => _TimeLeftState();
+}
+
+class _TimeLeftState extends State<TimeLeft> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    final left = widget.target.difference(DateTime.now().toUtc());
+    final urgent = left.inMinutes < 60;
+    final minutes = left.inMinutes % 60;
+    final text = left.inHours >= 24
+        ? l.timeLeftDays('${left.inDays}')
+        // Under three hours the minutes matter too.
+        : left.inHours >= 3 || (left.inHours >= 1 && minutes == 0)
+        ? l.timeLeftHours('${left.inHours}')
+        : left.inHours >= 1
+        ? l.timeLeftHoursMinutes('${left.inHours}', '$minutes')
+        : l.timeLeftMinutes('${left.inMinutes.clamp(1, 59)}');
+    final style = widget.style ?? const TextStyle();
+    return Text(
+      text,
+      style: urgent ? style.copyWith(color: context.accentText, fontWeight: FontWeight.w800) : style,
     );
   }
 }

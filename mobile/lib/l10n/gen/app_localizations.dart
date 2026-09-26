@@ -2696,6 +2696,54 @@ abstract class L {
   /// In uz, this message translates to:
   /// **'Rasm faqat sizga ko‘rinadi.'**
   String get profilePhotoHint;
+
+  /// No description provided for @homeHowTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'BugunBor qanday ishlaydi'**
+  String get homeHowTitle;
+
+  /// No description provided for @homeHowText.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yaqin atrofdagi kafe, do‘kon va xizmatlarning chegirmalari — bir joyda.'**
+  String get homeHowText;
+
+  /// No description provided for @homeAllDeals.
+  ///
+  /// In uz, this message translates to:
+  /// **'Barcha aksiyalar'**
+  String get homeAllDeals;
+
+  /// No description provided for @homePromoText.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiyangizni joylang — yaqin atrofdagi xaridorlar ko‘radi.'**
+  String get homePromoText;
+
+  /// No description provided for @timeLeftMinutes.
+  ///
+  /// In uz, this message translates to:
+  /// **'{count} daqiqa qoldi'**
+  String timeLeftMinutes(String count);
+
+  /// No description provided for @timeLeftHours.
+  ///
+  /// In uz, this message translates to:
+  /// **'{count} soat qoldi'**
+  String timeLeftHours(String count);
+
+  /// No description provided for @timeLeftDays.
+  ///
+  /// In uz, this message translates to:
+  /// **'{count} kun qoldi'**
+  String timeLeftDays(String count);
+
+  /// No description provided for @timeLeftHoursMinutes.
+  ///
+  /// In uz, this message translates to:
+  /// **'{hours} soat {minutes} daq. qoldi'**
+  String timeLeftHoursMinutes(String hours, String minutes);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

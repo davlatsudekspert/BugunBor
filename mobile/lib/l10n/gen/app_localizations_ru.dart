@@ -1400,4 +1400,36 @@ class LRu extends L {
 
   @override
   String get profilePhotoHint => 'Фото видите только вы.';
+
+  @override
+  String get homeHowTitle => 'Как работает BugunBor';
+
+  @override
+  String get homeHowText => 'Скидки кафе, магазинов и услуг рядом — в одном месте.';
+
+  @override
+  String get homeAllDeals => 'Все акции';
+
+  @override
+  String get homePromoText => 'Разместите акцию — её увидят покупатели рядом.';
+
+  @override
+  String timeLeftMinutes(String count) {
+    return 'Осталось $count мин';
+  }
+
+  @override
+  String timeLeftHours(String count) {
+    return 'Осталось $count ч';
+  }
+
+  @override
+  String timeLeftDays(String count) {
+    return 'Осталось $count дн.';
+  }
+
+  @override
+  String timeLeftHoursMinutes(String hours, String minutes) {
+    return 'Осталось $hours ч $minutes мин';
+  }
 }

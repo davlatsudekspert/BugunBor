@@ -1399,4 +1399,36 @@ class LEn extends L {
 
   @override
   String get profilePhotoHint => 'Only you see this photo.';
+
+  @override
+  String get homeHowTitle => 'How BugunBor works';
+
+  @override
+  String get homeHowText => 'Discounts from cafés, shops and services near you — in one place.';
+
+  @override
+  String get homeAllDeals => 'All deals';
+
+  @override
+  String get homePromoText => 'Post a deal — people nearby will see it.';
+
+  @override
+  String timeLeftMinutes(String count) {
+    return '$count min left';
+  }
+
+  @override
+  String timeLeftHours(String count) {
+    return '$count h left';
+  }
+
+  @override
+  String timeLeftDays(String count) {
+    return '$count d left';
+  }
+
+  @override
+  String timeLeftHoursMinutes(String hours, String minutes) {
+    return '$hours h $minutes min left';
+  }
 }

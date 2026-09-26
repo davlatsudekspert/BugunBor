@@ -1,7 +1,7 @@
 // An app installed from the site does not update itself: the server names the
 // newest build and the page to get it; home offers it until it is closed.
 import 'package:bugunbor/data/models.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -31,7 +31,13 @@ void main() {
     expect(find.text('Yangilash'), findsOneWidget);
     await checkTapTargets(tester);
 
-    await tester.tap(find.byTooltip('Yopish'));
+    // The update card's own ×, not the "how it works" card's.
+    await tester.tap(
+      find.descendant(
+        of: find.ancestor(of: find.text('Yangi versiya bor'), matching: find.byType(Card)),
+        matching: find.byTooltip('Yopish'),
+      ),
+    );
     await settle(tester);
     expect(find.text('Yangi versiya bor'), findsNothing);
     expect((await SharedPreferences.getInstance()).getInt('dismissed_update'), 45);

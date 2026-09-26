@@ -736,5 +736,44 @@
   "profilePhotoAdd": "Rasm qo‘yish",
   "profilePhotoChange": "Rasmni almashtirish",
   "profilePhotoRemove": "Rasmni olib tashlash",
-  "profilePhotoHint": "Rasm faqat sizga ko‘rinadi."
+  "profilePhotoHint": "Rasm faqat sizga ko‘rinadi.",
+  "homeHowTitle": "BugunBor qanday ishlaydi",
+  "homeHowText": "Yaqin atrofdagi kafe, do‘kon va xizmatlarning chegirmalari — bir joyda.",
+  "homeAllDeals": "Barcha aksiyalar",
+  "homePromoText": "Aksiyangizni joylang — yaqin atrofdagi xaridorlar ko‘radi.",
+  "timeLeftMinutes": "{count} daqiqa qoldi",
+  "@timeLeftMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "timeLeftHours": "{count} soat qoldi",
+  "@timeLeftHours": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "timeLeftDays": "{count} kun qoldi",
+  "@timeLeftDays": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "timeLeftHoursMinutes": "{hours} soat {minutes} daq. qoldi",
+  "@timeLeftHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -58,7 +58,7 @@ void main() {
     await pumpApp(tester, server: FakeServer.standard());
     await scrollTo(tester, find.text('Biznesimni qo‘shish'));
     expect(find.text('Biznesingiz bormi? Ko‘proq soting'), findsOneWidget);
-    expect(find.text('Ro‘yxatdan o‘tish bepul — bir necha daqiqa'), findsOneWidget);
+    expect(find.text('Aksiyangizni joylang — yaqin atrofdagi xaridorlar ko‘radi.'), findsOneWidget);
     await checkTapTargets(tester);
     await tester.tap(find.text('Biznesimni qo‘shish'));
     await settle(tester);
@@ -70,7 +70,7 @@ void main() {
     expect(find.text('Maxfiylik siyosati va foydalanish shartlariga roziman'), findsOneWidget);
   });
 
-  testWidgets('deals come first on the home screen; the card follows the first few', (tester) async {
+  testWidgets('deals come first on the home screen; the business card comes after them', (tester) async {
     final server = FakeServer.standard();
     final feed = contractMap('feed');
     final deal = ((feed['nearby'] as List).first as Map).cast<String, dynamic>();
@@ -81,12 +81,14 @@ void main() {
       'data': {...feed, 'forYou': <Object>[], 'nearby': nearby, 'total': nearby.length},
     };
     await pumpApp(tester, server: server, size: phoneSizes['360']!);
-    // Nothing chosen for "Siz uchun", yet deals are on the first screen.
-    expect(find.text('Osh 0'), findsOneWidget);
+    // Nothing chosen for "Siz uchun", yet the nearby deals lead; four of them, then one way to all.
+    await scrollTo(tester, find.text('Osh 0'));
+    expect(find.text('Osh 4', skipOffstage: false), findsNothing);
+    await scrollTo(tester, find.text('Barcha aksiyalar'));
     await scrollTo(tester, find.text('Biznesingiz bormi? Ko‘proq soting'));
     final card = tester.getTopLeft(find.text('Biznesingiz bormi? Ko‘proq soting')).dy;
-    expect(tester.getTopLeft(find.text('Osh 2', skipOffstage: false)).dy, lessThan(card));
-    expect(tester.getTopLeft(find.text('Osh 3', skipOffstage: false)).dy, greaterThan(card));
+    expect(tester.getTopLeft(find.text('Osh 3', skipOffstage: false)).dy, lessThan(card));
+    expect(tester.getTopLeft(find.text('Barcha aksiyalar', skipOffstage: false)).dy, lessThan(card));
   });
 
   testWidgets('the home card can be closed for a month', (tester) async {

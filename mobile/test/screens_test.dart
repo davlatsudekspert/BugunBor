@@ -274,8 +274,8 @@ void main() {
     };
     await pumpApp(tester, server: server);
     expect(find.textContaining('namuna aksiyalar'), findsOneWidget);
-    expect(find.text('Namuna'), findsWidgets);
     await showDeal(tester);
+    expect(find.text('Namuna'), findsWidgets);
     await tester.tap(find.text('Osh').hitTestable().first);
     await settle(tester);
     expect(find.textContaining('Bu namuna aksiya'), findsOneWidget);

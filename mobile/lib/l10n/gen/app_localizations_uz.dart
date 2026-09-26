@@ -1401,4 +1401,36 @@ class LUz extends L {
 
   @override
   String get profilePhotoHint => 'Rasm faqat sizga ko‘rinadi.';
+
+  @override
+  String get homeHowTitle => 'BugunBor qanday ishlaydi';
+
+  @override
+  String get homeHowText => 'Yaqin atrofdagi kafe, do‘kon va xizmatlarning chegirmalari — bir joyda.';
+
+  @override
+  String get homeAllDeals => 'Barcha aksiyalar';
+
+  @override
+  String get homePromoText => 'Aksiyangizni joylang — yaqin atrofdagi xaridorlar ko‘radi.';
+
+  @override
+  String timeLeftMinutes(String count) {
+    return '$count daqiqa qoldi';
+  }
+
+  @override
+  String timeLeftHours(String count) {
+    return '$count soat qoldi';
+  }
+
+  @override
+  String timeLeftDays(String count) {
+    return '$count kun qoldi';
+  }
+
+  @override
+  String timeLeftHoursMinutes(String hours, String minutes) {
+    return '$hours soat $minutes daq. qoldi';
+  }
 }

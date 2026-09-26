@@ -433,5 +433,13 @@
   "profilePhotoAdd": "Add a photo",
   "profilePhotoChange": "Change photo",
   "profilePhotoRemove": "Remove photo",
-  "profilePhotoHint": "Only you see this photo."
+  "profilePhotoHint": "Only you see this photo.",
+  "homeHowTitle": "How BugunBor works",
+  "homeHowText": "Discounts from cafés, shops and services near you — in one place.",
+  "homeAllDeals": "All deals",
+  "homePromoText": "Post a deal — people nearby will see it.",
+  "timeLeftMinutes": "{count} min left",
+  "timeLeftHours": "{count} h left",
+  "timeLeftDays": "{count} d left",
+  "timeLeftHoursMinutes": "{hours} h {minutes} min left"
 }
