@@ -184,6 +184,8 @@ describe('business workflow', () => {
     expect(await errorCode(deleteBranch(db, { businessId, userId: 'owner', branchId: second.id }, NOW))).toBe('BRANCH_IN_USE');
     await transitionDeal(db, { businessId, userId: 'owner', dealId, action: 'withdraw' }, NOW);
     await deleteBranch(db, { businessId, userId: 'owner', branchId: second.id }, NOW);
+    // The draft lost its only branch: it cannot be sent (it would be live but shown nowhere).
+    expect(await errorCode(transitionDeal(db, { businessId, userId: 'owner', dealId, action: 'submit' }, NOW))).toBe('NO_BRANCH');
 
     expect(await errorCode(addMember(db, { businessId, userId: 'owner', phone: '+998909999999', role: 'CASHIER' }, NOW))).toBe('USER_NOT_FOUND');
     await addMember(db, { businessId, userId: 'owner', phone: '+998900000002', role: 'CASHIER' }, NOW);

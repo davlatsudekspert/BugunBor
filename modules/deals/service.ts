@@ -91,6 +91,15 @@ function dealColumns(input: DealInput) {
 
 type Actor = { businessId: string; userId: string };
 
+/** A deal is shown through its branches: one without any (all deleted since) would be live but nowhere. */
+async function assertHasBranch(db: D1Database, dealId: string) {
+  const row = await db
+    .prepare(`SELECT COUNT(*) AS n FROM deal_branches db JOIN branches br ON br.id = db.branch_id WHERE db.deal_id = ?1 AND br.deleted_at IS NULL`)
+    .bind(dealId)
+    .first<{ n: number }>();
+  if (!row?.n) throw new DomainError('NO_BRANCH', 422);
+}
+
 async function assertCanSubmit(db: D1Database, actor: Actor, endsAt: string, now: Date) {
   if (endsAt <= toDbTime(now)) throw new DomainError('END_IN_PAST', 422);
   const subscription = await loadSubscription(db, actor.businessId, now);
@@ -165,7 +174,10 @@ export async function transitionDeal(db: D1Database, actor: Actor & { dealId: st
   const current = await getBusinessDeal(db, actor.businessId, actor.dealId);
   const rule = transitions[actor.action];
   if (!rule.from.includes(current.status)) throw new DomainError('INVALID_TRANSITION');
-  if (actor.action === 'submit') await assertCanSubmit(db, actor, current.endsAt, now);
+  if (actor.action === 'submit') {
+    await assertCanSubmit(db, actor, current.endsAt, now);
+    await assertHasBranch(db, actor.dealId);
+  }
   if (actor.action === 'resume') {
     if (current.endsAt <= toDbTime(now)) throw new DomainError('DEAL_EXPIRED');
     await assertWithinLimit(db, actor.businessId, 'liveDeals', now);

@@ -56,7 +56,11 @@ export function BusinessForm({ mode, businessId, canResubmit, pending, categorie
     return found ? (locale === 'ru' ? found.ru : found.uz) : slug;
   };
 
+  // A new business is on its way to its dashboard: a second tap must not create another one.
+  const creating = state === 'saving' || (mode === 'create' && state === 'saved');
+
   async function submit(form: HTMLFormElement, resubmit: boolean) {
+    if (creating) return;
     const values = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
     const images = mode === 'edit' ? { logoId, coverId } : {};
     const data = { ...values, ...images, latitude: point?.latitude ?? null, longitude: point?.longitude ?? null };
@@ -248,9 +252,9 @@ export function BusinessForm({ mode, businessId, canResubmit, pending, categorie
       {state === 'error' && message ? <FormMessage tone="error">{message}</FormMessage> : null}
       {state === 'saved' && mode === 'edit' ? <FormMessage tone="success"><CheckCircle2 className="mr-1 inline size-4" aria-hidden />{message}</FormMessage> : null}
       <div className="flex flex-col gap-2 sm:flex-row">
-        <button disabled={state === 'saving'} className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 font-bold text-white disabled:opacity-60">
-          {state === 'saving' ? <LoaderCircle className="size-5 animate-spin" aria-hidden /> : null}
-          {mode === 'create' ? (state === 'saving' ? t.onboarding.submitting : t.onboarding.submit) : t.common.save}
+        <button disabled={creating} className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 font-bold text-white disabled:opacity-60">
+          {creating ? <LoaderCircle className="size-5 animate-spin" aria-hidden /> : null}
+          {mode === 'create' ? (creating ? t.onboarding.submitting : t.onboarding.submit) : t.common.save}
         </button>
         {mode === 'edit' && canResubmit ? (
           <button

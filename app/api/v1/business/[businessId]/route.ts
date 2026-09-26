@@ -123,6 +123,8 @@ export const POST = route(async (request: Request, context: { params: Promise<{ 
   const { businessId } = await context.params;
   const membership = await requireMembership(db, user.id, businessId, permission[action.type]);
   if (blockedWhenSuspended.has(action.type)) assertNotSuspended(membership);
+  // Every change counts against one budget per person (code checks have their own).
+  if (action.type !== 'redeem.lookup' && action.type !== 'redeem.complete') await enforceRateLimit(db, `write:${user.id}`, RATE_RULES.write);
   const actor = { businessId, userId: user.id };
 
   switch (action.type) {

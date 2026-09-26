@@ -1154,6 +1154,7 @@ export const uz = {
     TARIFFS_OFF: 'Hozircha tariflar yo‘q — BugunBor bizneslar uchun bepul.',
     PLAN_LIMIT: 'Tarifingiz limitiga yetdingiz ({limit} ta). Kattaroq tarifga o‘ting.',
     END_IN_PAST: 'Tugash vaqti o‘tib ketgan. Vaqtni yangilang.',
+    NO_BRANCH: 'Aksiyaning filiali qolmagan. Aksiyani ochib, kamida bitta filialni tanlang.',
     BUSINESS_LIMIT: 'Bitta hisobdan ko‘pi bilan 5 ta biznes qo‘shish mumkin.',
     IMAGE_TOO_LARGE: 'Rasm hajmi juda katta. Boshqa rasm tanlang.',
     REVIEW_NOT_ALLOWED: 'Faqat ishlatilgan kodlar uchun 30 kun ichida baho qoldirish mumkin.',

@@ -22,6 +22,7 @@ function BranchEditor({ businessId, branch, locale, t, onDone }: { businessId: s
   const b = t.biz.branches;
 
   async function save(form: HTMLFormElement) {
+    if (saving) return;
     const values = Object.fromEntries(new FormData(form).entries());
     const parsed = branchSchema.safeParse({ ...values, latitude: point?.latitude ?? null, longitude: point?.longitude ?? null });
     if (!parsed.success) {
@@ -32,12 +33,13 @@ function BranchEditor({ businessId, branch, locale, t, onDone }: { businessId: s
     }
     setSaving(true);
     const result = await apiRequest(`/api/v1/business/${businessId}`, branch ? { type: 'branch.update', branchId: branch.id, data: parsed.data } : { type: 'branch.create', data: parsed.data }, { networkError: t.common.networkError });
-    setSaving(false);
     if (!result.ok) {
+      setSaving(false);
       setMessage(result.message);
       setErrors(fieldMessages(result.fields, t.validation as Record<string, string>));
       return;
     }
+    // Stays busy while the list reloads, so a second tap cannot add the branch twice.
     onDone();
   }
 

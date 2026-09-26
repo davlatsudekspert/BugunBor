@@ -133,9 +133,23 @@ export type DealFilters = {
   now?: Date;
 };
 
+/**
+ * The database keeps the rows the chosen order wants first, so the 2000-row
+ * cap (deal × branch) can only ever drop the least relevant ones.
+ */
+const SQL_ORDER: Record<SortKey, string> = {
+  ending: 'd.is_sponsored DESC, d.ends_at',
+  discount: 'd.discount_percent DESC, d.ends_at',
+  new: 'COALESCE(d.approved_at, d.created_at) DESC',
+  // Squared distance in micro-degrees: enough to keep the nearest rows.
+  near: '(br.latitude_e6 - ?6) * (br.latitude_e6 - ?6) + (br.longitude_e6 - ?7) * (br.longitude_e6 - ?7), d.ends_at',
+};
+
 /** All claimable deals matching the filters, one card per deal. */
 export async function listLiveDeals(db: D1Database, filters: DealFilters) {
   const now = filters.now ?? new Date();
+  const near = filters.near ?? null;
+  const sort = filters.sort === 'near' && !near ? 'ending' : (filters.sort ?? 'ending');
   const rows = await db
     .prepare(`SELECT ${DEAL_BRANCH_COLUMNS}
       FROM deals d
@@ -148,11 +162,17 @@ export async function listLiveDeals(db: D1Database, filters: DealFilters) {
         AND (?3 IS NULL OR br.city = ?3)
         AND (?4 IS NULL OR c.slug = ?4)
         AND (?5 IS NULL OR (' ' || d.search_text) LIKE ?5 OR (' ' || b.search_text) LIKE ?5)
+      ORDER BY ${SQL_ORDER[sort]}
       LIMIT 2000`)
-    .bind(toDbTime(now), filters.demo ? 1 : 0, filters.city ?? null, filters.category ?? null, wordSearchPattern(filters.query))
+    .bind(
+      toDbTime(now),
+      filters.demo ? 1 : 0,
+      filters.city ?? null,
+      filters.category ?? null,
+      wordSearchPattern(filters.query),
+      ...(sort === 'near' && near ? [Math.round(near.latitude * 1e6), Math.round(near.longitude * 1e6)] : []),
+    )
     .all<DealBranchRow>();
-  const near = filters.near ?? null;
-  const sort = filters.sort === 'near' && !near ? 'ending' : (filters.sort ?? 'ending');
   return sortDeals(groupDeals(rows.results, near, now), sort);
 }
 

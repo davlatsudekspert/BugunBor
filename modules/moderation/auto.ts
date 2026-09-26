@@ -119,9 +119,13 @@ const DEAL_LIMITS = { maxDiscountPercent: 80, minPriceUzs: 1000, maxOriginalUzs:
 
 const unique = (flags: AutoFlag[]) => AUTO_FLAGS.filter((flag) => flags.includes(flag));
 
-/** Tells the moderators, once per submission, that something waits for them and why. */
+/**
+ * Tells the moderators that something waits for them and why: at most once an
+ * hour per business or deal, so sending it again and again (withdraw, submit,
+ * withdraw…) cannot flood their Telegram.
+ */
 const reviewAlert = (db: D1Database, input: { target: 'Business' | 'Deal'; id: string; submittedAt: string; flags: AutoFlag[]; nowDb: string }) =>
-  staffAlertStatement(db, { kind: 'REVIEW_NEEDED', key: `${input.id}:${input.submittedAt}`, payload: { target: input.target, id: input.id, flags: input.flags.join(',') }, nowDb: input.nowDb });
+  staffAlertStatement(db, { kind: 'REVIEW_NEEDED', key: `${input.id}:${input.nowDb.slice(0, 13)}`, payload: { target: input.target, id: input.id, flags: input.flags.join(',') }, nowDb: input.nowDb });
 
 async function rejectedByPerson(db: D1Database, targetType: 'Business' | 'Deal', targetId: string) {
   const row = await db

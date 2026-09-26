@@ -20,6 +20,8 @@ import { NearMeButton } from './near-me-button';
 export type DiscoverParams = { q?: string; city?: string; category?: string; sort?: string; lat?: string; lng?: string; page?: string };
 
 const PAGE_SIZE = 24;
+/** «More» stops here: a longer list is better narrowed with search or a category. */
+const MAX_PAGE = 20;
 
 function parsePoint(lat?: string, lng?: string) {
   const latitude = Number(lat);
@@ -46,7 +48,7 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
   const requestedSort = SORT_KEYS.includes(params.sort as SortKey) ? (params.sort as SortKey) : 'ending';
   const sort: SortKey = requestedSort === 'near' && !near ? 'ending' : requestedSort;
   const categorySlug = category?.slug ?? (params.category || null);
-  const page = Math.max(1, Math.min(20, Number.parseInt(params.page ?? '1', 10) || 1));
+  const page = Math.max(1, Math.min(MAX_PAGE, Number.parseInt(params.page ?? '1', 10) || 1));
 
   const demo = await demoEnabled(db);
   const [deals, categories, favorites] = await Promise.all([
@@ -126,7 +128,7 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
                 <DealCard key={deal.id} deal={deal} t={t} locale={locale} favorite={favorites.has(deal.id)} loggedIn={Boolean(user)} />
               ))}
             </div>
-            {deals.length > visible.length ? (
+            {deals.length > visible.length && page < MAX_PAGE ? (
               <div className="mt-8 text-center">
                 <a href={href(basePath, { ...params, city }, { page: String(page + 1) })} className={cn(buttonVariants({ variant: 'outline' }), 'h-11 rounded-xl px-6 font-bold')}>
                   {t.common.more} <ArrowRight className="ml-1 size-4" aria-hidden />
