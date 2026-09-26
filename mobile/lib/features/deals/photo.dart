@@ -27,15 +27,15 @@ class CameraDenied implements Exception {
 }
 
 /// Makes picked bytes something the server takes: a JPEG of at most
-/// [maxUploadBytes] whose longest side is at most [maxPhotoSide]. Runs in
-/// an isolate; throws [UnreadablePhoto] when the bytes are not a picture.
+/// [maxUploadBytes] whose longest side is at most [maxPhotoSide], with no
+/// metadata left in it. Runs in an isolate; throws [UnreadablePhoto] when
+/// the bytes are not a picture.
 Uint8List preparePhoto(Uint8List bytes) => _prepare(bytes, maxPhotoSide, maxUploadBytes);
 
 /// The same for a profile photo: at most [maxAvatarSide] and [maxAvatarBytes].
 Uint8List prepareAvatar(Uint8List bytes) => _prepare(bytes, maxAvatarSide, maxAvatarBytes);
 
 Uint8List _prepare(Uint8List bytes, int maxSide, int maxBytes) {
-  final isJpeg = bytes.length > 2 && bytes[0] == 0xFF && bytes[1] == 0xD8;
   final img.Image? decoded;
   try {
     decoded = img.decodeImage(bytes);
@@ -49,10 +49,12 @@ Uint8List _prepare(Uint8List bytes, int maxSide, int maxBytes) {
   final orientation = decoded.exif.imageIfd.orientation ?? 1;
   final upright = orientation == 1 ? decoded : img.bakeOrientation(decoded);
   final fits = upright.width <= maxSide && upright.height <= maxSide;
-  if (isJpeg && fits && bytes.length <= maxBytes && orientation == 1) return bytes;
   final resized = fits
       ? upright
       : img.copyResize(upright, width: upright.width >= upright.height ? maxSide : null, height: upright.height > upright.width ? maxSide : null);
+  // Always a fresh JPEG without the camera's metadata: a photo taken at home
+  // must not tell everyone where (GPS), when or with which phone.
+  resized.exif = img.ExifData();
   for (var quality = 85; quality >= 40; quality -= 9) {
     final encoded = img.encodeJpg(resized, quality: quality);
     if (encoded.length <= maxBytes) return encoded;

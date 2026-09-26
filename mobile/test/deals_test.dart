@@ -183,9 +183,17 @@ void main() {
       expect([decoded.width, decoded.height], [1280, 640]);
     });
 
-    test('a small upright JPEG is sent as it is', () {
-      final jpeg = smallJpeg();
-      expect(identical(preparePhoto(jpeg), jpeg), isTrue);
+    test('the camera’s metadata (where, when, which phone) never leaves the phone', () {
+      final photo = img.Image(width: 64, height: 64);
+      photo.exif.imageIfd['Make'] = img.IfdValueAscii('Telefon');
+      photo.exif.gpsIfd['GPSLatitudeRef'] = img.IfdValueAscii('N');
+      final original = Uint8List.fromList(img.encodeJpg(photo));
+      expect(img.decodeJpg(original)!.exif.gpsIfd.isEmpty, isFalse);
+
+      final sent = img.decodeJpg(preparePhoto(original))!;
+      expect(sent.exif.imageIfd['Make'], isNull);
+      expect(sent.exif.gpsIfd.isEmpty, isTrue);
+      expect(img.decodeJpg(prepareAvatar(original))!.exif.gpsIfd.isEmpty, isTrue);
     });
 
     test('bytes that are not a picture are refused', () {
