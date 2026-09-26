@@ -4,13 +4,13 @@ import { describe, expect, it } from 'vitest';
 
 import { ru } from '@/lib/i18n/ru';
 import { uz } from '@/lib/i18n/uz';
-import { GUIDES, GUIDES_PAGE, PROMO, clock, guideCaptions, guidePoster, guideVideo, isoDuration } from './guides';
+import { GUIDES, GUIDES_PAGE, PROMO, clock, guideCaptions, guideFile, guidePoster, guideVideo, isoDuration, serveGuideVideo } from './guides';
 
 const publicDir = path.resolve(__dirname, '../public');
 
 describe('video guides', () => {
   it('has every video and poster it lists, and nothing else', () => {
-    const listed = [PROMO, ...GUIDES].flatMap((guide) => [guideVideo(guide.slug), guidePoster(guide.slug), guideCaptions(guide.slug)]);
+    const listed = [PROMO, ...GUIDES].flatMap((guide) => [guideFile(guide.slug), guidePoster(guide.slug), guideCaptions(guide.slug)]);
     for (const file of listed) expect(fs.existsSync(path.join(publicDir, file)), file).toBe(true);
     const present = fs.readdirSync(path.join(publicDir, GUIDES_PAGE)).map((name) => `${GUIDES_PAGE}/${name}`);
     expect(present.sort()).toEqual([...listed].sort());
@@ -38,4 +38,42 @@ describe('video guides', () => {
     expect([clock(25), clock(66), clock(120)]).toEqual(['0:25', '1:06', '2:00']);
     expect([isoDuration(25), isoDuration(66), isoDuration(120)]).toEqual(['PT25S', 'PT1M6S', 'PT2M0S']);
   });
+
+  it('sends a video in parts, as Safari asks, and only the listed ones', async () => {
+    const bytes = fs.readFileSync(path.join(publicDir, guideFile(PROMO.slug)));
+    const requested: string[] = [];
+    const assets = {
+      fetch: async (input: Request | string) => {
+        const url = new URL(input instanceof Request ? input.url : input);
+        requested.push(url.pathname);
+        return new Response(bytes, { headers: { 'content-type': 'video/mp4', etag: '"v1"' } });
+      },
+    } as unknown as Fetcher;
+    const ask = (path: string, init?: RequestInit) => serveGuideVideo(new Request(`https://bugunbor.uz${path}`, init), assets);
+
+    expect(guideVideo(PROMO.slug)).toBe('/qollanma/video/nima-uchun-bugunbor.mp4');
+    const first = (await ask(guideVideo(PROMO.slug), { headers: { range: 'bytes=0-1' } }))!;
+    expect([first.status, first.headers.get('content-range'), first.headers.get('accept-ranges'), first.headers.get('content-type')]).toEqual([206, `bytes 0-1/${bytes.length}`, 'bytes', 'video/mp4']);
+    expect([...new Uint8Array(await first.arrayBuffer())]).toEqual([...bytes.subarray(0, 2)]);
+    expect(requested).toEqual(['/qollanma/nima-uchun-bugunbor.mp4']);
+
+    const tail = (await ask(guideVideo(PROMO.slug), { headers: { range: 'bytes=-10' } }))!;
+    expect([tail.status, tail.headers.get('content-length')]).toEqual([206, '10']);
+    const rest = (await ask(guideVideo(PROMO.slug), { headers: { range: `bytes=${bytes.length - 5}-` } }))!;
+    expect(rest.headers.get('content-range')).toBe(`bytes ${bytes.length - 5}-${bytes.length - 1}/${bytes.length}`);
+    const whole = (await ask(guideVideo(PROMO.slug)))!;
+    expect([whole.status, whole.headers.get('content-length'), whole.headers.get('etag')]).toEqual([200, String(bytes.length), '"v1"']);
+    const past = (await ask(guideVideo(PROMO.slug), { headers: { range: `bytes=${bytes.length}-` } }))!;
+    expect([past.status, past.headers.get('content-range')]).toEqual([416, `bytes */${bytes.length}`]);
+    const head = (await ask(guideVideo(PROMO.slug), { method: 'HEAD', headers: { range: 'bytes=0-99' } }))!;
+    expect([head.status, head.headers.get('content-length'), await head.text()]).toEqual([206, '100', '']);
+
+    expect((await ask('/qollanma/video/boshqa.mp4'))!.status).toBe(404);
+    expect((await ask(guideVideo(PROMO.slug), { method: 'POST' }))!.status).toBe(404);
+    expect(await ask('/qollanma')).toBeNull();
+    // Without the static files binding the whole file is still reachable.
+    const plain = (await serveGuideVideo(new Request(`https://bugunbor.uz${guideVideo(PROMO.slug)}`), undefined))!;
+    expect([plain.status, plain.headers.get('location')]).toEqual([302, 'https://bugunbor.uz/qollanma/nima-uchun-bugunbor.mp4']);
+  });
 });
+
