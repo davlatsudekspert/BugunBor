@@ -1431,4 +1431,13 @@ class LEn extends L {
   String timeLeftHoursMinutes(String hours, String minutes) {
     return '$hours h $minutes min left';
   }
+
+  @override
+  String get timeEnded => 'Ended';
+
+  @override
+  String get codeUsedText => 'The code was accepted. How was your visit?';
+
+  @override
+  String get deletedUser => 'Deleted user';
 }

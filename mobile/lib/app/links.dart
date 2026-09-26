@@ -56,7 +56,11 @@ String? appPathFor(String link) {
   if (RegExp(r'^/deals/[^/]+/?$').hasMatch(path)) return path;
   if (RegExp(r'^/businesses/[^/]+/?$').hasMatch(path)) return path;
   if (RegExp(r'^/r/[^/]+/?$').hasMatch(path)) return path;
-  if (path.startsWith('/account/codes')) return '/codes';
+  if (path.startsWith('/account/codes')) {
+    // "Rate your visit" links end in #review-<code id>: the app opens that rating.
+    final review = RegExp(r'^review-([\w-]+)$').firstMatch(uri.fragment)?.group(1);
+    return review == null ? '/codes' : Uri(path: '/codes', queryParameters: {'review': review}).toString();
+  }
   if (path.startsWith('/account/favorites')) return '/saved';
   // "Your business was approved": the business profile in the Profile tab.
   final switchTo = RegExp(r'^/business/switch/([^/]+)/?$').firstMatch(path)?.group(1);

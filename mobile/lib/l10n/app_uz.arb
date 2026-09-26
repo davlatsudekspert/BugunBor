@@ -627,7 +627,7 @@
   "dealLocked": "Tasdiqlangan aksiyaning shartlarini o‘zgartirib bo‘lmaydi. O‘zgartirish uchun nusxa oling.",
   "dealStLive": "Faol",
   "dealStScheduled": "Tez orada",
-  "dealStSoldOut": "Tugadi",
+  "dealStSoldOut": "Hammasi band",
   "dealStExpired": "Muddati o‘tgan",
   "dealStPaused": "Pauzada",
   "dealStDraft": "Qoralama",
@@ -775,5 +775,8 @@
         "type": "String"
       }
     }
-  }
+  },
+  "timeEnded": "Tugagan",
+  "codeUsedText": "Kod qabul qilindi. Tashrif qanday o‘tdi?",
+  "deletedUser": "O‘chirilgan foydalanuvchi"
 }

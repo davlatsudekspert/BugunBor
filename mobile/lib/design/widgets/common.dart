@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../core/api_error.dart';
 import '../../core/format.dart';
 import '../../core/media.dart';
+import '../../core/time.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../theme.dart';
 
@@ -262,9 +263,12 @@ class PriceLine extends StatelessWidget {
 
 /// Counts down to [target] every second; "2 kun 3:04:05" style.
 class Countdown extends StatefulWidget {
-  const Countdown(this.target, {super.key, this.style});
+  const Countdown(this.target, {super.key, this.style, this.onDone});
   final DateTime target;
   final TextStyle? style;
+
+  /// Called once when the time runs out while shown (e.g. to reload a code's state).
+  final VoidCallback? onDone;
 
   @override
   State<Countdown> createState() => _CountdownState();
@@ -272,12 +276,18 @@ class Countdown extends StatefulWidget {
 
 class _CountdownState extends State<Countdown> {
   Timer? _timer;
+  bool _done = false;
 
   @override
   void initState() {
     super.initState();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
+      if (!mounted) return;
+      setState(() {});
+      if (!_done && !widget.target.isAfter(DateTime.now().toUtc())) {
+        _done = true;
+        widget.onDone?.call();
+      }
     });
   }
 
@@ -302,10 +312,12 @@ class _CountdownState extends State<Countdown> {
 
 /// Time until [target] in words for cards: "45 daqiqa qoldi", "3 soat qoldi",
 /// "2 kun qoldi". Refreshed every half minute; the last hour stands out.
+/// Before [startsAt] it says when the deal starts, and "Tugagan" once it ended.
 class TimeLeft extends StatefulWidget {
-  const TimeLeft(this.target, {super.key, this.style});
+  const TimeLeft(this.target, {super.key, this.style, this.startsAt});
   final DateTime target;
   final TextStyle? style;
+  final DateTime? startsAt;
 
   @override
   State<TimeLeft> createState() => _TimeLeftState();
@@ -331,7 +343,12 @@ class _TimeLeftState extends State<TimeLeft> {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
-    final left = widget.target.difference(DateTime.now().toUtc());
+    final now = DateTime.now().toUtc();
+    final style = widget.style ?? const TextStyle();
+    final startsAt = widget.startsAt;
+    if (startsAt != null && startsAt.isAfter(now)) return Text(l.dealStartsAt(momentLabel(startsAt)), style: style);
+    final left = widget.target.difference(now);
+    if (left <= Duration.zero) return Text(l.timeEnded, style: style);
     final urgent = left.inMinutes < 60;
     final minutes = left.inMinutes % 60;
     final text = left.inHours >= 24
@@ -342,7 +359,6 @@ class _TimeLeftState extends State<TimeLeft> {
         : left.inHours >= 1
         ? l.timeLeftHoursMinutes('${left.inHours}', '$minutes')
         : l.timeLeftMinutes('${left.inMinutes.clamp(1, 59)}');
-    final style = widget.style ?? const TextStyle();
     return Text(
       text,
       style: urgent ? style.copyWith(color: context.accentText, fontWeight: FontWeight.w800) : style,

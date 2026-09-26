@@ -18,17 +18,48 @@ String statusLabel(L l, String status) => switch (status) {
   _ => l.statusCanceled,
 };
 
-String dateLabel(DateTime utc) {
-  final local = toTashkent(utc);
-  String two(int value) => value.toString().padLeft(2, '0');
-  return '${two(local.day)}.${two(local.month)}.${local.year} ${local.hour}:${two(local.minute)}';
-}
+/// What a code's state is for people: a claim whose time ran out is expired
+/// even before the server marks it so.
+String effectiveCodeStatus(Redemption code) => code.status == 'CLAIMED' && !code.isActive ? 'EXPIRED' : code.status;
 
-class CodesScreen extends ConsumerWidget {
-  const CodesScreen({super.key});
+/// The person's codes: active ones to show at the counter, and the history.
+/// With [review] (a link from the "rate your visit" message) the history opens
+/// with that visit's rating sheet.
+class CodesScreen extends ConsumerStatefulWidget {
+  const CodesScreen({super.key, this.review});
+  final String? review;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CodesScreen> createState() => _CodesScreenState();
+}
+
+class _CodesScreenState extends ConsumerState<CodesScreen> with SingleTickerProviderStateMixin {
+  late final TabController _tabs = TabController(length: 2, vsync: this);
+  String? _reviewed;
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    super.dispose();
+  }
+
+  /// Opens the rating sheet asked for by the link, once per link.
+  void _openReview(List<Redemption> codes) {
+    final id = widget.review;
+    if (id == null || _reviewed == id) return;
+    final code = codes.where((item) => item.id == id).firstOrNull;
+    if (code == null) return;
+    _reviewed = id;
+    // After this frame: switching tabs or opening a sheet is not allowed while building.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!code.isActive) _tabs.index = 1;
+      if (code.canRate && code.myRating == null) showRateSheet(context, ref, code);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l = L.of(context);
     final signedIn = ref.watch(sessionProvider.select((session) => session.signedIn));
     if (!signedIn) {
@@ -38,41 +69,41 @@ class CodesScreen extends ConsumerWidget {
       );
     }
     final codes = ref.watch(myCodesProvider);
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(l.navCodes),
-          bottom: TabBar(
-            tabs: [
-              Tab(text: l.codesActive),
-              Tab(text: l.codesHistory),
-            ],
-          ),
+    if (codes.value case final value?) _openReview(value);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l.navCodes),
+        bottom: TabBar(
+          controller: _tabs,
+          tabs: [
+            Tab(text: l.codesActive),
+            Tab(text: l.codesHistory),
+          ],
         ),
-        body: switch (codes) {
-          AsyncValue(:final value?) => TabBarView(
-            children: [
-              _CodeList(
-                items: value.where((code) => code.isActive).toList(),
-                empty: StatePanel(
-                  icon: Icons.qr_code_2_rounded,
-                  title: l.codesEmpty,
-                  text: l.codesEmptyText,
-                  actionLabel: l.navSearch,
-                  onAction: () => context.go('/search'),
-                ),
-              ),
-              _CodeList(
-                items: value.where((code) => !code.isActive).toList(),
-                empty: StatePanel(icon: Icons.history_rounded, title: l.historyEmpty),
-              ),
-            ],
-          ),
-          AsyncValue(:final error?) => StatePanel.error(context, error, onRetry: () => ref.invalidate(myCodesProvider)),
-          _ => const SkeletonList(count: 3),
-        },
       ),
+      body: switch (codes) {
+        AsyncValue(:final value?) => TabBarView(
+          controller: _tabs,
+          children: [
+            _CodeList(
+              items: value.where((code) => code.isActive).toList(),
+              empty: StatePanel(
+                icon: Icons.qr_code_2_rounded,
+                title: l.codesEmpty,
+                text: l.codesEmptyText,
+                actionLabel: l.navSearch,
+                onAction: () => context.go('/search'),
+              ),
+            ),
+            _CodeList(
+              items: value.where((code) => !code.isActive).toList(),
+              empty: StatePanel(icon: Icons.history_rounded, title: l.historyEmpty),
+            ),
+          ],
+        ),
+        AsyncValue(:final error?) => StatePanel.error(context, error, onRetry: () => ref.invalidate(myCodesProvider)),
+        _ => const SkeletonList(count: 3),
+      },
     );
   }
 }
@@ -155,7 +186,7 @@ class _CodeCard extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  _StatusChip(status: code.status),
+                  _StatusChip(status: effectiveCodeStatus(code)),
                 ],
               ),
               const SizedBox(height: Gap.sm),
@@ -172,14 +203,15 @@ class _CodeCard extends ConsumerWidget {
                     const SizedBox(width: Gap.sm),
                     const Icon(Icons.schedule_rounded, size: 16),
                     const SizedBox(width: 4),
-                    Countdown(code.expiresAt),
+                    // Time is up: the list asks again, and the code moves to the history.
+                    Countdown(code.expiresAt, onDone: () => ref.invalidate(myCodesProvider)),
                   ],
                 )
               else
                 Row(
                   children: [
                     Expanded(
-                      child: Text(dateLabel(code.completedAt ?? code.createdAt), style: TextStyle(color: context.mutedText, fontSize: 13)),
+                      child: Text(momentLabel(code.completedAt ?? code.createdAt), style: TextStyle(color: context.mutedText, fontSize: 13)),
                     ),
                     if (code.myRating != null)
                       Text(l.yourRating('${code.myRating}'), style: const TextStyle(fontWeight: FontWeight.w700))

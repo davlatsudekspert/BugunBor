@@ -441,5 +441,8 @@
   "timeLeftMinutes": "{count} min left",
   "timeLeftHours": "{count} h left",
   "timeLeftDays": "{count} d left",
-  "timeLeftHoursMinutes": "{hours} h {minutes} min left"
+  "timeLeftHoursMinutes": "{hours} h {minutes} min left",
+  "timeEnded": "Ended",
+  "codeUsedText": "The code was accepted. How was your visit?",
+  "deletedUser": "Deleted user"
 }

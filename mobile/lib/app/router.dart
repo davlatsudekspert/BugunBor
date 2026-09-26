@@ -91,7 +91,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/codes',
-                builder: (context, state) => const CodesScreen(),
+                builder: (context, state) => CodesScreen(review: state.uri.queryParameters['review']),
                 routes: [
                   GoRoute(
                     path: ':id',

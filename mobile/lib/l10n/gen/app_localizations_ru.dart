@@ -1148,7 +1148,7 @@ class LRu extends L {
   String get dealStScheduled => 'Скоро';
 
   @override
-  String get dealStSoldOut => 'Закончилась';
+  String get dealStSoldOut => 'Распродано';
 
   @override
   String get dealStExpired => 'Срок истёк';
@@ -1432,4 +1432,13 @@ class LRu extends L {
   String timeLeftHoursMinutes(String hours, String minutes) {
     return 'Осталось $hours ч $minutes мин';
   }
+
+  @override
+  String get timeEnded => 'Завершилась';
+
+  @override
+  String get codeUsedText => 'Код принят. Как прошёл визит?';
+
+  @override
+  String get deletedUser => 'Удалённый пользователь';
 }

@@ -2208,7 +2208,7 @@ abstract class L {
   /// No description provided for @dealStSoldOut.
   ///
   /// In uz, this message translates to:
-  /// **'Tugadi'**
+  /// **'Hammasi band'**
   String get dealStSoldOut;
 
   /// No description provided for @dealStExpired.
@@ -2744,6 +2744,24 @@ abstract class L {
   /// In uz, this message translates to:
   /// **'{hours} soat {minutes} daq. qoldi'**
   String timeLeftHoursMinutes(String hours, String minutes);
+
+  /// No description provided for @timeEnded.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tugagan'**
+  String get timeEnded;
+
+  /// No description provided for @codeUsedText.
+  ///
+  /// In uz, this message translates to:
+  /// **'Kod qabul qilindi. Tashrif qanday o‘tdi?'**
+  String get codeUsedText;
+
+  /// No description provided for @deletedUser.
+  ///
+  /// In uz, this message translates to:
+  /// **'O‘chirilgan foydalanuvchi'**
+  String get deletedUser;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

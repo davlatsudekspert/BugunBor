@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/links.dart';
 import '../../app/providers.dart';
 import '../../core/format.dart';
+import '../../core/time.dart';
 import '../../data/models.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/common.dart';
@@ -595,12 +596,13 @@ class _Recent extends StatelessWidget {
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                         Text(
-                          '${codes[index].customerName} · ${codes[index].branchName}',
+                          // A deleted account is stored as "Deleted user" (modules/auth/account.ts).
+                          '${codes[index].customerName == 'Deleted user' ? l.deletedUser : codes[index].customerName} · ${codes[index].branchName}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(color: context.mutedText, fontSize: 13),
                         ),
-                        Text(dateLabel(codes[index].createdAt), style: TextStyle(color: context.mutedText, fontSize: 12)),
+                        Text(momentLabel(codes[index].createdAt), style: TextStyle(color: context.mutedText, fontSize: 12)),
                       ],
                     ),
                   ),

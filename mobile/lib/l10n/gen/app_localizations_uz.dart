@@ -1149,7 +1149,7 @@ class LUz extends L {
   String get dealStScheduled => 'Tez orada';
 
   @override
-  String get dealStSoldOut => 'Tugadi';
+  String get dealStSoldOut => 'Hammasi band';
 
   @override
   String get dealStExpired => 'Muddati o‘tgan';
@@ -1433,4 +1433,13 @@ class LUz extends L {
   String timeLeftHoursMinutes(String hours, String minutes) {
     return '$hours soat $minutes daq. qoldi';
   }
+
+  @override
+  String get timeEnded => 'Tugagan';
+
+  @override
+  String get codeUsedText => 'Kod qabul qilindi. Tashrif qanday o‘tdi?';
+
+  @override
+  String get deletedUser => 'O‘chirilgan foydalanuvchi';
 }

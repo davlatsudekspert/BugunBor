@@ -85,7 +85,7 @@ class DealTile extends StatelessWidget {
                           if (!ended)
                             _Meta(
                               icon: Icons.schedule_rounded,
-                              child: TimeLeft(deal.endsAt, style: _metaStyle(context)),
+                              child: TimeLeft(deal.endsAt, startsAt: deal.startsAt, style: _metaStyle(context)),
                             ),
                           if (deal.remaining != null && deal.remaining! <= 5 && !ended)
                             _Meta(icon: Icons.local_fire_department_outlined, text: l.left('${deal.remaining}')),
@@ -179,7 +179,7 @@ class DealCompactCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       _Meta(
                         icon: Icons.schedule_rounded,
-                        child: TimeLeft(deal.endsAt, style: _metaStyle(context)),
+                        child: TimeLeft(deal.endsAt, startsAt: deal.startsAt, style: _metaStyle(context)),
                       ),
                     ],
                   ),

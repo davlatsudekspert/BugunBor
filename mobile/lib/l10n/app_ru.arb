@@ -352,7 +352,7 @@
   "dealLocked": "Условия одобренной акции менять нельзя. Чтобы изменить, создайте копию.",
   "dealStLive": "Активна",
   "dealStScheduled": "Скоро",
-  "dealStSoldOut": "Закончилась",
+  "dealStSoldOut": "Распродано",
   "dealStExpired": "Срок истёк",
   "dealStPaused": "На паузе",
   "dealStDraft": "Черновик",
@@ -441,5 +441,8 @@
   "timeLeftMinutes": "Осталось {count} мин",
   "timeLeftHours": "Осталось {count} ч",
   "timeLeftDays": "Осталось {count} дн.",
-  "timeLeftHoursMinutes": "Осталось {hours} ч {minutes} мин"
+  "timeLeftHoursMinutes": "Осталось {hours} ч {minutes} мин",
+  "timeEnded": "Завершилась",
+  "codeUsedText": "Код принят. Как прошёл визит?",
+  "deletedUser": "Удалённый пользователь"
 }

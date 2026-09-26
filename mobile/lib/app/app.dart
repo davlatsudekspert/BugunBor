@@ -21,10 +21,32 @@ class BugunBorApp extends ConsumerStatefulWidget {
 }
 
 class _BugunBorAppState extends ConsumerState<BugunBorApp> {
+  late final AppLifecycleListener _lifecycle;
+  DateTime? _hiddenAt;
+
   @override
   void initState() {
     super.initState();
+    _lifecycle = AppLifecycleListener(onHide: () => _hiddenAt = DateTime.now(), onShow: _refreshAfterPause);
     WidgetsBinding.instance.addPostFrameCallback((_) => _startPush());
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  /// Back in the app after a while: a code may have been used at the counter
+  /// (and the savings grew), so the person's own data is asked again.
+  void _refreshAfterPause() {
+    final hiddenAt = _hiddenAt;
+    _hiddenAt = null;
+    if (hiddenAt == null || DateTime.now().difference(hiddenAt) < const Duration(seconds: 30)) return;
+    if (!ref.read(sessionProvider).signedIn) return;
+    ref
+      ..invalidate(myCodesProvider)
+      ..invalidate(meProvider);
   }
 
   Future<void> _startPush() async {
@@ -36,7 +58,13 @@ class _BugunBorAppState extends ConsumerState<BugunBorApp> {
     final router = ref.read(routerProvider);
     if (path == null) {
       openExternal(Uri.parse(link));
-    } else if (path == '/' || path == '/codes' || path == '/saved' || path.startsWith('/profile')) {
+    } else if (path == '/' || path.startsWith('/codes') || path == '/saved' || path.startsWith('/profile')) {
+      // Messages about codes (used, rate the visit) mean the list has changed.
+      if (path.startsWith('/codes')) {
+        ref
+          ..invalidate(myCodesProvider)
+          ..invalidate(meProvider);
+      }
       router.go(path);
     } else {
       router.push(path);

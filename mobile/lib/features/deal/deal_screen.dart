@@ -313,7 +313,7 @@ class _Facts extends StatelessWidget {
     final l = L.of(context);
     final now = DateTime.now().toUtc();
     final scheduled = deal.effective == 'SCHEDULED' || deal.startsAt.isAfter(now);
-    final starts = toTashkent(deal.startsAt);
+    final ended = !deal.endsAt.isAfter(now) || const {'EXPIRED', 'ARCHIVED', 'SOLD_OUT'}.contains(deal.effective);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(Gap.md),
@@ -321,20 +321,14 @@ class _Facts extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (scheduled)
-              _Fact(
-                icon: Icons.event_rounded,
-                child: Text(
-                  l.dealStartsAt(
-                    '${starts.day.toString().padLeft(2, '0')}.${starts.month.toString().padLeft(2, '0')} ${starts.hour}:${starts.minute.toString().padLeft(2, '0')}',
-                  ),
-                ),
-              )
+              _Fact(icon: Icons.event_rounded, child: Text(l.dealStartsAt(momentLabel(deal.startsAt))))
             else if (deal.endsAt.isAfter(now))
               _Fact(
                 icon: Icons.schedule_rounded,
                 child: Wrap(spacing: 4, children: [Text(l.endsInLabel), Countdown(deal.endsAt)]),
               ),
-            if (deal.remaining != null) _Fact(icon: Icons.local_fire_department_outlined, child: Text(l.left('${deal.remaining}'))),
+            // How many are left only matters while it can still be booked.
+            if (deal.remaining != null && !ended) _Fact(icon: Icons.local_fire_department_outlined, child: Text(l.left('${deal.remaining}'))),
             _Fact(icon: Icons.person_outline_rounded, child: Text(l.dealPerCustomer('${deal.perCustomerLimit}'))),
             _Fact(icon: Icons.qr_code_2_rounded, child: Text(l.dealCodeValid('${deal.claimTtlMinutes}'))),
           ],
@@ -531,7 +525,8 @@ class _BookBar extends ConsumerWidget {
     } else if (!deal.claimable) {
       final text = switch (deal.effective) {
         'SOLD_OUT' => l.dealSoldOut,
-        'EXPIRED' => l.dealEnded,
+        'EXPIRED' || 'ARCHIVED' => l.dealEnded,
+        _ when !deal.endsAt.isAfter(DateTime.now().toUtc()) => l.dealEnded,
         'SCHEDULED' => l.dealNotStarted,
         _ => l.dealUnavailable,
       };
