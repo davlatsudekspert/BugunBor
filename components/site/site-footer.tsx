@@ -2,15 +2,22 @@ import { getDb } from '@/db/client';
 import { formatPhone } from '@/lib/format';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
+import { appStores } from '@/modules/app-stores';
 import { EMPTY_COMPANY, companyIdentifier, getCompanyInfo } from '@/modules/company';
+import { AppBadges } from './app-badges';
 import { LanguageSwitch } from './language-switch';
 import { Logo } from './logo';
 import { STOCK_PHOTOS } from '@/lib/stock-photos';
 
 export async function SiteFooter() {
   const { t, locale } = await getI18n();
-  // The operator's details, once an admin has entered them (a missing database never breaks the footer).
-  const company = await getDb().then(getCompanyInfo).catch(() => EMPTY_COMPANY);
+  // The operator's details, once an admin has entered them, and the app's
+  // store links (a missing database never breaks the footer).
+  const db = await getDb().catch(() => null);
+  const [company, stores] = await Promise.all([
+    db ? getCompanyInfo(db).catch(() => EMPTY_COMPANY) : EMPTY_COMPANY,
+    db ? appStores(db) : { android: null },
+  ]);
   const columns = [
     { title: t.footer.product, links: [{ href: '/discover', label: t.nav.deals }, { href: '/categories', label: t.nav.categories }, { href: '/business', label: t.nav.forBusiness }] },
     { title: t.footer.help, links: [{ href: '/how-it-works', label: t.footer.howItWorks }, { href: '/faq', label: t.footer.faq }, { href: '/contact', label: t.footer.contact }] },
@@ -31,6 +38,8 @@ export async function SiteFooter() {
           <Logo label={t.nav.homeAria} />
           <p className="mt-4 text-sm leading-6 text-slate-500">{t.footer.tagline}</p>
           <LanguageSwitch locale={locale} label={t.nav.switchTo} full className="mt-4 -ml-3" />
+          <h2 className="mt-6 text-xs font-black uppercase tracking-[.14em] text-slate-400">{t.appStores.footerTitle}</h2>
+          <AppBadges android={stores.android} t={t} className="mt-3" />
         </div>
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
           {columns.map((column) => (

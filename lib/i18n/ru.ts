@@ -844,6 +844,13 @@ export const ru: Dictionary = {
       demoTurnOn: 'Показать демо-заведения',
       demoTurnOff: 'Скрыть демо-заведения',
       demoFromEnv: 'Включён переменной DEMO_SEED=true — отсюда не выключается.',
+      appTitle: 'Мобильное приложение',
+      appAndroidOn: 'Включено — кнопка «Приложение для Android» на сайте открывает Google Play.',
+      appAndroidOff: 'Выключено — на сайте написано «Приложение для Android · Скоро в Google Play».',
+      appAndroidHint: 'Включите, когда приложение станет доступно всем в Google Play. Кнопка откроет эту страницу:',
+      appAndroidTurnOn: 'Вышло в Google Play — включить кнопку',
+      appAndroidTurnOff: 'Выключить кнопку',
+      appIosNote: 'App Store: на сайте написано «Скоро».',
     },
   },
   how: {
@@ -991,6 +998,16 @@ export const ru: Dictionary = {
     shortcutDeals: 'Акции',
     shortcutCodes: 'Мои коды',
     shortcutRedeem: 'Проверить код',
+  },
+  appStores: {
+    title: 'Приложение BugunBor',
+    text: 'Акции рядом с вами, ваши коды и уведомления о новых предложениях — в телефоне.',
+    footerTitle: 'Скачайте приложение',
+    android: 'Приложение для Android',
+    getOnPlay: 'Скачайте в Google Play',
+    playSoon: 'Скоро в Google Play',
+    appStore: 'App Store',
+    soon: 'Скоро',
   },
   moderation: {
     flags: {

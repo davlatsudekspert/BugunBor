@@ -75,12 +75,18 @@ Reja: `docs/ILOVA-REJA.md`.
   - Server: `GET /api/v1/business/{id}/deals`, `GET /api/v1/business/{id}/deals/{dealId}`;
     `/config`da aksiya qoidalari va belgilar; biznes profilida kategoriya va filiallar. Kassir ko'ra olmaydi.
   - Testlar: ilova 97, sayt 159.
+- [x] **PR #7 `main`ga birlashtirildi** (2026-09-26): CI yashil (check, e2e, build, verify).
+- [x] **Saytda ilova bo'limi** (2026-09-26)
+  - Bosh sahifada «BugunBor ilovasi» bo'limi va sayt pastida «Ilovani yuklab oling».
+  - «Android ilova» Google Play sahifasini (`uz.bugunbor.app`) ochadi, lekin faqat admin
+    Admin → Sozlamalar → «Mobil ilova»da «Google Play'da chiqdi» ni yoqqandan keyin.
+    Unga qadar «Tez kunda Google Play'da» deb turadi. App Store: «Tez kunda».
 
 ## Navbatda
 
 - [ ] Egasi kalitlarni qo'ygach: imzolangan build, qo'lda APK sinovi, Internal testing qoralamasi.
-- [ ] Saytda ilova bo'limi: «Android ilova» tugmasi va «App Store — tez kunda» belgisi
-  (Android havolasi qayerga olib borishi egasi bilan kelishiladi).
+- [ ] Ilova Google Play'da chiqqach: Admin → Sozlamalar → «Mobil ilova» → «Google Play'da chiqdi».
+- [ ] Qo'llanma videolari (ilovadan): ro'yxatdan o'tish, biznes qo'shish, aksiya qo'shish.
 
 ## Egasidan kerak
 

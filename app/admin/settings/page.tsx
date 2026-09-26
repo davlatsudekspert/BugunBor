@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Bot, Building2, CheckCircle2, CircleAlert, CreditCard, FlaskConical, Sparkles } from 'lucide-react';
+import { Bot, Building2, CheckCircle2, CircleAlert, CreditCard, FlaskConical, Smartphone, Sparkles } from 'lucide-react';
 
 import { ActionButton } from '@/components/admin/admin-controls';
 import { AdminShell } from '@/components/admin/admin-shell';
@@ -8,6 +8,7 @@ import { getDb } from '@/db/client';
 import { DEFAULT_HASH_SECRET, getConfig, isTelegramConfigured } from '@/lib/env';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
+import { GOOGLE_PLAY_URL, appStores, forgetAppStores } from '@/modules/app-stores';
 import { requireAdmin } from '@/modules/auth/current';
 import { companyComplete, getCompanyInfo } from '@/modules/company';
 import { demoEnabled } from '@/modules/demo';
@@ -24,7 +25,15 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function AdminSettingsPage() {
   const user = await requireAdmin('/admin/settings');
   const [{ t }, db] = await Promise.all([getI18n(), getDb()]);
-  const [queue, switches, company, demo] = await Promise.all([notificationStats(db), getAutoModerationSettings(db), getCompanyInfo(db, { fresh: true }), demoEnabled(db)]);
+  // The switch as stored, not as remembered for the site's pages.
+  forgetAppStores(db);
+  const [queue, switches, company, demo, stores] = await Promise.all([
+    notificationStats(db),
+    getAutoModerationSettings(db),
+    getCompanyInfo(db, { fresh: true }),
+    demoEnabled(db),
+    appStores(db),
+  ]);
   const auto = t.admin.auto;
   const config = getConfig();
   const siteUrl = config.appUrl ?? 'https://bugunbor.uz';
@@ -134,6 +143,20 @@ export default async function AdminSettingsPage() {
             <ActionButton payload={{ type: 'demo.update', on: !demo }} label={demo ? s.demoTurnOff : s.demoTurnOn} tone={demo ? 'neutral' : 'success'} networkError={t.common.networkError} />
           )}
         </div>
+      </section>
+
+      <section id="app" className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 className="flex items-center gap-2 text-lg font-black text-navy"><Smartphone className="size-5 text-primary" aria-hidden /> {s.appTitle}</h2>
+        <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-navy">
+          {stores.android ? <CheckCircle2 className="size-4 text-emerald-600" aria-hidden /> : <CircleAlert className="size-4 text-amber-600" aria-hidden />}
+          {stores.android ? s.appAndroidOn : s.appAndroidOff}
+        </p>
+        <p className="mt-1 text-sm leading-6 text-slate-600">{s.appAndroidHint}</p>
+        <p className="mt-1 break-all font-mono text-xs text-slate-600">{GOOGLE_PLAY_URL}</p>
+        <div className="mt-3">
+          <ActionButton payload={{ type: 'app.android', on: !stores.android }} label={stores.android ? s.appAndroidTurnOff : s.appAndroidTurnOn} tone={stores.android ? 'neutral' : 'success'} networkError={t.common.networkError} />
+        </div>
+        <p className="mt-3 text-xs text-slate-500">{s.appIosNote}</p>
       </section>
     </AdminShell>
   );

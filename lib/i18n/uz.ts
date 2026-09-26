@@ -842,6 +842,13 @@ export const uz = {
       demoTurnOn: 'Namuna bizneslarni ko‘rsatish',
       demoTurnOff: 'Namuna bizneslarni yashirish',
       demoFromEnv: 'DEMO_SEED=true muhit o‘zgaruvchisi bilan yoqilgan — bu yerdan o‘chmaydi.',
+      appTitle: 'Mobil ilova',
+      appAndroidOn: 'Yoqilgan — saytdagi «Android ilova» tugmasi Google Play’ni ochadi.',
+      appAndroidOff: 'O‘chirilgan — saytda «Android ilova · Tez kunda Google Play’da» deb turadi.',
+      appAndroidHint: 'Ilova Google Play’da hammaga ochiq bo‘lgach yoqing. Tugma shu sahifani ochadi:',
+      appAndroidTurnOn: 'Google Play’da chiqdi — tugmani yoqish',
+      appAndroidTurnOff: 'Tugmani o‘chirish',
+      appIosNote: 'App Store: saytda «Tez kunda» deb turadi.',
     },
   },
   how: {
@@ -989,6 +996,16 @@ export const uz = {
     shortcutDeals: 'Aksiyalar',
     shortcutCodes: 'Kodlarim',
     shortcutRedeem: 'Kodni tekshirish',
+  },
+  appStores: {
+    title: 'BugunBor ilovasi',
+    text: 'Yaqin atrofdagi aksiyalar, kodlaringiz va yangi takliflar haqida xabarnomalar — telefoningizda.',
+    footerTitle: 'Ilovani yuklab oling',
+    android: 'Android ilova',
+    getOnPlay: 'Google Play’dan yuklab oling',
+    playSoon: 'Tez kunda Google Play’da',
+    appStore: 'App Store',
+    soon: 'Tez kunda',
   },
   moderation: {
     flags: {
