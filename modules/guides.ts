@@ -13,6 +13,8 @@ export const GUIDES = [
   { slug: '2-royxatdan-otish', seconds: 40 },
   { slug: '3-biznes-qoshish', seconds: 46 },
   { slug: '4-aksiya-qoshish', seconds: 66 },
+  { slug: '5-aksiyani-band-qilish', seconds: 47 },
+  { slug: '6-kodni-tekshirish', seconds: 42 },
 ] as const;
 export type GuideSlug = (typeof GUIDES)[number]['slug'];
 /** Shows the APK being downloaded, so it is listed only while the site serves the APK. */
