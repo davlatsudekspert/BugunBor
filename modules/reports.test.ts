@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import { toDbTime } from '@/lib/time';
 import { NOW, SECRET, marketplace } from '@/test/fixtures';
-import { listBusinessDeals, transitionDeal } from '@/modules/deals/service';
+import { duplicateDeal, listBusinessDeals, transitionDeal } from '@/modules/deals/service';
+import { autoModerateDeal } from '@/modules/moderation/auto';
 import { releaseDealHold } from '@/modules/moderation/service';
 import { processNotifications } from '@/modules/notifications/service';
-import { claimDeal, completeRedemption } from '@/modules/redemptions/service';
+import { cancelRedemption, claimDeal, completeRedemption } from '@/modules/redemptions/service';
 import { codeIssuesOf, listReports, reportCodeIssue } from './reports';
 
 const errorCode = async (promise: Promise<unknown>) => promise.then(() => 'OK', (error: { code?: string; message?: string }) => error.code ?? error.message ?? 'UNKNOWN');
@@ -107,5 +108,63 @@ describe('complaints about a booked code', () => {
     const stranger = await claim(db, 'stranger', later(10));
     expect(await reportCodeIssue(db, { userId: 'stranger', redemptionId: stranger.id, issue: 'NOT_AVAILABLE', comment: null }, later(12))).toMatchObject({ held: false });
     expect(await dealState(db)).toEqual({ status: 'ACTIVE', held: 0 });
+  });
+
+  it('a deal its owner paused is held all the same, so resuming cannot bring it back', async () => {
+    const db = await world();
+    const alice = await claim(db, 'alice');
+    const bob = await claim(db, 'bob');
+    const stranger = await claim(db, 'stranger');
+    await reportCodeIssue(db, { userId: 'alice', redemptionId: alice.id, issue: 'NOT_AVAILABLE', comment: null }, later(5));
+    await reportCodeIssue(db, { userId: 'bob', redemptionId: bob.id, issue: 'CODE_REFUSED', comment: null }, later(6));
+    await transitionDeal(db, { businessId: 'biz', userId: 'owner', dealId: 'deal', action: 'pause' }, later(7));
+    expect(await reportCodeIssue(db, { userId: 'stranger', redemptionId: stranger.id, issue: 'BRANCH_CLOSED', comment: null }, later(8))).toMatchObject({ held: true });
+    expect(await dealState(db)).toEqual({ status: 'PAUSED', held: 1 });
+    expect(await errorCode(transitionDeal(db, { businessId: 'biz', userId: 'owner', dealId: 'deal', action: 'resume' }, later(9)))).toBe('UNDER_REVIEW');
+  });
+
+  it('codes people cancelled themselves do not take a deal down, though moderators still see them', async () => {
+    const db = await world();
+    for (const user of ['alice', 'bob', 'stranger']) {
+      const code = await claim(db, user);
+      await cancelRedemption(db, { redemptionId: code.id, userId: user, now: later(1) });
+      expect(await reportCodeIssue(db, { userId: user, redemptionId: code.id, issue: 'NOT_AVAILABLE', comment: null }, later(2))).toMatchObject({ held: false });
+    }
+    expect(await dealState(db)).toEqual({ status: 'ACTIVE', held: 0 });
+    expect(await listReports(db, { status: 'NEW' })).toHaveLength(3);
+  });
+
+  it('two taps at once make one complaint and one alert', async () => {
+    const db = await world();
+    await db.prepare(`UPDATE users SET telegram_user_id = '7009' WHERE id = 'mod'`).run();
+    const code = await claim(db, 'alice');
+    const both = await Promise.all([
+      reportCodeIssue(db, { userId: 'alice', redemptionId: code.id, issue: 'NOT_AVAILABLE', comment: null }, later(5)),
+      reportCodeIssue(db, { userId: 'alice', redemptionId: code.id, issue: 'CODE_REFUSED', comment: null }, later(5)),
+    ]);
+    // One of them made the complaint, the other found it and replaced its words.
+    expect(both.filter((report) => report.repeated)).toHaveLength(1);
+    expect((await db.prepare(`SELECT COUNT(*) AS n FROM reports WHERE target_type = 'REDEMPTION'`).first<{ n: number }>())?.n).toBe(1);
+    expect((await db.prepare(`SELECT COUNT(*) AS n FROM notifications WHERE kind = 'REPORT'`).first<{ n: number }>())?.n).toBe(1);
+  });
+
+  it('while a deal is held, a copy of it waits for a moderator', async () => {
+    const db = await world();
+    // Text good enough to be approved on its own.
+    await db.prepare(`UPDATE deals SET description = 'Bir porsiya to‘y oshi, achchiq-chuchuk salat va issiq tandir non.', terms = 'Faqat zalda. Boshqa aksiyalar bilan qo‘shilmaydi.' WHERE id = 'deal'`).run();
+    for (const user of ['alice', 'bob', 'stranger']) {
+      const code = await claim(db, user);
+      await reportCodeIssue(db, { userId: user, redemptionId: code.id, issue: 'CODE_REFUSED', comment: null }, later(5));
+    }
+    expect(await dealState(db)).toEqual({ status: 'PAUSED', held: 1 });
+    const copy = await duplicateDeal(db, { businessId: 'biz', userId: 'owner', dealId: 'deal' }, later(10));
+    await transitionDeal(db, { businessId: 'biz', userId: 'owner', dealId: copy.id, action: 'submit' }, later(11));
+    expect(await autoModerateDeal(db, copy.id, later(11))).toEqual({ status: 'PENDING_REVIEW', flags: ['COMPLAINT_HOLD'] });
+
+    // Once a moderator lets the held deal go, a copy is approved as usual.
+    await releaseDealHold(db, { actorId: 'mod', dealId: 'deal' }, later(20));
+    const next = await duplicateDeal(db, { businessId: 'biz', userId: 'owner', dealId: 'deal' }, later(21));
+    await transitionDeal(db, { businessId: 'biz', userId: 'owner', dealId: next.id, action: 'submit' }, later(22));
+    expect(await autoModerateDeal(db, next.id, later(22))).toEqual({ status: 'ACTIVE', flags: [] });
   });
 });

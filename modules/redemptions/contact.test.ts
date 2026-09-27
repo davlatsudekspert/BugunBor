@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { toDbTime } from '@/lib/time';
 import { NOW, SECRET, marketplace } from '@/test/fixtures';
 import { processNotifications } from '@/modules/notifications/service';
+import { listReports, reportCodeIssue, resolveReport } from '@/modules/reports';
 import { cancelBooking, messageBooking, sentMessages } from './contact';
 import { noShowState } from './no-shows';
 import { cancelRedemption, claimDeal, listCustomerRedemptions } from './service';
@@ -93,5 +94,28 @@ describe('booking and never coming', () => {
     // Other people are not affected, and a day after the last one it is over.
     expect(await errorCode(claim(db, 'bob', later(186)))).toBe('OK');
     expect(await errorCode(claim(db, 'alice', later(185 + 24 * 60)))).toBe('OK');
+  });
+
+  it('a code the person complained about is not a no-show, unless a moderator dismissed the complaint', async () => {
+    const db = await world();
+    await claim(db, 'alice', NOW);
+    const refused = await claim(db, 'alice', later(61));
+    await reportCodeIssue(db, { userId: 'alice', redemptionId: refused.id, issue: 'CODE_REFUSED', comment: null }, later(70));
+    await claim(db, 'alice', later(122));
+    expect(await noShowState(db, 'alice', later(185))).toEqual({ count: 2, pausedUntil: null });
+    const [report] = await listReports(db, { status: 'NEW' });
+    await resolveReport(db, { actorId: 'mod', reportId: report.id, status: 'DISMISSED' }, later(186));
+    expect(await noShowState(db, 'alice', later(187))).toMatchObject({ count: 3 });
+  });
+});
+
+describe('what the log keeps', () => {
+  it('a message sent twice is logged once', async () => {
+    const db = await world();
+    const code = await claim(db, 'alice', NOW);
+    await messageBooking(db, { businessId: 'biz', staffUserId: 'cashier', redemptionId: code.id, message: 'WAITING' }, later(1));
+    expect(await messageBooking(db, { businessId: 'biz', staffUserId: 'cashier', redemptionId: code.id, message: 'WAITING' }, later(2))).toEqual({ sent: false });
+    const logged = await db.prepare(`SELECT COUNT(*) AS n FROM audit_logs WHERE action = 'redemption.messaged'`).first<{ n: number }>();
+    expect(logged?.n).toBe(1);
   });
 });

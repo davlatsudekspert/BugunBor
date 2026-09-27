@@ -38,21 +38,24 @@ export async function createReport(
   const target = await db.prepare(TARGET_SQL[input.targetType]).bind(input.targetId).first<{ title: string }>();
   if (!target) throw new DomainError('NOT_FOUND');
   const nowDb = toDbTime(now);
-  const open = await db
-    .prepare(`SELECT id FROM reports WHERE reporter_id = ?1 AND target_type = ?2 AND target_id = ?3 AND status = 'NEW'`)
-    .bind(input.reporterId, input.targetType, input.targetId)
-    .first<{ id: string }>();
-  if (open) {
-    await db.prepare(`UPDATE reports SET reason = ?2, comment = ?3 WHERE id = ?1`).bind(open.id, input.reason, input.comment).run();
-    return { id: open.id, repeated: true };
-  }
+  // Written only if this person has no open report about it yet, in one
+  // statement: two taps at once still make one report and one alert.
   const id = crypto.randomUUID();
-  await db.batch([
-    db.prepare(`INSERT INTO reports(id, reporter_id, target_type, target_id, reason, comment, status, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 'NEW', ?7)`)
+  const [inserted] = await db.batch([
+    db.prepare(`INSERT INTO reports(id, reporter_id, target_type, target_id, reason, comment, status, created_at)
+        SELECT ?1, ?2, ?3, ?4, ?5, ?6, 'NEW', ?7
+        WHERE NOT EXISTS (SELECT 1 FROM reports WHERE reporter_id = ?2 AND target_type = ?3 AND target_id = ?4 AND status = 'NEW')`)
       .bind(id, input.reporterId, input.targetType, input.targetId, input.reason, input.comment, nowDb),
-    staffAlertStatement(db, { kind: 'REPORT', key: id, payload: { reportId: id }, nowDb }),
+    staffAlertStatement(db, { kind: 'REPORT', key: id, payload: { reportId: id }, nowDb }, { sql: `EXISTS (SELECT 1 FROM reports WHERE id = ?5)`, params: [id] }),
   ]);
-  return { id, repeated: false };
+  if ((inserted.meta.changes ?? 0) === 1) return { id, repeated: false };
+  // A second word about the same thing replaces the first.
+  const open = await db
+    .prepare(`UPDATE reports SET reason = ?4, comment = ?5 WHERE reporter_id = ?1 AND target_type = ?2 AND target_id = ?3 AND status = 'NEW' RETURNING id`)
+    .bind(input.reporterId, input.targetType, input.targetId, input.reason, input.comment)
+    .first<{ id: string }>();
+  if (!open) throw new DomainError('CONFLICT');
+  return { id: open.id, repeated: true };
 }
 
 export type AdminReport = {
@@ -116,26 +119,33 @@ export async function reportCodeIssue(db: D1Database, input: { userId: string; r
  * Three different people saying within a week that a deal was not honoured
  * take it off the air: it is paused and only a moderator can put it back
  * (the business cannot resume it). The team and the moderators are told.
+ * A deal the owner had just paused is held all the same, or resuming it
+ * would bring it back with the complaints still open. Codes people cancelled
+ * themselves do not count: booking and cancelling at once costs nothing, so
+ * a few accounts could otherwise take anyone's deal down (moderators still
+ * see those complaints).
  */
 async function holdAfterComplaints(db: D1Database, dealId: string, now: Date) {
   const since = toDbTime(new Date(now.getTime() - CODE_ISSUE_RULES.holdDays * 24 * 60 * 60_000));
   const people =
     (await db
       .prepare(`SELECT COUNT(DISTINCT p.reporter_id) AS n FROM reports p JOIN redemptions r ON r.id = p.target_id
-        WHERE p.target_type = 'REDEMPTION' AND p.status = 'NEW' AND p.created_at >= ?2 AND r.deal_id = ?1`)
+        WHERE p.target_type = 'REDEMPTION' AND p.status = 'NEW' AND p.created_at >= ?2 AND r.deal_id = ?1
+          AND NOT (r.status = 'CANCELED' AND r.cancel_reason IS NULL)`)
       .bind(dealId, since)
       .first<{ n: number }>())?.n ?? 0;
   if (people < CODE_ISSUE_RULES.holdAfter) return false;
   const nowDb = toDbTime(now);
+  const before = await db.prepare(`SELECT status FROM deals WHERE id = ?1`).bind(dealId).first<{ status: string }>();
   const held = await db
     .prepare(`UPDATE deals SET status = 'PAUSED', complaint_hold_at = ?2, updated_at = ?2
-      WHERE id = ?1 AND status = 'ACTIVE' AND complaint_hold_at IS NULL AND deleted_at IS NULL RETURNING business_id AS businessId`)
+      WHERE id = ?1 AND status IN ('ACTIVE', 'PAUSED') AND complaint_hold_at IS NULL AND deleted_at IS NULL RETURNING business_id AS businessId`)
     .bind(dealId, nowDb)
     .first<{ businessId: string }>();
   if (!held) return false;
   const payload = { dealId, people: String(people) };
   await db.batch([
-    auditStatement(db, { actorUserId: null, businessId: held.businessId, action: 'deal.held_after_complaints', targetType: 'Deal', targetId: dealId, reason: `${people} customers`, before: { status: 'ACTIVE' }, after: { status: 'PAUSED' } }, nowDb),
+    auditStatement(db, { actorUserId: null, businessId: held.businessId, action: 'deal.held_after_complaints', targetType: 'Deal', targetId: dealId, reason: `${people} customers`, before: { status: before?.status ?? 'ACTIVE' }, after: { status: 'PAUSED' } }, nowDb),
     teamStatement(db, { businessId: held.businessId, kind: 'DEAL_HELD', key: `${dealId}:${nowDb}`, payload: { ...payload, audience: 'team' }, nowDb }),
     staffAlertStatement(db, { kind: 'DEAL_HELD', key: `${dealId}:${nowDb}`, payload: { ...payload, audience: 'staff' }, nowDb }),
   ]);

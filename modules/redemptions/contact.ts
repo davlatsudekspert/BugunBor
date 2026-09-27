@@ -1,5 +1,5 @@
 import { toDbTime } from '@/lib/time';
-import { auditStatement } from '@/modules/audit';
+import { auditStatementIf } from '@/modules/audit';
 import { DomainError } from '@/modules/errors';
 
 // A business talks to a person who booked a code without ever seeing their
@@ -34,11 +34,19 @@ export async function messageBooking(
 ) {
   const code = await activeBooking(db, input.businessId, input.redemptionId, now);
   const nowDb = toDbTime(now);
+  const notificationId = crypto.randomUUID();
   const results = await db.batch([
     db.prepare(`INSERT OR IGNORE INTO notifications(id, user_id, kind, dedupe_key, payload_json, send_after, created_at)
-        VALUES (lower(hex(randomblob(16))), ?1, 'BOOKING_MESSAGE', 'BOOKING_MESSAGE:' || ?2 || ':' || ?3, json_object('redemptionId', ?2, 'message', ?3), ?4, ?4)`)
-      .bind(code.userId, code.id, input.message, nowDb),
-    auditStatement(db, { actorUserId: input.staffUserId, businessId: input.businessId, action: 'redemption.messaged', targetType: 'Redemption', targetId: code.id, after: { message: input.message } }, nowDb),
+        VALUES (?5, ?1, 'BOOKING_MESSAGE', 'BOOKING_MESSAGE:' || ?2 || ':' || ?3, json_object('redemptionId', ?2, 'message', ?3), ?4, ?4)`)
+      .bind(code.userId, code.id, input.message, nowDb, notificationId),
+    // Logged only when it was really sent (not a repeat).
+    auditStatementIf(
+      db,
+      { actorUserId: input.staffUserId, businessId: input.businessId, action: 'redemption.messaged', targetType: 'Redemption', targetId: code.id, after: { message: input.message } },
+      nowDb,
+      `EXISTS (SELECT 1 FROM notifications WHERE id = ?11)`,
+      notificationId,
+    ),
   ]);
   return { sent: (results[0].meta.changes ?? 0) === 1 };
 }
@@ -68,7 +76,14 @@ export async function cancelBooking(
         SELECT lower(hex(randomblob(16))), ?1, 'BOOKING_CANCELED', 'BOOKING_CANCELED:' || ?2, json_object('redemptionId', ?2), ?3, ?3
         WHERE EXISTS (SELECT 1 FROM redemption_events WHERE id = ?4)`)
       .bind(code.userId, code.id, nowDb, eventId),
-    auditStatement(db, { actorUserId: input.staffUserId, businessId: input.businessId, action: 'redemption.canceled_by_business', targetType: 'Redemption', targetId: code.id, reason: input.reason, before: { status: 'CLAIMED' }, after: { status: 'CANCELED' } }, nowDb),
+    // Logged only if this cancellation won (not a cashier or the customer a moment earlier).
+    auditStatementIf(
+      db,
+      { actorUserId: input.staffUserId, businessId: input.businessId, action: 'redemption.canceled_by_business', targetType: 'Redemption', targetId: code.id, reason: input.reason, before: { status: 'CLAIMED' }, after: { status: 'CANCELED' } },
+      nowDb,
+      `EXISTS (SELECT 1 FROM redemption_events WHERE id = ?11)`,
+      eventId,
+    ),
   ]);
   if ((results[0].meta.changes ?? 0) !== 1) throw new DomainError('CONFLICT');
 }

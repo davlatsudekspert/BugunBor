@@ -4,6 +4,7 @@ import { ActionButton, DecisionForm } from '@/components/admin/admin-controls';
 import { AdminShell } from '@/components/admin/admin-shell';
 import { DealVisual } from '@/components/deals/deal-visual';
 import { getDb } from '@/db/client';
+import { setSummary } from '@/lib/deal-set';
 import { formatDurationMinutes, formatMoment, formatSum } from '@/lib/format';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
@@ -53,6 +54,12 @@ export default async function AdminDealsPage({ searchParams }: { searchParams: P
                 </div>
               </div>
               <p className="mt-3 text-sm leading-6 text-slate-600">{deal.description}</p>
+              {deal.set ? (
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  <strong className="text-navy">{[t.deal.set.contents, deal.set.persons ? fmt(t.deal.set.persons, { count: deal.set.persons }) : null].filter(Boolean).join(' · ')}:</strong>{' '}
+                  {setSummary(deal.set)}
+                </p>
+              ) : null}
               <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">{deal.terms}</p>
               <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
                 <div><dt className="text-slate-400">{t.deal.startsAt}</dt><dd className="font-semibold text-navy">{formatMoment(parseDbTime(deal.startsAt), t, locale)}</dd></div>

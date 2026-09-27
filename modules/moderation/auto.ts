@@ -38,7 +38,7 @@ export async function getAutoModerationSettings(db: D1Database): Promise<AutoMod
 
 export const AUTO_FLAGS = [
   'LINK', 'BANNED', 'RESTRICTED', 'CARD', 'PROFANITY', 'LOW_QUALITY', 'DUPLICATE_NAME', 'OWNER_HISTORY',
-  'RESUBMITTED', 'LOCATION', 'DISCOUNT_HIGH', 'PRICE_LOW', 'PRICE_HIGH', 'BUSINESS_HISTORY',
+  'RESUBMITTED', 'LOCATION', 'DISCOUNT_HIGH', 'PRICE_LOW', 'PRICE_HIGH', 'BUSINESS_HISTORY', 'COMPLAINT_HOLD',
 ] as const;
 export type AutoFlag = (typeof AUTO_FLAGS)[number];
 
@@ -193,16 +193,22 @@ type DealFacts = { id: string; businessId: string; title: string; description: s
 
 export async function dealFlags(db: D1Database, deal: DealFacts, now = new Date()): Promise<AutoFlag[]> {
   const since = toDbTime(new Date(now.getTime() - DEAL_LIMITS.historyDays * 86_400_000));
-  const [history, resubmitted] = await Promise.all([
+  const [history, resubmitted, held] = await Promise.all([
     db.prepare(`SELECT 1 AS found FROM moderation_actions ma JOIN deals d ON d.id = ma.target_id
         WHERE ma.target_type = 'Deal' AND ma.action IN ('REJECT', 'ARCHIVE') AND ma.actor_user_id != ?3
           AND d.business_id = ?1 AND d.id != ?2 AND ma.created_at >= ?4 LIMIT 1`)
       .bind(deal.businessId, deal.id, SYSTEM_MODERATOR_ID, since)
       .first<{ found: number }>(),
     rejectedByPerson(db, 'Deal', deal.id),
+    // A deal of the business is held after complaints: its new deals (a copy
+    // of the held one included) wait for a moderator too.
+    db.prepare(`SELECT 1 AS found FROM deals WHERE business_id = ?1 AND id != ?2 AND complaint_hold_at IS NOT NULL AND deleted_at IS NULL LIMIT 1`)
+      .bind(deal.businessId, deal.id)
+      .first<{ found: number }>(),
   ]);
   const flags = dealContentFlags(deal);
   if (history) flags.push('BUSINESS_HISTORY');
+  if (held) flags.push('COMPLAINT_HOLD');
   if (resubmitted) flags.push('RESUBMITTED');
   return unique(flags);
 }

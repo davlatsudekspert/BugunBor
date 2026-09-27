@@ -68,13 +68,18 @@ export function teamStatement(db: D1Database, input: { businessId: string; kind:
  * the automatic checks held back go to moderators and admins, manual payment
  * requests to admins. Once per key.
  */
-export function staffAlertStatement(db: D1Database, input: { kind: 'REVIEW_NEEDED' | 'PAYMENT_REQUEST' | 'REPORT' | 'DEAL_HELD'; key: string; payload: Record<string, string>; nowDb: string }) {
+export function staffAlertStatement(
+  db: D1Database,
+  input: { kind: 'REVIEW_NEEDED' | 'PAYMENT_REQUEST' | 'REPORT' | 'DEAL_HELD'; key: string; payload: Record<string, string>; nowDb: string },
+  /** Sent only if this holds when the batch reaches it; its parameters are numbered from ?5. */
+  onlyIf?: { sql: string; params: unknown[] },
+) {
   return db
     .prepare(`INSERT OR IGNORE INTO notifications(id, user_id, kind, dedupe_key, payload_json, send_after, created_at)
       SELECT lower(hex(randomblob(16))), u.id, ?1, ?1 || ':' || ?2 || ':' || u.id, ?3, ?4, ?4
       FROM users u WHERE u.status = 'ACTIVE' AND u.telegram_user_id IS NOT NULL
-        AND (u.role = 'ADMIN' OR (u.role = 'MODERATOR' AND ?1 IN ('REVIEW_NEEDED', 'REPORT', 'DEAL_HELD')))`)
-    .bind(input.kind, input.key, JSON.stringify(input.payload), input.nowDb);
+        AND (u.role = 'ADMIN' OR (u.role = 'MODERATOR' AND ?1 IN ('REVIEW_NEEDED', 'REPORT', 'DEAL_HELD')))${onlyIf ? ` AND ${onlyIf.sql}` : ''}`)
+    .bind(input.kind, input.key, JSON.stringify(input.payload), input.nowDb, ...(onlyIf?.params ?? []));
 }
 
 type Rendered = { text: string; button: string; path: string };

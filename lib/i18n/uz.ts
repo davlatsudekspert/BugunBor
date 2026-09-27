@@ -1146,6 +1146,7 @@ export const uz = {
       PRICE_LOW: 'Narx 1 000 so‘mdan past',
       PRICE_HIGH: 'Asl narx 50 mln so‘mdan yuqori',
       BUSINESS_HISTORY: 'Biznesning yaqinda rad etilgan aksiyalari bor',
+      COMPLAINT_HOLD: 'Biznesning boshqa aksiyasi shikoyatlar tufayli to‘xtatilgan',
     },
     ownerFix: 'Avtomatik tekshiruv to‘xtatdi: {reasons}. Profilda tuzatib saqlasangiz, darhol qayta tekshiriladi; aks holda moderator ko‘rib chiqadi.',
     ownerFixDeal: 'Avtomatik tekshiruv: {reasons}. Qaytarib olib tuzatsangiz va qayta yuborsangiz, darhol tekshiriladi; aks holda moderator ko‘rib chiqadi.',

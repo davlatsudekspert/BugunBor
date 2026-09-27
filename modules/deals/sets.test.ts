@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { parseDealSet, setSummary } from '@/lib/deal-set';
 import { dateToTashkentInput, toDbTime } from '@/lib/time';
 import { NOW, marketplace } from '@/test/fixtures';
+import { listAdminDeals } from '@/modules/admin/service';
 import { getDealBySlug, listLiveDeals } from '@/modules/catalog/queries';
 import { dealContentFlags } from '@/modules/moderation/auto';
 import { dealInputSchema } from './schema';
@@ -66,6 +67,8 @@ describe('a set deal from the form to the catalogue', () => {
     const db = await marketplace();
     const { id } = await createDeal(db, { businessId: 'biz', userId: 'owner', input: input(), submit: false }, NOW);
     expect((await getBusinessDeal(db, 'biz', id)).set).toEqual(oilaviy);
+    // Moderators see what is in it.
+    expect((await listAdminDeals(db, 'all', NOW)).find((deal) => deal.id === id)?.set).toEqual(oilaviy);
 
     // An app that knows nothing about sets saves the form: the set stays.
     const { set: _omit, ...older } = input({ title: 'Oilaviy set 4 kishilik' });
