@@ -472,5 +472,20 @@
   "branchOpenNow": "Сейчас открыто",
   "branchOpenUntil": "Открыто до {time}",
   "branchClosedNow": "Закрыто · откроется в {time}",
-  "branchClosedWarning": "Филиал сейчас закрыт и откроется в {time}. Код действует {minutes} мин — бронируйте ближе к открытию."
+  "branchClosedWarning": "Филиал сейчас закрыт и откроется в {time}. Код действует {minutes} мин — бронируйте ближе к открытию.",
+  "setBadge": "Сет",
+  "setPersons": "на {count} чел.",
+  "setContents": "Состав сета",
+  "filterSets": "Сеты",
+  "dealSetToggle": "Это сет",
+  "dealSetHint": "Несколько блюд или товаров вместе: например, 2 плова, 2 салата и чай.",
+  "dealSetItemName": "{number}. Название",
+  "dealSetItemHint": "Например, Плов",
+  "dealSetQty": "Кол-во",
+  "dealSetAdd": "Добавить ещё",
+  "dealSetRemove": "Убрать",
+  "dealSetPersons": "На сколько человек",
+  "dealSetPersonsAny": "Не указано",
+  "dealSetPriceHint": "Обычная цена — сумма обычных цен всего, что входит в сет.",
+  "valSetItems": "В сете должно быть от 2 до 12 позиций."
 }

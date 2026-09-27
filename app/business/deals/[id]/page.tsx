@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { DealActions } from '@/components/business/deal-actions';
 import { DealForm } from '@/components/business/deal-form';
+import { emptySetItems } from '@/lib/deal-set';
 import { WorkspaceShell } from '@/components/business/workspace-shell';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
@@ -56,6 +57,9 @@ export default async function EditDealPage({ params }: { params: Promise<{ id: s
               claimTtlMinutes: String(deal.claimTtlMinutes),
               branchIds: deal.branchIds,
               photoId: deal.photoId,
+              isSet: Boolean(deal.set),
+              setItems: deal.set ? deal.set.items.map((item) => ({ name: item.name, qty: String(item.qty) })) : emptySetItems(),
+              setPersons: deal.set?.persons ? String(deal.set.persons) : '',
             }}
             t={{ biz: t.biz, validation: t.validation, common: t.common, errors: t.errors, deal: t.deal }}
           />

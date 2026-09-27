@@ -16,6 +16,41 @@ String? distanceLabel(BuildContext context, double? km) {
   return distance.meters ? l.distanceM(distance.value) : l.distanceKm(distance.value);
 }
 
+/// «Set · 4 kishilik»: on a photo in white on navy, elsewhere in the brand tint.
+class SetBadge extends StatelessWidget {
+  const SetBadge(this.set, {super.key, this.onPhoto = false});
+  final DealSet set;
+  final bool onPhoto;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    final color = onPhoto ? Colors.white : context.accentText;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: onPhoto ? Brand.navy.withValues(alpha: 0.9) : Brand.primary.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.layers_outlined, size: 14, color: onPhoto ? const Color(0xFFFFB199) : color),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              [l.setBadge, if (set.persons != null) l.setPersons('${set.persons}')].join(' · '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: color, fontSize: 12.5, fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Full-width deal card for vertical lists (search, saved, business page).
 class DealTile extends StatelessWidget {
   const DealTile(this.deal, {super.key});
@@ -72,7 +107,16 @@ class DealTile extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 2),
+                      if (deal.set case final set?) ...[SetBadge(set), const SizedBox(height: 4)],
                       Text(deal.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium),
+                      // What is in the set, in one line.
+                      if (deal.set case final set?)
+                        Text(
+                          set.summary,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: context.mutedText, fontSize: 13.5),
+                        ),
                       const SizedBox(height: Gap.xs),
                       PriceLine(price: deal.price, original: deal.originalPrice),
                       const SizedBox(height: 6),
@@ -153,6 +197,13 @@ class DealCompactCard extends StatelessWidget {
                       AppImage(deal.photo, small: true, icon: categoryIcon(deal.categorySlug)),
                       if (deal.discountPercent > 0) Positioned(left: Gap.sm, top: Gap.sm, child: DiscountBadge(deal.discountPercent)),
                       if (deal.isDemo) const Positioned(right: Gap.sm, top: Gap.sm, child: DemoBadge()),
+                      if (deal.set case final set?)
+                        Positioned(
+                          left: Gap.sm,
+                          bottom: Gap.sm,
+                          right: Gap.sm,
+                          child: Align(alignment: Alignment.bottomLeft, child: SetBadge(set, onPhoto: true)),
+                        ),
                     ],
                   ),
                 ),

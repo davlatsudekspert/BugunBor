@@ -25,6 +25,9 @@ void main() {
     await tester.tap(find.widgetWithText(ChoiceChip, 'Taomlar'));
     await settle(tester);
     expect(lastSearch()['category'], 'taomlar');
+    // The order chips follow «Setlar» in a row that scrolls sideways.
+    await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Katta chegirma'));
+    await settle(tester, frames: 4);
     await tester.tap(find.widgetWithText(ChoiceChip, 'Katta chegirma'));
     await settle(tester);
     expect(lastSearch(), containsPair('sort', 'discount'));

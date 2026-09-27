@@ -84,14 +84,21 @@ Tasdiqlangan aksiyaning saytdagi ko‘rinishi vaqt va miqdorga qarab o‘zi hiso
 
 - Tasdiqlangan aksiyaning shartlari va narxini o‘zgartirib bo‘lmaydi. Aldov bo‘lmasligi uchun o‘zgartirish kerak bo‘lsa, nusxa olinadi va yangi aksiya tekshiruvdan o‘tadi.
 - Aksiyani faqat biznes **tasdiqlangan** bo‘lsa tasdiqlash mumkin.
+- Aksiya **set** (to‘plam) bo‘lishi mumkin: tarkibi 2–12 ta narsa (har biri soni bilan, 1–20) va ixtiyoriy «necha kishilik» (1–20). Kartada «Set · 4 kishilik» va tarkibi bir qatorda, aksiya sahifasida ro‘yxat bo‘lib ko‘rinadi. Qidiruvda «Setlar» filtri bor, tarkibidagi nomlar ham qidiriladi va avtomatik tekshiruvdan o‘tadi. Asl narx — set ichidagilarning odatdagi narxlari yig‘indisi.
+- **Shikoyat bilan to‘xtatish:** 7 kun ichida 3 xil mijoz kod bo‘yicha «Aksiya berilmadi» deb shikoyat qilsa, aksiya avtomatik pauzaga tushadi. Uni faqat moderator qayta yoqadi; biznes va moderator xabar oladi.
 
 ### 3.3. Kod
 
 ```
 Faol (CLAIMED) ──kassir tasdiqladi──▶ Ishlatilgan (COMPLETED)
       ├──muddati tugadi──▶ Muddati o‘tgan (EXPIRED)    [joy qaytadi]
-      └──mijoz bekor qildi──▶ Bekor qilingan (CANCELED) [joy qaytadi]
+      ├──mijoz bekor qildi──▶ Bekor qilingan (CANCELED) [joy qaytadi]
+      └──biznes bekor qildi (mahsulot tugadi / filial yopiq)──▶ Bekor qilingan (CANCELED) [joy qaytadi, mijozga sababi bilan xabar]
 ```
+
+- Mijozning telefon raqami biznesga ko‘rinmaydi. Biznes faol bronga tayyor xabar yuboradi («Kutyapmiz», «Kechikyapmiz», har biri bir marta) yoki uni sabab bilan bekor qiladi — xabarni BugunBor yetkazadi.
+- **Kelmaganlar:** 7 kun ichida ishlatilmay muddati o‘tgan 3 ta kod bo‘lsa, oxirgisidan boshlab 24 soat band qilib bo‘lmaydi. 2 tadan keyin ogohlantiriladi. O‘zi bekor qilgan yoki biznes bekor qilgan kod hisoblanmaydi.
+- **«Aksiya berilmadimi?»:** band qilgan mijoz 3 kun ichida kod bo‘yicha bir marta shikoyat qila oladi (ishlatilgan kod uchun faqat narx haqida).
 
 ### 3.4. Kirish so‘rovi (Telegram)
 

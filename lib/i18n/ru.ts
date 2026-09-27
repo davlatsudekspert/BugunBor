@@ -141,6 +141,7 @@ export const ru: Dictionary = {
     howMore: 'Подробнее',
   },
   deal: {
+    set: { badge: 'Сет', persons: 'на {count} чел.', contents: 'Состав сета' },
     viewDeal: 'Смотреть акцию',
     save: 'В избранное',
     saved: 'В избранном',
@@ -212,6 +213,7 @@ export const ru: Dictionary = {
     allCategories: 'Все категории',
     sortLabel: 'Сортировка',
     sort: { ending: 'Скоро закончатся', discount: 'Большая скидка', new: 'Новые', near: 'Рядом' },
+    sets: 'Сеты',
     results: 'Активных акций: {count}',
     nearMe: 'Рядом со мной',
     locating: 'Определяем местоположение…',
@@ -566,6 +568,19 @@ export const ru: Dictionary = {
       saveAndSubmit: 'Сохранить и отправить на проверку',
       preview: 'Как это выглядит на сайте',
       rules: 'Правила: скидка от {min}%, длительность от 30 минут до 30 дней.',
+      set: {
+        toggle: 'Это сет',
+        hint: 'Несколько блюд или товаров вместе: например, 2 плова, 2 салата и чай.',
+        items: 'Состав сета',
+        itemName: 'Название',
+        itemPlaceholder: 'Например, Плов',
+        itemQty: 'Кол-во',
+        addItem: 'Добавить ещё',
+        removeItem: 'Убрать',
+        persons: 'На сколько человек',
+        personsAny: 'Не указано',
+        priceHint: 'Обычная цена — сумма обычных цен всего, что входит в сет.',
+      },
     },
     redeem: {
       title: 'Проверка кода',
@@ -1236,5 +1251,6 @@ export const ru: Dictionary = {
     tooLong: 'Слишком длинно.',
     invalid: 'Неверное значение.',
     code: 'Код состоит из 6 символов.',
+    setItems: 'В сете должно быть от 2 до 12 позиций.',
   },
 };

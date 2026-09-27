@@ -78,6 +78,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => SearchScreen(
                   category: state.uri.queryParameters['category'],
                   sort: state.uri.queryParameters['sort'],
+                  sets: state.uri.queryParameters['set'] == '1',
                   query: state.uri.queryParameters['q'],
                   focus: state.uri.queryParameters['focus'] == '1',
                 ),

@@ -139,6 +139,7 @@ export const uz = {
     howMore: 'Batafsil',
   },
   deal: {
+    set: { badge: 'Set', persons: '{count} kishilik', contents: 'Set tarkibi' },
     viewDeal: 'Aksiyani ko‘rish',
     save: 'Saqlash',
     saved: 'Saqlangan',
@@ -210,6 +211,7 @@ export const uz = {
     allCategories: 'Barcha kategoriyalar',
     sortLabel: 'Saralash',
     sort: { ending: 'Tez tugaydi', discount: 'Katta chegirma', new: 'Yangi', near: 'Yaqin' },
+    sets: 'Setlar',
     results: '{count} ta faol aksiya',
     nearMe: 'Yaqinimdagilar',
     locating: 'Joylashuv aniqlanmoqda…',
@@ -564,6 +566,19 @@ export const uz = {
       saveAndSubmit: 'Saqlash va tekshiruvga yuborish',
       preview: 'Saytdagi ko‘rinishi',
       rules: 'Qoidalar: chegirma kamida {min}%, davomiylik 30 daqiqadan 30 kungacha.',
+      set: {
+        toggle: 'Bu set (to‘plam)',
+        hint: 'Bir nechta taom yoki mahsulot birga: masalan, 2 ta osh, 2 ta salat va choy.',
+        items: 'Set tarkibi',
+        itemName: 'Nomi',
+        itemPlaceholder: 'Masalan, Osh',
+        itemQty: 'Soni',
+        addItem: 'Yana qo‘shish',
+        removeItem: 'Olib tashlash',
+        persons: 'Necha kishilik',
+        personsAny: 'Ko‘rsatilmagan',
+        priceHint: 'Asl narx — set ichidagilarning odatdagi narxlari yig‘indisi.',
+      },
     },
     redeem: {
       title: 'Kodni tekshirish',
@@ -1234,6 +1249,7 @@ export const uz = {
     tooLong: 'Juda uzun.',
     invalid: 'Noto‘g‘ri qiymat.',
     code: 'Kod 6 belgidan iborat.',
+    setItems: 'Setga kamida 2 ta, ko‘pi bilan 12 ta narsa kiriting.',
   },
 };
 

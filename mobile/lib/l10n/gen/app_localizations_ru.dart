@@ -1539,4 +1539,53 @@ class LRu extends L {
   String branchClosedWarning(String time, String minutes) {
     return 'Филиал сейчас закрыт и откроется в $time. Код действует $minutes мин — бронируйте ближе к открытию.';
   }
+
+  @override
+  String get setBadge => 'Сет';
+
+  @override
+  String setPersons(String count) {
+    return 'на $count чел.';
+  }
+
+  @override
+  String get setContents => 'Состав сета';
+
+  @override
+  String get filterSets => 'Сеты';
+
+  @override
+  String get dealSetToggle => 'Это сет';
+
+  @override
+  String get dealSetHint => 'Несколько блюд или товаров вместе: например, 2 плова, 2 салата и чай.';
+
+  @override
+  String dealSetItemName(String number) {
+    return '$number. Название';
+  }
+
+  @override
+  String get dealSetItemHint => 'Например, Плов';
+
+  @override
+  String get dealSetQty => 'Кол-во';
+
+  @override
+  String get dealSetAdd => 'Добавить ещё';
+
+  @override
+  String get dealSetRemove => 'Убрать';
+
+  @override
+  String get dealSetPersons => 'На сколько человек';
+
+  @override
+  String get dealSetPersonsAny => 'Не указано';
+
+  @override
+  String get dealSetPriceHint => 'Обычная цена — сумма обычных цен всего, что входит в сет.';
+
+  @override
+  String get valSetItems => 'В сете должно быть от 2 до 12 позиций.';
 }

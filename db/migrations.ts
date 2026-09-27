@@ -551,4 +551,18 @@ const codeIssues: Migration = {
   },
 };
 
-export const migrations: readonly Migration[] = [baseline, systemV1, billing, media, engagement, payments, autoModeration, freeLaunch, privacyConsent, appSupport, userAvatars, codeIssues];
+/** A deal can be a set: what is in it and for how many people (lib/deal-set.ts). */
+const dealSets: Migration = {
+  id: '0013_deal_sets',
+  async build({ db, columns }) {
+    const existing = await columns('deals');
+    const statements: D1PreparedStatement[] = [];
+    if (!existing.has('set_items_json')) statements.push(db.prepare(`ALTER TABLE deals ADD COLUMN set_items_json TEXT`));
+    if (!existing.has('set_persons')) statements.push(db.prepare(`ALTER TABLE deals ADD COLUMN set_persons INTEGER`));
+    return statements;
+  },
+};
+
+export const migrations: readonly Migration[] = [
+  baseline, systemV1, billing, media, engagement, payments, autoModeration, freeLaunch, privacyConsent, appSupport, userAvatars, codeIssues, dealSets,
+];

@@ -1,3 +1,4 @@
+import { parseDealSet, serializeSetItems, type DealSet } from '@/lib/deal-set';
 import { dealPhotoUrl } from '@/lib/photos';
 import { buildSearchText, slugify } from '@/lib/search';
 import { addMinutes, parseDbTime, tashkentInputToDate, toDbTime } from '@/lib/time';
@@ -54,6 +55,8 @@ export type EditableDeal = {
   id: string; status: StoredDealStatus; title: string; description: string; terms: string; categoryId: string; visual: string | null;
   originalPrice: number | null; price: number; startsAt: string; endsAt: string; total: number | null; perCustomerLimit: number;
   claimTtlMinutes: number; branchIds: string[]; rejectionReason: string | null; slug: string; isSponsored: boolean; photoId: string | null;
+  /** What the set holds, or null for a regular deal. */
+  set: DealSet | null;
 };
 
 export async function getBusinessDeal(db: D1Database, businessId: string, dealId: string): Promise<EditableDeal> {
@@ -61,13 +64,14 @@ export async function getBusinessDeal(db: D1Database, businessId: string, dealId
     .prepare(`SELECT id, status, title, description, terms, category_id AS categoryId, visual, original_price_uzs AS originalPrice,
         discounted_price_uzs AS price, starts_at AS startsAt, ends_at AS endsAt, total_quantity AS total,
         per_customer_limit AS perCustomerLimit, claim_ttl_minutes AS claimTtlMinutes, rejection_reason AS rejectionReason, slug,
-        is_sponsored AS isSponsored, photo_id AS photoId
+        is_sponsored AS isSponsored, photo_id AS photoId, set_items_json AS setItemsJson, set_persons AS setPersons
       FROM deals WHERE id = ?1 AND business_id = ?2 AND deleted_at IS NULL`)
     .bind(dealId, businessId)
-    .first<Omit<EditableDeal, 'branchIds' | 'isSponsored'> & { isSponsored: number }>();
+    .first<Omit<EditableDeal, 'branchIds' | 'isSponsored' | 'set'> & { isSponsored: number; setItemsJson: string | null; setPersons: number | null }>();
   if (!deal) throw new DomainError('NOT_FOUND');
   const branches = await db.prepare(`SELECT branch_id AS id FROM deal_branches WHERE deal_id = ?1`).bind(dealId).all<{ id: string }>();
-  return { ...deal, isSponsored: Boolean(deal.isSponsored), branchIds: branches.results.map((row) => row.id) };
+  const { setItemsJson, setPersons, ...rest } = deal;
+  return { ...rest, isSponsored: Boolean(deal.isSponsored), branchIds: branches.results.map((row) => row.id), set: parseDealSet(setItemsJson, setPersons) };
 }
 
 async function assertBranchesBelong(db: D1Database, businessId: string, branchIds: string[]) {
@@ -86,14 +90,19 @@ async function assertCategory(db: D1Database, categoryId: string) {
   if (!category) throw new DomainError('VALIDATION');
 }
 
-function dealColumns(input: DealInput) {
+/** [current] is the set already saved: an input without one keeps it. */
+function dealColumns(input: DealInput, current: DealSet | null = null) {
   const startsAt = tashkentInputToDate(input.startsAt)!;
   const endsAt = tashkentInputToDate(input.endsAt)!;
+  const set = input.set === undefined ? current : input.set;
   return {
     startsAt: toDbTime(startsAt),
     endsAt: toDbTime(endsAt),
     percent: discountPercent(input.originalPrice, input.price),
-    searchText: buildSearchText(input.title, input.description),
+    // What is in a set is searched too: "somsa" finds the set with somsa.
+    searchText: buildSearchText(input.title, input.description, ...(set?.items.map((item) => item.name) ?? [])),
+    setItemsJson: set ? serializeSetItems(set.items) : null,
+    setPersons: set?.persons ?? null,
   };
 }
 
@@ -128,11 +137,12 @@ export async function createDeal(db: D1Database, actor: Actor & { input: DealInp
   await db.batch([
     db.prepare(`INSERT INTO deals(id, business_id, category_id, slug, title, description, terms, original_price_uzs, discounted_price_uzs,
         discount_percent, starts_at, ends_at, total_quantity, remaining_quantity, per_customer_limit, redemption_method, status,
-        created_by_id, claim_ttl_minutes, visual, search_text, submitted_at, created_at, updated_at, photo_id)
-      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?13, ?14, 'ONSITE_CODE', ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?21, ?22)`)
+        created_by_id, claim_ttl_minutes, visual, search_text, submitted_at, created_at, updated_at, photo_id, set_items_json, set_persons)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?13, ?14, 'ONSITE_CODE', ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?21, ?22, ?23, ?24)`)
       .bind(id, actor.businessId, input.categoryId, `${slugify(input.title, 'aksiya')}-${randomSuffix()}`, input.title, input.description, input.terms,
         input.originalPrice, input.price, columns.percent, columns.startsAt, columns.endsAt, input.quantity, input.perCustomerLimit, status,
-        actor.userId, input.claimTtlMinutes, input.visual, columns.searchText, actor.submit ? nowDb : null, nowDb, input.photoId ?? null),
+        actor.userId, input.claimTtlMinutes, input.visual, columns.searchText, actor.submit ? nowDb : null, nowDb, input.photoId ?? null,
+        columns.setItemsJson, columns.setPersons),
     ...branchIds.map((branchId) => db.prepare(`INSERT INTO deal_branches(deal_id, branch_id) VALUES (?1, ?2)`).bind(id, branchId)),
     auditStatement(db, { actorUserId: actor.userId, businessId: actor.businessId, action: actor.submit ? 'deal.submitted' : 'deal.created', targetType: 'Deal', targetId: id, after: { status, title: input.title } }, nowDb),
   ]);
@@ -146,7 +156,7 @@ export async function updateDeal(db: D1Database, actor: Actor & { dealId: string
   await assertCategory(db, input.categoryId);
   const branchIds = await assertBranchesBelong(db, actor.businessId, input.branchIds);
   await assertOwnMedia(db, actor.businessId, input.photoId);
-  const columns = dealColumns(input);
+  const columns = dealColumns(input, current.set);
   if (actor.submit) await assertCanSubmit(db, actor, columns.endsAt, now);
   const nowDb = toDbTime(now);
   const status: StoredDealStatus = actor.submit ? 'PENDING_REVIEW' : current.status;
@@ -154,11 +164,11 @@ export async function updateDeal(db: D1Database, actor: Actor & { dealId: string
     db.prepare(`UPDATE deals SET category_id = ?3, title = ?4, description = ?5, terms = ?6, original_price_uzs = ?7, discounted_price_uzs = ?8,
         discount_percent = ?9, starts_at = ?10, ends_at = ?11, total_quantity = ?12, remaining_quantity = ?12, per_customer_limit = ?13,
         claim_ttl_minutes = ?14, visual = ?15, search_text = ?16, status = ?17, submitted_at = CASE WHEN ?17 = 'PENDING_REVIEW' THEN ?18 ELSE submitted_at END,
-        updated_at = ?18, photo_id = CASE WHEN ?19 = 1 THEN ?20 ELSE photo_id END
+        updated_at = ?18, photo_id = CASE WHEN ?19 = 1 THEN ?20 ELSE photo_id END, set_items_json = ?21, set_persons = ?22
       WHERE id = ?1 AND business_id = ?2 AND status IN ('DRAFT', 'REJECTED') AND deleted_at IS NULL`)
       .bind(actor.dealId, actor.businessId, input.categoryId, input.title, input.description, input.terms, input.originalPrice, input.price,
         columns.percent, columns.startsAt, columns.endsAt, input.quantity, input.perCustomerLimit, input.claimTtlMinutes, input.visual,
-        columns.searchText, status, nowDb, input.photoId === undefined ? 0 : 1, input.photoId ?? null),
+        columns.searchText, status, nowDb, input.photoId === undefined ? 0 : 1, input.photoId ?? null, columns.setItemsJson, columns.setPersons),
     db.prepare(`DELETE FROM deal_branches WHERE deal_id = ?1`).bind(actor.dealId),
     ...branchIds.map((branchId) => db.prepare(`INSERT INTO deal_branches(deal_id, branch_id) VALUES (?1, ?2)`).bind(actor.dealId, branchId)),
     auditStatement(db, { actorUserId: actor.userId, businessId: actor.businessId, action: actor.submit ? 'deal.submitted' : 'deal.updated', targetType: 'Deal', targetId: actor.dealId, before: { status: current.status }, after: { status } }, nowDb),
@@ -226,10 +236,10 @@ export async function duplicateDeal(db: D1Database, actor: Actor & { dealId: str
   await db.batch([
     db.prepare(`INSERT INTO deals(id, business_id, category_id, slug, title, description, terms, original_price_uzs, discounted_price_uzs,
         discount_percent, starts_at, ends_at, total_quantity, remaining_quantity, per_customer_limit, redemption_method, status,
-        created_by_id, claim_ttl_minutes, visual, search_text, created_at, updated_at, photo_id)
+        created_by_id, claim_ttl_minutes, visual, search_text, created_at, updated_at, photo_id, set_items_json, set_persons)
       SELECT ?1, business_id, category_id, ?3, title, description, terms, original_price_uzs, discounted_price_uzs,
         discount_percent, ?4, ?5, total_quantity, total_quantity, per_customer_limit, 'ONSITE_CODE', 'DRAFT',
-        ?6, claim_ttl_minutes, visual, search_text, ?7, ?7, photo_id
+        ?6, claim_ttl_minutes, visual, search_text, ?7, ?7, photo_id, set_items_json, set_persons
       FROM deals WHERE id = ?2 AND business_id = ?8`)
       .bind(id, actor.dealId, `${slugify(source.title, 'aksiya')}-${randomSuffix()}`, toDbTime(start), toDbTime(end), actor.userId, nowDb, actor.businessId),
     ...branches.results.map((branch) => db.prepare(`INSERT INTO deal_branches(deal_id, branch_id) VALUES (?1, ?2)`).bind(id, branch.id)),

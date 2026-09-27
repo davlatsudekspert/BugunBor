@@ -301,6 +301,8 @@ class _DealScreenState extends ConsumerState<DealScreen> {
                     ),
                   ],
                   if (noShowWarning) ...[const SizedBox(height: Gap.md), _BookingNotice(text: l.noShowWarning('${me.noShows}'), blocking: false)],
+                  // A set: what the person gets, before anything else.
+                  if (deal.set case final set?) ...[const SizedBox(height: Gap.lg), _SetContents(set)],
                   const SizedBox(height: Gap.lg),
                   _Facts(deal: deal),
                   if (deal.isDemo) ...[const SizedBox(height: Gap.lg), _DemoNotice(text: l.demoNotice)],
@@ -420,6 +422,57 @@ class _DemoNotice extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// What is in a set, one line per thing: "Osh  × 2".
+class _SetContents extends StatelessWidget {
+  const _SetContents(this.set);
+  final DealSet set;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(Gap.md, Gap.md, Gap.md, Gap.sm),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Wrap(
+              spacing: Gap.sm,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Icon(Icons.layers_outlined, size: 20, color: Brand.primary),
+                Text(l.setContents, style: Theme.of(context).textTheme.titleMedium),
+                if (set.persons != null)
+                  Text(
+                    l.setPersons('${set.persons}'),
+                    style: TextStyle(color: context.mutedText, fontWeight: FontWeight.w700),
+                  ),
+              ],
+            ),
+            const SizedBox(height: Gap.xs),
+            for (var index = 0; index < set.items.length; index++) ...[
+              if (index > 0) Divider(height: 1, color: context.borderColor),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  children: [
+                    Expanded(child: Text(set.items[index].name, style: const TextStyle(fontSize: 15.5))),
+                    const SizedBox(width: Gap.md),
+                    Text(
+                      '× ${set.items[index].qty}',
+                      style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800, fontFeatures: [FontFeature.tabularFigures()]),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 /// Above the book button: a heads-up (amber) or why booking waits (red).

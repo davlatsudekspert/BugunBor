@@ -1538,4 +1538,53 @@ class LEn extends L {
   String branchClosedWarning(String time, String minutes) {
     return 'This branch is closed now and opens at $time. The code lasts $minutes min — book closer to opening time.';
   }
+
+  @override
+  String get setBadge => 'Set';
+
+  @override
+  String setPersons(String count) {
+    return 'for $count';
+  }
+
+  @override
+  String get setContents => 'What’s in the set';
+
+  @override
+  String get filterSets => 'Sets';
+
+  @override
+  String get dealSetToggle => 'This is a set';
+
+  @override
+  String get dealSetHint => 'Several dishes or items together, e.g. 2 plov, 2 salads and tea.';
+
+  @override
+  String dealSetItemName(String number) {
+    return '$number. Name';
+  }
+
+  @override
+  String get dealSetItemHint => 'e.g. Plov';
+
+  @override
+  String get dealSetQty => 'Qty';
+
+  @override
+  String get dealSetAdd => 'Add another';
+
+  @override
+  String get dealSetRemove => 'Remove';
+
+  @override
+  String get dealSetPersons => 'For how many people';
+
+  @override
+  String get dealSetPersonsAny => 'Not stated';
+
+  @override
+  String get dealSetPriceHint => 'The regular price is what everything in the set usually costs together.';
+
+  @override
+  String get valSetItems => 'A set needs 2 to 12 items.';
 }

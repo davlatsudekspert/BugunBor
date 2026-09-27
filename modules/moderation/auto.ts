@@ -1,3 +1,4 @@
+import { parseDealSet } from '@/lib/deal-set';
 import type { Dictionary } from '@/lib/i18n';
 import { normalizeSearchText } from '@/lib/search';
 import { toDbTime } from '@/lib/time';
@@ -149,8 +150,10 @@ export function businessContentFlags(
 }
 
 /** Checks of the deal itself: its texts and whether the prices make sense. */
-export function dealContentFlags(deal: { title: string; description: string; terms: string; originalPrice: number | null; price: number; discountPercent: number }): AutoFlag[] {
-  const flags = textFlags(`${deal.title}\n${deal.description}\n${deal.terms}`);
+export function dealContentFlags(deal: { title: string; description: string; terms: string; originalPrice: number | null; price: number; discountPercent: number; setItemsJson?: string | null }): AutoFlag[] {
+  // What a set holds is read like the rest of its text.
+  const setText = parseDealSet(deal.setItemsJson, null)?.items.map((item) => item.name).join('\n') ?? '';
+  const flags = textFlags(`${deal.title}\n${deal.description}\n${deal.terms}\n${setText}`);
   if (lowQuality(deal.title, deal.description)) flags.push('LOW_QUALITY');
   if (deal.discountPercent > DEAL_LIMITS.maxDiscountPercent) flags.push('DISCOUNT_HIGH');
   if (deal.price < DEAL_LIMITS.minPriceUzs) flags.push('PRICE_LOW');
@@ -186,7 +189,7 @@ export async function businessFlags(db: D1Database, business: BusinessFacts): Pr
   return unique(flags);
 }
 
-type DealFacts = { id: string; businessId: string; title: string; description: string; terms: string; originalPrice: number | null; price: number; discountPercent: number };
+type DealFacts = { id: string; businessId: string; title: string; description: string; terms: string; originalPrice: number | null; price: number; discountPercent: number; setItemsJson?: string | null };
 
 export async function dealFlags(db: D1Database, deal: DealFacts, now = new Date()): Promise<AutoFlag[]> {
   const since = toDbTime(new Date(now.getTime() - DEAL_LIMITS.historyDays * 86_400_000));
@@ -243,7 +246,7 @@ export async function autoModerateDeal(db: D1Database, dealId: string, now = new
   try {
     const deal = await db
       .prepare(`SELECT d.id, d.business_id AS businessId, d.title, d.description, d.terms, d.original_price_uzs AS originalPrice,
-          d.discounted_price_uzs AS price, d.discount_percent AS discountPercent, d.status, d.submitted_at AS submittedAt,
+          d.discounted_price_uzs AS price, d.discount_percent AS discountPercent, d.set_items_json AS setItemsJson, d.status, d.submitted_at AS submittedAt,
           b.verification_status AS businessStatus, b.suspended_at AS suspendedAt
         FROM deals d JOIN businesses b ON b.id = d.business_id WHERE d.id = ?1 AND d.deleted_at IS NULL`)
       .bind(dealId)

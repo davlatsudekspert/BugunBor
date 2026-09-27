@@ -1,4 +1,4 @@
-import { ArrowRight, ListFilter, MapPin, Search } from 'lucide-react';
+import { ArrowRight, Layers, ListFilter, MapPin, Search } from 'lucide-react';
 
 import { buttonVariants } from '@/components/ui/button';
 import { getDb } from '@/db/client';
@@ -17,7 +17,7 @@ import { CitySelect } from './city-select';
 import { DealCard } from './deal-card';
 import { NearMeButton } from './near-me-button';
 
-export type DiscoverParams = { q?: string; city?: string; category?: string; sort?: string; lat?: string; lng?: string; page?: string };
+export type DiscoverParams = { q?: string; city?: string; category?: string; sort?: string; lat?: string; lng?: string; page?: string; set?: string };
 
 const PAGE_SIZE = 24;
 /** «More» stops here: a longer list is better narrowed with search or a category. */
@@ -49,15 +49,16 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
   const sort: SortKey = requestedSort === 'near' && !near ? 'ending' : requestedSort;
   const categorySlug = category?.slug ?? (params.category || null);
   const page = Math.max(1, Math.min(MAX_PAGE, Number.parseInt(params.page ?? '1', 10) || 1));
+  const sets = params.set === '1';
 
   const demo = await demoEnabled(db);
   const [deals, categories, favorites] = await Promise.all([
-    listLiveDeals(db, { city, category: categorySlug, query: params.q, sort, near, demo }),
+    listLiveDeals(db, { city, category: categorySlug, query: params.q, sort, sets, near, demo }),
     category ? Promise.resolve([] as Category[]) : listCategories(db),
     user ? getFavoriteIds(db, user.id) : Promise.resolve(new Set<string>()),
   ]);
   const visible = deals.slice(0, page * PAGE_SIZE);
-  const hasFilters = Boolean(params.q || params.category || near || (params.sort && params.sort !== 'ending'));
+  const hasFilters = Boolean(params.q || params.category || near || sets || (params.sort && params.sort !== 'ending'));
   const sortLabels: Record<SortKey, string> = t.discover.sort;
 
   return (
@@ -91,6 +92,7 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
             </div>
             {params.category && !category ? <input type="hidden" name="category" value={params.category} /> : null}
             {sort !== 'ending' && sort !== 'near' ? <input type="hidden" name="sort" value={sort} /> : null}
+            {sets ? <input type="hidden" name="set" value="1" /> : null}
             <button type="submit" className="h-12 rounded-xl bg-primary px-6 text-sm font-bold text-white transition hover:bg-primary/90">{t.home.find}</button>
           </form>
 
@@ -101,6 +103,10 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
                 {sortLabels[key]}
               </a>
             ))}
+            {/* Restaurants' sets («to‘plam»): on or off, whatever the order. */}
+            <a href={href(basePath, { ...params, city }, { set: sets ? null : '1', page: null })} aria-current={sets ? 'true' : undefined} className={cn('inline-flex h-9 items-center gap-1.5 rounded-full border px-4 text-xs font-bold transition', sets ? 'border-primary bg-primary text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-primary/40')}>
+              <Layers className="size-3.5" aria-hidden /> {t.discover.sets}
+            </a>
           </div>
 
           {!category && categories.length ? (

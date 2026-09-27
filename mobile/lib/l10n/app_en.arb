@@ -472,5 +472,20 @@
   "branchOpenNow": "Open now",
   "branchOpenUntil": "Open until {time}",
   "branchClosedNow": "Closed · opens at {time}",
-  "branchClosedWarning": "This branch is closed now and opens at {time}. The code lasts {minutes} min — book closer to opening time."
+  "branchClosedWarning": "This branch is closed now and opens at {time}. The code lasts {minutes} min — book closer to opening time.",
+  "setBadge": "Set",
+  "setPersons": "for {count}",
+  "setContents": "What’s in the set",
+  "filterSets": "Sets",
+  "dealSetToggle": "This is a set",
+  "dealSetHint": "Several dishes or items together, e.g. 2 plov, 2 salads and tea.",
+  "dealSetItemName": "{number}. Name",
+  "dealSetItemHint": "e.g. Plov",
+  "dealSetQty": "Qty",
+  "dealSetAdd": "Add another",
+  "dealSetRemove": "Remove",
+  "dealSetPersons": "For how many people",
+  "dealSetPersonsAny": "Not stated",
+  "dealSetPriceHint": "The regular price is what everything in the set usually costs together.",
+  "valSetItems": "A set needs 2 to 12 items."
 }

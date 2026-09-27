@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, BadgeCheck, CalendarClock, Clock3, Eye, Info, MapPin, Navigation, Phone, ShieldCheck, Ticket, Timer } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, CalendarClock, Clock3, Eye, Info, Layers, MapPin, Navigation, Phone, ShieldCheck, Ticket, Timer } from 'lucide-react';
 
 import { BusinessAvatar } from '@/components/deals/business-avatar';
 import { ClaimPanel } from '@/components/deals/claim-panel';
@@ -158,6 +158,22 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
           {deal.isDemo || deal.business.isDemo ? <span className="mt-4 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-900">{t.common.sample}</span> : null}
           <h1 className="mt-2 text-4xl font-black tracking-[-.05em] text-navy sm:text-5xl">{deal.title}</h1>
           <p className="mt-5 max-w-2xl whitespace-pre-line text-lg leading-8 text-slate-600">{deal.description}</p>
+          {deal.set ? (
+            <div className="mt-6 max-w-2xl rounded-2xl border border-primary/25 bg-white p-5">
+              <h2 className="flex flex-wrap items-center gap-x-2 font-black text-navy">
+                <Layers className="size-5 text-primary" aria-hidden /> {t.deal.set.contents}
+                {deal.set.persons ? <span className="text-sm font-bold text-slate-500">· {fmt(t.deal.set.persons, { count: deal.set.persons })}</span> : null}
+              </h2>
+              <ul className="mt-3 divide-y divide-slate-100">
+                {deal.set.items.map((item, index) => (
+                  <li key={index} className="flex items-center justify-between gap-4 py-2.5 text-slate-700">
+                    <span>{item.name}</span>
+                    <span className="shrink-0 font-bold text-navy tabular">× {item.qty}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2">
             {deal.branches.map((branch) => {

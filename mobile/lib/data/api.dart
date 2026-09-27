@@ -123,7 +123,18 @@ class BugunBorApi {
   Future<Feed> feed({double? lat, double? lng, String? city, List<String> interests = const []}) async =>
       Feed.fromJson(await feedData(lat: lat, lng: lng, city: city, interests: interests));
 
-  Future<DealPage> deals({String? city, String? category, String? query, String? sort, double? lat, double? lng, int limit = 24, int offset = 0}) async {
+  /// Live deals; [sets] keeps only sets («Setlar»).
+  Future<DealPage> deals({
+    String? city,
+    String? category,
+    String? query,
+    String? sort,
+    bool sets = false,
+    double? lat,
+    double? lng,
+    int limit = 24,
+    int offset = 0,
+  }) async {
     final body = await _request(
       'GET',
       '/api/v1/deals',
@@ -132,6 +143,7 @@ class BugunBorApi {
         'category': category,
         'q': (query ?? '').trim().isEmpty ? null : query!.trim(),
         'sort': sort,
+        'set': sets ? '1' : null,
         'lat': lat,
         'lng': lng,
         'limit': limit,

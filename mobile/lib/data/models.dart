@@ -222,6 +222,42 @@ class BusinessSummary {
 }
 
 /// One deal in a list (feed, search, business page).
+/// One thing in a set: "2× Osh".
+class SetItem {
+  const SetItem({required this.name, required this.qty});
+  factory SetItem.fromJson(Json json) => SetItem(name: _str(json['name']).trim(), qty: _int(json['qty'], 1).clamp(1, 20));
+  final String name;
+  final int qty;
+
+  Json toJson() => {'name': name, 'qty': qty};
+}
+
+/// A set («to‘plam»): several dishes or things sold together, and for how
+/// many people (lib/deal-set.ts on the site). Null for a regular deal.
+class DealSet {
+  const DealSet({required this.items, this.persons});
+
+  static DealSet? fromJson(Object? json) {
+    if (json is! Map) return null;
+    final map = json.cast<String, dynamic>();
+    final items = _list(map['items'], SetItem.fromJson).where((item) => item.name.isNotEmpty).toList();
+    if (items.isEmpty) return null;
+    final persons = _intOrNull(map['persons']);
+    return DealSet(items: items, persons: persons != null && persons >= 1 ? persons : null);
+  }
+
+  final List<SetItem> items;
+  final int? persons;
+
+  /// One line for a card: "2× Osh · 2× Salat · Choy".
+  String get summary => items.map((item) => item.qty > 1 ? '${item.qty}× ${item.name}' : item.name).join(' · ');
+
+  Json toJson() => {
+    'items': [for (final item in items) item.toJson()],
+    'persons': persons,
+  };
+}
+
 class DealCard {
   const DealCard({
     required this.id,
@@ -242,6 +278,7 @@ class DealCard {
     required this.effective,
     required this.isDemo,
     required this.isSponsored,
+    this.set,
   });
 
   factory DealCard.fromJson(Json json) => DealCard(
@@ -263,6 +300,7 @@ class DealCard {
     effective: _str(json['effective']),
     isDemo: _bool(json['isDemo']),
     isSponsored: _bool(json['isSponsored']),
+    set: DealSet.fromJson(json['set']),
   );
 
   final String id;
@@ -283,6 +321,9 @@ class DealCard {
   final String effective;
   final bool isDemo;
   final bool isSponsored;
+
+  /// What the set holds, or null for a regular deal (and on older servers).
+  final DealSet? set;
 }
 
 class Feed {
@@ -388,6 +429,7 @@ class DealDetail {
     required this.followers,
     required this.usedCount,
     required this.activeRedemptionId,
+    this.set,
   });
 
   factory DealDetail.fromJson(Json json) => DealDetail(
@@ -416,6 +458,7 @@ class DealDetail {
     followers: _int(json['followers']),
     usedCount: _int(json['usedCount']),
     activeRedemptionId: _strOrNull(json['activeRedemptionId']),
+    set: DealSet.fromJson(json['set']),
   );
 
   final String id;
@@ -443,6 +486,9 @@ class DealDetail {
   final int followers;
   final int usedCount;
   final String? activeRedemptionId;
+
+  /// What the set holds, or null for a regular deal.
+  final DealSet? set;
 
   bool get limitReached => usedCount >= perCustomerLimit;
 
@@ -472,6 +518,7 @@ class DealDetail {
     followers: followers ?? this.followers,
     usedCount: usedCount,
     activeRedemptionId: activeRedemptionId,
+    set: set,
   );
 }
 
@@ -1168,6 +1215,7 @@ class EditableDeal {
     required this.rejectionReason,
     required this.photoId,
     required this.photo,
+    this.set,
   });
 
   factory EditableDeal.fromJson(Json json) => EditableDeal(
@@ -1189,6 +1237,7 @@ class EditableDeal {
     rejectionReason: _strOrNull(json['rejectionReason']),
     photoId: _strOrNull(json['photoId']),
     photo: _strOrNull(json['photo']),
+    set: DealSet.fromJson(json['set']),
   );
 
   final String id;
@@ -1209,6 +1258,9 @@ class EditableDeal {
   final String? rejectionReason;
   final String? photoId;
   final String? photo;
+
+  /// What the set holds, or null for a regular deal.
+  final DealSet? set;
 }
 
 /// A deal after saving: DRAFT, or ACTIVE / PENDING_REVIEW after the check.

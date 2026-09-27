@@ -858,5 +858,34 @@
         "type": "String"
       }
     }
-  }
+  },
+  "setBadge": "Set",
+  "setPersons": "{count} kishilik",
+  "@setPersons": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "setContents": "Set tarkibi",
+  "filterSets": "Setlar",
+  "dealSetToggle": "Bu set (to‘plam)",
+  "dealSetHint": "Bir nechta taom yoki mahsulot birga: masalan, 2 ta osh, 2 ta salat va choy.",
+  "dealSetItemName": "{number}. Nomi",
+  "@dealSetItemName": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "dealSetItemHint": "Masalan, Osh",
+  "dealSetQty": "Soni",
+  "dealSetAdd": "Yana qo‘shish",
+  "dealSetRemove": "Olib tashlash",
+  "dealSetPersons": "Necha kishilik",
+  "dealSetPersonsAny": "Ko‘rsatilmagan",
+  "dealSetPriceHint": "Asl narx — set ichidagilarning odatdagi narxlari yig‘indisi.",
+  "valSetItems": "Setga kamida 2 ta, ko‘pi bilan 12 ta narsa kiriting."
 }

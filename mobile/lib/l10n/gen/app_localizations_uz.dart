@@ -1540,4 +1540,53 @@ class LUz extends L {
   String branchClosedWarning(String time, String minutes) {
     return 'Bu filial hozir yopiq va $time da ochiladi. Kod $minutes daqiqa amal qiladi — ochilishiga yaqinroq band qiling.';
   }
+
+  @override
+  String get setBadge => 'Set';
+
+  @override
+  String setPersons(String count) {
+    return '$count kishilik';
+  }
+
+  @override
+  String get setContents => 'Set tarkibi';
+
+  @override
+  String get filterSets => 'Setlar';
+
+  @override
+  String get dealSetToggle => 'Bu set (to‘plam)';
+
+  @override
+  String get dealSetHint => 'Bir nechta taom yoki mahsulot birga: masalan, 2 ta osh, 2 ta salat va choy.';
+
+  @override
+  String dealSetItemName(String number) {
+    return '$number. Nomi';
+  }
+
+  @override
+  String get dealSetItemHint => 'Masalan, Osh';
+
+  @override
+  String get dealSetQty => 'Soni';
+
+  @override
+  String get dealSetAdd => 'Yana qo‘shish';
+
+  @override
+  String get dealSetRemove => 'Olib tashlash';
+
+  @override
+  String get dealSetPersons => 'Necha kishilik';
+
+  @override
+  String get dealSetPersonsAny => 'Ko‘rsatilmagan';
+
+  @override
+  String get dealSetPriceHint => 'Asl narx — set ichidagilarning odatdagi narxlari yig‘indisi.';
+
+  @override
+  String get valSetItems => 'Setga kamida 2 ta, ko‘pi bilan 12 ta narsa kiriting.';
 }

@@ -39,7 +39,8 @@
       "branchCount": 2,
       "distanceKm": 1.4764456746137822,
       "effective": "LIVE",
-      "isDemo": false
+      "isDemo": false,
+      "set": null
     }
   ],
   "ending": [
@@ -79,7 +80,8 @@
       "branchCount": 2,
       "distanceKm": 1.4764456746137822,
       "effective": "LIVE",
-      "isDemo": false
+      "isDemo": false,
+      "set": null
     }
   ],
   "total": 1

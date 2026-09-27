@@ -2930,6 +2930,96 @@ abstract class L {
   /// In uz, this message translates to:
   /// **'Bu filial hozir yopiq va {time} da ochiladi. Kod {minutes} daqiqa amal qiladi — ochilishiga yaqinroq band qiling.'**
   String branchClosedWarning(String time, String minutes);
+
+  /// No description provided for @setBadge.
+  ///
+  /// In uz, this message translates to:
+  /// **'Set'**
+  String get setBadge;
+
+  /// No description provided for @setPersons.
+  ///
+  /// In uz, this message translates to:
+  /// **'{count} kishilik'**
+  String setPersons(String count);
+
+  /// No description provided for @setContents.
+  ///
+  /// In uz, this message translates to:
+  /// **'Set tarkibi'**
+  String get setContents;
+
+  /// No description provided for @filterSets.
+  ///
+  /// In uz, this message translates to:
+  /// **'Setlar'**
+  String get filterSets;
+
+  /// No description provided for @dealSetToggle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bu set (to‘plam)'**
+  String get dealSetToggle;
+
+  /// No description provided for @dealSetHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bir nechta taom yoki mahsulot birga: masalan, 2 ta osh, 2 ta salat va choy.'**
+  String get dealSetHint;
+
+  /// No description provided for @dealSetItemName.
+  ///
+  /// In uz, this message translates to:
+  /// **'{number}. Nomi'**
+  String dealSetItemName(String number);
+
+  /// No description provided for @dealSetItemHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Masalan, Osh'**
+  String get dealSetItemHint;
+
+  /// No description provided for @dealSetQty.
+  ///
+  /// In uz, this message translates to:
+  /// **'Soni'**
+  String get dealSetQty;
+
+  /// No description provided for @dealSetAdd.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yana qo‘shish'**
+  String get dealSetAdd;
+
+  /// No description provided for @dealSetRemove.
+  ///
+  /// In uz, this message translates to:
+  /// **'Olib tashlash'**
+  String get dealSetRemove;
+
+  /// No description provided for @dealSetPersons.
+  ///
+  /// In uz, this message translates to:
+  /// **'Necha kishilik'**
+  String get dealSetPersons;
+
+  /// No description provided for @dealSetPersonsAny.
+  ///
+  /// In uz, this message translates to:
+  /// **'Ko‘rsatilmagan'**
+  String get dealSetPersonsAny;
+
+  /// No description provided for @dealSetPriceHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Asl narx — set ichidagilarning odatdagi narxlari yig‘indisi.'**
+  String get dealSetPriceHint;
+
+  /// No description provided for @valSetItems.
+  ///
+  /// In uz, this message translates to:
+  /// **'Setga kamida 2 ta, ko‘pi bilan 12 ta narsa kiriting.'**
+  String get valSetItems;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

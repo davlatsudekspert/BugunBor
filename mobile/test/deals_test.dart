@@ -32,6 +32,7 @@ DealDraft valid({
   String quantity = '30',
   bool unlimited = false,
   List<String> branchIds = const ['br1'],
+  DealSet? set,
 }) => DealDraft(
   title: 'Somsa va choy',
   description: 'Tandir somsa va bir choynak ko‘k choy, issiq holda.',
@@ -47,6 +48,16 @@ DealDraft valid({
   perCustomerLimit: 2,
   claimTtlMinutes: 60,
   branchIds: branchIds,
+  set: set,
+);
+
+const oilaviy = DealSet(
+  items: [
+    SetItem(name: 'Osh', qty: 2),
+    SetItem(name: 'Achchiq-chuchuk salat', qty: 2),
+    SetItem(name: 'Choy', qty: 1),
+  ],
+  persons: 4,
 );
 
 BusinessDeal listed(String status, [String? effective, String title = 'Somsa va choy']) => BusinessDeal.fromJson({
@@ -119,8 +130,33 @@ void main() {
         'claimTtlMinutes': 60,
         'branchIds': ['br1'],
         'photoId': null,
+        // Said out loud, so the server turns a set back into a regular deal.
+        'set': null,
       });
       expect(valid(unlimited: true).toJson()['quantity'], isNull);
+    });
+
+    test('a set holds two to twelve named things, and is sent with them', () {
+      expect(valid(set: oilaviy).problems(rules, now: now, submit: true), isEmpty);
+      expect(valid(set: oilaviy).toJson()['set'], {
+        'items': [
+          {'name': 'Osh', 'qty': 2},
+          {'name': 'Achchiq-chuchuk salat', 'qty': 2},
+          {'name': 'Choy', 'qty': 1},
+        ],
+        'persons': 4,
+      });
+      const one = DealSet(items: [SetItem(name: 'Osh', qty: 2)]);
+      expect(valid(set: one).problems(rules, now: now, submit: true), {'set': 'setItems'});
+      final many = DealSet(items: [for (var index = 0; index < 13; index++) SetItem(name: 'Taom $index', qty: 1)]);
+      expect(valid(set: many).problems(rules, now: now, submit: true), {'set': 'setItems'});
+      const short = DealSet(
+        items: [
+          SetItem(name: 'O', qty: 1),
+          SetItem(name: 'Choy', qty: 1),
+        ],
+      );
+      expect(valid(set: short).problems(rules, now: now, submit: true), {'set': 'setName'});
     });
 
     test('an empty form lists every field it needs', () {
@@ -333,6 +369,105 @@ void main() {
     await submitDeal(tester);
     expect(find.text('Chegirma kamida 10% bo‘lishi kerak'), findsOneWidget);
     expect(find.byType(DealFormScreen), findsOneWidget);
+  });
+
+  testWidgets('a set in the form: lines with a count, for how many people; empty lines are left out', (tester) async {
+    final server = ownerServer();
+    await pumpApp(tester, server: server, token: 't');
+    await go(tester, '/business/biz/deals/new');
+    await fillDeal(tester);
+    await scrollDealForm(tester, find.text('Bu set (to‘plam)'));
+    await tester.tap(find.text('Bu set (to‘plam)'));
+    await settle(tester);
+    await tester.enterText(find.widgetWithText(TextField, '1. Nomi'), 'Osh');
+    await tester.tap(find.widgetWithText(DropdownButtonFormField<int>, 'Soni').first);
+    await settle(tester);
+    await tester.tap(find.text('2').last);
+    await settle(tester);
+
+    // One thing is not a set yet: said under it, nothing sent.
+    await submitDeal(tester);
+    expect(find.text('Setga kamida 2 ta, ko‘pi bilan 12 ta narsa kiriting.'), findsOneWidget);
+    expect(server.requests.where((request) => request.method == 'POST'), isEmpty);
+
+    await scrollDealForm(tester, find.widgetWithText(TextField, '2. Nomi'));
+    await tester.enterText(find.widgetWithText(TextField, '2. Nomi'), 'Achchiq-chuchuk salat');
+    await tester.tap(find.text('Yana qo‘shish'));
+    await settle(tester);
+    expect(find.widgetWithText(TextField, '3. Nomi'), findsOneWidget);
+    await scrollDealForm(tester, find.text('Necha kishilik'));
+    await tester.tap(find.text('Necha kishilik'));
+    await settle(tester);
+    await tester.tap(find.text('4 kishilik').last);
+    await settle(tester);
+    // The preview says it the way the card will.
+    await scrollDealForm(tester, find.text('Set · 4 kishilik'));
+    expect(find.text('2× Osh · Achchiq-chuchuk salat'), findsOneWidget);
+
+    await submitDeal(tester);
+    final input = (lastAction(server)['input'] as Map).cast<String, dynamic>();
+    expect(input['set'], {
+      'items': [
+        {'name': 'Osh', 'qty': 2},
+        {'name': 'Achchiq-chuchuk salat', 'qty': 1},
+      ],
+      'persons': 4,
+    });
+    expect(find.byType(DealFormScreen), findsNothing);
+  });
+
+  testWidgets('a saved set opens with its lines; switched off it becomes a regular deal', (tester) async {
+    final server = ownerServer();
+    server.routes['GET /api/v1/business/:id/deals/:dealId'] = (_) => {
+      'data': {...withoutPhoto(contractMap('business-deal')), 'status': 'DRAFT', 'set': oilaviy.toJson()},
+    };
+    server.routes['POST /api/v1/business/:id'] = (request) => {
+      'data': {'id': 'deal', 'status': 'DRAFT'},
+    };
+    await pumpApp(tester, server: server, token: 't');
+    await go(tester, '/business/biz/deals/deal/edit');
+    await scrollDealForm(tester, find.widgetWithText(TextField, '3. Nomi'));
+    expect(tester.widget<TextField>(find.widgetWithText(TextField, '1. Nomi')).controller!.text, 'Osh');
+    expect(tester.widget<TextField>(find.widgetWithText(TextField, '3. Nomi')).controller!.text, 'Choy');
+    expect(find.text('4 kishilik'), findsOneWidget);
+    await checkTapTargets(tester);
+
+    // A line removed, then the whole set switched off.
+    await tester.tap(find.byTooltip('Olib tashlash').last);
+    await settle(tester);
+    expect(find.widgetWithText(TextField, '3. Nomi'), findsNothing);
+    await scrollDealForm(tester, find.text('Bu set (to‘plam)'));
+    await tester.tap(find.text('Bu set (to‘plam)'));
+    await settle(tester);
+    expect(find.widgetWithText(TextField, '1. Nomi'), findsNothing);
+    await scrollDealForm(tester, find.text('Qoralama sifatida saqlash'));
+    await tester.tap(find.text('Qoralama sifatida saqlash'));
+    await settle(tester);
+    final input = (lastAction(server)['input'] as Map).cast<String, dynamic>();
+    expect(input.containsKey('set'), isTrue);
+    expect(input['set'], isNull);
+  });
+
+  testWidgets('the server’s word about a set lands under the set', (tester) async {
+    final server = ownerServer();
+    server.routes['POST /api/v1/business/:id'] = (_) => const Reply(422, {
+      'error': {
+        'code': 'VALIDATION',
+        'message': 'Xato',
+        'fields': {'input.set.items': 'setItems'},
+      },
+    });
+    server.routes['GET /api/v1/business/:id/deals/:dealId'] = (_) => {
+      'data': {...withoutPhoto(contractMap('business-deal')), 'status': 'DRAFT', 'set': oilaviy.toJson()},
+    };
+    await pumpApp(tester, server: server, token: 't');
+    await go(tester, '/business/biz/deals/deal/edit');
+    // As a draft: the sample deal's time is already over for review.
+    await scrollDealForm(tester, find.text('Qoralama sifatida saqlash'));
+    await tester.tap(find.text('Qoralama sifatida saqlash'));
+    await settle(tester);
+    expect(lastAction(server)['type'], 'deal.update');
+    expect(find.text('Setga kamida 2 ta, ko‘pi bilan 12 ta narsa kiriting.'), findsOneWidget);
   });
 
   testWidgets('the deals list: statuses, filters and pausing a live deal', (tester) async {

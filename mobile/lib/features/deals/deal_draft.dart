@@ -60,6 +60,7 @@ class DealDraft {
     this.claimTtlMinutes = 120,
     this.branchIds = const [],
     this.photoId,
+    this.set,
   });
 
   final String title;
@@ -78,12 +79,19 @@ class DealDraft {
   final List<String> branchIds;
   final String? photoId;
 
+  /// A set: what is in it and for how many people; null for a regular deal.
+  final DealSet? set;
+
   static const minOriginalPrice = 1000;
+
+  /// The server's limits for a set (lib/deal-set.ts).
+  static const setMinItems = 2;
+  static const setMaxItems = 12;
   static const maxPrice = 100000000;
 
   /// Field → problem (tooShort, tooLong, choose, minAmount, invalid,
   /// priceOrder, minDiscount, endAfterStart, duration, endInPast,
-  /// branchesRequired); empty when it can be sent. [now] is Tashkent wall
+  /// branchesRequired, setItems, setName); empty when it can be sent. [now] is Tashkent wall
   /// time; a deal sent for review must not have ended already.
   Map<String, String> problems(DealRules rules, {required DateTime now, required bool submit}) {
     final problems = <String, String>{};
@@ -128,6 +136,13 @@ class DealDraft {
     if (perCustomerLimit < 1 || perCustomerLimit > rules.maxPerCustomer) problems['perCustomerLimit'] = 'invalid';
     if (!rules.claimTtlOptions.contains(claimTtlMinutes)) problems['claimTtlMinutes'] = 'invalid';
     if (branchIds.isEmpty) problems['branchIds'] = 'branchesRequired';
+    if (set case final set?) {
+      if (set.items.length < setMinItems || set.items.length > setMaxItems) {
+        problems['set'] = 'setItems';
+      } else if (set.items.any((item) => item.name.trim().length < 2 || item.name.trim().length > 60)) {
+        problems['set'] = 'setName';
+      }
+    }
     return problems;
   }
 
@@ -147,5 +162,7 @@ class DealDraft {
     'claimTtlMinutes': claimTtlMinutes,
     'branchIds': branchIds,
     'photoId': photoId,
+    // Always said out loud: null turns a set back into a regular deal.
+    'set': set?.toJson(),
   };
 }
