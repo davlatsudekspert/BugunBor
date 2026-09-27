@@ -20,7 +20,7 @@ const englishErrors = <String, String>{
   'CODE_NOT_FOUND': 'Code not found, or it belongs to another business.',
   'CODE_EXPIRED': 'This code has expired.',
   'CODE_USED': 'This code has already been used.',
-  'CODE_CANCELED': 'The customer cancelled this code.',
+  'CODE_CANCELED': 'This code was cancelled.',
   'TELEGRAM_NOT_CONFIGURED': 'Signing in with Telegram isn’t available yet.',
   'LOGIN_EXPIRED': 'The sign-in request has expired. Please try again.',
   'ACCOUNT_BLOCKED': 'Your account is blocked.',
@@ -43,4 +43,7 @@ const englishErrors = <String, String>{
   'REVIEW_NOT_ALLOWED': 'Only used codes can be rated, within 30 days.',
   'ALREADY_REVIEWED': 'This visit has already been rated.',
   'IMAGE_INVALID': 'This file isn’t a picture, or its format isn’t supported (JPG, PNG, WebP).',
+  'ISSUE_TOO_LATE': 'A complaint about a code can be sent within 3 days of booking it.',
+  'UNDER_REVIEW': 'This deal is being checked after complaints. A moderator will turn it back on.',
+  'NO_SHOW_PAUSE': '3 codes went unused this week, so booking is paused for 24 hours.',
 };

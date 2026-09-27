@@ -1452,4 +1452,91 @@ class LRu extends L {
 
   @override
   String get staleNote => 'Не удалось обновить — показаны последние данные';
+
+  @override
+  String get codeIssueAsk => 'Акцию не дали?';
+
+  @override
+  String get codeIssueTitle => 'Что случилось на кассе?';
+
+  @override
+  String get issueNotAvailable => 'Акцию не дали: товара или услуги не было';
+
+  @override
+  String get issueCodeRefused => 'Код не приняли';
+
+  @override
+  String get issueWrongPrice => 'Цена была не как в акции';
+
+  @override
+  String get issueBranchClosed => 'Филиал был закрыт';
+
+  @override
+  String get codeIssueSent => 'Жалоба принята. Модератор проверит.';
+
+  @override
+  String get canceledOutOfStock => 'Бизнес отменил: товар закончился';
+
+  @override
+  String get canceledClosed => 'Бизнес отменил: филиал закрыт';
+
+  @override
+  String get dealHeld => 'Остановлена из-за жалоб — проверяет модератор';
+
+  @override
+  String dealComplaints(String count) {
+    return 'Жалоб за 30 дней: $count';
+  }
+
+  @override
+  String get bookingWaiting => 'Ждём вас';
+
+  @override
+  String get bookingDelay => 'Задерживаемся';
+
+  @override
+  String get bookingCancel => 'Отменить';
+
+  @override
+  String get bookingOutOfStock => 'Товар закончился';
+
+  @override
+  String get bookingClosed => 'Филиал закрыт';
+
+  @override
+  String get bookingSent => 'Отправлено ✓';
+
+  @override
+  String get bookingCancelAsk => 'Отменить бронь? Клиенту придёт сообщение с причиной, место вернётся другим.';
+
+  @override
+  String get bookingHint => 'Номер клиента скрыт: сообщение отправится через BugunBor.';
+
+  @override
+  String noShowWarning(String count) {
+    return 'Внимание: за последние 7 дней неиспользованных кодов: $count. Ещё один — и бронирование приостановится на 24 часа. Если не сможете прийти, отмените код.';
+  }
+
+  @override
+  String noShowPaused(String time) {
+    return 'За последние 7 дней 3 кода остались неиспользованными. Бронирование приостановлено до $time.';
+  }
+
+  @override
+  String get branchOpenNow => 'Сейчас открыто';
+
+  @override
+  String branchOpenUntil(String time) {
+    return 'Открыто до $time';
+  }
+
+  @override
+  String branchClosedNow(String time) {
+    return 'Закрыто · откроется в $time';
+  }
+
+  @override
+  String branchClosedWarning(String time, String minutes) {
+    return 'Филиал сейчас закрыт и откроется в $time. Код действует $minutes мин — бронируйте ближе к открытию.';
+  }
 }

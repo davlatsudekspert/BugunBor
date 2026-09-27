@@ -36,14 +36,15 @@ Tone dealTone(String effective) => switch (effective) {
 
 /// What can be done next with [deal] (the server's rules in
 /// modules/deals/service.ts): changed while a draft or rejected, withdrawn
-/// from review, paused, resumed or ended on the air, copied any time.
+/// from review, paused, resumed or ended on the air, copied any time. One
+/// held after customers' complaints only a moderator puts back on the air.
 List<String> dealActions(BusinessDeal deal) {
   final onAir = deal.status == 'ACTIVE' && deal.effective != 'EXPIRED';
   return [
     if (deal.editable) ...['edit', 'submit'],
     if (deal.status == 'PENDING_REVIEW') 'withdraw',
     if (onAir) ...['view', 'pause'],
-    if (deal.status == 'PAUSED') 'resume',
+    if (deal.status == 'PAUSED' && !deal.held) 'resume',
     if (deal.status == 'ACTIVE' || deal.status == 'PAUSED') 'end',
     'duplicate',
     if (deal.editable) 'delete',
@@ -174,6 +175,15 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
                 padding: const EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.sm),
                 child: Text(deal.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium),
               ),
+              // Why "Davom ettirish" is missing: a moderator puts it back.
+              if (deal.held)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.sm),
+                  child: Text(
+                    l.dealHeld,
+                    style: TextStyle(color: danger, fontSize: 13, fontWeight: FontWeight.w700, height: 1.35),
+                  ),
+                ),
               if (!deal.editable && deal.status != 'ARCHIVED')
                 Padding(
                   padding: const EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.sm),
@@ -384,6 +394,21 @@ class _DealCard extends StatelessWidget {
                           Text(
                             l.dealsRejected(deal.rejectionReason!),
                             style: TextStyle(color: errorColor(context), fontSize: 13, fontWeight: FontWeight.w600, height: 1.35),
+                          ),
+                        ],
+                        // Customers said it was not honoured: why it is off, and how often.
+                        if (deal.held) ...[
+                          const SizedBox(height: Gap.xs),
+                          Text(
+                            l.dealHeld,
+                            style: TextStyle(color: errorColor(context), fontSize: 13, fontWeight: FontWeight.w700, height: 1.35),
+                          ),
+                        ],
+                        if (deal.complaints > 0) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            l.dealComplaints('${deal.complaints}'),
+                            style: TextStyle(color: toneColor(context, Tone.warning), fontSize: 13, fontWeight: FontWeight.w700),
                           ),
                         ],
                       ],

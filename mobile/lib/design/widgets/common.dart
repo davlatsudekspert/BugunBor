@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../core/api_error.dart';
 import '../../core/errors_en.dart';
 import '../../core/format.dart';
+import '../../core/hours.dart';
 import '../../core/media.dart';
 import '../../core/time.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -422,5 +423,37 @@ class RatingStars extends StatelessWidget {
       ),
     );
     return announce ? Semantics(label: L.of(context).ratingLabel(ratingValue(context, value)), child: stars) : stars;
+  }
+}
+
+/// "Hozir ochiq" / "22:00 gacha ochiq" / "Yopiq · 09:00 da ochiladi" for a
+/// branch right now, on Tashkent clocks; nothing when its hours are unknown.
+class OpenNow extends StatelessWidget {
+  const OpenNow({super.key, required this.hoursJson});
+  final String? hoursJson;
+
+  @override
+  Widget build(BuildContext context) {
+    final hours = WorkingHours.parse(hoursJson);
+    if (hours == null) return const SizedBox.shrink();
+    final l = L.of(context);
+    final open = hours.isOpenAt(DateTime.now().toUtc());
+    final color = open ? context.successText : context.mutedText;
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ExcludeSemantics(child: Icon(Icons.circle, size: 8, color: color)),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              open ? (hours.allDay ? l.branchOpenNow : l.branchOpenUntil(hours.close)) : l.branchClosedNow(hours.open),
+              style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

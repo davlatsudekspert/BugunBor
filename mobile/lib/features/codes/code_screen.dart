@@ -13,6 +13,7 @@ import '../../data/models.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/common.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../common/report_sheet.dart';
 import 'codes_screen.dart';
 
 /// One claimed code, big enough for the cashier to scan or read.
@@ -152,7 +153,9 @@ class _CodeScreenState extends ConsumerState<CodeScreen> {
                       Countdown(
                         code.expiresAt,
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, fontFeatures: [FontFeature.tabularFigures()]),
-                        onDone: () => ref.invalidate(myCodesProvider),
+                        onDone: () => ref
+                          ..invalidate(myCodesProvider)
+                          ..invalidate(meProvider),
                       ),
                     ],
                   ),
@@ -172,7 +175,11 @@ class _CodeScreenState extends ConsumerState<CodeScreen> {
                   onAction: () => showRateSheet(context, ref, code),
                 )
               else
-                StatePanel(icon: Icons.timer_off_outlined, title: statusLabel(l, effectiveCodeStatus(code))),
+                StatePanel(
+                  icon: code.status == 'CANCELED' ? Icons.cancel_outlined : Icons.timer_off_outlined,
+                  title: statusLabel(l, effectiveCodeStatus(code)),
+                  text: canceledByBusiness(l, code),
+                ),
               const SizedBox(height: Gap.lg),
               Card(
                 child: ListTile(
@@ -196,6 +203,23 @@ class _CodeScreenState extends ConsumerState<CodeScreen> {
                   onPressed: _canceling ? null : () => _cancel(code),
                   style: TextButton.styleFrom(foregroundColor: context.dangerText),
                   child: Text(l.codeCancel),
+                ),
+              ],
+              // Went and did not get it: tell the moderators (once, within three days).
+              if (code.issue != null) ...[
+                const SizedBox(height: Gap.sm),
+                Text(
+                  l.codeIssueSent,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: context.mutedText, fontWeight: FontWeight.w600),
+                ),
+              ] else if (code.canReportIssue) ...[
+                const SizedBox(height: Gap.xs),
+                TextButton.icon(
+                  onPressed: () => showCodeIssueSheet(context, ref, code),
+                  style: TextButton.styleFrom(foregroundColor: context.mutedText),
+                  icon: const Icon(Icons.report_gmailerrorred_rounded),
+                  label: Text(l.codeIssueAsk),
                 ),
               ],
               const SizedBox(height: Gap.sm),

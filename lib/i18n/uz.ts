@@ -1193,7 +1193,7 @@ export const uz = {
     CODE_NOT_FOUND: 'Kod topilmadi yoki boshqa biznesga tegishli.',
     CODE_EXPIRED: 'Kod muddati tugagan.',
     CODE_USED: 'Kod allaqachon ishlatilgan.',
-    CODE_CANCELED: 'Kod mijoz tomonidan bekor qilingan.',
+    CODE_CANCELED: 'Bu kod bekor qilingan.',
     TELEGRAM_NOT_CONFIGURED: 'Telegram orqali kirish hali sozlanmagan.',
     LOGIN_EXPIRED: 'Kirish so‘rovi muddati tugadi.',
     ACCOUNT_BLOCKED: 'Hisobingiz bloklangan.',

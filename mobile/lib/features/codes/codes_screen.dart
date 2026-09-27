@@ -22,6 +22,15 @@ String statusLabel(L l, String status) => switch (status) {
 /// even before the server marks it so.
 String effectiveCodeStatus(Redemption code) => code.status == 'CLAIMED' && !code.isActive ? 'EXPIRED' : code.status;
 
+/// Why the business cancelled the booking, when it did.
+String? canceledByBusiness(L l, Redemption code) => code.status != 'CANCELED'
+    ? null
+    : switch (code.cancelReason) {
+        'OUT_OF_STOCK' => l.canceledOutOfStock,
+        'CLOSED' => l.canceledClosed,
+        _ => null,
+      };
+
 /// The person's codes: active ones to show at the counter, and the history.
 /// With [review] (a link from the "rate your visit" message) the history opens
 /// with that visit's rating sheet.
@@ -153,7 +162,9 @@ class _CodeCard extends ConsumerWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: active ? () => context.push('/codes/${code.id}') : () => context.push('/deals/${code.dealSlug}'),
+        // The code's own page: the QR while it is valid, afterwards what
+        // happened (and "Aksiya berilmadimi?" for three days).
+        onTap: () => context.push('/codes/${code.id}'),
         child: Padding(
           padding: const EdgeInsets.all(Gap.md),
           child: Column(
@@ -203,15 +214,31 @@ class _CodeCard extends ConsumerWidget {
                     const SizedBox(width: Gap.sm),
                     const Icon(Icons.schedule_rounded, size: 16),
                     const SizedBox(width: 4),
-                    // Time is up: the list asks again, and the code moves to the history.
-                    Countdown(code.expiresAt, onDone: () => ref.invalidate(myCodesProvider)),
+                    // Time is up: the list asks again, and the code moves to the history
+                    // (an unused code also counts towards the booking pause).
+                    Countdown(
+                      code.expiresAt,
+                      onDone: () => ref
+                        ..invalidate(myCodesProvider)
+                        ..invalidate(meProvider),
+                    ),
                   ],
                 )
               else
                 Row(
                   children: [
                     Expanded(
-                      child: Text(momentLabel(code.completedAt ?? code.createdAt), style: TextStyle(color: context.mutedText, fontSize: 13)),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(momentLabel(code.completedAt ?? code.createdAt), style: TextStyle(color: context.mutedText, fontSize: 13)),
+                          if (canceledByBusiness(l, code) case final reason?)
+                            Text(
+                              reason,
+                              style: TextStyle(color: context.dangerText, fontSize: 13, fontWeight: FontWeight.w700),
+                            ),
+                        ],
+                      ),
                     ),
                     if (code.myRating != null)
                       Text(l.yourRating('${code.myRating}'), style: const TextStyle(fontWeight: FontWeight.w700))

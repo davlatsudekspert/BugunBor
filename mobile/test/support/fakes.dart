@@ -21,6 +21,31 @@ Map<String, dynamic> contractMap(String name) => (contract(name) as Map).cast<St
 /// [deal] as the server sends it, but with no photo to load.
 Map<String, dynamic> withoutPhoto(Map<String, dynamic> deal) => {...deal, 'photo': null};
 
+/// Branch hours (Tashkent clocks) under which it is open whenever a test runs.
+const openAllDay = '{"open":"00:00","close":"00:00"}';
+
+/// Branch hours under which it is closed now and opens in about [opensIn].
+String closedNow({Duration opensIn = const Duration(hours: 3)}) {
+  String clock(DateTime utc) {
+    final wall = utc.add(const Duration(hours: 5));
+    return '${wall.hour.toString().padLeft(2, '0')}:${wall.minute.toString().padLeft(2, '0')}';
+  }
+
+  final opens = DateTime.now().toUtc().add(opensIn);
+  return '{"open":"${clock(opens)}","close":"${clock(opens.add(const Duration(hours: 2)))}"}';
+}
+
+/// The sample deal, every branch keeping [hoursJson].
+Map<String, dynamic> dealWithHours(String hoursJson) {
+  final deal = contractMap('deal');
+  return {
+    ...deal,
+    'branches': [
+      for (final branch in (deal['branches'] as List).cast<Map<String, dynamic>>()) {...branch, 'hoursJson': hoursJson},
+    ],
+  };
+}
+
 typedef Handler = Object? Function(RequestOptions request);
 
 /// UTC in the server's `YYYY-MM-DD HH:MM:SS` form.
@@ -59,7 +84,8 @@ class FakeServer implements HttpClientAdapter {
         'data': nearby,
         'page': {'total': nearby.length, 'offset': 0, 'limit': 24},
       },
-      'GET /api/v1/deals/:slug': (_) => {'data': contract('deal')},
+      // Its branches are open round the clock, so no test depends on the time it runs.
+      'GET /api/v1/deals/:slug': (_) => {'data': dealWithHours(openAllDay)},
       'POST /api/v1/deals/:id/view': (_) => {
         'data': {'ok': true},
       },
@@ -80,6 +106,9 @@ class FakeServer implements HttpClientAdapter {
         'data': {'live': nearby, 'ended': []},
       },
       'GET /api/v1/me/follows': (_) => {'data': []},
+      'POST /api/v1/reports': (_) => Reply(201, {
+        'data': {'id': 'report', 'repeated': false, 'held': false},
+      }),
       'POST /api/v1/businesses': (_) => Reply(201, {'data': contract('business-create')}),
       'GET /api/v1/business/:id': (_) => {'data': contract('business-workspace')},
       // Widget tests load no network pictures, so the deals come without photos.
@@ -95,6 +124,12 @@ class FakeServer implements HttpClientAdapter {
         'deal.duplicate' => const Reply(201, {
           'data': {'id': 'copy'},
         }),
+        'booking.message' => {
+          'data': {'sent': true},
+        },
+        'booking.cancel' => {
+          'data': {'ok': true},
+        },
         'deal.transition' => {
           'data': {
             'status': switch ((request.data as Map)['action']) {

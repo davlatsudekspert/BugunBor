@@ -1195,7 +1195,7 @@ export const ru: Dictionary = {
     CODE_NOT_FOUND: 'Код не найден или относится к другому заведению.',
     CODE_EXPIRED: 'Срок действия кода истёк.',
     CODE_USED: 'Код уже использован.',
-    CODE_CANCELED: 'Код отменён клиентом.',
+    CODE_CANCELED: 'Этот код отменён.',
     TELEGRAM_NOT_CONFIGURED: 'Вход через Telegram ещё не настроен.',
     LOGIN_EXPIRED: 'Срок запроса на вход истёк.',
     ACCOUNT_BLOCKED: 'Ваш аккаунт заблокирован.',

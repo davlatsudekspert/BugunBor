@@ -205,7 +205,11 @@ class _Workspace extends ConsumerWidget {
           ),
         ],
         if (stats != null) ...[const SizedBox(height: Gap.lg), _Title(l.bizStats), _Stats(stats: stats)],
-        if (stats != null) ...[const SizedBox(height: Gap.lg), _Title(l.bizRecent), _Recent(codes: workspace.recent)],
+        if (stats != null) ...[
+          const SizedBox(height: Gap.lg),
+          _Title(l.bizRecent),
+          _Recent(businessId: business.id, codes: workspace.recent, canAct: workspace.canValidate),
+        ],
         const SizedBox(height: Gap.lg),
         Text(
           l.bizSiteHint,
@@ -560,13 +564,100 @@ class _Stats extends StatelessWidget {
   }
 }
 
-class _Recent extends StatelessWidget {
-  const _Recent({required this.codes});
+/// The latest codes. While a booking is still valid, whoever checks codes
+/// can tell the person "we are waiting" or "it takes a little longer", or
+/// cancel it with a reason; BugunBor delivers it, so their number stays hidden.
+class _Recent extends ConsumerStatefulWidget {
+  const _Recent({required this.businessId, required this.codes, required this.canAct});
+  final String businessId;
   final List<WorkspaceCode> codes;
+  final bool canAct;
+
+  @override
+  ConsumerState<_Recent> createState() => _RecentState();
+}
+
+class _RecentState extends ConsumerState<_Recent> {
+  /// Messages sent from here before the list is asked again.
+  final _sent = <String, Set<String>>{};
+
+  /// The booking and action in flight (one at a time).
+  String? _busy;
+
+  Future<void> _run(WorkspaceCode code, String action, Future<void> Function() call, {bool reload = false}) async {
+    setState(() => _busy = '${code.id}:$action');
+    try {
+      await call();
+      if (reload) ref.invalidate(workspaceProvider(widget.businessId));
+    } catch (error) {
+      // Maybe it was used, cancelled or ran out meanwhile: show it as it is now.
+      if (mounted) showErrorSnack(context, error);
+      ref.invalidate(workspaceProvider(widget.businessId));
+      rethrow;
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  Future<void> _message(WorkspaceCode code, String message) async {
+    try {
+      await _run(code, message, () => ref.read(apiProvider).messageBooking(widget.businessId, code.id, message));
+    } catch (_) {
+      return;
+    }
+    if (mounted) setState(() => _sent.putIfAbsent(code.id, () => {}).add(message));
+  }
+
+  Future<void> _cancel(WorkspaceCode code) async {
+    final reason = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      useSafeArea: true,
+      builder: (context) {
+        final l = L.of(context);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: Gap.md),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.xs),
+                  child: Text(code.dealTitle, style: Theme.of(context).textTheme.titleLarge),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.sm),
+                  child: Text(l.bookingCancelAsk, style: TextStyle(color: context.mutedText, height: 1.4)),
+                ),
+                ListTile(
+                  leading: Icon(Icons.inventory_2_outlined, color: context.dangerText),
+                  title: Text(l.bookingOutOfStock, style: const TextStyle(fontWeight: FontWeight.w700)),
+                  onTap: () => Navigator.pop(context, 'OUT_OF_STOCK'),
+                ),
+                ListTile(
+                  leading: Icon(Icons.door_front_door_outlined, color: context.dangerText),
+                  title: Text(l.bookingClosed, style: const TextStyle(fontWeight: FontWeight.w700)),
+                  onTap: () => Navigator.pop(context, 'CLOSED'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (reason == null || !mounted) return;
+    try {
+      await _run(code, 'cancel', () => ref.read(apiProvider).cancelBooking(widget.businessId, code.id, reason), reload: true);
+    } catch (_) {
+      return;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
+    final codes = widget.codes;
     if (codes.isEmpty) {
       return Card(
         child: Padding(
@@ -575,43 +666,111 @@ class _Recent extends StatelessWidget {
         ),
       );
     }
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          for (var index = 0; index < codes.length; index++) ...[
-            if (index > 0) Divider(height: 1, color: context.borderColor),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Gap.lg, vertical: Gap.md),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          codes[index].dealTitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        Text(
-                          // A deleted account is stored as "Deleted user" (modules/auth/account.ts).
-                          '${codes[index].customerName == 'Deleted user' ? l.deletedUser : codes[index].customerName} · ${codes[index].branchName}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: context.mutedText, fontSize: 13),
-                        ),
-                        Text(momentLabel(codes[index].createdAt), style: TextStyle(color: context.mutedText, fontSize: 12)),
-                      ],
-                    ),
+    final acting = widget.canAct && codes.any((code) => code.isActive);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Card(
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              for (var index = 0; index < codes.length; index++) ...[
+                if (index > 0) Divider(height: 1, color: context.borderColor),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: Gap.lg, vertical: Gap.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  codes[index].dealTitle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                                Text(
+                                  // A deleted account is stored as "Deleted user" (modules/auth/account.ts).
+                                  '${codes[index].customerName == 'Deleted user' ? l.deletedUser : codes[index].customerName} · ${codes[index].branchName}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(color: context.mutedText, fontSize: 13),
+                                ),
+                                Text(momentLabel(codes[index].createdAt), style: TextStyle(color: context.mutedText, fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: Gap.sm),
+                          StatusPill(text: statusLabel(l, codes[index].status), tone: codes[index].status == 'CLAIMED' ? Tone.success : Tone.neutral),
+                        ],
+                      ),
+                      if (widget.canAct && codes[index].isActive) _bookingActions(context, codes[index]),
+                    ],
                   ),
-                  const SizedBox(width: Gap.sm),
-                  StatusPill(text: statusLabel(l, codes[index].status), tone: codes[index].status == 'CLAIMED' ? Tone.success : Tone.neutral),
-                ],
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (acting)
+          Padding(
+            padding: const EdgeInsets.only(top: Gap.sm, left: Gap.xs, right: Gap.xs),
+            child: Text(l.bookingHint, style: TextStyle(color: context.mutedText, fontSize: 13, height: 1.35)),
+          ),
+      ],
+    );
+  }
+
+  Widget _bookingActions(BuildContext context, WorkspaceCode code) {
+    final l = L.of(context);
+    final sent = {...code.sent, ...?_sent[code.id]};
+    // The theme's button text, a little smaller, so the three fit a line.
+    final label = Theme.of(context).textTheme.labelLarge?.copyWith(fontSize: 13.5, fontWeight: FontWeight.w700);
+    // Messages in the text colour (as on the site), the cancel in red.
+    ButtonStyle style(Color color, Color border) => OutlinedButton.styleFrom(
+      minimumSize: const Size(0, Gap.tap),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      textStyle: label,
+      foregroundColor: color,
+      side: BorderSide(color: border),
+    );
+    Widget progress() => const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2));
+    Widget message(String kind, String text, IconData icon) => sent.contains(kind)
+        ? ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: Gap.tap),
+            child: Align(
+              widthFactor: 1,
+              heightFactor: 1,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text('$text · ${l.bookingSent}', style: label?.copyWith(color: context.successText)),
               ),
             ),
-          ],
+          )
+        : OutlinedButton.icon(
+            style: style(Theme.of(context).colorScheme.onSurface, context.borderColor),
+            onPressed: _busy == null ? () => _message(code, kind) : null,
+            icon: _busy == '${code.id}:$kind' ? progress() : Icon(icon, size: 18),
+            label: Text(text),
+          );
+    return Padding(
+      padding: const EdgeInsets.only(top: Gap.sm),
+      child: Wrap(
+        spacing: Gap.sm,
+        runSpacing: Gap.xs,
+        children: [
+          message('WAITING', l.bookingWaiting, Icons.front_hand_outlined),
+          message('DELAY', l.bookingDelay, Icons.schedule_rounded),
+          OutlinedButton.icon(
+            style: style(context.dangerText, context.dangerText.withValues(alpha: 0.4)),
+            onPressed: _busy == null ? () => _cancel(code) : null,
+            icon: _busy == '${code.id}:cancel' ? progress() : const Icon(Icons.cancel_outlined, size: 18),
+            label: Text(l.bookingCancel),
+          ),
         ],
       ),
     );

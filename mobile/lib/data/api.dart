@@ -337,4 +337,15 @@ class BugunBorApi {
 
   Future<void> completeCode(String businessId, String redemptionId) =>
       _request('POST', '/api/v1/business/${Uri.encodeComponent(businessId)}', body: {'type': 'redeem.complete', 'redemptionId': redemptionId});
+
+  /// A ready message (WAITING, DELAY) to the person who booked; their number stays hidden.
+  Future<void> messageBooking(String businessId, String redemptionId, String message) => _request(
+    'POST',
+    '/api/v1/business/${Uri.encodeComponent(businessId)}',
+    body: {'type': 'booking.message', 'redemptionId': redemptionId, 'message': message},
+  );
+
+  /// Cancels an active booking with its reason (OUT_OF_STOCK, CLOSED); the person is told.
+  Future<void> cancelBooking(String businessId, String redemptionId, String reason) =>
+      _request('POST', '/api/v1/business/${Uri.encodeComponent(businessId)}', body: {'type': 'booking.cancel', 'redemptionId': redemptionId, 'reason': reason});
 }

@@ -1451,4 +1451,91 @@ class LEn extends L {
 
   @override
   String get staleNote => 'Couldn’t refresh — showing the latest data';
+
+  @override
+  String get codeIssueAsk => 'Didn’t get the deal?';
+
+  @override
+  String get codeIssueTitle => 'What happened at the counter?';
+
+  @override
+  String get issueNotAvailable => 'Not given: the product or service wasn’t there';
+
+  @override
+  String get issueCodeRefused => 'They didn’t accept the code';
+
+  @override
+  String get issueWrongPrice => 'The price wasn’t the deal’s price';
+
+  @override
+  String get issueBranchClosed => 'The branch was closed';
+
+  @override
+  String get codeIssueSent => 'Your complaint was received. A moderator will look into it.';
+
+  @override
+  String get canceledOutOfStock => 'Cancelled by the business: sold out';
+
+  @override
+  String get canceledClosed => 'Cancelled by the business: the branch is closed';
+
+  @override
+  String get dealHeld => 'Paused after complaints — a moderator is checking';
+
+  @override
+  String dealComplaints(String count) {
+    return 'Complaints (30 days): $count';
+  }
+
+  @override
+  String get bookingWaiting => 'We’re waiting';
+
+  @override
+  String get bookingDelay => 'Running late';
+
+  @override
+  String get bookingCancel => 'Cancel';
+
+  @override
+  String get bookingOutOfStock => 'Sold out';
+
+  @override
+  String get bookingClosed => 'Branch closed';
+
+  @override
+  String get bookingSent => 'Sent ✓';
+
+  @override
+  String get bookingCancelAsk => 'Cancel the booking? The customer is told why, and the spot goes back to others.';
+
+  @override
+  String get bookingHint => 'The customer’s number stays hidden: BugunBor delivers the message.';
+
+  @override
+  String noShowWarning(String count) {
+    return 'Heads-up: $count codes went unused this week. One more and booking pauses for 24 hours. If you can’t go, cancel the code.';
+  }
+
+  @override
+  String noShowPaused(String time) {
+    return '3 codes went unused this week. Booking is paused until $time.';
+  }
+
+  @override
+  String get branchOpenNow => 'Open now';
+
+  @override
+  String branchOpenUntil(String time) {
+    return 'Open until $time';
+  }
+
+  @override
+  String branchClosedNow(String time) {
+    return 'Closed · opens at $time';
+  }
+
+  @override
+  String branchClosedWarning(String time, String minutes) {
+    return 'This branch is closed now and opens at $time. The code lasts $minutes min — book closer to opening time.';
+  }
 }

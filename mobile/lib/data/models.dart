@@ -606,11 +606,14 @@ class Me {
     required this.memberships,
     this.telegramUsername,
     this.avatar,
+    this.noShows = 0,
+    this.bookingPausedUntil,
   });
 
   factory Me.fromJson(Json json) {
     final user = _map(json['user']);
     final stats = _map(json['stats']);
+    final noShows = _map(json['noShows']);
     return Me(
       id: _str(user['id']),
       displayName: _str(user['displayName']),
@@ -626,6 +629,8 @@ class Me {
       memberships: _list(json['memberships'], Membership.fromJson),
       telegramUsername: _strOrNull(user['telegramUsername']),
       avatar: _strOrNull(user['avatar']),
+      noShows: _int(noShows['count']),
+      bookingPausedUntil: parseServerTimeOrNull(noShows['pausedUntil']),
     );
   }
 
@@ -647,6 +652,12 @@ class Me {
 
   /// The person's own profile photo (a site path only they can load; it changes with each photo), or null.
   final String? avatar;
+
+  /// Codes that ran out unused this week (after three, booking waits a day).
+  final int noShows;
+
+  /// Booking waits until then after three unused codes this week.
+  final DateTime? bookingPausedUntil;
 
   bool get hasBusiness => memberships.isNotEmpty;
 
@@ -674,6 +685,9 @@ class Redemption {
     required this.code,
     required this.canRate,
     required this.myRating,
+    this.issue,
+    this.canReportIssue = false,
+    this.cancelReason,
   });
 
   factory Redemption.fromJson(Json json) => Redemption(
@@ -695,6 +709,9 @@ class Redemption {
     code: _strOrNull(json['code']),
     canRate: _bool(json['canRate']),
     myRating: _intOrNull(json['myRating']),
+    issue: _strOrNull(json['issue']),
+    canReportIssue: _bool(json['canReportIssue']),
+    cancelReason: _strOrNull(json['cancelReason']),
   );
 
   final String id;
@@ -718,6 +735,15 @@ class Redemption {
   final String? code;
   final bool canRate;
   final int? myRating;
+
+  /// What the person said went wrong at the counter (NOT_AVAILABLE, CODE_REFUSED…), if they did.
+  final String? issue;
+
+  /// "Aksiya berilmadimi?" can still be sent (three days after booking, once).
+  final bool canReportIssue;
+
+  /// Why the business cancelled it (OUT_OF_STOCK, CLOSED), when it did.
+  final String? cancelReason;
 
   /// Can still be shown at the counter (a claim past its time counts as
   /// expired even before the server marks it so).
@@ -903,6 +929,8 @@ class WorkspaceCode {
     required this.dealTitle,
     required this.customerName,
     required this.branchName,
+    this.expiresAt,
+    this.sent = const [],
   });
   factory WorkspaceCode.fromJson(Json json) => WorkspaceCode(
     id: _str(json['id']),
@@ -911,6 +939,8 @@ class WorkspaceCode {
     dealTitle: _str(json['dealTitle']),
     customerName: _str(json['customerName']),
     branchName: _str(json['branchName']),
+    expiresAt: parseServerTimeOrNull(json['expiresAt']),
+    sent: (json['sent'] as List?)?.map((message) => '$message').toList() ?? const [],
   );
   final String id;
   final String status;
@@ -918,6 +948,13 @@ class WorkspaceCode {
   final String dealTitle;
   final String customerName;
   final String branchName;
+  final DateTime? expiresAt;
+
+  /// Ready messages already sent about this booking (WAITING, DELAY).
+  final List<String> sent;
+
+  /// A booking the business can still message or cancel.
+  bool get isActive => status == 'CLAIMED' && (expiresAt?.isAfter(DateTime.now().toUtc()) ?? false);
 }
 
 /// The business profile a member sees: what they may do, and for owners
@@ -1048,6 +1085,8 @@ class BusinessDeal {
     required this.redeemed,
     required this.photo,
     required this.views,
+    this.held = false,
+    this.complaints = 0,
   });
 
   factory BusinessDeal.fromJson(Json json) => BusinessDeal(
@@ -1070,6 +1109,8 @@ class BusinessDeal {
     redeemed: _int(json['redeemed']),
     photo: _strOrNull(json['photo']),
     views: _int(json['views']),
+    held: _bool(json['held']),
+    complaints: _int(json['complaints']),
   );
 
   final String id;
@@ -1095,6 +1136,12 @@ class BusinessDeal {
   final int redeemed;
   final String? photo;
   final int views;
+
+  /// Off the air after customers said it was not honoured: only a moderator resumes it.
+  final bool held;
+
+  /// Open complaints about its codes in the last 30 days.
+  final int complaints;
 
   /// Only drafts and rejected deals can be changed; others are copied.
   bool get editable => status == 'DRAFT' || status == 'REJECTED';

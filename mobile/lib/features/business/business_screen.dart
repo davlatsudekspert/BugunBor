@@ -321,7 +321,13 @@ class _Branch extends StatelessWidget {
         child: ListTile(
           contentPadding: const EdgeInsets.only(left: Gap.md, right: Gap.xs),
           title: Text(branch.name, style: const TextStyle(fontWeight: FontWeight.w800)),
-          subtitle: Text(branch.address),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(branch.address),
+              OpenNow(hoursJson: branch.hoursJson),
+            ],
+          ),
           trailing: IconButton(
             tooltip: l.dealDirections,
             icon: const Icon(Icons.directions_outlined, color: Brand.primary),
