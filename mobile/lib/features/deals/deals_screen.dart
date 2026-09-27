@@ -11,6 +11,7 @@ import '../../design/widgets/common.dart';
 import '../../design/widgets/form_fields.dart';
 import '../../design/widgets/status_pill.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../shell/shell_screen.dart';
 import 'deal_draft.dart';
 import 'deal_form_screen.dart';
 import 'deal_visual.dart';
@@ -217,6 +218,7 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
       final locale = ref.watch(settingsProvider.select((settings) => settings.locale));
       return Scaffold(
         appBar: AppBar(title: Text(l.dealsTitle)),
+        bottomNavigationBar: const PageTabBar(),
         body: StatePanel(
           icon: Icons.local_offer_outlined,
           title: l.dealsNeedUpdate,
@@ -229,6 +231,7 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
     final visuals = config?.deal ?? const DealRules();
     return Scaffold(
       appBar: AppBar(title: Text(l.dealsTitle)),
+      bottomNavigationBar: const PageTabBar(),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: Brand.primaryStrong,
         foregroundColor: Colors.white,
@@ -268,8 +271,8 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
       DealFilter.ended: l.dealsFilterEnded,
     };
     return ListView(
-      // Room for the button at the bottom (which keeps clear of the phone's bar).
-      padding: EdgeInsets.fromLTRB(0, 0, 0, 96 + context.navBarInset),
+      // Room for the button at the bottom.
+      padding: const EdgeInsets.fromLTRB(0, 0, 0, 96),
       children: [
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,

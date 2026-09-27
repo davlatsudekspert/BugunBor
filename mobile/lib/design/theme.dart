@@ -169,10 +169,4 @@ extension ThemeX on BuildContext {
   /// Errors and "delete" / "cancel" actions, readable in both themes (plain
   /// red is too light on white and too dark on the dark surface).
   Color get dangerText => isDark ? const Color(0xFFFF8A80) : const Color(0xFFB3261E);
-
-  /// The phone's own navigation bar (buttons or gesture line) over the bottom
-  /// of a page or sheet that has no bar of its own. Added to the end of a
-  /// scroll view, it lets the last line scroll clear of it. Zero while the
-  /// keyboard is open (the keyboard covers the bar).
-  double get navBarInset => MediaQuery.paddingOf(this).bottom;
 }

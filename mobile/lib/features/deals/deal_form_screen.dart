@@ -506,7 +506,7 @@ class _DealFormState extends ConsumerState<_DealForm> {
     const gap = SizedBox(height: Gap.lg);
 
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(Gap.gutter, Gap.sm, Gap.gutter, Gap.xl + context.navBarInset),
+      padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.sm, Gap.gutter, Gap.xl),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

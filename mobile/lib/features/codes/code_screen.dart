@@ -14,6 +14,7 @@ import '../../design/theme.dart';
 import '../../design/widgets/common.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../common/report_sheet.dart';
+import '../shell/shell_screen.dart';
 import 'codes_screen.dart';
 
 /// One claimed code, big enough for the cashier to scan or read.
@@ -94,11 +95,13 @@ class _CodeScreenState extends ConsumerState<CodeScreen> {
             : codes.isLoading
             ? const Center(child: CircularProgressIndicator())
             : StatePanel(icon: Icons.qr_code_2_rounded, title: l.errorNotFound, actionLabel: l.navCodes, onAction: () => context.go('/codes')),
+        bottomNavigationBar: const PageTabBar(),
       );
     }
     final expired = !code.isActive || code.expiresAt.isBefore(DateTime.now().toUtc());
     return Scaffold(
       appBar: AppBar(title: Text(l.navCodes)),
+      bottomNavigationBar: const PageTabBar(),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _reload,

@@ -126,6 +126,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
     if (!signedIn) {
       return Scaffold(
         appBar: AppBar(title: Text(l.cashierTitle)),
+        bottomNavigationBar: const PageTabBar(),
         body: const LoginRequired(icon: Icons.qr_code_scanner_rounded),
       );
     }
@@ -134,12 +135,14 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
     if (me.value == null) {
       return Scaffold(
         appBar: AppBar(title: Text(l.cashierTitle)),
+        bottomNavigationBar: const PageTabBar(),
         body: me.hasError ? StatePanel.error(context, me.error!, onRetry: () => ref.invalidate(meProvider)) : const Center(child: CircularProgressIndicator()),
       );
     }
     if (counters.isEmpty) {
       return Scaffold(
         appBar: AppBar(title: Text(l.cashierTitle)),
+        bottomNavigationBar: const PageTabBar(),
         body: StatePanel(
           icon: Icons.storefront_outlined,
           title: l.cashierNoBusiness,
@@ -159,8 +162,9 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(l.cashierTitle)),
+      bottomNavigationBar: const PageTabBar(),
       body: ListView(
-        padding: EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.xl + context.navBarInset),
+        padding: const EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.xl),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         children: [
           if (counters.length > 1) ...[

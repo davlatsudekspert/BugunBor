@@ -342,7 +342,7 @@ class _RateSheetState extends ConsumerState<_RateSheet> {
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.xl + context.navBarInset),
+        padding: const EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,

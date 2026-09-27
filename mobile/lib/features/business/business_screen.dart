@@ -14,6 +14,7 @@ import '../../design/widgets/deal_card.dart';
 import '../../design/widgets/photo_app_bar.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../common/report_sheet.dart';
+import '../shell/shell_screen.dart';
 
 class BusinessScreen extends ConsumerStatefulWidget {
   const BusinessScreen({super.key, required this.slug});
@@ -144,6 +145,7 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
         body: async.hasError
             ? StatePanel.error(context, async.error!, onRetry: () => ref.invalidate(businessProvider(widget.slug)))
             : const SkeletonList(count: 3, height: 140),
+        bottomNavigationBar: const PageTabBar(),
       );
     }
     final blocked = ref.watch(meProvider).value?.blockedBusinessIds.contains(business.id) ?? false;
@@ -151,6 +153,7 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
     final followers = _follow?.followers ?? business.followers;
 
     return Scaffold(
+      bottomNavigationBar: const PageTabBar(),
       body: RefreshIndicator(
         onRefresh: () => refreshing(context, ref.refresh(businessProvider(widget.slug).future)),
         child: CustomScrollView(
@@ -170,7 +173,7 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
                 actions: _actions(business, blocked, false),
               ),
             SliverPadding(
-              padding: EdgeInsets.fromLTRB(Gap.gutter, Gap.lg, Gap.gutter, Gap.xl + context.navBarInset),
+              padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.lg, Gap.gutter, Gap.xl),
               sliver: SliverList.list(
                 children: [
                   Row(

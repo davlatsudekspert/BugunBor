@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -125,7 +126,41 @@ class _BugunBorAppState extends ConsumerState<BugunBorApp> {
       theme: buildTheme(Brightness.light),
       darkTheme: buildTheme(Brightness.dark),
       themeMode: settings.themeMode,
-      builder: (context, child) => _UpdateGate(child: child ?? const SizedBox.shrink()),
+      builder: (context, child) => _NavBarBand(child: _UpdateGate(child: child ?? const SizedBox.shrink())),
+    );
+  }
+}
+
+/// Android draws its own buttons (or the gesture line) over the app: at the
+/// bottom, or at the side of a phone turned sideways, where a camera cutout
+/// can also be. Each phone says how much they take. The whole app keeps clear
+/// of them, on a band of the tab bar's colour: no line of any page, sheet or
+/// form ever sits under the buttons, on any phone, and the buttons stay
+/// readable on the band (dark on light, light on dark). A phone without such
+/// buttons gets no band. The top is left to each page (a photo may run under
+/// the status bar).
+class _NavBarBand extends StatelessWidget {
+  const _NavBarBand({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = context.isDark;
+    final band = dark ? Brand.darkSurface : Colors.white;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        // Older Android paints its bar in this colour; Android 15 and later
+        // draw the buttons over the app, so over this band.
+        systemNavigationBarColor: band,
+        systemNavigationBarDividerColor: band,
+        systemNavigationBarIconBrightness: dark ? Brightness.light : Brightness.dark,
+        // No grey veil over the band behind three-button navigation.
+        systemNavigationBarContrastEnforced: false,
+      ),
+      child: ColoredBox(
+        color: band,
+        child: SafeArea(top: false, child: child),
+      ),
     );
   }
 }

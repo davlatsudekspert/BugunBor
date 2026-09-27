@@ -19,6 +19,7 @@ import '../../design/widgets/deal_card.dart';
 import '../../design/widgets/photo_app_bar.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../common/report_sheet.dart';
+import '../shell/shell_screen.dart';
 
 String _randomKey() {
   final random = Random.secure();
@@ -229,6 +230,7 @@ class _DealScreenState extends ConsumerState<DealScreen> {
         body: async.hasError
             ? StatePanel.error(context, async.error!, onRetry: () => ref.invalidate(dealProvider(widget.slug)))
             : const SkeletonList(count: 3, height: 140),
+        bottomNavigationBar: const PageTabBar(),
       );
     }
     final locale = ref.watch(settingsProvider.select((settings) => settings.locale));
@@ -280,7 +282,7 @@ class _DealScreenState extends ConsumerState<DealScreen> {
               ],
             ),
             SliverPadding(
-              padding: EdgeInsets.fromLTRB(Gap.gutter, Gap.lg, Gap.gutter, Gap.xl + (deal.isDemo ? context.navBarInset : 0)),
+              padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.lg, Gap.gutter, Gap.xl),
               sliver: SliverList.list(
                 children: [
                   Wrap(
@@ -336,7 +338,16 @@ class _DealScreenState extends ConsumerState<DealScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: deal.isDemo ? null : _BookBar(deal: deal, busy: _booking, onBook: () => _book(deal)),
+      // The book bar sits right over the tabs.
+      bottomNavigationBar: deal.isDemo
+          ? const PageTabBar()
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _BookBar(deal: deal, busy: _booking, onBook: () => _book(deal)),
+                const PageTabBar(),
+              ],
+            ),
     );
   }
 }

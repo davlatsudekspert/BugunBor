@@ -112,7 +112,7 @@ class _JoinGuest extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(l.addBusiness)),
       body: ListView(
-        padding: EdgeInsets.fromLTRB(Gap.gutter, Gap.sm, Gap.gutter, Gap.xl + context.navBarInset),
+        padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.sm, Gap.gutter, Gap.xl),
         children: [
           const _JoinHeader(),
           const SizedBox(height: Gap.lg),
@@ -455,7 +455,7 @@ class _JoinFormState extends ConsumerState<_JoinForm> {
     // Not a lazy list: every field stays built, so a problem can always be
     // scrolled to (a ListView drops the ones out of sight).
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(Gap.gutter, Gap.sm, Gap.gutter, Gap.xl + context.navBarInset),
+      padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.sm, Gap.gutter, Gap.xl),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -734,7 +734,7 @@ class _Created extends ConsumerWidget {
     final verified = created.verified;
     final color = verified ? context.successText : context.accentText;
     return ListView(
-      padding: EdgeInsets.fromLTRB(Gap.gutter, Gap.xl, Gap.gutter, Gap.xl + context.navBarInset),
+      padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.xl, Gap.gutter, Gap.xl),
       children: [
         Center(
           child: Container(
