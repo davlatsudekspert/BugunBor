@@ -47,6 +47,14 @@ void expectMenuAboveBar(WidgetTester tester, double bar, String page) {
   }
 }
 
+/// The phone's buttons stay readable on the band under the app: dark on
+/// the light theme, light on the dark one, with no grey veil over them.
+void expectButtonsReadable(String page, {bool dark = false}) {
+  final style = SystemChrome.latestStyle;
+  expect(style?.systemNavigationBarIconBrightness, dark ? Brightness.light : Brightness.dark, reason: '$page: the phone’s buttons can be seen');
+  expect(style?.systemNavigationBarContrastEnforced, isFalse, reason: '$page: no grey veil');
+}
+
 void mockScanner(WidgetTester tester) {
   const methods = MethodChannel('dev.steenbakker.mobile_scanner/scanner/method');
   const streams = [MethodChannel('dev.steenbakker.mobile_scanner/scanner/event'), MethodChannel('dev.steenbakker.mobile_scanner/scanner/deviceOrientation')];
@@ -94,9 +102,11 @@ void main() {
         await pumpApp(tester, server: server, size: phone.value, textScale: small ? 1.3 : 1, theme: dark ? 'dark' : 'light');
         await phoneBar(tester, bar.value);
         expectMenuAboveBar(tester, bar.value, 'Home');
+        expectButtonsReadable('Home', dark: dark);
 
         await push(tester, '/deals/osh');
         expectMenuAboveBar(tester, bar.value, 'deal');
+        expectButtonsReadable('deal', dark: dark);
         // The book button sits right over the menu.
         final screen = tester.view.physicalSize.height / tester.view.devicePixelRatio;
         expect(tester.getRect(find.byType(FilledButton).last).bottom, lessThan(screen - bar.value));
@@ -105,13 +115,16 @@ void main() {
         await go(tester, '/');
         await push(tester, '/deals/somsa');
         expectMenuAboveBar(tester, bar.value, 'demo deal');
+        expectButtonsReadable('demo deal', dark: dark);
 
         await go(tester, '/');
         await push(tester, '/businesses/kafe');
         expectMenuAboveBar(tester, bar.value, 'business');
+        expectButtonsReadable('business', dark: dark);
 
         await go(tester, '/nowhere');
         expectMenuAboveBar(tester, bar.value, 'not found');
+        expectButtonsReadable('not found', dark: dark);
       });
     }
 
@@ -123,12 +136,15 @@ void main() {
       final code = (contract('my-codes') as List).first as Map<String, dynamic>;
       await push(tester, '/codes/${code['id']}');
       expectMenuAboveBar(tester, bar.value, 'code');
+      expectButtonsReadable('code');
       await go(tester, '/');
       await push(tester, '/cashier?business=biz');
       expectMenuAboveBar(tester, bar.value, 'counter');
+      expectButtonsReadable('counter');
       await go(tester, '/');
       await push(tester, '/business/biz/deals');
       expectMenuAboveBar(tester, bar.value, 'business deals');
+      expectButtonsReadable('business deals');
       // «Yangi aksiya» stays above the menu.
       expect(tester.getRect(find.byType(FloatingActionButton)).bottom, lessThanOrEqualTo(tester.getRect(find.byType(TabBarIos)).top));
     });
