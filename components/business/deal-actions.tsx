@@ -16,13 +16,15 @@ type Props = {
   dealId: string;
   slug: string;
   status: string;
+  /** Held after complaints: only a moderator can resume it. */
+  held?: boolean;
   isSponsored: boolean;
   labels: Labels;
 };
 
 const button = 'inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-navy transition hover:border-primary/40 disabled:opacity-50';
 
-export function DealActions({ businessId, dealId, slug, status, isSponsored, labels }: Props) {
+export function DealActions({ businessId, dealId, slug, status, held = false, isSponsored, labels }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState('');
 
@@ -52,7 +54,7 @@ export function DealActions({ businessId, dealId, slug, status, isSponsored, lab
         {editable ? <button type="button" disabled={busy !== null} onClick={() => transition('submit')} className={cn(button, 'border-primary/40 text-primary')}>{icon('submit', Send)} {labels.submit}</button> : null}
         {status === 'PENDING_REVIEW' ? <button type="button" disabled={busy !== null} onClick={() => transition('withdraw')} className={button}>{icon('withdraw', Undo2)} {labels.withdraw}</button> : null}
         {status === 'ACTIVE' ? <button type="button" disabled={busy !== null} onClick={() => transition('pause')} className={button}>{icon('pause', Pause)} {labels.pause}</button> : null}
-        {status === 'PAUSED' ? <button type="button" disabled={busy !== null} onClick={() => transition('resume')} className={button}>{icon('resume', Play)} {labels.resume}</button> : null}
+        {status === 'PAUSED' && !held ? <button type="button" disabled={busy !== null} onClick={() => transition('resume')} className={button}>{icon('resume', Play)} {labels.resume}</button> : null}
         {live || status === 'PENDING_REVIEW' ? (
           <button type="button" disabled={busy !== null} onClick={() => run('top', { type: 'deal.top', dealId, on: !isSponsored })} className={cn(button, isSponsored && 'border-amber-300 bg-amber-50 text-amber-800')}>
             {icon('top', Crown)} {isSponsored ? labels.topOff : labels.topOn}

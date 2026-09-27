@@ -13,6 +13,7 @@ import { requireWorkspace } from '@/modules/businesses/current';
 import { businessDashboard, profileChecklist } from '@/modules/businesses/service';
 import { listBusinessReviews } from '@/modules/engagement/reviews';
 import { DELETED_USER_NAME } from '@/modules/auth/account';
+import { BookingActions } from '@/components/business/booking-actions';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -85,15 +86,21 @@ export default async function BusinessDashboardPage() {
       <div className="mt-5 grid gap-5 lg:grid-cols-[1.4fr_1fr]">
         <section className="rounded-2xl border border-slate-200 bg-white p-5">
           <h2 className="font-black text-navy">{t.biz.dashboard.recent}</h2>
+          {data.recent.some((row) => row.status === 'CLAIMED') ? <p className="mt-1 text-xs text-slate-500">{t.biz.dashboard.bookings.hint}</p> : null}
           {data.recent.length ? (
             <ul className="mt-4 divide-y divide-slate-100">
               {data.recent.map((row) => (
-                <li key={row.id} className="flex items-center justify-between gap-3 py-3">
-                  <div className="min-w-0">
-                    <p className="truncate font-bold text-navy">{row.dealTitle}</p>
-                    <p className="truncate text-xs text-slate-500">{row.customerName === DELETED_USER_NAME ? t.common.deletedUser : row.customerName} · {row.branchName} · {formatMoment(parseDbTime(row.completedAt ?? row.createdAt), t, locale)}</p>
+                <li key={row.id} className="py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-bold text-navy">{row.dealTitle}</p>
+                      <p className="truncate text-xs text-slate-500">{row.customerName === DELETED_USER_NAME ? t.common.deletedUser : row.customerName} · {row.branchName} · {formatMoment(parseDbTime(row.completedAt ?? row.createdAt), t, locale)}</p>
+                    </div>
+                    <span className={cn('shrink-0 rounded-full px-2.5 py-1 text-xs font-bold', statusTone[row.status] ?? statusTone.EXPIRED)}>{t.codes.status[row.status as keyof typeof t.codes.status] ?? row.status}</span>
                   </div>
-                  <span className={cn('shrink-0 rounded-full px-2.5 py-1 text-xs font-bold', statusTone[row.status] ?? statusTone.EXPIRED)}>{t.codes.status[row.status as keyof typeof t.codes.status] ?? row.status}</span>
+                  {row.status === 'CLAIMED' && roleCan(membership.role, 'redemption.validate') ? (
+                    <BookingActions businessId={membership.businessId} redemptionId={row.id} sent={row.sent} labels={{ ...t.biz.dashboard.bookings, networkError: t.common.networkError }} />
+                  ) : null}
                 </li>
               ))}
             </ul>

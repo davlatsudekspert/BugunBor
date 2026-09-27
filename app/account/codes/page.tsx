@@ -3,6 +3,8 @@ import { MapPin, Navigation, TicketCheck } from 'lucide-react';
 
 import { CancelCodeButton } from '@/components/account/account-actions';
 import { RateVisit } from '@/components/account/rate-visit';
+import { ComplaintButton } from '@/components/deals/complaint-button';
+import { codeIssueProps } from '@/components/deals/complaint-labels';
 import { Countdown } from '@/components/deals/countdown';
 import { DealVisual } from '@/components/deals/deal-visual';
 import { QrCode } from '@/components/deals/qr-code';
@@ -18,6 +20,7 @@ import { requireUser } from '@/modules/auth/current';
 import { givenRatings, reviewableRedemptions } from '@/modules/engagement/reviews';
 import { formatRedemptionCode } from '@/modules/redemptions/codes';
 import { listCustomerRedemptions, runMaintenance } from '@/modules/redemptions/service';
+import { canReportCode, codeIssuesOf } from '@/modules/reports';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -36,11 +39,19 @@ export default async function CodesPage() {
   const [{ t, locale }, db] = await Promise.all([getI18n(), getDb()]);
   const config = getConfig();
   await runMaintenance(db);
-  const [redemptions, reviewable, ratings] = await Promise.all([
+  const [redemptions, reviewable, ratings, issues] = await Promise.all([
     listCustomerRedemptions(db, user.id, config.hashSecret),
     reviewableRedemptions(db, user.id),
     givenRatings(db, user.id),
+    codeIssuesOf(db, user.id),
   ]);
+  // "The deal was not honoured": within three days of booking, once per code.
+  const issue = (item: (typeof redemptions)[number], className?: string) =>
+    issues.has(item.id) ? (
+      <p className={cn('text-xs font-semibold text-slate-500', className)}>{t.complaint.codeSent}</p>
+    ) : canReportCode(item.createdAt) ? (
+      <ComplaintButton targetType="REDEMPTION" targetId={item.id} loggedIn loginHref="/login" className={className} {...codeIssueProps(t, item.status === 'COMPLETED')} />
+    ) : null;
   const active = redemptions.filter((item) => item.status === 'CLAIMED');
   const history = redemptions.filter((item) => item.status !== 'CLAIMED');
   const origin = config.appUrl ?? 'https://bugunbor.uz';
@@ -84,7 +95,8 @@ export default async function CodesPage() {
                     <p className="mt-2 max-w-44 text-xs text-emerald-900">{t.codes.showToCashier}</p>
                   </div>
                 </div>
-                <div className="flex justify-end border-t border-slate-100 px-5 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 px-5 py-3">
+                  {issue(item)}
                   <CancelCodeButton redemptionId={item.id} labels={{ button: t.codes.cancel, ask: t.codes.cancelAsk, error: t.common.unknownError }} />
                 </div>
               </article>
@@ -107,9 +119,13 @@ export default async function CodesPage() {
                       <a href={`/deals/${item.dealSlug}`} className="block truncate font-bold text-navy hover:text-primary">{item.dealTitle}</a>
                       <p className="truncate text-sm text-slate-500">{item.businessName} · {formatMoment(parseDbTime(item.completedAt ?? item.createdAt), t, locale)}</p>
                       {given ? <p className="mt-0.5 text-xs font-bold text-amber-700">{fmt(t.codes.rated, { rating: given })}</p> : null}
+                      {item.status === 'CANCELED' && (item.cancelReason === 'OUT_OF_STOCK' || item.cancelReason === 'CLOSED') ? (
+                        <p className="mt-0.5 text-xs font-bold text-red-700">{t.codes.canceledByBusiness[item.cancelReason]}</p>
+                      ) : null}
                     </div>
                     <span className={cn('shrink-0 rounded-full px-3 py-1 text-xs font-bold', statusTone[item.status])}>{t.codes.status[item.status]}</span>
                   </div>
+                  {issue(item, 'mt-1')}
                   {reviewable.has(item.id) ? (
                     <RateVisit
                       redemptionId={item.id}

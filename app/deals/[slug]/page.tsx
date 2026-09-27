@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, BadgeCheck, CalendarClock, Clock3, Eye, Info, MapPin, Navigation, Phone, ShieldCheck, Ticket, Timer, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, CalendarClock, Clock3, Eye, Info, MapPin, Navigation, Phone, ShieldCheck, Ticket, Timer } from 'lucide-react';
 
 import { BusinessAvatar } from '@/components/deals/business-avatar';
 import { ClaimPanel } from '@/components/deals/claim-panel';
+import { ComplaintButton } from '@/components/deals/complaint-button';
+import { reportProps } from '@/components/deals/complaint-labels';
 import { Countdown } from '@/components/deals/countdown';
 import { DealCard } from '@/components/deals/deal-card';
 import { DealVisual } from '@/components/deals/deal-visual';
@@ -22,12 +24,13 @@ import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
 import { minutesUntilOpen, parseHours } from '@/lib/hours';
 import { directionsUrl } from '@/lib/maps';
-import { parseDbTime, toDbTime } from '@/lib/time';
+import { formatClock, formatNumericDate, parseDbTime, toDbTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { getCurrentUser, isModerator } from '@/modules/auth/current';
 import { getDealBySlug, getFavoriteIds, getPublicBusiness } from '@/modules/catalog/queries';
 import { demoEnabled } from '@/modules/demo';
 import { followState } from '@/modules/engagement/follows';
+import { NO_SHOW_RULES, noShowState } from '@/modules/redemptions/no-shows';
 
 async function loadDeal(slug: string) {
   const db = await getDb();
@@ -65,7 +68,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
   if (preview && !isMember && !isModerator(user)) notFound();
 
   const now = new Date();
-  const [favorites, usage, business, follow] = await Promise.all([
+  const [favorites, usage, business, follow, noShows] = await Promise.all([
     user ? getFavoriteIds(db, user.id) : Promise.resolve(new Set<string>()),
     user
       ? db.prepare(`SELECT SUM(CASE WHEN status = 'CLAIMED' AND expires_at > ?3 THEN 1 ELSE 0 END) AS active,
@@ -74,7 +77,15 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
       : Promise.resolve(null),
     deal.isPublic ? demoEnabled(db).then((demo) => getPublicBusiness(db, deal.business.slug, { demo })) : Promise.resolve(null),
     followState(db, deal.business.id, user?.id ?? null),
+    user ? noShowState(db, user.id, now) : Promise.resolve(null),
   ]);
+  // Booked and never came: warned after two, booking paused after three (a day).
+  const pausedUntil = noShows?.pausedUntil ? parseDbTime(noShows.pausedUntil) : null;
+  const notice = pausedUntil
+    ? { text: fmt(t.errors.NO_SHOW_PAUSE, { time: `${formatNumericDate(pausedUntil).slice(0, 5)} ${formatClock(pausedUntil)}` }), blocking: true }
+    : noShows && noShows.count >= NO_SHOW_RULES.limit - 1
+      ? { text: fmt(t.claim.noShowWarning, { count: noShows.count }), blocking: false }
+      : null;
 
   // Demo deals show how the site works; outside development nobody can claim them.
   const demoOnly = (deal.isDemo || deal.business.isDemo) && !getConfig().isDevelopment;
@@ -187,9 +198,9 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
             <ShareButton url={`/deals/${deal.slug}`} text={fmt(t.deal.shareText, { title: deal.title, percent: deal.discountPercent })} labels={{ share: t.common.share, copied: t.common.copied }} />
             <FavoriteButton dealId={deal.id} initial={favorites.has(deal.id)} loggedIn={Boolean(user)} labels={{ save: fmt(t.deal.saveAria, { title: deal.title }), unsave: fmt(t.deal.unsaveAria, { title: deal.title }) }} withText={{ save: t.deal.save, saved: t.deal.saved }} />
           </div>
-          <a href={`/contact?subject=${encodeURIComponent(fmt(t.deal.reportSubject, { title: deal.title }))}`} className="mt-5 inline-flex items-center gap-2 py-2 text-sm text-slate-500 underline-offset-4 hover:underline">
-            <TriangleAlert className="size-4" aria-hidden /> {t.deal.report}
-          </a>
+          {deal.isPublic ? (
+            <ComplaintButton targetType="DEAL" targetId={deal.id} loggedIn={Boolean(user)} loginHref={`/login?returnTo=${encodeURIComponent(`/deals/${deal.slug}`)}`} className="mt-5" {...reportProps(t)} />
+          ) : null}
         </section>
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
@@ -243,6 +254,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
                   loginHref={`/login?returnTo=${encodeURIComponent(`/deals/${deal.slug}`)}`}
                   claimable={claimable}
                   hasActiveCode={Boolean(usage?.active)}
+                  notice={notice}
                   limitReached={(usage?.used ?? 0) >= deal.perCustomerLimit}
                   labels={{
                     button: t.claim.button,

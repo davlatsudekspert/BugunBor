@@ -40,12 +40,14 @@ type Props = {
   hasActiveCode: boolean;
   /** The customer already used this deal as many times as allowed. */
   limitReached: boolean;
+  /** A word before booking (codes left unused lately); `blocking` pauses booking. */
+  notice?: { text: string; blocking: boolean } | null;
   labels: Labels;
 };
 
 type Success = { code: string; expiresAt: string };
 
-export function ClaimPanel({ dealId, branches, loggedIn, loginHref, claimable, hasActiveCode, limitReached, labels }: Props) {
+export function ClaimPanel({ dealId, branches, loggedIn, loginHref, claimable, hasActiveCode, limitReached, notice, labels }: Props) {
   const [branchId, setBranchId] = useState(branches[0]?.id ?? '');
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle');
   const [error, setError] = useState<{ code: string; message: string } | null>(null);
@@ -135,10 +137,11 @@ export function ClaimPanel({ dealId, branches, loggedIn, loginHref, claimable, h
         </label>
       ) : null}
       {closedWarning ? <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold leading-5 text-amber-800">{closedWarning}</p> : null}
+      {notice ? <p className={cn('rounded-xl px-3 py-2 text-xs font-semibold leading-5', notice.blocking ? 'bg-red-50 text-red-800' : 'bg-amber-50 text-amber-800')}>{notice.text}</p> : null}
       <button
         type="button"
         onClick={claim}
-        disabled={!claimable || state === 'loading' || !branchId}
+        disabled={!claimable || state === 'loading' || !branchId || Boolean(notice?.blocking)}
         className="flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 font-bold text-white shadow-[0_10px_25px_rgba(245,89,55,.24)] transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {state === 'loading' ? <LoaderCircle className="size-5 animate-spin" aria-hidden /> : <QrIcon className="size-5" aria-hidden />}

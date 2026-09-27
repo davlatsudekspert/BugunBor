@@ -5,6 +5,8 @@ import { AtSign, BadgeCheck, CalendarClock, Globe, MapPin, Navigation, Phone, Se
 import { BusinessAvatar } from '@/components/deals/business-avatar';
 import { CategoryIcon, categoryColor } from '@/components/deals/category-icon';
 import { DealCard } from '@/components/deals/deal-card';
+import { ComplaintButton } from '@/components/deals/complaint-button';
+import { reportProps } from '@/components/deals/complaint-labels';
 import { FollowButton } from '@/components/deals/follow-button';
 import { RatingStars, ratingText } from '@/components/deals/rating-stars';
 import { JsonLd } from '@/components/site/json-ld';
@@ -126,6 +128,7 @@ export default async function BusinessPage({ params }: { params: Promise<{ slug:
                 {business.instagram ? <a href={instagramUrl(business.instagram)} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-bold text-navy hover:border-primary/40"><AtSign className="size-4" aria-hidden /> Instagram</a> : null}
                 {websiteHost ? <a href={business.website!} target="_blank" rel="noreferrer nofollow" className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-bold text-navy hover:border-primary/40"><Globe className="size-4" aria-hidden /> {websiteHost}</a> : null}
               </div>
+              <ComplaintButton targetType="BUSINESS" targetId={business.id} loggedIn={Boolean(user)} loginHref={`/login?returnTo=${encodeURIComponent(`/businesses/${business.slug}`)}`} className="mt-3" {...reportProps(t)} />
             </div>
           </div>
         </div>
