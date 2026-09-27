@@ -1,4 +1,5 @@
 import { CITIES, type City } from '@/lib/cities';
+import { type DealSet, serializeSetItems } from '@/lib/deal-set';
 import { buildSearchText, slugify } from '@/lib/search';
 import { addMinutes, toDbTime } from '@/lib/time';
 import type { DealVisualKey } from '@/lib/visuals';
@@ -9,7 +10,7 @@ import type { DealVisualKey } from '@/lib/visuals';
 // Everything here is is_demo = 1 and only ever shown in demo mode.
 
 /** Bump when the catalog content changes so existing databases pick it up. */
-export const DEMO_CATALOG_VERSION = '2026-09-26.3';
+export const DEMO_CATALOG_VERSION = '2026-09-27.1';
 
 export const DEMO_CATEGORIES = ['food', 'coffee', 'shop', 'beauty', 'sport', 'fun', 'services', 'delivery'] as const;
 export type DemoCategory = (typeof DEMO_CATEGORIES)[number];
@@ -30,22 +31,28 @@ type Template = {
   visual: DealVisualKey;
   limit?: number;
   unlimited?: boolean;
+  /** What a set holds; a regular deal has none. */
+  set?: DealSet;
 };
 
 const food: Template[] = [
   { key: 'osh-salat-non', title: 'To‘y oshi + salat + non', description: 'Bir porsiya to‘y oshi, achchiq-chuchuk salat va issiq tandir non.', price: 58000, discount: 25, visual: 'plov' },
   { key: 'lagmon-choy', title: 'Qo‘lda cho‘zilgan lag‘mon + choy', description: 'Katta porsiya lag‘mon, ko‘k choy va non.', price: 45000, discount: 20, visual: 'noodles' },
-  { key: 'shashlik-seti', title: 'Shashlik seti: 5 six + non + piyoz', description: 'Mol go‘shtidan besh six shashlik, tandir non va sirkali piyoz.', price: 120000, discount: 20, visual: 'shashlik' },
+  { key: 'shashlik-seti', title: 'Shashlik seti: 5 six + non + piyoz', description: 'Mol go‘shtidan besh six shashlik, tandir non va sirkali piyoz.', price: 120000, discount: 20, visual: 'shashlik',
+    set: { items: [{ name: 'Shashlik (six)', qty: 5 }, { name: 'Tandir non', qty: 1 }, { name: 'Sirkali piyoz', qty: 1 }], persons: null } },
   { key: 'manti-5', title: 'Bug‘da pishgan manti (5 dona)', description: 'Qo‘y go‘shti va piyozli yirik manti, qatiq bilan.', price: 40000, discount: 25, visual: 'dumplings' },
   { key: 'somsa-choy', title: '3 ta tandir somsa + ko‘k choy', description: 'Go‘shtli tandir somsa, tandirdan yangi uzilgan.', price: 42000, discount: 30, visual: 'samsa' },
-  { key: 'biznes-lanch', title: 'Biznes-lanch: sho‘rva + ikkinchi taom + choy', description: 'Kunning sho‘rvasi, ikkinchi taom, salat va choy.', price: 55000, discount: 30, visual: 'lunch' },
+  { key: 'biznes-lanch', title: 'Biznes-lanch: sho‘rva + ikkinchi taom + choy', description: 'Kunning sho‘rvasi, ikkinchi taom, salat va choy.', price: 55000, discount: 30, visual: 'lunch',
+    set: { items: [{ name: 'Kunning sho‘rvasi', qty: 1 }, { name: 'Ikkinchi taom', qty: 1 }, { name: 'Salat', qty: 1 }, { name: 'Choy', qty: 1 }], persons: 1 } },
   { key: 'qozon-kabob', title: 'Qozon kabob (1 porsiya)', description: 'Qozonda qovurilgan go‘sht va kartoshka, ko‘kat bilan.', price: 80000, discount: 20, visual: 'meat' },
   { key: 'tandir-tovuq', title: 'Butun tandir tovuq + non', description: 'Tandirda pishgan butun tovuq, 2–3 kishiga yetadi.', price: 110000, discount: 25, visual: 'chicken' },
   { key: 'dimlama-2', title: 'Dimlama (2 kishilik)', description: 'Go‘sht, kartoshka, karam va sabzavotlardan dimlama.', price: 90000, discount: 25, visual: 'soup' },
   { key: 'chuchvara', title: 'Uy chuchvarasi + qaymoq', description: 'Qo‘lda tugilgan chuchvara, qaymoq va ko‘kat bilan.', price: 38000, discount: 20, visual: 'dumplings' },
   { key: 'pitsa-30', title: 'Pitsa 30 sm + 1 l ichimlik', description: 'Istalgan klassik pitsa va bir litrli ichimlik.', price: 105000, discount: 30, visual: 'pizza' },
-  { key: 'burger-kombo', title: 'Burger kombo: burger + fri + ichimlik', description: 'Mol go‘shtli burger, kartoshka fri va ichimlik.', price: 68000, discount: 30, visual: 'burger' },
-  { key: 'sushi-24', title: 'Sushi set (24 dona)', description: 'Filadelfiya, Kaliforniya va maki rollari aralash seti.', price: 190000, discount: 30, visual: 'sushi' },
+  { key: 'burger-kombo', title: 'Burger kombo: burger + fri + ichimlik', description: 'Mol go‘shtli burger, kartoshka fri va ichimlik.', price: 68000, discount: 30, visual: 'burger',
+    set: { items: [{ name: 'Mol go‘shtli burger', qty: 1 }, { name: 'Kartoshka fri', qty: 1 }, { name: 'Ichimlik', qty: 1 }], persons: 1 } },
+  { key: 'sushi-24', title: 'Sushi set (24 dona)', description: 'Filadelfiya, Kaliforniya va maki rollari aralash seti.', price: 190000, discount: 30, visual: 'sushi',
+    set: { items: [{ name: 'Filadelfiya roll', qty: 8 }, { name: 'Kaliforniya roll', qty: 8 }, { name: 'Maki roll', qty: 8 }], persons: null } },
   { key: 'mastava', title: 'Mastava + non', description: 'Guruchli issiq mastava, qatiq va ko‘kat bilan.', price: 35000, discount: 20, visual: 'soup' },
   { key: 'norin', title: 'Norin (katta porsiya)', description: 'Qo‘lda to‘g‘ralgan xamir va qazi, sho‘rva bilan.', price: 48000, discount: 20, visual: 'noodles' },
   // Regional dishes, used by the city that is famous for them.
@@ -66,12 +73,14 @@ const coffee: Template[] = [
   { key: 'ikki-latte', title: 'Ikkita latte — do‘stingiz bilan', description: 'Ikkita latte, istalgan sirop bilan.', price: 76000, discount: 30, visual: 'coffee' },
   { key: 'chizkeyk-kofe', title: 'Chizkeyk + amerikano', description: 'San-Sebastyan chizkeyki va amerikano.', price: 70000, discount: 30, visual: 'cake' },
   { key: 'butun-tort', title: 'Butun tort (1 kg) kechki narxda', description: 'Bugun pishirilgan tortlardan istalgani.', price: 230000, discount: 35, visual: 'cake' },
-  { key: 'desert-seti', title: 'Kechki desert seti: 2 desert + 2 choy', description: 'Ikki desert va ikki choy — kechki suhbat uchun.', price: 115000, discount: 30, visual: 'dessert' },
+  { key: 'desert-seti', title: 'Kechki desert seti: 2 desert + 2 choy', description: 'Ikki desert va ikki choy — kechki suhbat uchun.', price: 115000, discount: 30, visual: 'dessert',
+    set: { items: [{ name: 'Desert', qty: 2 }, { name: 'Choy', qty: 2 }], persons: 2 } },
   { key: 'pishiriqlar-qutisi', title: 'Bugungi pishiriqlar qutisi (6 dona)', description: 'Kun oxirida qolgan yangi pishiriqlar — isrof bo‘lmasin.', price: 90000, discount: 50, visual: 'bread' },
   { key: 'milksheyk-vafli', title: 'Milksheyk + vafli', description: 'Qulupnayli yoki shokoladli milksheyk va Belgiya vaflisi.', price: 58000, discount: 30, visual: 'icecream' },
   { key: 'nonushta', title: 'Nonushta: omlet, salat, non va kofe', description: 'To‘yimli nonushta soat 11:00 gacha.', price: 78000, discount: 30, visual: 'breakfast' },
   { key: 'muzqaymoq-3', title: '3 shar muzqaymoq', description: 'Uyda tayyorlangan muzqaymoq, uchta ta’m.', price: 45000, discount: 30, visual: 'icecream' },
-  { key: 'choy-seti', title: 'Choy seti: ko‘k choy, navvot, holva', description: 'Choynakda ko‘k choy, navvot va uy holvasi.', price: 50000, discount: 25, visual: 'tea' },
+  { key: 'choy-seti', title: 'Choy seti: ko‘k choy, navvot, holva', description: 'Choynakda ko‘k choy, navvot va uy holvasi.', price: 50000, discount: 25, visual: 'tea',
+    set: { items: [{ name: 'Ko‘k choy (choynak)', qty: 1 }, { name: 'Navvot', qty: 1 }, { name: 'Uy holvasi', qty: 1 }], persons: null } },
   { key: 'samarqand-noni', title: 'Samarqand noni (3 dona) + choy', description: 'Tandirdan yangi uzilgan mashhur Samarqand noni.', price: 48000, discount: 20, visual: 'bread' },
   { key: 'buxoro-shirinliklari', title: 'Buxoro shirinliklari to‘plami', description: 'Navvot, pashmak va yong‘oqli holva — 1 kg.', price: 95000, discount: 25, visual: 'sweets' },
   { key: 'qoqon-halvosi', title: 'Qo‘qon halvosi (1 kg)', description: 'Qo‘lda tortilgan mashhur Qo‘qon halvosi.', price: 95000, discount: 25, visual: 'sweets' },
@@ -96,6 +105,21 @@ const shop: Template[] = [
   { key: 'atlas-mato', title: 'Marg‘ilon atlasi (3 metr)', description: 'Qo‘lda to‘qilgan tabiiy ipak atlas.', price: 420000, discount: 20, visual: 'fabric' },
   { key: 'xiva-oymakor', title: 'Xiva yog‘och o‘ymakorligi: laux', description: 'Kitob uchun o‘yma yog‘och laux — xivalik ustadan.', price: 250000, discount: 20, visual: 'woodcarving' },
   { key: 'qoraqalpoq-sovgasi', title: 'Qoraqalpoq sovg‘alar to‘plami', description: 'Kashta tikilgan sumka, magnit va milliy bezaklar.', price: 200000, discount: 25, visual: 'gift' },
+  // Home textiles and phones, which women shop for most: shown only by the shops
+  // that sell them (EXTRA_SHOPS), mostly as sets.
+  { key: 'satin-choyshab', title: 'Satin choyshab to‘plami (2 kishilik)', description: 'Yumshoq satin, pastel ranglarda: ko‘rpa jildi, choyshab va ikkita yostiq jildi.', price: 690000, discount: 30, visual: 'bedding',
+    set: { items: [{ name: 'Ko‘rpa jildi', qty: 1 }, { name: 'Choyshab', qty: 1 }, { name: 'Yostiq jildi', qty: 2 }], persons: 2 } },
+  { key: 'kelin-sepi', title: 'Kelin sepi to‘plami: choyshab va sochiqlar', description: 'Sovg‘a qutisida: ikki kishilik choyshab to‘plami, to‘rtta mahra sochiq va hammom xalati.', price: 1450000, discount: 25, visual: 'bedding',
+    set: { items: [{ name: 'Choyshab to‘plami (2 kishilik)', qty: 1 }, { name: 'Mahra sochiq', qty: 4 }, { name: 'Hammom xalati', qty: 1 }], persons: null } },
+  { key: 'bolalar-choyshabi', title: 'Bolalar choyshab to‘plami (1,5 kishilik)', description: 'Rasmli, 100% paxta: ko‘rpa jildi, choyshab va yostiq jildi. Yuvilganda rangi o‘chmaydi.', price: 380000, discount: 30, visual: 'bedding',
+    set: { items: [{ name: 'Ko‘rpa jildi', qty: 1 }, { name: 'Choyshab', qty: 1 }, { name: 'Yostiq jildi', qty: 1 }], persons: null } },
+  { key: 'mahra-sochiqlar', title: 'Mahra sochiqlar to‘plami (6 dona)', description: 'Yuz, qo‘l va hammom uchun: 100% paxta, yumshoq va suvni yaxshi shimadi.', price: 320000, discount: 35, visual: 'towels',
+    set: { items: [{ name: 'Hammom sochig‘i', qty: 2 }, { name: 'Qo‘l sochig‘i', qty: 2 }, { name: 'Yuz sochig‘i', qty: 2 }], persons: null } },
+  { key: 'xalat-sochiq', title: 'Hammom xalati + katta sochiq (sovg‘a qutisida)', description: 'Yumshoq mahra xalat va katta sochiq — onangiz yoki opa-singlingizga yoqimli sovg‘a.', price: 450000, discount: 30, visual: 'towels',
+    set: { items: [{ name: 'Hammom xalati', qty: 1 }, { name: 'Katta sochiq', qty: 1 }], persons: null } },
+  { key: 'smartfon-256', title: 'Smartfon 256 GB — pushti yoki lavanda rangda', description: '6,7 dyuymli ekran, 50 MP kamera va 5000 mAh batareya. Rasmiy kafolat — 1 yil.', price: 3490000, discount: 15, visual: 'phone' },
+  { key: 'smartfon-sovga', title: 'Smartfon sovg‘a to‘plami: g‘ilof va quvvatlagich bilan', description: '128 GB smartfon, chiroyli g‘ilof, himoya oynasi va tez quvvatlagich — sovg‘a qutisida.', price: 2790000, discount: 15, visual: 'phone',
+    set: { items: [{ name: 'Smartfon (128 GB)', qty: 1 }, { name: 'G‘ilof', qty: 1 }, { name: 'Himoya oynasi', qty: 1 }, { name: 'Tez quvvatlagich', qty: 1 }], persons: null } },
 ];
 
 const beauty: Template[] = [
@@ -155,8 +179,10 @@ const delivery: Template[] = [
   { key: 'osh-yetkazish', title: 'Osh yetkazib berish (2 porsiya)', description: 'Issiq to‘y oshi, salat va non — eshigingizgacha.', price: 110000, discount: 25, visual: 'plov' },
   { key: 'pitsa-yetkazish', title: 'Pitsa 35 sm + ichimlik yetkazish', description: 'Katta pitsa va 1 l ichimlik, 45 daqiqada.', price: 125000, discount: 30, visual: 'pizza' },
   { key: 'lavash-2', title: 'Ikkita lavash + fri', description: 'Tovuqli yoki go‘shtli lavash, fri bilan.', price: 95000, discount: 30, visual: 'wrap' },
-  { key: 'oilaviy-set', title: 'Oilaviy set (4 kishi)', description: 'Shashlik, salatlar, non va ichimliklar.', price: 290000, discount: 25, visual: 'delivery' },
-  { key: 'sushi-yetkazish', title: 'Sushi set (32 dona) yetkazish', description: 'To‘rt xil roll, soya sousi va imbir bilan.', price: 270000, discount: 30, visual: 'sushi' },
+  { key: 'oilaviy-set', title: 'Oilaviy set (4 kishi)', description: 'Shashlik, salatlar, non va ichimliklar.', price: 290000, discount: 25, visual: 'delivery',
+    set: { items: [{ name: 'Shashlik (six)', qty: 8 }, { name: 'Salat', qty: 2 }, { name: 'Tandir non', qty: 2 }, { name: 'Ichimlik (1 l)', qty: 2 }], persons: 4 } },
+  { key: 'sushi-yetkazish', title: 'Sushi set (32 dona) yetkazish', description: 'To‘rt xil roll, soya sousi va imbir bilan.', price: 270000, discount: 30, visual: 'sushi',
+    set: { items: [{ name: 'Filadelfiya roll', qty: 8 }, { name: 'Kaliforniya roll', qty: 8 }, { name: 'Maki roll', qty: 8 }, { name: 'Tempura roll', qty: 8 }], persons: null } },
   { key: 'somsa-10', title: '10 ta somsa yetkazish', description: 'Go‘shtli tandir somsa, issiq holda.', price: 130000, discount: 25, visual: 'samsa' },
   { key: 'mevalar-savati', title: 'Mevalar savati (5 kg)', description: 'Mavsumiy mevalar — olma, uzum, anor.', price: 160000, discount: 20, visual: 'fruit' },
   { key: 'gul-yetkazish', title: 'Gul yetkazish: 11 ta atirgul', description: 'Guldasta va tabriknoma bilan.', price: 200000, discount: 25, visual: 'flowers' },
@@ -166,11 +192,12 @@ const delivery: Template[] = [
 
 const TEMPLATES: Record<DemoCategory, Template[]> = { food, coffee, shop, beauty, sport, fun, services, delivery };
 
-/** Templates only used where a business asks for them (regional specialities). */
-const REGIONAL = new Set([
+/** Templates only used where a business asks for them: regional specialities, home textiles and phones. */
+const ON_REQUEST = new Set([
   'samarqand-oshi', 'oshi-sofi', 'andijon-oshi', 'fargona-oshi', 'namangan-kabobi', 'jizzax-somsasi', 'tandir-gosht',
   'tuxum-barak', 'shivit-oshi', 'beshbarmoq', 'samarqand-noni', 'buxoro-shirinliklari', 'qoqon-halvosi',
   'milliy-qogirchoq', 'buxoro-suzanasi', 'rishton-kosalari', 'chust-doppisi', 'atlas-mato', 'xiva-oymakor', 'qoraqalpoq-sovgasi',
+  'satin-choyshab', 'kelin-sepi', 'bolalar-choyshabi', 'mahra-sochiqlar', 'xalat-sochiq', 'smartfon-256', 'smartfon-sovga',
 ]);
 
 const TERMS: Record<DemoCategory, string[]> = {
@@ -440,6 +467,22 @@ const CITY_SPECS: Record<string, CitySpec> = {
   },
 };
 
+type ExtraShop = { city: string; key: string; name: string; description: string; picks: [string, string]; branch?: string };
+
+/**
+ * Shops beyond the one per category: home textiles (bed linen, towels) and
+ * phones, which women shop for most. Each has two deals, like every demo business.
+ */
+export const EXTRA_SHOPS: ExtraShop[] = [
+  { city: 'tashkent', key: 'tekstil', name: 'Parizod Uy Tekstili', description: 'Choyshab, sochiq va uy tekstili — kelin sepi uchun to‘plamlar ham bor.', picks: ['satin-choyshab', 'mahra-sochiqlar'], branch: 'Chilonzor filiali' },
+  { city: 'tashkent', key: 'telefon', name: 'Aloqa Telefon Markazi', description: 'Smartfonlar, g‘iloflar va aksessuarlar — rasmiy kafolat bilan.', picks: ['smartfon-256', 'smartfon-sovga'], branch: 'Yunusobod filiali' },
+  { city: 'samarkand', key: 'tekstil', name: 'Sadaf Tekstil', description: 'Paxta va satin choyshablar, mahra sochiqlar va sovg‘a to‘plamlari.', picks: ['kelin-sepi', 'xalat-sochiq'] },
+  { city: 'bukhara', key: 'tekstil', name: 'Zarbof Uy Tekstili', description: 'Choyshablar, sochiqlar va hammom xalatlari — sovg‘a qutisida ham.', picks: ['satin-choyshab', 'xalat-sochiq'] },
+  { city: 'andijan', key: 'tekstil', name: 'Nafosat Choyshablari', description: 'Kattalar va bolalar uchun paxta choyshablar, yumshoq sochiqlar.', picks: ['bolalar-choyshabi', 'mahra-sochiqlar'] },
+  { city: 'namangan', key: 'telefon', name: 'Namangan Mobil', description: 'Smartfonlar va aksessuarlar — telefonni sozlab beramiz.', picks: ['smartfon-sovga', 'telefon-aksessuar'] },
+  { city: 'fergana', key: 'telefon', name: 'Farg‘ona Smart', description: 'Yangi smartfonlar, g‘iloflar va himoya oynalari.', picks: ['smartfon-256', 'telefon-aksessuar'] },
+];
+
 const TASHKENT_DISTRICTS = ['Yunusobod', 'Chilonzor', 'Mirzo Ulug‘bek', 'Yakkasaroy', 'Shayxontohur', 'Mirobod', 'Olmazor', 'Sergeli'];
 
 const HOURS: Record<DemoCategory, { open: string; close: string }> = {
@@ -458,6 +501,8 @@ const TTL: Record<DemoCategory, number> = { food: 120, coffee: 60, shop: 240, be
 const WINDOWS: Array<[number, number]> = [
   [-60, 90], [-120, 240], [-180, 480], [-1440, 2880], [120, 600], [-30, 1440], [-240, 180], [-60, 4320],
 ];
+/** The extra shops open with their deals already on. */
+const LIVE_WINDOWS = WINDOWS.filter(([start]) => start <= 0);
 
 /** Small deterministic hash so the catalog is identical on every run. */
 function hash(...parts: Array<string | number>) {
@@ -494,17 +539,19 @@ export type DemoDealRow = {
   id: string; businessId: string; branchId: string; categoryId: string; slug: string; title: string; description: string; terms: string;
   originalPrice: number; price: number; discountPercent: number; startsAt: string; endsAt: string;
   totalQuantity: number | null; remainingQuantity: number | null; perCustomerLimit: number; claimTtlMinutes: number;
-  visual: DealVisualKey; searchText: string;
+  visual: DealVisualKey; setItemsJson: string | null; setPersons: number | null; searchText: string;
 };
+
+function templateByKey(category: DemoCategory, key: string, where: string) {
+  const template = TEMPLATES[category].find((item) => item.key === key);
+  if (!template) throw new Error(`Unknown demo template ${category}/${key} for ${where}`);
+  return template;
+}
 
 function pickTemplates(category: DemoCategory, city: City, cityIndex: number, spec: BusinessSpec): [Template, Template] {
   const all = TEMPLATES[category];
-  const byKey = (key: string) => {
-    const template = all.find((item) => item.key === key);
-    if (!template) throw new Error(`Unknown demo template ${category}/${key} for ${city.slug}`);
-    return template;
-  };
-  const pool = all.filter((item) => !REGIONAL.has(item.key));
+  const byKey = (key: string) => templateByKey(category, key, city.slug);
+  const pool = all.filter((item) => !ON_REQUEST.has(item.key));
   const categoryIndex = DEMO_CATEGORIES.indexOf(category);
   const first = spec.picks?.[0] ? byKey(spec.picks[0]) : pool[(cityIndex * 3 + categoryIndex) % pool.length];
   let second = spec.picks?.[1] ? byKey(spec.picks[1]) : pool[(cityIndex * 5 + categoryIndex * 2 + 4) % pool.length];
@@ -512,11 +559,59 @@ function pickTemplates(category: DemoCategory, city: City, cityIndex: number, sp
   return [first, second];
 }
 
+type Shop = { city: City; cityIndex: number; level: number; category: DemoCategory; key: string; businessId: string; branchId: string; name: string };
+
+/** A business's two deals, priced for its city. */
+function shopDeals(shop: Shop, templates: [Template, Template], windowFor: (slot: number) => [number, number], now: Date): DemoDealRow[] {
+  return templates.map((template, slot) => {
+    const seed = hash(shop.city.slug, shop.key, slot);
+    // Vary the discount by -5/0/+5 points so neighbouring cities differ.
+    const percentTarget = Math.min(60, Math.max(10, template.discount + ((seed % 3) - 1) * 5));
+    const originalPrice = regionalPrice(template.price, shop.level);
+    const price = discountedPrice(originalPrice, percentTarget);
+    const [minQty, maxQty] = QUANTITY[shop.category];
+    const unlimited = Boolean(template.unlimited) && seed % 2 === 0;
+    const total = unlimited ? null : minQty + (seed % (maxQty - minQty + 1));
+    const remaining = total === null ? null : Math.max(1, Math.round(total * [0.2, 0.35, 0.5, 0.65, 0.8, 0.95][seed % 6]));
+    const [startMin, endMin] = windowFor(slot);
+    return {
+      id: `gdeal_${shop.city.slug}_${shop.key}_${slot + 1}`,
+      businessId: shop.businessId,
+      branchId: shop.branchId,
+      categoryId: DEMO_CATEGORY_IDS[shop.category],
+      slug: `${template.key}-${shop.city.slug}`,
+      title: template.title,
+      description: template.description,
+      terms: TERMS[shop.category][(shop.cityIndex + slot) % TERMS[shop.category].length],
+      originalPrice,
+      price,
+      discountPercent: Math.round(((originalPrice - price) / originalPrice) * 100),
+      startsAt: toDbTime(addMinutes(now, startMin)),
+      endsAt: toDbTime(addMinutes(now, endMin)),
+      totalQuantity: total,
+      remainingQuantity: remaining,
+      perCustomerLimit: template.limit ?? 1,
+      claimTtlMinutes: TTL[shop.category],
+      visual: template.visual,
+      setItemsJson: template.set ? serializeSetItems(template.set.items) : null,
+      setPersons: template.set?.persons ?? null,
+      // What a set holds is searched too, as for a business's own sets.
+      searchText: buildSearchText(template.title, template.description, ...(template.set?.items.map((item) => item.name) ?? []), shop.name, shop.city.uz, shop.city.ru),
+    };
+  });
+}
+
 /** Builds the whole generated catalog relative to `now`. Pure and deterministic for a given `now`. */
 export function buildDemoCatalog(now: Date) {
   const businesses: DemoBusinessRow[] = [];
   const branches: DemoBranchRow[] = [];
   const deals: DemoDealRow[] = [];
+
+  const branchPlace = (city: City, citySpec: CitySpec, key: string, streetIndex: number) => ({
+    address: `${citySpec.streets[streetIndex % citySpec.streets.length]}, ${(hash(city.slug, key, 'house') % 118) + 1}`,
+    latitudeE6: Math.round((city.latitude + ((hash(city.slug, key, 'lat') % 401) - 200) / 10_000) * 1e6),
+    longitudeE6: Math.round((city.longitude + ((hash(city.slug, key, 'lon') % 401) - 200) / 10_000) * 1e6),
+  });
 
   CITIES.forEach((city, cityIndex) => {
     const citySpec = CITY_SPECS[city.slug];
@@ -535,56 +630,46 @@ export function buildDemoCatalog(now: Date) {
         categoryId: DEMO_CATEGORY_IDS[category],
         searchText: buildSearchText(spec.name, description, city.uz, city.ru),
       });
-
-      const street = citySpec.streets[(cityIndex + categoryIndex) % citySpec.streets.length];
-      const number = (hash(city.slug, category, 'house') % 118) + 1;
-      const dLat = ((hash(city.slug, category, 'lat') % 401) - 200) / 10_000;
-      const dLon = ((hash(city.slug, category, 'lon') % 401) - 200) / 10_000;
       branches.push({
         id: branchId,
         businessId,
         name: city.slug === 'tashkent' ? `${TASHKENT_DISTRICTS[categoryIndex]} filiali` : 'Markaziy filial',
         city: city.slug,
-        address: `${street}, ${number}`,
-        latitudeE6: Math.round((city.latitude + dLat) * 1e6),
-        longitudeE6: Math.round((city.longitude + dLon) * 1e6),
+        ...branchPlace(city, citySpec, category, cityIndex + categoryIndex),
         hoursJson: JSON.stringify(HOURS[category]),
       });
-
-      pickTemplates(category, city, cityIndex, spec).forEach((template, slot) => {
-        const seed = hash(city.slug, category, slot);
-        // Vary the discount by -5/0/+5 points so neighbouring cities differ.
-        const percentTarget = Math.min(60, Math.max(10, template.discount + ((seed % 3) - 1) * 5));
-        const originalPrice = regionalPrice(template.price, citySpec.level);
-        const price = discountedPrice(originalPrice, percentTarget);
-        const [minQty, maxQty] = QUANTITY[category];
-        const unlimited = Boolean(template.unlimited) && seed % 2 === 0;
-        const total = unlimited ? null : minQty + (seed % (maxQty - minQty + 1));
-        const remaining = total === null ? null : Math.max(1, Math.round(total * [0.2, 0.35, 0.5, 0.65, 0.8, 0.95][seed % 6]));
-        const [startMin, endMin] = WINDOWS[(cityIndex + categoryIndex * 3 + slot * 5) % WINDOWS.length];
-        deals.push({
-          id: `gdeal_${city.slug}_${category}_${slot + 1}`,
-          businessId,
-          branchId,
-          categoryId: DEMO_CATEGORY_IDS[category],
-          slug: `${template.key}-${city.slug}`,
-          title: template.title,
-          description: template.description,
-          terms: TERMS[category][(cityIndex + slot) % TERMS[category].length],
-          originalPrice,
-          price,
-          discountPercent: Math.round(((originalPrice - price) / originalPrice) * 100),
-          startsAt: toDbTime(addMinutes(now, startMin)),
-          endsAt: toDbTime(addMinutes(now, endMin)),
-          totalQuantity: total,
-          remainingQuantity: remaining,
-          perCustomerLimit: template.limit ?? 1,
-          claimTtlMinutes: TTL[category],
-          visual: template.visual,
-          searchText: buildSearchText(template.title, template.description, spec.name, city.uz, city.ru),
-        });
-      });
+      const shop = { city, cityIndex, level: citySpec.level, category, key: category, businessId, branchId, name: spec.name };
+      deals.push(...shopDeals(shop, pickTemplates(category, city, cityIndex, spec), (slot) => WINDOWS[(cityIndex + categoryIndex * 3 + slot * 5) % WINDOWS.length], now));
     });
+  });
+
+  EXTRA_SHOPS.forEach((extra, extraIndex) => {
+    const cityIndex = CITIES.findIndex((city) => city.slug === extra.city);
+    const city = CITIES[cityIndex];
+    const citySpec = CITY_SPECS[extra.city];
+    if (!city || !citySpec) throw new Error(`Missing demo city ${extra.city}`);
+    const businessId = `gbiz_${city.slug}_${extra.key}`;
+    const branchId = `gbr_${city.slug}_${extra.key}`;
+    businesses.push({
+      id: businessId,
+      slug: `${slugify(extra.name)}-${city.slug}`,
+      name: extra.name,
+      description: extra.description,
+      city: city.slug,
+      categoryId: DEMO_CATEGORY_IDS.shop,
+      searchText: buildSearchText(extra.name, extra.description, city.uz, city.ru),
+    });
+    branches.push({
+      id: branchId,
+      businessId,
+      name: extra.branch ?? 'Markaziy filial',
+      city: city.slug,
+      ...branchPlace(city, citySpec, extra.key, cityIndex + extraIndex + 3),
+      hoursJson: JSON.stringify(HOURS.shop),
+    });
+    const templates = extra.picks.map((key) => templateByKey('shop', key, `${city.slug}/${extra.key}`)) as [Template, Template];
+    const shop = { city, cityIndex, level: citySpec.level, category: 'shop' as const, key: extra.key, businessId, branchId, name: extra.name };
+    deals.push(...shopDeals(shop, templates, (slot) => LIVE_WINDOWS[(cityIndex + extraIndex * 3 + slot * 5) % LIVE_WINDOWS.length], now));
   });
 
   return { businesses, branches, deals };

@@ -30,6 +30,30 @@ export const STOCK_PHOTOS: Record<string, StockPhoto> = {
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
     "source": "https://commons.wikimedia.org/wiki/File:French_Manicure_with_Glitter_nail_art_on_ring_finger.jpg"
   },
+  "bedding": {
+    "src": "/photos/bedding.webp",
+    "title": "Dormeo bedding FLEUR image 4",
+    "author": "Studio Moderna",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Dormeo_bedding_FLEUR_image_4.jpg"
+  },
+  "bedding-2": {
+    "src": "/photos/bedding-2.webp",
+    "title": "Cozy wooden bedroom with floral bedding",
+    "author": "Shixart1985",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Cozy_wooden_bedroom_with_floral_bedding.jpg"
+  },
+  "bedding-3": {
+    "src": "/photos/bedding-3.webp",
+    "title": "DSC 8588 Cozy elegant bedroom with plush bedding soft ambient lighting and sliding glass doors opening to a private outdoor space",
+    "author": "PattayaPatrol",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:DSC_8588_Cozy_elegant_bedroom_with_plush_bedding_soft_ambient_lighting_and_sliding_glass_doors_opening_to_a_private_outdoor_space.jpg"
+  },
   "billiards": {
     "src": "/photos/billiards.webp",
     "title": "Billiards table 2",
@@ -446,6 +470,14 @@ export const STOCK_PHOTOS: Record<string, StockPhoto> = {
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
     "source": "https://commons.wikimedia.org/wiki/File:Smartphone_with_case_cover_on_table.jpg"
   },
+  "phone-2": {
+    "src": "/photos/phone-2.webp",
+    "title": "Aerial view of woman using computer laptop and a smartphone on wooden table (40640189245)",
+    "author": "Rawpixel Ltd",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Aerial_view_of_woman_using_computer_laptop_and_a_smartphone_on_wooden_table_(40640189245).jpg"
+  },
   "pizza": {
     "src": "/photos/pizza.webp",
     "title": "Margherita Originale",
@@ -645,6 +677,22 @@ export const STOCK_PHOTOS: Record<string, StockPhoto> = {
     "license": "CC BY 3.0",
     "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
     "source": "https://commons.wikimedia.org/wiki/File:Tire_Changer.jpg"
+  },
+  "towels": {
+    "src": "/photos/towels.webp",
+    "title": "Zusammengelegte Handtücher",
+    "author": "User:Mattes",
+    "license": "Public domain",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/Commons:Licensing",
+    "source": "https://commons.wikimedia.org/wiki/File:Zusammengelegte_Handt%C3%BCcher.jpg"
+  },
+  "towels-2": {
+    "src": "/photos/towels-2.webp",
+    "title": "Stacks-of-gym-towels-on-wood-bench",
+    "author": "Brandon.wiggins",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Stacks-of-gym-towels-on-wood-bench.jpg"
   },
   "water": {
     "src": "/photos/water.webp",

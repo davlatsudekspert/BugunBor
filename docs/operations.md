@@ -37,7 +37,7 @@ Migrations run automatically on the first request after a deploy. They are addit
 
 ## Demo mode
 
-Development always shows the demo catalogue. Production shows it with `DEMO_SEED=true`, or when an admin presses «Namuna bizneslarni ko‘rsatish» in Admin → Sozlamalar (no redeploy; «yashirish» hides it again). Demo businesses and deals carry `is_demo = 1`, never have phone numbers, and are hidden again as soon as the flag is off. Ended demo deals restart automatically every few minutes.
+Development always shows the demo catalogue. Production shows it with `DEMO_SEED=true`, or when an admin presses «Namuna bizneslarni ko‘rsatish» in Admin → Sozlamalar (no redeploy; «yashirish» hides it again). Demo businesses and deals carry `is_demo = 1`, never have phone numbers, and are hidden again as soon as the flag is off. Ended demo deals restart automatically every few minutes, and a new catalogue version (`DEMO_CATALOG_VERSION`) loads the same way, with no need to switch demo mode off and on.
 
 ## Speed
 

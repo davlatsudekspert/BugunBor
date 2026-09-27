@@ -4,7 +4,7 @@ import { getConfig } from '@/lib/env';
 import { demoEnabled } from '@/modules/demo';
 import { inBackground, tickBackgroundJobs } from '@/modules/jobs';
 import { applyMigrations } from './migrate';
-import { refreshDemoData, seedDemoData } from './seed';
+import { seedDemoData } from './seed';
 
 let ready: Promise<void> | undefined;
 let lastDemoRefresh = 0;
@@ -35,8 +35,9 @@ export async function getDb(): Promise<D1Database> {
   await ready;
   if (Date.now() - lastDemoRefresh > DEMO_REFRESH_MS && (await demoEnabled(db))) {
     lastDemoRefresh = Date.now();
-    // Restarting ended demo deals never holds up a page.
-    inBackground(refreshDemoData(db), 'Demo refresh failed');
+    // Restarting ended demo deals never holds up a page. A new demo catalogue
+    // version (new businesses, deals or photos) loads here by itself too.
+    inBackground(seedDemoData(db), 'Demo refresh failed');
   }
   tickBackgroundJobs(db);
   return db;

@@ -25,7 +25,7 @@ const API = 'https://commons.wikimedia.org/w/api.php';
 const USER_AGENT = 'BugunBor/1.0 (https://bugunbor.uz; demo catalogue photos)';
 export const SIZES = { large: [1200, 900], small: [720, 540] };
 
-/** Commons file per key; `crop` = [left, top, width, height] as fractions, to leave out a sign or a logo. */
+/** Commons file per key; `crop` = [left, top, width, height] as fractions, to leave out a sign, a logo or a watermark. */
 const CURATED = {
   // Food
   plov: 'Plov with lamb and carrots in ceramic bowl.jpg',
@@ -69,6 +69,12 @@ const CURATED = {
   kitchen: 'Saucepan.jpg',
   flowers: 'Bouquet de roses roses.jpg',
   phone: 'Smartphone with case cover on table.jpg',
+  'phone-2': { file: 'Aerial view of woman using computer laptop and a smartphone on wooden table (40640189245).jpg', crop: [0.25, 0.08, 0.75, 0.84] },
+  bedding: 'Dormeo bedding FLEUR image 4.jpg',
+  'bedding-2': { file: 'Cozy wooden bedroom with floral bedding.jpg', crop: [0.2, 0.38, 0.552, 0.62] },
+  'bedding-3': { file: 'DSC 8588 Cozy elegant bedroom with plush bedding soft ambient lighting and sliding glass doors opening to a private outdoor space.jpg', crop: [0.22, 0.42, 0.515, 0.58] },
+  towels: 'Zusammengelegte Handtücher.jpg',
+  'towels-2': 'Stacks-of-gym-towels-on-wood-bench.jpg',
   crafts: 'Piyola-choynak 1.jpg',
   fabric: 'Adras (Ikat). 1990s. Silk, cotton.jpg',
   'fabric-2': 'Adras (Ikat). 1990s. Silk, cotton (3).jpg',
@@ -254,7 +260,8 @@ async function main() {
       continue;
     }
     try {
-      const [page] = await imageInfo({ titles: `File:${file}` });
+      // A cropped photo is read larger, so the part that is kept still fills 1200 px.
+      const [page] = await imageInfo({ titles: `File:${file}`, ...(crop ? { iiurlwidth: '3200' } : {}) });
       const photo = page && describe(page);
       if (!photo?.url) throw new Error('file not found');
       if (!photo.allowed) throw new Error(`licence not allowed: ${photo.license}`);

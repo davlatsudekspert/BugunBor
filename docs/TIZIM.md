@@ -188,7 +188,7 @@ Biror belgi topilsa, ariza navbatda qoladi, sababi yoziladi va moderatorlarga xa
 | Biznesning 30 kun ichida rad etilgan yoki to‘xtatilgan aksiyasi bor | | ✓ |
 
 - So‘zlar o‘zbek (lotin va kirill) va rus tilida qidiriladi.
-- Oddiy matnlarga xato bilan tegmaydi: «sport seksiyasi», «alkogolsiz», «shisha idish», «travmatolog» va hokazo. Demo katalogdagi barcha 136 biznes va 272 aksiya tekshiruvdan o‘tadi.
+- Oddiy matnlarga xato bilan tegmaydi: «sport seksiyasi», «alkogolsiz», «shisha idish», «travmatolog» va hokazo. Demo katalogdagi barcha 143 biznes va 286 aksiya tekshiruvdan o‘tadi.
 - Egasi o‘zi tuzata oladigan sabablarni (havola, karta raqami, narx, qisqa matn, xarita) kabinetda ko‘radi.
 - Tuzatib saqlasa, ariza darhol qayta tekshiriladi.
 - Haqoratli so‘z, havola yoki karta raqami bor sharh avtomatik yashiriladi, moderator uni qaytarishi mumkin.
