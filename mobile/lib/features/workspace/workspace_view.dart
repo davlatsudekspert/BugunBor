@@ -611,12 +611,13 @@ class _RecentState extends ConsumerState<_Recent> {
   Future<void> _cancel(WorkspaceCode code) async {
     final reason = await showModalBottomSheet<String>(
       context: context,
+      isScrollControlled: true,
       showDragHandle: true,
       useSafeArea: true,
       builder: (context) {
         final l = L.of(context);
         return SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.only(bottom: Gap.md),
             child: Column(
               mainAxisSize: MainAxisSize.min,

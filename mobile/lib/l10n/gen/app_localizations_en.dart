@@ -1459,7 +1459,7 @@ class LEn extends L {
   String get codeIssueTitle => 'What happened at the counter?';
 
   @override
-  String get issueNotAvailable => 'Not given: the product or service wasn’t there';
+  String get issueNotAvailable => 'I didn’t get it: the product or service wasn’t available';
 
   @override
   String get issueCodeRefused => 'They didn’t accept the code';
@@ -1513,12 +1513,12 @@ class LEn extends L {
 
   @override
   String noShowWarning(String count) {
-    return 'Heads-up: $count codes went unused this week. One more and booking pauses for 24 hours. If you can’t go, cancel the code.';
+    return 'Heads-up: $count codes went unused in the last 7 days. One more and booking pauses for 24 hours. If you can’t go, cancel the code.';
   }
 
   @override
   String noShowPaused(String time) {
-    return '3 codes went unused this week. Booking is paused until $time.';
+    return '3 codes went unused in the last 7 days. Booking is paused until $time.';
   }
 
   @override
@@ -1543,8 +1543,9 @@ class LEn extends L {
   String get setBadge => 'Set';
 
   @override
-  String setPersons(String count) {
-    return 'for $count';
+  String setPersons(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: 'for $count people', one: 'for 1 person');
+    return '$_temp0';
   }
 
   @override

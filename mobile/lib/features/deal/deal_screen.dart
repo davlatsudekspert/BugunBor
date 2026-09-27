@@ -137,7 +137,13 @@ class _DealScreenState extends ConsumerState<DealScreen> {
       if (!mounted) return;
       setState(() => _booking = false);
       showErrorSnack(context, error);
-      if (error is ApiError && !error.isNetwork) ref.invalidate(dealProvider(widget.slug));
+      // A real answer (a booking pause among them) means the deal or the
+      // person changed: show it, so the button does not invite a retry.
+      if (error is ApiError && !error.isNetwork) {
+        ref
+          ..invalidate(dealProvider(widget.slug))
+          ..invalidate(meProvider);
+      }
     }
   }
 
@@ -446,7 +452,7 @@ class _SetContents extends StatelessWidget {
                 Text(l.setContents, style: Theme.of(context).textTheme.titleMedium),
                 if (set.persons != null)
                   Text(
-                    l.setPersons('${set.persons}'),
+                    l.setPersons(set.persons!),
                     style: TextStyle(color: context.mutedText, fontWeight: FontWeight.w700),
                   ),
               ],

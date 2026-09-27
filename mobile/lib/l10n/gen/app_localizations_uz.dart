@@ -1545,7 +1545,7 @@ class LUz extends L {
   String get setBadge => 'Set';
 
   @override
-  String setPersons(String count) {
+  String setPersons(int count) {
     return '$count kishilik';
   }
 

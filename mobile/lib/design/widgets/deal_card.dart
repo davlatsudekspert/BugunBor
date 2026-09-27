@@ -39,7 +39,7 @@ class SetBadge extends StatelessWidget {
           const SizedBox(width: 4),
           Flexible(
             child: Text(
-              [l.setBadge, if (set.persons != null) l.setPersons('${set.persons}')].join(' · '),
+              [l.setBadge, if (set.persons != null) l.setPersons(set.persons!)].join(' · '),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(color: color, fontSize: 12.5, fontWeight: FontWeight.w800),

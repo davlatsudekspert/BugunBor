@@ -862,7 +862,7 @@ class _DealFormState extends ConsumerState<_DealForm> {
                     decoration: InputDecoration(labelText: l.dealSetPersons),
                     items: [
                       DropdownMenuItem(value: null, child: Text(l.dealSetPersonsAny)),
-                      for (var count = 1; count <= 20; count++) DropdownMenuItem(value: count, child: Text(l.setPersons('$count'))),
+                      for (var count = 1; count <= 20; count++) DropdownMenuItem(value: count, child: Text(l.setPersons(count))),
                     ],
                     onChanged: (value) => _edit(['set'], () => _setPersons = value),
                   ),

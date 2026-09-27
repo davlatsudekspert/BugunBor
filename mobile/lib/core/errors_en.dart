@@ -45,5 +45,5 @@ const englishErrors = <String, String>{
   'IMAGE_INVALID': 'This file isn’t a picture, or its format isn’t supported (JPG, PNG, WebP).',
   'ISSUE_TOO_LATE': 'A complaint about a code can be sent within 3 days of booking it.',
   'UNDER_REVIEW': 'This deal is being checked after complaints. A moderator will turn it back on.',
-  'NO_SHOW_PAUSE': '3 codes went unused this week, so booking is paused for 24 hours.',
+  'NO_SHOW_PAUSE': '3 codes went unused in the last 7 days, so booking is paused for now.',
 };

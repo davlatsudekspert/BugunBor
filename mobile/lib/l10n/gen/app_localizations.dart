@@ -2941,7 +2941,7 @@ abstract class L {
   ///
   /// In uz, this message translates to:
   /// **'{count} kishilik'**
-  String setPersons(String count);
+  String setPersons(int count);
 
   /// No description provided for @setContents.
   ///

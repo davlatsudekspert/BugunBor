@@ -1544,7 +1544,7 @@ class LRu extends L {
   String get setBadge => 'Сет';
 
   @override
-  String setPersons(String count) {
+  String setPersons(int count) {
     return 'на $count чел.';
   }
 

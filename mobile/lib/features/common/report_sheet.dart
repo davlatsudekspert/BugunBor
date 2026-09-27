@@ -69,7 +69,12 @@ Future<void> showCodeIssueSheet(BuildContext context, WidgetRef ref, Redemption 
     ),
   );
   if (sent != true) return;
-  ref.invalidate(myCodesProvider);
+  // The complaint can lift a no-show pause and put the deal on hold: the
+  // person's state and the deal page follow at once.
+  ref
+    ..invalidate(myCodesProvider)
+    ..invalidate(meProvider)
+    ..invalidate(dealProvider(code.dealSlug));
   if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(L.of(context).codeIssueSent)));
 }
 

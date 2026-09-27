@@ -864,7 +864,7 @@
   "@setPersons": {
     "placeholders": {
       "count": {
-        "type": "String"
+        "type": "int"
       }
     }
   },
