@@ -59,6 +59,8 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
   ]);
   const visible = deals.slice(0, page * PAGE_SIZE);
   const hasFilters = Boolean(params.q || params.category || near || sets || (params.sort && params.sort !== 'ending'));
+  // Nothing found because of a search, a place or «Setlar» (a category page may still have other deals).
+  const filteredOut = hasFilters && (!category || sets || Boolean(params.q) || Boolean(near));
   const sortLabels: Record<SortKey, string> = t.discover.sort;
 
   return (
@@ -146,8 +148,8 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
         ) : (
           <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
             <MapPin className="mx-auto size-10 text-slate-300" aria-hidden />
-            <h2 className="mt-4 text-xl font-bold text-navy">{category ? t.categories.emptyTitle : hasFilters ? t.discover.emptyTitle : t.home.emptyTitle}</h2>
-            <p className="mt-2 text-slate-500">{category ? t.categories.emptyText : hasFilters ? t.discover.emptyText : t.home.emptyText}</p>
+            <h2 className="mt-4 text-xl font-bold text-navy">{filteredOut ? t.discover.emptyTitle : category ? t.categories.emptyTitle : t.home.emptyTitle}</h2>
+            <p className="mt-2 text-slate-500">{filteredOut ? t.discover.emptyText : category ? t.categories.emptyText : t.home.emptyText}</p>
             {hasFilters ? <a href={basePath} className="mt-5 inline-flex font-bold text-primary">{t.discover.clear}</a> : <a href="/business" className="mt-5 inline-flex font-bold text-primary hover:underline">{t.home.emptyBusiness}</a>}
           </div>
         )}

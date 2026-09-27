@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { toDbTime } from '@/lib/time';
 import { NOW, SECRET, marketplace } from '@/test/fixtures';
 import { processNotifications } from '@/modules/notifications/service';
+import { recentCodes } from '@/modules/businesses/service';
 import { listReports, reportCodeIssue, resolveReport } from '@/modules/reports';
 import { cancelBooking, messageBooking, sentMessages } from './contact';
 import { noShowState } from './no-shows';
@@ -117,5 +118,23 @@ describe('what the log keeps', () => {
     expect(await messageBooking(db, { businessId: 'biz', staffUserId: 'cashier', redemptionId: code.id, message: 'WAITING' }, later(2))).toEqual({ sent: false });
     const logged = await db.prepare(`SELECT COUNT(*) AS n FROM audit_logs WHERE action = 'redemption.messaged'`).first<{ n: number }>();
     expect(logged?.n).toBe(1);
+  });
+});
+
+describe('the bookings a business sees', () => {
+  it('a live booking stays on the list however many codes came after it, and cashiers get only those', async () => {
+    const db = await world();
+    await db.prepare(`UPDATE deals SET claim_ttl_minutes = 1440 WHERE id = 'deal'`).run();
+    const waiting = await claim(db, 'alice', NOW);
+    // Eleven codes after it, each cancelled at once.
+    for (let step = 1; step <= 11; step++) {
+      const code = await claim(db, 'bob', later(step));
+      await cancelRedemption(db, { redemptionId: code.id, userId: 'bob', now: later(step) });
+    }
+    const all = await recentCodes(db, 'biz', later(20));
+    expect(all.length).toBe(11);
+    expect(all.find((code) => code.id === waiting.id)).toMatchObject({ status: 'CLAIMED', sent: [] });
+    const live = await recentCodes(db, 'biz', later(20), { activeOnly: true });
+    expect(live.map((code) => code.id)).toEqual([waiting.id]);
   });
 });

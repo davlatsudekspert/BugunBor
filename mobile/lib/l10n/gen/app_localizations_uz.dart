@@ -1589,4 +1589,7 @@ class LUz extends L {
 
   @override
   String get valSetItems => 'Setga kamida 2 ta, ko‘pi bilan 12 ta narsa kiriting.';
+
+  @override
+  String get bizBookings => 'Faol bronlar';
 }

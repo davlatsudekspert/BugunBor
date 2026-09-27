@@ -3020,6 +3020,12 @@ abstract class L {
   /// In uz, this message translates to:
   /// **'Setga kamida 2 ta, ko‘pi bilan 12 ta narsa kiriting.'**
   String get valSetItems;
+
+  /// No description provided for @bizBookings.
+  ///
+  /// In uz, this message translates to:
+  /// **'Faol bronlar'**
+  String get bizBookings;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

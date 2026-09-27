@@ -11,7 +11,7 @@ import { BILLING_PERIODS, requestPlan } from '@/modules/billing/service';
 import { assertNotSuspended, requireMembership } from '@/modules/businesses/access';
 import { branchSchema, businessProfileSchema, teamAddSchema } from '@/modules/businesses/schema';
 import {
-  addMember, businessDashboard, changeMemberRole, createBranch, deleteBranch, listBranches, profileChecklist, removeMember, updateBranch,
+  addMember, businessDashboard, changeMemberRole, createBranch, deleteBranch, listBranches, profileChecklist, recentCodes, removeMember, updateBranch,
   updateBusinessProfile,
 } from '@/modules/businesses/service';
 import { dealInputSchema } from '@/modules/deals/schema';
@@ -96,13 +96,15 @@ export const GET = route(async (request: Request, context: { params: Promise<{ b
     validate: roleCan(membership.role, 'redemption.validate'),
     analytics: roleCan(membership.role, 'analytics.read'),
   };
-  const [row, dashboard, setup, branches] = await Promise.all([
+  const [row, dashboard, setup, branches, bookings] = await Promise.all([
     db.prepare(`SELECT logo_id AS logoId, category_id AS categoryId FROM businesses WHERE id = ?1`).bind(businessId).first<{ logoId: string | null; categoryId: string | null }>(),
     can.analytics ? businessDashboard(db, businessId) : Promise.resolve(null),
     can.edit ? profileChecklist(db, businessId) : Promise.resolve([]),
     can.deals ? listBranches(db, businessId) : Promise.resolve([]),
+    // A cashier sees no statistics, but still the bookings to message or cancel.
+    !can.analytics && can.validate ? recentCodes(db, businessId, new Date(), { activeOnly: true }) : Promise.resolve([]),
   ]);
-  const { recent, ...stats } = dashboard ?? { recent: [] };
+  const { recent, ...stats } = dashboard ?? { recent: bookings };
   return json({
     data: {
       business: {
@@ -113,7 +115,8 @@ export const GET = route(async (request: Request, context: { params: Promise<{ b
       role: membership.role,
       can,
       stats: dashboard ? stats : null,
-      recent: recent.slice(0, 5),
+      // Every booking that can still be acted on, then the latest others: five at least.
+      recent: recent.filter((code, index) => code.status === 'CLAIMED' || index < 5),
       setup: setup.map(({ key, done }) => ({ key, done })),
       branches: branches.map(({ id, name, address }) => ({ id, name, address })),
     },

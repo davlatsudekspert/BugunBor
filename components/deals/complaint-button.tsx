@@ -1,7 +1,7 @@
 'use client';
 
 import { CheckCircle2, LoaderCircle, TriangleAlert } from 'lucide-react';
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 import { apiRequest } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
@@ -28,17 +28,32 @@ export function ComplaintButton({ targetType, targetId, reasons, loggedIn, login
   const [state, setState] = useState<'idle' | 'sending' | 'done'>('idle');
   const [error, setError] = useState('');
   const name = useId();
+  const panel = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const firstRadio = useRef<HTMLInputElement>(null);
+  const wasOpen = useRef(false);
 
-  const trigger = cn('inline-flex min-h-10 items-center gap-2 py-2 text-sm text-slate-500 underline-offset-4 hover:underline', className);
+  // Opening moves to the first reason; closing returns to the button.
+  useEffect(() => {
+    if (open) firstRadio.current?.focus();
+    else if (wasOpen.current) triggerRef.current?.focus();
+    wasOpen.current = open;
+  }, [open]);
+
+  const trigger = 'inline-flex min-h-11 items-center gap-2 py-2 text-sm text-slate-500 underline-offset-4 hover:underline';
   if (state === 'done') {
-    return <p className={cn('flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800', className)}><CheckCircle2 className="size-4" aria-hidden /> {labels.thanks}</p>;
+    // <output> is announced by screen readers when it appears.
+    return <output className={cn('flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800', className)}><CheckCircle2 className="size-4" aria-hidden /> {labels.thanks}</output>;
   }
   if (!loggedIn) {
-    return <a href={loginHref} className={trigger} title={labels.login}><TriangleAlert className="size-4" aria-hidden /> {labels.button}</a>;
+    return <a href={loginHref} className={cn(trigger, className)} title={labels.login}><TriangleAlert className="size-4" aria-hidden /> {labels.button}</a>;
   }
-  if (!open) {
-    return <button type="button" onClick={() => setOpen(true)} className={trigger} aria-expanded={false}><TriangleAlert className="size-4" aria-hidden /> {labels.button}</button>;
-  }
+  const button = (
+    <button ref={triggerRef} type="button" onClick={() => setOpen((value) => !value)} className={cn(trigger, open ? null : className)} aria-expanded={open} aria-controls={panel}>
+      <TriangleAlert className="size-4" aria-hidden /> {labels.button}
+    </button>
+  );
+  if (!open) return button;
 
   async function send() {
     setState('sending');
@@ -53,26 +68,29 @@ export function ComplaintButton({ targetType, targetId, reasons, loggedIn, login
   }
 
   return (
-    <div className={cn('mt-2 rounded-xl border border-slate-200 bg-white p-4', className)}>
-      <fieldset>
-        <legend className="text-sm font-bold text-navy">{labels.title}</legend>
-        <div className="mt-2 space-y-1">
-          {reasons.map((item) => (
-            <label key={item.value} className="flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2 text-sm text-slate-700 hover:bg-slate-50">
-              <input type="radio" name={name} value={item.value} checked={reason === item.value} onChange={() => setReason(item.value)} className="size-4 accent-[var(--primary)]" />
-              {item.label}
-            </label>
-          ))}
+    <div className={className}>
+      {button}
+      <div id={panel} className="mt-2 rounded-xl border border-slate-200 bg-white p-4">
+        <fieldset>
+          <legend className="text-sm font-bold text-navy">{labels.title}</legend>
+          <div className="mt-2 space-y-1">
+            {reasons.map((item, index) => (
+              <label key={item.value} className="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-lg px-2 text-sm text-slate-700 hover:bg-slate-50">
+                <input ref={index === 0 ? firstRadio : undefined} type="radio" name={name} value={item.value} checked={reason === item.value} onChange={() => setReason(item.value)} className="size-4 shrink-0 accent-[var(--primary)]" />
+                {item.label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        <textarea value={comment} onChange={(event) => setComment(event.target.value)} rows={2} maxLength={500} placeholder={labels.comment} aria-label={labels.comment} className="mt-2 w-full rounded-lg border border-slate-200 p-2.5 text-base outline-none focus:ring-2 focus:ring-primary/20" />
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button type="button" onClick={() => void send()} disabled={!reason || state === 'sending'} className="inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white disabled:opacity-50">
+            {state === 'sending' ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : null} {labels.send}
+          </button>
+          <button type="button" onClick={() => setOpen(false)} className="inline-flex h-11 items-center rounded-lg px-3 text-sm font-semibold text-slate-600 hover:bg-slate-50">{labels.cancel}</button>
         </div>
-      </fieldset>
-      <textarea value={comment} onChange={(event) => setComment(event.target.value)} rows={2} maxLength={500} placeholder={labels.comment} aria-label={labels.comment} className="mt-2 w-full rounded-lg border border-slate-200 p-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20" />
-      <div className="mt-2 flex flex-wrap gap-2">
-        <button type="button" onClick={() => void send()} disabled={!reason || state === 'sending'} className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white disabled:opacity-50">
-          {state === 'sending' ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : null} {labels.send}
-        </button>
-        <button type="button" onClick={() => setOpen(false)} className="inline-flex h-10 items-center rounded-lg px-3 text-sm font-semibold text-slate-600 hover:bg-slate-50">{labels.cancel}</button>
+        {error ? <p role="alert" className="mt-2 text-xs font-semibold text-red-600">{error}</p> : null}
       </div>
-      {error ? <p role="alert" className="mt-2 text-xs font-semibold text-red-600">{error}</p> : null}
     </div>
   );
 }

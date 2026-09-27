@@ -487,5 +487,6 @@
   "dealSetPersons": "For how many people",
   "dealSetPersonsAny": "Not stated",
   "dealSetPriceHint": "The regular price is what everything in the set usually costs together.",
-  "valSetItems": "A set needs 2 to 12 items."
+  "valSetItems": "A set needs 2 to 12 items.",
+  "bizBookings": "Active bookings"
 }

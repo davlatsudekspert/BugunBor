@@ -493,9 +493,12 @@ export const uz = {
         cancel: 'Bekor qilish',
         outOfStock: 'Mahsulot tugadi',
         closed: 'Filial yopiq',
-        sent: 'Yuborildi ✓',
+        sent: 'Yuborildi',
         ask: 'Bronni bekor qilasizmi? Mijozga sababi bilan xabar boradi, joy boshqalarga qaytadi.',
         hint: 'Mijoz raqami yashirin: xabar BugunBor orqali boradi.',
+        title: 'Faol bronlar',
+        reason: 'Bekor qilish sababi:',
+        back: 'Orqaga',
       },
       setup: {
         title: 'Profilni to‘ldiring',

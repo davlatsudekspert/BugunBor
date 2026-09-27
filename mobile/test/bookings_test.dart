@@ -267,6 +267,38 @@ void main() {
     expect(find.text('Kechikyapmiz'), findsNothing);
   });
 
+  testWidgets('a cashier (no statistics) still sees the live bookings and can answer them', (tester) async {
+    final server = memberServer(
+      () => [
+        {...owner, 'role': 'CASHIER'},
+      ],
+    );
+    final code = {
+      ...(contractMap('business-workspace')['recent'] as List).first as Map<String, dynamic>,
+      'expiresAt': serverTime(DateTime.now().toUtc().add(const Duration(minutes: 40))),
+    };
+    server.routes['GET /api/v1/business/:id'] = (_) => {
+      'data': workspace(
+        other: {
+          'role': 'CASHIER',
+          'can': {'edit': false, 'deals': false, 'validate': true, 'analytics': false},
+          'stats': null,
+          'setup': <Object>[],
+          'recent': [code],
+        },
+      ),
+    };
+    await pumpApp(tester, server: server, token: 't');
+    await tester.tap(find.text('Profil'));
+    await settle(tester);
+    await scrollTo(tester, find.text('Faol bronlar'));
+    expect(find.text('So‘nggi kodlar'), findsNothing);
+    await scrollTo(tester, find.text('Kutyapmiz'));
+    await tester.tap(find.text('Kutyapmiz'));
+    await settle(tester);
+    expect(lastAction(server), {'type': 'booking.message', 'redemptionId': code['id'], 'message': 'WAITING'});
+  });
+
   testWidgets('a booking that ended meanwhile says so, and the list shows it as it is now', (tester) async {
     final server = memberServer(() => [owner]);
     final code = {

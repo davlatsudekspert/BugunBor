@@ -887,5 +887,6 @@
   "dealSetPersons": "Necha kishilik",
   "dealSetPersonsAny": "Ko‘rsatilmagan",
   "dealSetPriceHint": "Asl narx — set ichidagilarning odatdagi narxlari yig‘indisi.",
-  "valSetItems": "Setga kamida 2 ta, ko‘pi bilan 12 ta narsa kiriting."
+  "valSetItems": "Setga kamida 2 ta, ko‘pi bilan 12 ta narsa kiriting.",
+  "bizBookings": "Faol bronlar"
 }

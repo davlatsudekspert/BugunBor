@@ -1588,4 +1588,7 @@ class LEn extends L {
 
   @override
   String get valSetItems => 'A set needs 2 to 12 items.';
+
+  @override
+  String get bizBookings => 'Active bookings';
 }

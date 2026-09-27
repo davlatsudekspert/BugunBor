@@ -312,7 +312,12 @@ describe('app API', () => {
     pinContract('business-workspace', own.body.data);
 
     const counter = await read(await workspace(req('/api/v1/business/biz', { token: cashier }), params({ businessId: 'biz' })));
-    expect(counter.body.data).toMatchObject({ role: 'CASHIER', can: { edit: false, validate: true, analytics: false }, stats: null, recent: [], setup: [] });
+    // No statistics for a cashier, but the live bookings, to message or cancel.
+    expect(counter.body.data).toMatchObject({
+      role: 'CASHIER', can: { edit: false, validate: true, analytics: false }, stats: null, setup: [],
+      recent: [{ status: 'CLAIMED', dealTitle: 'Osh', customerName: 'Alice Karimova' }],
+    });
+    expect((counter.body.data.recent as Array<{ status: string }>).every((code) => code.status === 'CLAIMED')).toBe(true);
     expect((await workspace(req('/api/v1/business/biz', { token: alice }), params({ businessId: 'biz' }))).status).toBe(403);
   });
 

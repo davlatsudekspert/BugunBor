@@ -1588,4 +1588,7 @@ class LRu extends L {
 
   @override
   String get valSetItems => 'В сете должно быть от 2 до 12 позиций.';
+
+  @override
+  String get bizBookings => 'Активные брони';
 }

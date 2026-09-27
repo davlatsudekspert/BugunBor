@@ -209,6 +209,11 @@ class _Workspace extends ConsumerWidget {
           const SizedBox(height: Gap.lg),
           _Title(l.bizRecent),
           _Recent(businessId: business.id, codes: workspace.recent, canAct: workspace.canValidate),
+        ] else if (workspace.canValidate && workspace.recent.isNotEmpty) ...[
+          // A cashier sees no statistics, but the live bookings to message or cancel.
+          const SizedBox(height: Gap.lg),
+          _Title(l.bizBookings),
+          _Recent(businessId: business.id, codes: workspace.recent, canAct: true),
         ],
         const SizedBox(height: Gap.lg),
         Text(

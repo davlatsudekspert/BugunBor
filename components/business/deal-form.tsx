@@ -105,7 +105,7 @@ export function DealForm({ businessId, businessName, dealId, categories, branche
           <textarea value={values.description} onChange={(event) => set('description', event.target.value)} rows={3} maxLength={600} placeholder={f.descriptionPlaceholder} aria-invalid={Boolean(errors.description)} className={textareaClass} />
         </Field>
         <fieldset className={cn('rounded-2xl border p-4', values.isSet ? 'border-primary/40 bg-primary/5' : 'border-slate-200')}>
-          <label className="flex min-h-8 cursor-pointer items-center gap-3 text-sm font-bold text-navy">
+          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-bold text-navy">
             <input type="checkbox" checked={values.isSet} onChange={(event) => set('isSet', event.target.checked)} className="size-4 accent-[var(--primary)]" />
             <Layers className="size-4 text-primary" aria-hidden />
             {f.set.toggle}
@@ -115,8 +115,9 @@ export function DealForm({ businessId, businessName, dealId, categories, branche
             <div className="mt-4 space-y-3">
               <p className="text-sm font-bold text-navy">{f.set.items}</p>
               {values.setItems.map((item, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <input value={item.name} onChange={(event) => setItem(index, { name: event.target.value })} maxLength={SET_RULES.nameMax} placeholder={f.set.itemPlaceholder} aria-label={`${f.set.itemName} ${index + 1}`} aria-invalid={Boolean(errors.set)} className={cn(inputClass, 'min-w-0 flex-1')} />
+                // On a phone the name takes its own line, so what was typed can be read back.
+                <div key={index} className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+                  <input value={item.name} onChange={(event) => setItem(index, { name: event.target.value })} maxLength={SET_RULES.nameMax} placeholder={f.set.itemPlaceholder} aria-label={`${f.set.itemName} ${index + 1}`} aria-invalid={Boolean(errors.set)} className={cn(inputClass, 'min-w-0 basis-full sm:basis-0 sm:flex-1')} />
                   <select value={item.qty} onChange={(event) => setItem(index, { qty: event.target.value })} aria-label={`${f.set.itemQty} ${index + 1}`} className={cn(inputClass, 'w-20 shrink-0 px-2')}>
                     {Array.from({ length: SET_RULES.maxQty }, (_, count) => count + 1).map((count) => <option key={count} value={count}>{count}</option>)}
                   </select>
@@ -126,7 +127,7 @@ export function DealForm({ businessId, businessName, dealId, categories, branche
                 </div>
               ))}
               {values.setItems.length < SET_RULES.maxItems ? (
-                <button type="button" onClick={() => set('setItems', [...values.setItems, { name: '', qty: '1' }])} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-dashed border-primary/50 px-4 text-sm font-bold text-primary hover:bg-primary/5">
+                <button type="button" onClick={() => set('setItems', [...values.setItems, { name: '', qty: '1' }])} className="inline-flex h-11 items-center gap-1.5 rounded-xl border border-dashed border-primary/50 px-4 text-sm font-bold text-primary hover:bg-primary/5">
                   <Plus className="size-4" aria-hidden /> {f.set.addItem}
                 </button>
               ) : null}
