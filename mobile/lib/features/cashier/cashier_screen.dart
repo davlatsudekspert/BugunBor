@@ -107,14 +107,16 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
     }
   }
 
-  Future<void> _reset() async {
+  /// Back to scanning for the next customer. The scanner comes back on
+  /// screen and starts the camera itself; starting it here as well would
+  /// race it ("still initializing").
+  void _reset() {
     _manual.clear();
     setState(() {
       _found = null;
       _done = false;
       _error = null;
     });
-    await _scanner.start();
   }
 
   @override

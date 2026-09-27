@@ -464,7 +464,7 @@
   "bookingCancel": "Cancel",
   "bookingOutOfStock": "Sold out",
   "bookingClosed": "Branch closed",
-  "bookingSent": "Sent ✓",
+  "bookingSent": "Sent",
   "bookingCancelAsk": "Cancel the booking? The customer is told why, and the spot goes back to others.",
   "bookingHint": "The customer’s number stays hidden: BugunBor delivers the message.",
   "noShowWarning": "Heads-up: {count} codes went unused this week. One more and booking pauses for 24 hours. If you can’t go, cancel the code.",

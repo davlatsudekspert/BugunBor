@@ -250,7 +250,7 @@ void main() {
     await tester.tap(find.text('Kutyapmiz'));
     await settle(tester);
     expect(lastAction(server), {'type': 'booking.message', 'redemptionId': code['id'], 'message': 'WAITING'});
-    expect(find.text('Kutyapmiz · Yuborildi ✓'), findsOneWidget);
+    expect(find.text('Kutyapmiz · Yuborildi'), findsOneWidget);
     expect(find.widgetWithText(OutlinedButton, 'Kechikyapmiz'), findsOneWidget);
 
     // Cancelling asks for the reason and says what happens.

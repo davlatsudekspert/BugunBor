@@ -1504,7 +1504,7 @@ class LRu extends L {
   String get bookingClosed => 'Филиал закрыт';
 
   @override
-  String get bookingSent => 'Отправлено ✓';
+  String get bookingSent => 'Отправлено';
 
   @override
   String get bookingCancelAsk => 'Отменить бронь? Клиенту придёт сообщение с причиной, место вернётся другим.';

@@ -1505,7 +1505,7 @@ class LUz extends L {
   String get bookingClosed => 'Filial yopiq';
 
   @override
-  String get bookingSent => 'Yuborildi ✓';
+  String get bookingSent => 'Yuborildi';
 
   @override
   String get bookingCancelAsk => 'Bronni bekor qilasizmi? Mijozga sababi bilan xabar boradi, joy boshqalarga qaytadi.';

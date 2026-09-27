@@ -2880,7 +2880,7 @@ abstract class L {
   /// No description provided for @bookingSent.
   ///
   /// In uz, this message translates to:
-  /// **'Yuborildi ✓'**
+  /// **'Yuborildi'**
   String get bookingSent;
 
   /// No description provided for @bookingCancelAsk.

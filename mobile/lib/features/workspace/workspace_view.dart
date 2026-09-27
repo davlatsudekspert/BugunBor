@@ -747,7 +747,17 @@ class _RecentState extends ConsumerState<_Recent> {
               heightFactor: 1,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Text('$text · ${l.bookingSent}', style: label?.copyWith(color: context.successText)),
+                // A drawn tick, not a "✓" character some fonts lack.
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.check_rounded, size: 18, color: context.successText),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text('$text · ${l.bookingSent}', style: label?.copyWith(color: context.successText)),
+                    ),
+                  ],
+                ),
               ),
             ),
           )

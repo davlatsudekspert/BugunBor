@@ -812,7 +812,7 @@
   "bookingCancel": "Bekor qilish",
   "bookingOutOfStock": "Mahsulot tugadi",
   "bookingClosed": "Filial yopiq",
-  "bookingSent": "Yuborildi ✓",
+  "bookingSent": "Yuborildi",
   "bookingCancelAsk": "Bronni bekor qilasizmi? Mijozga sababi bilan xabar boradi, joy boshqalarga qaytadi.",
   "bookingHint": "Mijoz raqami yashirin: xabar BugunBor orqali boradi.",
   "noShowWarning": "Diqqat: oxirgi 7 kunda {count} ta kod ishlatilmay qoldi. Yana bittasi bo‘lsa, band qilish 24 soatga to‘xtaydi. Bora olmasangiz, kodni bekor qiling.",

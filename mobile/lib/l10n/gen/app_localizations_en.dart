@@ -1503,7 +1503,7 @@ class LEn extends L {
   String get bookingClosed => 'Branch closed';
 
   @override
-  String get bookingSent => 'Sent ✓';
+  String get bookingSent => 'Sent';
 
   @override
   String get bookingCancelAsk => 'Cancel the booking? The customer is told why, and the spot goes back to others.';
