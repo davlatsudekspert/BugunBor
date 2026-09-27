@@ -17,6 +17,10 @@ export type BusinessDealRow = {
   claims: number; redeemed: number; effective: EffectiveDealStatus;
   /** Why the automatic check held it back, if it did. */
   autoNote: string | null;
+  /** Off the air after customers said it was not honoured, until a moderator looks. */
+  held: boolean;
+  /** Open complaints about its codes in the last 30 days. */
+  complaints: number;
 };
 
 export async function listBusinessDeals(db: D1Database, businessId: string, now = new Date()): Promise<BusinessDealRow[]> {
@@ -27,17 +31,21 @@ export async function listBusinessDeals(db: D1Database, businessId: string, now 
         d.view_count AS viewCount, d.is_sponsored AS isSponsored, d.rejection_reason AS rejectionReason,
         d.photo_id AS photoId, d.is_demo AS isDemo, d.auto_review_note AS autoNote,
         (SELECT COUNT(*) FROM redemptions r WHERE r.deal_id = d.id) AS claims,
-        (SELECT COUNT(*) FROM redemptions r WHERE r.deal_id = d.id AND r.status = 'COMPLETED') AS redeemed
+        (SELECT COUNT(*) FROM redemptions r WHERE r.deal_id = d.id AND r.status = 'COMPLETED') AS redeemed,
+        d.complaint_hold_at IS NOT NULL AS held,
+        (SELECT COUNT(*) FROM reports p JOIN redemptions r ON r.id = p.target_id
+          WHERE p.target_type = 'REDEMPTION' AND p.status = 'NEW' AND r.deal_id = d.id AND p.created_at >= ?2) AS complaints
       FROM deals d JOIN categories c ON c.id = d.category_id
       WHERE d.business_id = ?1 AND d.deleted_at IS NULL
       ORDER BY CASE d.status WHEN 'PENDING_REVIEW' THEN 0 WHEN 'ACTIVE' THEN 1 WHEN 'PAUSED' THEN 2 WHEN 'DRAFT' THEN 3 WHEN 'REJECTED' THEN 4 ELSE 5 END,
         d.ends_at DESC`)
-    .bind(businessId)
-    .all<Omit<BusinessDealRow, 'effective' | 'isSponsored' | 'photo'> & { isSponsored: number; photoId: string | null; isDemo: number }>();
+    .bind(businessId, toDbTime(new Date(now.getTime() - 30 * 24 * 60 * 60_000)))
+    .all<Omit<BusinessDealRow, 'effective' | 'isSponsored' | 'photo' | 'held'> & { isSponsored: number; photoId: string | null; isDemo: number; held: number }>();
   return rows.results.map(({ photoId, isDemo, ...row }) => ({
     ...row,
     photo: dealPhotoUrl({ photoId, isDemo, visual: row.visual, slug: row.slug }),
     isSponsored: Boolean(row.isSponsored),
+    held: Boolean(row.held),
     effective: effectiveDealStatus({ status: row.status, startsAt: row.startsAt, endsAt: row.endsAt, remainingQuantity: row.remaining }, now),
   }));
 }
@@ -179,6 +187,9 @@ export async function transitionDeal(db: D1Database, actor: Actor & { dealId: st
     await assertHasBranch(db, actor.dealId);
   }
   if (actor.action === 'resume') {
+    // Held after complaints: only a moderator puts it back on the air.
+    const hold = await db.prepare(`SELECT complaint_hold_at AS heldAt FROM deals WHERE id = ?1`).bind(actor.dealId).first<{ heldAt: string | null }>();
+    if (hold?.heldAt) throw new DomainError('UNDER_REVIEW');
     if (current.endsAt <= toDbTime(now)) throw new DomainError('DEAL_EXPIRED');
     await assertWithinLimit(db, actor.businessId, 'liveDeals', now);
   }

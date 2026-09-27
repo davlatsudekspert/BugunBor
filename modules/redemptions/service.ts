@@ -1,12 +1,13 @@
 import { dealPhotoUrl } from '@/lib/photos';
 import { RETENTION, yearsBefore } from '@/lib/retention';
-import { addMinutes, parseDbTime, toDbTime } from '@/lib/time';
+import { addMinutes, formatClock, formatNumericDate, parseDbTime, toDbTime } from '@/lib/time';
 import { auditStatementIf } from '@/modules/audit';
 import { subscriptionActiveSql } from '@/modules/deals/status';
 import { DomainError } from '@/modules/errors';
 import { pruneOrphanMediaStatement } from '@/modules/media/service';
 import { codeReminderStatement, redeemedStatement } from '@/modules/notifications/service';
 import { deriveRedemptionCode, hashRedemptionCode } from './codes';
+import { noShowState } from './no-shows';
 import { evaluateClaimPolicy } from './policy';
 
 export type ClaimInput = {
@@ -85,6 +86,12 @@ export async function claimDeal(db: D1Database, input: ClaimInput): Promise<Clai
   // A code of theirs that ran out a moment ago may not be marked yet (the
   // cleanup runs once a minute); it must not block a new one.
   await expireStaleRedemptions(db, now, { dealId: input.dealId, userId: input.userId });
+  // Booked and never came three times this week: booking waits a day.
+  const noShows = await noShowState(db, input.userId, now);
+  if (noShows.pausedUntil) {
+    const until = parseDbTime(noShows.pausedUntil);
+    throw new DomainError('NO_SHOW_PAUSE', 429, { time: `${formatNumericDate(until).slice(0, 5)} ${formatClock(until)}` });
+  }
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const id = crypto.randomUUID();
@@ -213,11 +220,13 @@ export type CustomerRedemption = {
   completedAt: string | null; dealSlug: string; dealTitle: string; price: number; originalPrice: number | null;
   visual: string | null; photo: string | null; categorySlug: string; businessName: string; branchName: string; address: string;
   latitude: number; longitude: number; code: string | null;
+  /** Why the business cancelled it (OUT_OF_STOCK, CLOSED), when it did. */
+  cancelReason: string | null;
 };
 
 export async function listCustomerRedemptions(db: D1Database, userId: string, secret: string, now = new Date()) {
   const rows = await db
-    .prepare(`SELECT r.id, r.status, r.expires_at AS expiresAt, r.created_at AS createdAt, r.completed_at AS completedAt,
+    .prepare(`SELECT r.id, r.status, r.expires_at AS expiresAt, r.created_at AS createdAt, r.completed_at AS completedAt, r.cancel_reason AS cancelReason,
         d.slug AS dealSlug, d.title AS dealTitle, d.discounted_price_uzs AS price, d.original_price_uzs AS originalPrice,
         d.visual, d.photo_id AS photoId, d.is_demo AS isDemo, c.slug AS categorySlug, b.name AS businessName, br.name AS branchName, br.address,
         br.latitude_e6 AS lat, br.longitude_e6 AS lon

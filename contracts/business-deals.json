@@ -16,6 +16,8 @@
     "rejectionReason": null,
     "claims": 0,
     "redeemed": 0,
+    "held": false,
+    "complaints": 0,
     "photo": "/media/fe5fca9c-a1fd-4378-95ee-150b43cd5eef",
     "effective": "LIVE",
     "views": 0
@@ -37,6 +39,8 @@
     "rejectionReason": null,
     "claims": 0,
     "redeemed": 0,
+    "held": false,
+    "complaints": 0,
     "photo": null,
     "effective": "LIVE",
     "views": 0

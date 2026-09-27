@@ -113,6 +113,29 @@ export async function archiveDealByModerator(db: D1Database, input: { actorId: s
 }
 
 /**
+ * A moderator looked into the complaints about a held deal: it goes back on
+ * the air (while its time lasts) and the open complaints about it are closed.
+ */
+export async function releaseDealHold(db: D1Database, input: { actorId: string; dealId: string }, now = new Date()) {
+  const deal = await db
+    .prepare(`SELECT status, business_id AS businessId, complaint_hold_at AS heldAt FROM deals WHERE id = ?1 AND deleted_at IS NULL`)
+    .bind(input.dealId)
+    .first<{ status: string; businessId: string; heldAt: string | null }>();
+  if (!deal) throw new DomainError('NOT_FOUND');
+  if (!deal.heldAt) throw new DomainError('INVALID_TRANSITION');
+  const nowDb = toDbTime(now);
+  await db.batch([
+    db.prepare(`UPDATE deals SET complaint_hold_at = NULL, updated_at = ?2,
+        status = CASE WHEN status = 'PAUSED' AND ends_at > ?2 THEN 'ACTIVE' ELSE status END
+      WHERE id = ?1`).bind(input.dealId, nowDb),
+    db.prepare(`UPDATE reports SET status = 'RESOLVED', handled_at = ?2, handled_by = ?3
+      WHERE status = 'NEW' AND target_type = 'REDEMPTION' AND target_id IN (SELECT id FROM redemptions WHERE deal_id = ?1)`).bind(input.dealId, nowDb, input.actorId),
+    moderationStatement(db, { actorId: input.actorId, targetType: 'Deal', targetId: input.dealId, action: 'RELEASE', reason: 'complaints checked', before: { status: deal.status, heldAt: deal.heldAt }, after: {} }, nowDb),
+    auditStatement(db, { actorUserId: input.actorId, businessId: deal.businessId, action: 'deal.released', targetType: 'Deal', targetId: input.dealId, before: { status: deal.status } }, nowDb),
+  ]);
+}
+
+/**
  * Moderators can take down an inappropriate logo, cover or deal photo without
  * touching anything else. The image itself is deleted at once, together with
  * every other place it was used (a copied deal), so its link stops working.

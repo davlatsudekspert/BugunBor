@@ -21,6 +21,7 @@ import { autoModerateBusiness, autoModerateDeal } from '@/modules/moderation/aut
 import { checkoutAvailable, clickCheckoutUrl, createOrder, paymeCheckoutUrl } from '@/modules/payments/service';
 import { RATE_RULES, enforceRateLimit } from '@/modules/rate-limit';
 import { codeFromScan } from '@/modules/redemptions/codes';
+import { BOOKING_CANCEL_REASONS, BOOKING_MESSAGES, cancelBooking, messageBooking } from '@/modules/redemptions/contact';
 import { completeRedemption, lookupRedemption, runMaintenance } from '@/modules/redemptions/service';
 
 const id = z.string().min(1).max(100);
@@ -41,6 +42,8 @@ const actionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('team.remove'), memberId: id }),
   z.object({ type: z.literal('redeem.lookup'), code: z.string().max(200) }),
   z.object({ type: z.literal('redeem.complete'), redemptionId: id }),
+  z.object({ type: z.literal('booking.message'), redemptionId: id, message: z.enum(BOOKING_MESSAGES) }),
+  z.object({ type: z.literal('booking.cancel'), redemptionId: id, reason: z.enum(BOOKING_CANCEL_REASONS) }),
   z.object({ type: z.literal('billing.request'), planCode: z.string().max(20), months: z.number().int().refine((value) => BILLING_PERIODS.some((period) => period.months === value)) }),
   z.object({ type: z.literal('billing.checkout'), planCode: z.string().max(20), months: z.number().int().refine((value) => BILLING_PERIODS.some((period) => period.months === value)), provider: z.enum(['PAYME', 'CLICK']) }),
 ]);
@@ -62,6 +65,8 @@ const permission: Record<Action['type'], BusinessAction> = {
   'team.remove': 'team.manage',
   'redeem.lookup': 'redemption.validate',
   'redeem.complete': 'redemption.validate',
+  'booking.message': 'redemption.validate',
+  'booking.cancel': 'redemption.validate',
   'billing.request': 'business.edit',
   'billing.checkout': 'business.edit',
 };
@@ -173,6 +178,12 @@ export const POST = route(async (request: Request, context: { params: Promise<{ 
     }
     case 'redeem.complete':
       return json({ data: await completeRedemption(db, { businessId, redemptionId: action.redemptionId, staffUserId: user.id }) });
+    // The person's number stays hidden: BugunBor tells them.
+    case 'booking.message':
+      return json({ data: await messageBooking(db, { businessId, staffUserId: user.id, redemptionId: action.redemptionId, message: action.message }) });
+    case 'booking.cancel':
+      await cancelBooking(db, { businessId, staffUserId: user.id, redemptionId: action.redemptionId, reason: action.reason });
+      return json({ data: { ok: true } });
     case 'billing.request':
       return json({ data: await requestPlan(db, { businessId, userId: user.id, planCode: action.planCode, months: action.months }) }, { status: 201 });
     case 'billing.checkout': {

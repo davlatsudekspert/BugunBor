@@ -13,13 +13,14 @@ import { clearSessionCookie } from '@/modules/auth/sessions';
 import { listMemberships } from '@/modules/businesses/access';
 import { listBlockedBusinessIds } from '@/modules/engagement/blocks';
 import { getInterests } from '@/modules/engagement/interests';
+import { noShowState } from '@/modules/redemptions/no-shows';
 
 // The signed-in customer: profile, savings, notification switches, interests,
 // blocked businesses and the businesses they work for (for the cashier screen).
 export const GET = route(async (request: Request) => {
   const db = await getDb();
   const user = await apiUser(request, db);
-  const [stats, notifications, interests, blocked, memberships, account] = await Promise.all([
+  const [stats, notifications, interests, blocked, memberships, account, noShows] = await Promise.all([
     accountStats(db, user.id),
     getNotificationSettings(db, user.id),
     getInterests(db, user.id),
@@ -29,6 +30,7 @@ export const GET = route(async (request: Request) => {
         FROM users u LEFT JOIN user_avatars a ON a.user_id = u.id WHERE u.id = ?1`)
       .bind(user.id)
       .first<{ version: string | null; telegramUsername: string | null; avatar: string | null }>(),
+    noShowState(db, user.id),
   ]);
   return json({
     data: {
@@ -45,6 +47,8 @@ export const GET = route(async (request: Request) => {
         businessId: m.businessId, name: m.name, slug: m.slug, role: m.role, status: m.verificationStatus, verified: m.verificationStatus === 'VERIFIED' && !m.suspendedAt,
       })),
       privacy: { acceptedVersion: account?.version ?? null, currentVersion: PRIVACY_VERSION },
+      // Codes that ran out unused this week, and until when booking waits (see modules/redemptions/no-shows.ts).
+      noShows,
     },
   });
 });

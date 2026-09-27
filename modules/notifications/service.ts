@@ -13,7 +13,7 @@ import { pushFromTelegram, type PushSender } from './push';
 
 export type NotificationKind =
   | 'NEW_DEAL' | 'CODE_REMINDER' | 'REDEEMED' | 'DEAL_APPROVED' | 'DEAL_REJECTED' | 'BUSINESS_APPROVED' | 'BUSINESS_REJECTED' | 'PAYMENT_RECEIVED'
-  | 'REVIEW_NEEDED' | 'PAYMENT_REQUEST' | 'INTEREST_DEAL' | 'REPORT';
+  | 'REVIEW_NEEDED' | 'PAYMENT_REQUEST' | 'INTEREST_DEAL' | 'REPORT' | 'DEAL_HELD' | 'BOOKING_MESSAGE' | 'BOOKING_CANCELED';
 
 const RETRY_LIMIT = 3;
 /** Alerts a person can switch off in the profile; only these say so under the message. */
@@ -68,12 +68,12 @@ export function teamStatement(db: D1Database, input: { businessId: string; kind:
  * the automatic checks held back go to moderators and admins, manual payment
  * requests to admins. Once per key.
  */
-export function staffAlertStatement(db: D1Database, input: { kind: 'REVIEW_NEEDED' | 'PAYMENT_REQUEST' | 'REPORT'; key: string; payload: Record<string, string>; nowDb: string }) {
+export function staffAlertStatement(db: D1Database, input: { kind: 'REVIEW_NEEDED' | 'PAYMENT_REQUEST' | 'REPORT' | 'DEAL_HELD'; key: string; payload: Record<string, string>; nowDb: string }) {
   return db
     .prepare(`INSERT OR IGNORE INTO notifications(id, user_id, kind, dedupe_key, payload_json, send_after, created_at)
       SELECT lower(hex(randomblob(16))), u.id, ?1, ?1 || ':' || ?2 || ':' || u.id, ?3, ?4, ?4
       FROM users u WHERE u.status = 'ACTIVE' AND u.telegram_user_id IS NOT NULL
-        AND (u.role = 'ADMIN' OR (u.role = 'MODERATOR' AND ?1 IN ('REVIEW_NEEDED', 'REPORT')))`)
+        AND (u.role = 'ADMIN' OR (u.role = 'MODERATOR' AND ?1 IN ('REVIEW_NEEDED', 'REPORT', 'DEAL_HELD')))`)
     .bind(input.kind, input.key, JSON.stringify(input.payload), input.nowDb);
 }
 
@@ -201,6 +201,36 @@ async function render(db: D1Database, row: Row, t: Dictionary, now: Date, locale
         button: n.reviewButton,
         path: '/admin/reports',
       };
+    }
+    case 'BOOKING_MESSAGE':
+    case 'BOOKING_CANCELED': {
+      // A message from the business about this booking: only while it still applies.
+      const booking = await db
+        .prepare(`SELECT d.title, b.name AS business, r.status, r.expires_at AS expiresAt, r.cancel_reason AS reason
+          FROM redemptions r JOIN deals d ON d.id = r.deal_id JOIN businesses b ON b.id = r.business_id WHERE r.id = ?1`)
+        .bind(payload.redemptionId)
+        .first<{ title: string; business: string; status: string; expiresAt: string; reason: string | null }>();
+      if (!booking) return null;
+      const values = { title: escapeHtml(booking.title), business: escapeHtml(booking.business) };
+      if (row.kind === 'BOOKING_MESSAGE') {
+        if (booking.status !== 'CLAIMED' || booking.expiresAt <= nowDb) return null;
+        return { text: fmt(payload.message === 'DELAY' ? n.bookingDelay : n.bookingWaiting, values), button: n.bookingButton, path: '/account/codes' };
+      }
+      if (booking.status !== 'CANCELED') return null;
+      return { text: fmt(booking.reason === 'CLOSED' ? n.bookingCanceledClosed : n.bookingCanceledOutOfStock, values), button: n.bookingButton, path: '/account/codes' };
+    }
+    case 'DEAL_HELD': {
+      // Only while it is still on hold (a moderator may have looked already).
+      const deal = await db
+        .prepare(`SELECT d.id, d.title, b.name AS business FROM deals d JOIN businesses b ON b.id = d.business_id
+          WHERE d.id = ?1 AND d.complaint_hold_at IS NOT NULL AND d.deleted_at IS NULL`)
+        .bind(payload.dealId)
+        .first<{ id: string; title: string; business: string }>();
+      if (!deal) return null;
+      const values = { title: escapeHtml(deal.title), business: escapeHtml(deal.business), people: payload.people ?? '' };
+      return payload.audience === 'staff'
+        ? { text: fmt(n.dealHeldStaff, values), button: n.reviewButton, path: '/admin/reports' }
+        : { text: fmt(n.dealHeld, values), button: n.dealHeldButton, path: '/business/deals' };
     }
     default:
       return null;
