@@ -268,8 +268,8 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
       DealFilter.ended: l.dealsFilterEnded,
     };
     return ListView(
-      // Room for the button at the bottom.
-      padding: const EdgeInsets.fromLTRB(0, 0, 0, 96),
+      // Room for the button at the bottom (which keeps clear of the phone's bar).
+      padding: EdgeInsets.fromLTRB(0, 0, 0, 96 + context.navBarInset),
       children: [
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,

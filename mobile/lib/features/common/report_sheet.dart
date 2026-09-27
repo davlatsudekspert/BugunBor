@@ -127,7 +127,7 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.xl),
+        padding: EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.xl + context.navBarInset),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,

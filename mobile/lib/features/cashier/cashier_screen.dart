@@ -160,7 +160,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l.cashierTitle)),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.xl),
+        padding: EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.xl + context.navBarInset),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         children: [
           if (counters.length > 1) ...[

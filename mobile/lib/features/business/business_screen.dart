@@ -170,7 +170,7 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
                 actions: _actions(business, blocked, false),
               ),
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.lg, Gap.gutter, Gap.xl),
+              padding: EdgeInsets.fromLTRB(Gap.gutter, Gap.lg, Gap.gutter, Gap.xl + context.navBarInset),
               sliver: SliverList.list(
                 children: [
                   Row(

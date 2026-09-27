@@ -274,7 +274,7 @@ class _DealScreenState extends ConsumerState<DealScreen> {
               ],
             ),
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(Gap.gutter, Gap.lg, Gap.gutter, Gap.xl),
+              padding: EdgeInsets.fromLTRB(Gap.gutter, Gap.lg, Gap.gutter, Gap.xl + (deal.isDemo ? context.navBarInset : 0)),
               sliver: SliverList.list(
                 children: [
                   Wrap(

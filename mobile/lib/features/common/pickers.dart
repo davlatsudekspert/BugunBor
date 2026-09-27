@@ -46,7 +46,7 @@ class _PlaceSheet extends ConsumerWidget {
       maxChildSize: 0.92,
       builder: (context, controller) => ListView(
         controller: controller,
-        padding: const EdgeInsets.only(bottom: Gap.xl),
+        padding: EdgeInsets.only(bottom: Gap.xl + context.navBarInset),
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.sm),
