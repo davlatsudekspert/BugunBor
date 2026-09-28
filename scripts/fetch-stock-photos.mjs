@@ -12,7 +12,9 @@
 // Keys are deal visuals (lib/visuals.ts); "plov-2", "plov-3" are extra
 // variants, spread over demo deals so the catalogue does not repeat one photo.
 // Every pick was reviewed by eye: real photo, no readable brand, no close-up
-// faces and nothing military (weapons, uniforms, vehicles). Photos imported with import-photos.mjs stay unless their key is named.
+// faces, nothing military (weapons, uniforms, camouflage, vehicles) and nothing
+// political or religious (flags, emblems, places of worship, religious dress,
+// even in the background). Photos imported with import-photos.mjs stay unless their key is named.
 // Needs network access to commons.wikimedia.org and upload.wikimedia.org.
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -37,7 +39,8 @@ const CURATED = {
   dumplings: 'Uzbek Manti (bright).jpg',
   samsa: 'Uzbek samsa in Vienna, Austria.jpg',
   'samsa-2': 'Samsa of Khiva.jpg',
-  'samsa-3': "'Parmuda'-uzbek samsa-02.jpg",
+  // Not the Parmuda photo: its tablecloth reads «Mudofaa vazirligi».
+  'samsa-3': 'Uyda tayyorlangan somsa.jpg',
   bread: { file: 'Uzbekistan lives of citizens IGP3003.jpg', crop: [0, 0.12, 1, 0.5] },
   soup: 'Суп Мастава.jpg',
   chicken: 'Chicken Tandoori 01.jpg',
@@ -51,7 +54,8 @@ const CURATED = {
   // Cafés and sweets
   coffee: 'Classical Cappuccino in Savour Cafe.jpg',
   'coffee-2': 'A-cup-of-cappuccino-coffee-dar-es-salaam-cafe.jpg',
-  breakfast: 'Omelette 20210505 075028.jpg',
+  // Not the omelette with bacon.
+  breakfast: 'Chicken cheese omelette chips salad Enjoy Cafe Tottenham High Road Haringey London England.jpg',
   tea: 'Uzbek tea couple with traditional coloration.jpg',
   cake: 'Piece of chocolate cake on a white plate decorated with chocolate sauce.jpg',
   dessert: 'Cheshire cupcakes.jpg',
@@ -62,7 +66,8 @@ const CURATED = {
   clothes: 'Interior sports clothing store Cala Millor.jpg',
   sneakers: 'Converse Jack Purcell sneakers on white canvas.jpg',
   backpack: { file: 'Boy-in-brown-hoodie-carrying-red-backpack-while-walking-on-207697.jpg', crop: [0, 0.34, 1, 0.5] },
-  books: 'Bookstore shelves.jpg',
+  // Not the old bookstore shelf: its spines were about war.
+  books: { file: 'A pile of books (29767858348).jpg', crop: [0, 0.12, 0.78, 0.88] },
   gift: 'Brown gift box with red ribbon and bow.jpg',
   nuts: 'Mercado de Chorsu 05.jpg',
   'nuts-2': 'Samarcanda, Siyab 5.jpg',
@@ -80,9 +85,11 @@ const CURATED = {
   'fabric-2': 'Adras (Ikat). 1990s. Silk, cotton (3).jpg',
   suzani: 'Boukhara-Suzani (2).jpg',
   doppi: 'Tajik Tubeteika-2.jpg',
-  woodcarving: 'Djouma mosque column detail 2.JPG',
+  // A museum panel, not a column of a place of worship.
+  woodcarving: { file: 'Tashkent, Museo de Artes Decorativas 09.jpg', crop: [0, 0.42, 1, 0.498] },
   'woodcarving-2': 'Artisanat et tourisme (Khiva, Ouzbékistan) (5606264361).jpg',
-  doll: '224 Molí paperer Meros (Konigil, Samarcanda), ninos.jpg',
+  // Dolls in atlas dresses, not the bearded figures in turbans.
+  doll: { file: 'Uzbek dolls.jpg', crop: [0.3, 0.19, 0.7, 0.394] },
   // Beauty
   beauty: 'French Manicure with Glitter nail art on ring finger.jpg',
   makeup: '2012-11-19 Eyelash extensions at the Shilin Night Market.jpg',
@@ -96,13 +103,16 @@ const CURATED = {
   pool: 'Swimming Pool lanes and starting blocks.jpg',
   yoga: 'Girl doing bird dog yoga pose 2.jpg',
   football: 'Futsal indoor.jpg',
-  boxing: 'Boxing gloves Bail 10-OZ (4).jpg',
-  kurash: 'Tournoi de Kurash 27.jpg',
+  // Plain gloves: the old pair had cross marks on the straps.
+  boxing: 'Pair of boxing gloves.jpg',
+  // Kurash in Uzbekistan; the crop leaves out a spectator's camouflage cap.
+  kurash: { file: 'Kurash at village. Uzbek national sport.jpg', crop: [0, 0.04, 0.84, 0.945] },
   tennis: 'Pörtschach Johannes-Brahms-Promenade Werzer-Tennis-Arena 27052017 8932.jpg',
   // Entertainment
   fun: 'Illuminated Ferris wheel, bouncing castle and carousel at night in a funfair in Vientiane, Laos.jpg',
   cinema: 'Columbia City Cinema main hall.jpg',
-  bowling: { file: 'Bowland Elizabeth, Edinburgh North 20251209-093756.jpg', crop: [0.2, 0.12, 0.8, 0.8] },
+  // The crop leaves out the flags on the wall and the score screens.
+  bowling: { file: 'Bowland Elizabeth, Edinburgh North 20251209-093756.jpg', crop: [0.26, 0.14, 0.74, 0.74] },
   quest: 'Escape Room - "The Expedition" (Escape Quest Bethesda).jpg',
   kids: 'Ball pit with playground slide.jpg',
   karaoke: 'Karaoke in Nha Trang.jpg',
@@ -131,8 +141,10 @@ const CURATED = {
 // Commercial use and modification allowed; attribution handled on /credits.
 const ALLOWED = /^(cc0|public domain|pd|cc by(-sa)? (2\.0|2\.5|3\.0|4\.0))/i;
 
-// Nothing military on BugunBor: such files are left out of searches and imports.
-export const MILITARY = /military|army|soldier|troop|airm[ae]n|air force|marines?\b|navy|naval|DVIDS|weapon|rifle|pistol|\bguns?\b|tank|armou?r|combat|war\b/i;
+// Nothing military, political or religious on BugunBor: such files are left
+// out of searches and imports (the eye check still decides the rest).
+export const MILITARY = /military|army|soldier|troop|airm[ae]n|air force|marines?\b|navy|naval|DVIDS|weapon|rifle|pistol|\bguns?\b|tank|armou?r|combat|war\b|camouflage|\bcamo\b/i;
+export const SENSITIVE = /\bflags?\b|emblem|coat of arms|election|protest|parliament|president|politic|mosque|masjid|mezquita|moschee|church|cathedral|chapel|temple|shrine|madras|minaret|mausoleum|monaster|relig|islam|christian|christmas|buddh|hindu|\bjewish\b|synagog|\bpray(er|ing)?\b|\bimam\b|priest|\bmonks?\b|\bnuns?\b|quran|koran|bible|hijab|niqab|burqa|\bcross\b|crucifix/i;
 
 const strip = (html = '') => html.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
 
@@ -177,6 +189,7 @@ function describe(page) {
     source: info.descriptionurl,
     allowed: ALLOWED.test(license) && !/nc|nd/i.test(license),
     military: MILITARY.test([page.title, strip(meta.Artist?.value), strip(meta.Credit?.value), strip(meta.ImageDescription?.value)].join(' ')),
+    sensitive: SENSITIVE.test([page.title, strip(meta.ImageDescription?.value)].join(' ')),
     url: info.thumburl ?? info.url,
     width: info.width,
     height: info.height,
@@ -227,7 +240,7 @@ async function searchCandidates(query) {
   const pages = await imageInfo({ generator: 'search', gsrnamespace: '6', gsrlimit: '30', gsrsearch: `${query} filetype:bitmap` });
   for (const page of pages.sort((a, b) => a.index - b.index)) {
     const photo = describe(page);
-    if (!photo?.allowed || photo.mime !== 'image/jpeg' || photo.width < 1000 || photo.military) continue;
+    if (!photo?.allowed || photo.mime !== 'image/jpeg' || photo.width < 1000 || photo.military || photo.sensitive) continue;
     console.log(`${photo.width}×${photo.height}  ${photo.license.padEnd(12)}  ${page.title.replace(/^File:/, '')}  — ${photo.author}`);
   }
 }
@@ -266,6 +279,7 @@ async function main() {
       if (!photo?.url) throw new Error('file not found');
       if (!photo.allowed) throw new Error(`licence not allowed: ${photo.license}`);
       if (photo.military) throw new Error('military subject, pick another photo');
+      if (photo.sensitive) throw new Error('political or religious subject, pick another photo');
       const bytes = await writePhoto(key, Buffer.from(await (await request(photo.url)).arrayBuffer()), crop);
       photos[key] = { src: `/photos/${key}.webp`, title: photo.title, author: photo.author, license: photo.license, licenseUrl: photo.licenseUrl, source: photo.source };
       console.log(`✓ ${key}: ${photo.title} — ${photo.author} (${photo.license}), ${Math.round(bytes / 1024)} KB`);

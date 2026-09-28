@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 
 import { getI18n } from '@/lib/i18n/server';
+import { localeAlternates } from '@/lib/locale-paths';
 import { photoSrcSet } from '@/lib/photos';
 import { STOCK_PHOTOS } from '@/lib/stock-photos';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getI18n();
-  return { title: t.credits.title, description: t.credits.text, alternates: { canonical: '/credits' } };
+  const { t, locale } = await getI18n();
+  return { title: t.credits.title, description: t.credits.text, alternates: localeAlternates('/credits', locale) };
 }
 
 // Attribution for the freely licensed photos used on demo deals.

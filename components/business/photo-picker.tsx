@@ -1,12 +1,14 @@
 'use client';
 
-import { ImagePlus, LoaderCircle, RefreshCw, Trash2 } from 'lucide-react';
+import { ImagePlus, LoaderCircle, RefreshCw, ShieldAlert, Trash2 } from 'lucide-react';
 import { useId, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
 export type PhotoLabels = {
   choose: string; change: string; remove: string; processing: string; uploading: string; failed: string; tooBig: string; networkError: string;
+  /** What is never accepted; shown to everyone who uploads. */
+  rules: string;
 };
 
 type Kind = 'DEAL' | 'LOGO' | 'COVER';
@@ -145,6 +147,7 @@ export function PhotoPicker({ businessId, kind, value, onChange, label, hint, la
         </div>
       ) : null}
       {error ? <p role="alert" className="mt-1.5 text-xs font-semibold text-red-600">{error}</p> : hint ? <p className="mt-1.5 text-xs text-slate-500">{hint}</p> : null}
+      <p className="mt-1.5 flex items-start gap-1.5 text-xs font-semibold text-amber-800"><ShieldAlert className="mt-px size-3.5 shrink-0" aria-hidden /> {labels.rules}</p>
     </div>
   );
 }

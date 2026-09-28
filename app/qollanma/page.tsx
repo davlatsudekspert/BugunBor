@@ -6,12 +6,13 @@ import { getDb } from '@/db/client';
 import { getConfig } from '@/lib/env';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
+import { localeAlternates } from '@/lib/locale-paths';
 import { appStores, type AppStores } from '@/modules/app-stores';
 import { APK_GUIDE, GUIDES, GUIDES_PAGE, PROMO, clock, guideCaptions, guidePoster, guideVideo, isoDuration } from '@/modules/guides';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getI18n();
-  return { title: t.guides.metaTitle, description: t.guides.metaDescription, alternates: { canonical: GUIDES_PAGE } };
+  const { t, locale } = await getI18n();
+  return { title: t.guides.metaTitle, description: t.guides.metaDescription, alternates: localeAlternates(GUIDES_PAGE, locale) };
 }
 
 // A phone-shaped player: the videos are 9:16 and load only when played.

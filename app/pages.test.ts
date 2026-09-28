@@ -1,0 +1,289 @@
+import { renderToStaticMarkup } from 'react-dom/server';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { LOCALE_COOKIE } from '@/lib/i18n/config';
+import { uz } from '@/lib/i18n/uz';
+import { categoryAbout, cityAbout } from '@/lib/place-texts';
+import { toDbTime } from '@/lib/time';
+import { SESSION_COOKIE, createSession } from '@/modules/auth/sessions';
+import { updateSiteVerification } from '@/modules/search-engines';
+import { NOW, marketplace } from '@/test/fixtures';
+
+// The public pages rendered to HTML the way a visitor gets them: what they
+// promise about samples (no address, timer or stock) and about real deals.
+
+const state = vi.hoisted(() => ({ db: null as unknown as D1Database, cookies: {} as Record<string, string> }));
+
+vi.mock('@/db/client', () => ({ getDb: async () => state.db }));
+vi.mock('next/headers', () => ({
+  cookies: async () => ({ get: (name: string) => (state.cookies[name] ? { name, value: state.cookies[name] } : undefined) }),
+  headers: async () => new Headers(),
+}));
+vi.mock('next/navigation', () => ({
+  notFound: () => {
+    throw new Error('NEXT_NOT_FOUND');
+  },
+  redirect: (to: string) => {
+    throw new Error(`NEXT_REDIRECT ${to}`);
+  },
+  useRouter: () => ({ refresh() {}, push() {}, replace() {} }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+}));
+vi.mock('@/modules/jobs', () => ({ inBackground: () => {} }));
+vi.mock('@/lib/env', () => ({
+  DEFAULT_HASH_SECRET: 'x',
+  isTelegramConfigured: () => true,
+  getConfig: () => ({
+    appUrl: 'https://bugunbor.uz',
+    demoMode: false,
+    isDevelopment: false,
+    adminPhones: [],
+    hashSecret: 'test-secret',
+    telegram: { botToken: '1:token', botUsername: 'bugunborbot', webhookSecret: 'hook' },
+    app: { fcmServiceAccount: null, reviewLoginCode: null, minBuild: 3 },
+    payments: { enabled: false, payme: null, click: null },
+  }),
+}));
+
+const { default: Home, generateMetadata: homeMetadata } = await import('./page');
+const { default: DealPage } = await import('./deals/[slug]/page');
+const { default: BusinessPage } = await import('./businesses/[slug]/page');
+const { default: ContactPage } = await import('./contact/page');
+const categoryPage = await import('./categories/[slug]/page');
+const discoverPage = await import('./discover/page');
+const { default: sitemap } = await import('./sitemap');
+
+const minutes = (value: number) => toDbTime(new Date(NOW.getTime() + value * 60_000));
+const html = async (page: Promise<React.ReactNode>) => renderToStaticMarkup(await page);
+const deal = (slug: string) => html(DealPage({ params: Promise.resolve({ slug }) }));
+const business = (slug: string) => html(BusinessPage({ params: Promise.resolve({ slug }) }));
+/** A page that hands over to an async view (the catalogue) is rendered with that view's props. */
+async function view(page: Promise<React.ReactElement>) {
+  const element = (await page) as React.ReactElement<object, (props: object) => Promise<React.ReactNode>>;
+  return html(element.type(element.props));
+}
+
+/** The admin's «Namunalar» switch and a made-up cafe with a street address, a timer and 3 left. */
+async function addSample(db: D1Database) {
+  await db.batch([
+    db.prepare(`INSERT INTO app_settings(key, value) VALUES ('demo_mode', '1')`),
+    db.prepare(`INSERT INTO businesses(id, slug, name, description, city, category_id, verification_status, search_text, is_demo)
+      VALUES ('demo', 'namuna-kafe', 'Namuna kafe', 'Namuna', 'tashkent', 'cat_food', 'VERIFIED', 'namuna kafe', 1)`),
+    db.prepare(`INSERT INTO branches(id, business_id, name, city, address, latitude_e6, longitude_e6, working_hours_json)
+      VALUES ('demo_br', 'demo', 'Asosiy filial', 'tashkent', 'Farobiy ko‘chasi, 44', 41340000, 69290000, '{}')`),
+    db.prepare(`INSERT INTO deals(id, business_id, category_id, slug, title, description, terms, original_price_uzs, discounted_price_uzs,
+        discount_percent, starts_at, ends_at, total_quantity, remaining_quantity, per_customer_limit, redemption_method, status, created_by_id,
+        claim_ttl_minutes, search_text, is_demo)
+      VALUES ('demo_deal', 'demo', 'cat_food', 'namuna-somsa', 'Namuna somsa', 'Tandir somsa', 'Faqat zalda', 20000, 8000, 60, ?1, ?2, 10, 3, 1,
+        'ONSITE_CODE', 'ACTIVE', 'owner', 60, 'namuna somsa', 1)`)
+      .bind(minutes(-60), minutes(180)),
+    db.prepare(`INSERT INTO deal_branches(deal_id, branch_id) VALUES ('demo_deal', 'demo_br')`),
+  ]);
+}
+
+describe('public pages', () => {
+  beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(NOW);
+    state.db = await marketplace();
+    state.cookies = {};
+    await addSample(state.db);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('a sample deal has no street, directions, check claim, timer or stock count', async () => {
+    const page = await deal('namuna-somsa');
+    expect(page).toContain('Namuna somsa');
+    expect(page).toContain(uz.common.sample);
+    for (const made of ['Farobiy ko‘chasi, 44', uz.common.directions, uz.deal.verifiedNote, uz.deal.endsIn, uz.deal.endsAt, '3 ta qoldi']) {
+      expect(page).not.toContain(made);
+    }
+    // Nobody to follow or report, and no «Faol» on a made-up deal.
+    for (const pointless of [uz.business.follow, uz.complaint.button, uz.deal.status.LIVE]) expect(page).not.toContain(pointless);
+  });
+
+  it('a real deal keeps its address, directions, timer and stock count', async () => {
+    const page = await deal('osh');
+    for (const shown of ['Amir Temur 1', uz.common.directions, uz.deal.endsIn, '2 ta qoldi', uz.business.follow, uz.complaint.button]) expect(page).toContain(shown);
+  });
+
+  it('a sample business lists its branches without a street or directions', async () => {
+    const page = await business('namuna-kafe');
+    expect(page).toContain('Asosiy filial');
+    for (const made of ['Farobiy ko‘chasi, 44', uz.common.directions, uz.business.follow, uz.complaint.button]) expect(page).not.toContain(made);
+    const real = await business('kafe');
+    for (const shown of ['Amir Temur 1', uz.business.follow, uz.complaint.button]) expect(real).toContain(shown);
+  });
+
+  it('«Tasdiqlangan biznes» only after a moderator checked it; until then a new business is «Yangi»', async () => {
+    // Put on the site by the automatic check: new, not checked by a person.
+    expect(await business('kafe')).toContain(uz.business.newBusiness);
+    expect(await business('kafe')).not.toContain(uz.business.verified);
+    const newDeal = await deal('osh');
+    expect(newDeal).toContain(uz.deal.checkedNote);
+    expect(newDeal).not.toContain(uz.deal.verifiedNote);
+    expect(newDeal).not.toContain(`aria-label="${uz.business.verified}"`);
+
+    await state.db.prepare(`UPDATE businesses SET badge_verified_at = ?1, badge_verified_by = 'mod' WHERE id = 'biz'`).bind(minutes(0)).run();
+    const checked = await business('kafe');
+    expect(checked).toContain(uz.business.verified);
+    expect(checked).not.toContain(uz.business.newBusiness);
+    const checkedDeal = await deal('osh');
+    expect(checkedDeal).toContain(uz.deal.verifiedNote);
+    expect(checkedDeal).toContain(`aria-label="${uz.business.verified}"`);
+    expect(await html(Home())).toContain(`aria-label="${uz.business.verified}"`);
+
+    // Long on the site and never checked: neither mark.
+    await state.db.prepare(`UPDATE businesses SET badge_verified_at = NULL, verified_at = ?1 WHERE id = 'biz'`).bind(minutes(-60 * 24 * 60)).run();
+    const old = await business('kafe');
+    expect(old).not.toContain(uz.business.verified);
+    expect(old).not.toContain(uz.business.newBusiness);
+  });
+
+  it('a review names its deal as a deal, so a short title is not read as the reviewer’s phone', async () => {
+    await state.db.batch([
+      state.db.prepare(`UPDATE deals SET title = 'Win 11' WHERE id = 'deal'`),
+      state.db.prepare(`INSERT INTO redemptions(id, deal_id, branch_id, user_id, idempotency_key, code_hash, code_hint, status, expires_at, completed_at)
+        VALUES ('r1', 'deal', 'br1', 'alice', 'key-r1', 'hash-r1', 'AB', 'COMPLETED', ?1, ?1)`).bind(minutes(-10)),
+      state.db.prepare(`INSERT INTO reviews(id, redemption_id, business_id, deal_id, user_id, rating, comment) VALUES ('v1', 'r1', 'biz', 'deal', 'alice', 5, 'Juda zo‘r')`),
+    ]);
+    const page = await business('kafe');
+    expect(page).toContain('Alice K.');
+    expect(page).toContain('Aksiya: «Win 11»');
+  });
+
+  it('an older text typed in capitals and an address written its own way read like the rest', async () => {
+    await state.db.batch([
+      state.db.prepare(`UPDATE businesses SET description = 'DASTURXON VA PARDALAR' WHERE id = 'biz'`),
+      state.db.prepare(`UPDATE branches SET address = 'Andijon Shahar' WHERE id = 'br1'`),
+    ]);
+    const page = await business('kafe');
+    expect(page).toContain('Dasturxon va pardalar');
+    expect(page).not.toContain('DASTURXON VA PARDALAR');
+    expect(page).toContain('Andijon shahar');
+    expect(page).not.toContain('Andijon Shahar');
+  });
+
+  it('the contact page gives a direct way to write and when to expect a reply, not only the form', async () => {
+    const contact = () => html(ContactPage({ searchParams: Promise.resolve({}) }));
+    const page = await contact();
+    expect(page).toContain('mailto:davlatsudekspert@gmail.com');
+    expect(page).toContain(uz.contact.responseTime);
+    expect(page).not.toContain('t.me/');
+    await state.db.prepare(`INSERT INTO app_settings(key, value) VALUES ('company_telegram', 'bugunbor_yordam')`).run();
+    const { forgetCompanyInfo } = await import('@/modules/company');
+    forgetCompanyInfo(state.db);
+    expect(await contact()).toContain('href="https://t.me/bugunbor_yordam"');
+  });
+
+  it('a category or a city page has its own title and description, and says it under the heading', async () => {
+    const foodAbout = categoryAbout({ slug: 'taomlar', nameUz: 'Taomlar', nameRu: 'Еда' }, 'uz');
+    expect(await categoryPage.generateMetadata({ params: Promise.resolve({ slug: 'taomlar' }) }))
+      .toMatchObject({ title: 'Taomlar: bugungi aksiyalar', description: foodAbout, alternates: { canonical: '/categories/taomlar' } });
+    expect(await view(categoryPage.default({ params: Promise.resolve({ slug: 'taomlar' }), searchParams: Promise.resolve({}) }))).toContain(foodAbout);
+
+    const city = (params: Record<string, string | undefined>) => discoverPage.generateMetadata({ searchParams: Promise.resolve(params) });
+    const samarkand = cityAbout('samarkand', 'uz');
+    expect(await city({ city: 'samarkand' }))
+      .toMatchObject({ title: 'Samarqand: bugungi aksiyalar', description: samarkand, alternates: { canonical: '/discover?city=samarkand' } });
+    // A search or another order inside a city is that city's page to a search engine.
+    expect(await city({ city: 'samarkand', sort: 'discount', q: 'osh' })).toMatchObject({ alternates: { canonical: '/discover?city=samarkand' } });
+    for (const params of [{}, { city: 'moscow' }]) {
+      expect(await city(params)).toMatchObject({ title: uz.discover.title, description: uz.meta.description, alternates: { canonical: '/discover' } });
+    }
+    expect(await view(discoverPage.default({ searchParams: Promise.resolve({ city: 'samarkand' }) }))).toContain(samarkand);
+  });
+
+  it('the sitemap lists a city once it has a real deal; a sample never puts one there', async () => {
+    await state.db.prepare(`UPDATE branches SET city = 'samarkand' WHERE id = 'demo_br'`).run();
+    const urls = (await sitemap()).map((entry) => entry.url);
+    expect(urls).toContain('https://bugunbor.uz/discover?city=tashkent');
+    expect(urls).not.toContain('https://bugunbor.uz/discover?city=samarkand');
+    expect(urls).toContain('https://bugunbor.uz/categories/taomlar');
+    expect(urls).not.toContain('https://bugunbor.uz/deals/namuna-somsa');
+  });
+
+  it('the sitemap lists every page in Uzbek and in Russian, each naming the other', async () => {
+    const entries = await sitemap();
+    const find = (url: string) => entries.find((entry) => entry.url === url);
+    const languages = { uz: 'https://bugunbor.uz/deals/osh', ru: 'https://bugunbor.uz/ru/deals/osh', 'x-default': 'https://bugunbor.uz/deals/osh' };
+    expect(find('https://bugunbor.uz/deals/osh')?.alternates).toEqual({ languages });
+    expect(find('https://bugunbor.uz/ru/deals/osh')?.alternates).toEqual({ languages });
+    for (const url of ['https://bugunbor.uz/ru', 'https://bugunbor.uz/ru/discover?city=tashkent', 'https://bugunbor.uz/ru/categories/taomlar', 'https://bugunbor.uz/ru/businesses/kafe']) {
+      expect(find(url), url).toBeTruthy();
+    }
+    // The privacy policy has its own address per language.
+    expect(find('https://bugunbor.uz/privacy?lang=ru')?.alternates?.languages).toMatchObject({ uz: 'https://bugunbor.uz/privacy', en: 'https://bugunbor.uz/privacy?lang=en' });
+    expect(find('https://bugunbor.uz/ru/privacy')).toBeUndefined();
+    expect(new Set(entries.map((entry) => entry.url)).size).toBe(entries.length);
+  });
+
+  it('a page shown in Russian names its /ru/ address as its own', async () => {
+    state.cookies[LOCALE_COOKIE] = 'ru';
+    expect(await discoverPage.generateMetadata({ searchParams: Promise.resolve({ city: 'samarkand' }) })).toMatchObject({
+      alternates: { canonical: '/ru/discover?city=samarkand', languages: { uz: '/discover?city=samarkand', ru: '/ru/discover?city=samarkand', 'x-default': '/discover?city=samarkand' } },
+    });
+    expect(await categoryPage.generateMetadata({ params: Promise.resolve({ slug: 'taomlar' }) })).toMatchObject({ alternates: { canonical: '/ru/categories/taomlar' } });
+    expect((await homeMetadata()).alternates).toMatchObject({ canonical: '/ru' });
+  });
+
+  it('the home page carries the codes an admin entered for Google and Yandex, and none before that', async () => {
+    const alternates = { canonical: '/', languages: { uz: '/', ru: '/ru', 'x-default': '/' } };
+    expect(await homeMetadata()).toEqual({ alternates });
+    await updateSiteVerification(state.db, { actorId: 'mod', codes: { google: 'googleCode_12345', yandex: '' } });
+    expect(await homeMetadata()).toEqual({ alternates, verification: { google: 'googleCode_12345' } });
+  });
+
+  it('on the Russian site a sample reads in Russian; a business’s own words stay as written', async () => {
+    await state.db.batch([
+      state.db.prepare(`UPDATE deals SET title = 'Kapuchino + kruassan', description = 'Katta kapuchino va sariyog‘li kruassan.' WHERE id = 'demo_deal'`),
+      state.db.prepare(`UPDATE deals SET title = 'Kapuchino + kruassan' WHERE id = 'deal'`),
+    ]);
+    state.cookies[LOCALE_COOKIE] = 'ru';
+    const sample = await deal('namuna-somsa');
+    expect(sample).toContain('Капучино + круассан');
+    expect(sample).toContain('Большой капучино и круассан на сливочном масле.');
+    expect(sample).toContain('Основной филиал');
+    expect(await deal('osh')).toContain('Kapuchino + kruassan');
+    const home = await html(Home());
+    expect(home).toContain('Капучино + круассан');
+    expect(home).toContain('Kapuchino + kruassan');
+  });
+
+  it('views show to the business only once there are enough to mean something', async () => {
+    state.cookies[SESSION_COOKIE] = (await createSession(state.db, 'owner', {})).token;
+    expect(await deal('osh')).not.toContain(uz.biz.deals.views);
+    await state.db.prepare(`UPDATE deals SET view_count = 12 WHERE id = 'deal'`).run();
+    expect(await deal('osh')).toContain(`${uz.biz.deals.views}: 12`);
+  });
+
+  it('home counts real deals only: a sample neither adds to the numbers nor raises the top discount', async () => {
+    const page = await html(Home());
+    expect(page).toContain('Bugun Toshkentda 1 ta faol aksiya');
+    expect(page).toContain('−40%');
+    expect(page).not.toContain('−60%');
+    expect(page).toContain(uz.home.trustVerified);
+    // The real deal leads; the sample still shows, marked, without a timer or «qoldi».
+    expect(page).toContain(uz.home.liveTitle);
+    expect(page).toContain('Namuna somsa');
+    expect(page).not.toContain('3 ta qoldi');
+  });
+
+  it('home with samples only promises nothing: no counts, no «live», sections say they are samples', async () => {
+    await state.db.prepare(`UPDATE deals SET status = 'PAUSED' WHERE is_demo = 0`).run();
+    const page = await html(Home());
+    expect(page).toContain('Toshkentda birinchi aksiyalar tez orada');
+    expect(page).not.toContain(uz.home.stats.deals);
+    expect(page).not.toContain('−60%');
+    expect(page).not.toContain(uz.home.liveBadge);
+    expect(page).toContain(uz.home.sampleTitle);
+    expect(page).toContain(uz.home.samplesTitle);
+    expect(page).toContain(uz.home.categorySamples);
+    expect(page).not.toContain('3 ta qoldi');
+    // The app block is in the footer only.
+    expect(page).not.toContain(uz.appStores.title);
+  });
+});

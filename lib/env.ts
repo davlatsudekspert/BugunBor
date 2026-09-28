@@ -1,5 +1,7 @@
 import { env } from 'cloudflare:workers';
 
+import type { PhotoCheckConfig } from '@/modules/media/check';
+
 /** Receipt data Payme needs when the cashbox has fiscalization: MXIK (IKPU) code, package code, VAT %. */
 export type PaymeFiscal = { ikpu: string; packageCode: string; vatPercent: number };
 
@@ -29,6 +31,8 @@ export type AppConfig = {
     payme: { merchantId: string; key: string; sandbox: boolean; fiscal: PaymeFiscal | null } | null;
     click: { serviceId: string; merchantId: string; secretKey: string; sandbox: boolean } | null;
   };
+  /** Claude looks at every public photo before it is kept (ANTHROPIC_API_KEY); null = photos are kept unchecked. */
+  photoCheck: PhotoCheckConfig | null;
 };
 
 const clean = (value: string | undefined) => {
@@ -61,7 +65,13 @@ export function getConfig(): AppConfig {
       minBuild: Number.parseInt(clean(env.MIN_APP_BUILD) ?? '0', 10) || 0,
     },
     payments: paymentsConfig(),
+    photoCheck: photoCheckConfig(),
   };
+}
+
+function photoCheckConfig(): PhotoCheckConfig | null {
+  const apiKey = clean(env.ANTHROPIC_API_KEY);
+  return apiKey ? { apiKey, model: clean(env.PHOTO_CHECK_MODEL) } : null;
 }
 
 function paymeFiscal(): PaymeFiscal | null {

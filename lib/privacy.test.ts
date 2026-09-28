@@ -35,6 +35,19 @@ describe('privacy policy', () => {
     expect([...markers].sort()).toEqual(Object.values(MISSING_LABELS).map((label) => `[TO'LDIRISH KERAK: ${label}]`).sort());
   });
 
+  it('names Anthropic only for the check of public business photos, never for profile photos or texts', () => {
+    for (const locale of PRIVACY_LOCALES) {
+      const policy = privacyPolicy(locale);
+      const lines = policy.sections.flatMap((section) => [...(section.paragraphs ?? []), ...(section.items ?? []), section.after ?? '']);
+      const mentions = lines.filter((line) => /Anthropic/.test(line));
+      expect(mentions.length).toBeGreaterThanOrEqual(3);
+      // Each mention is about photos (the check, the processor list, where they go).
+      expect(mentions.every((line) => /rasm|фото|photo/i.test(line))).toBe(true);
+    }
+    expect(text()).toContain('Profil rasmingiz tekshiruvga yuborilmaydi.');
+    expect(text()).toContain('matn tashqi xizmatga yuborilmaydi');
+  });
+
   it('quotes the same periods the code uses', () => {
     expect(LOGIN_TTL_MINUTES).toBe(10);
     const uz = text().split('\n');
@@ -45,7 +58,7 @@ describe('privacy policy', () => {
 
   it('describes only BugunBor, with no other product’s features and no home address', () => {
     const all = text();
-    expect(all).not.toMatch(/NFC|Reels|Gemini|Anthropic|Resend|Google Play|auksion|аукцион|nfcstore/i);
+    expect(all).not.toMatch(/NFC|Reels|Gemini|Resend|Google Play|auksion|аукцион|nfcstore/i);
     expect(all).not.toMatch(/ko‘chasi|улица|ул\.|street|uy\b|дом \d/i);
     expect(all).not.toMatch(/reyestr|реестр|register of personal data/i);
   });

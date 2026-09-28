@@ -22,7 +22,8 @@
 | `/qollanma` | Video guides: «Nima uchun BugunBor?» and the 1–4 series (the APK guide only while the site serves the APK); files in `public/qollanma` |
 | `/offline` | Shown by the service worker without a connection |
 | `/r/[code]` | QR target: opens the staff check page with the code filled in |
-| `/lang/[locale]` | Switches language (`uz`, `ru`) and returns |
+| `/lang/[locale]` | Switches language (`uz`, `ru`) and returns to the page at its address in that language |
+| `/ru/…` | The public pages above in Russian (`/ru`, `/ru/deals/[slug]`, …): served by `worker.ts` as the same page with the language on Russian, and the visitor's language is set to Russian. Other `/ru/…` addresses go through `/lang/ru`. The privacy policy keeps `?lang=`. Rules in `lib/locale-paths.ts` |
 
 ## Business workspace (`/business`)
 

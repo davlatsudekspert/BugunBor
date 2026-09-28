@@ -4,11 +4,12 @@ import { ChevronDown } from 'lucide-react';
 import { getDb } from '@/db/client';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
+import { localeAlternates } from '@/lib/locale-paths';
 import { getBillingSettings, listPlans } from '@/modules/billing/service';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getI18n();
-  return { title: t.faq.title, description: t.faq.metaDescription, alternates: { canonical: '/faq' } };
+  const { t, locale } = await getI18n();
+  return { title: t.faq.title, description: t.faq.metaDescription, alternates: localeAlternates('/faq', locale) };
 }
 
 export default async function FaqPage() {

@@ -132,7 +132,7 @@ export default async function BusinessDashboardPage() {
                   <li key={review.id} className="text-sm">
                     <RatingStars value={review.rating} className="[&>svg]:size-3.5" />
                     {review.comment ? <p className="mt-1 text-slate-700">{review.comment}</p> : null}
-                    <p className="mt-0.5 text-xs text-slate-500">{review.author ?? t.common.anonymous} · {review.dealTitle}</p>
+                    <p className="mt-0.5 text-xs text-slate-500">{review.author ?? t.common.anonymous} · {fmt(t.business.reviewDeal, { title: `«${review.dealTitle}»` })}</p>
                   </li>
                 ))}
               </ul>

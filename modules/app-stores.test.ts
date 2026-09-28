@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { applyMigrations } from '@/db/migrate';
 import { createTestD1 } from '@/test/d1';
-import { APK_FILES, APK_RELEASE_BASE, GOOGLE_PLAY_URL, appStores, forgetAppStores, forgetLatestApk, latestApkBuild } from './app-stores';
+import { APK_FILES, APK_RELEASE_BASE, GOOGLE_PLAY_URL, appStores, forgetAppStores, forgetLatestApk, latestApkBuild, latestApkSize } from './app-stores';
 
 describe('app store links', () => {
   it('follows the admin’s choice: coming soon, the APK page, or Google Play', async () => {
@@ -54,6 +54,25 @@ describe('app store links', () => {
     // No release at all.
     forgetLatestApk();
     expect(await latestApkBuild(answer(null, 404), at)).toBeNull();
+    forgetLatestApk();
+  });
+
+  it('reads the newest APK’s size from one byte of it, remembers it, and keeps it when GitHub is away', async () => {
+    forgetLatestApk();
+    const calls: Array<{ url: string; range: string | null }> = [];
+    const file = (total: number | null, status = 206) => (async (url: string | URL | Request, init?: RequestInit) => {
+      calls.push({ url: url instanceof Request ? url.url : url.toString(), range: new Headers(init?.headers).get('range') });
+      return new Response(status === 206 ? 'x' : null, { status, headers: total ? { 'content-range': `bytes 0-0/${total}` } : {} });
+    }) as typeof fetch;
+    const at = 1_000_000;
+    expect(await latestApkSize(file(30_012_345), at)).toBe(30_012_345);
+    expect(calls).toEqual([{ url: 'https://github.com/davlatsudekspert/BugunBor/releases/latest/download/BugunBor-arm64.apk', range: 'bytes=0-0' }]);
+    expect(await latestApkSize(file(26_400_000), at + 60_000)).toBe(30_012_345);
+    const down = (async () => { throw new Error('offline'); }) as typeof fetch;
+    expect(await latestApkSize(down, at + 11 * 60_000)).toBe(30_012_345);
+    // A reply without the length keeps what was known; no release at all is no size.
+    expect(await latestApkSize(file(null, 200), at + 22 * 60_000)).toBe(30_012_345);
+    expect(await latestApkSize(file(null, 404), at + 33 * 60_000)).toBeNull();
     forgetLatestApk();
   });
 });

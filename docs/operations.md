@@ -39,6 +39,14 @@ Migrations run automatically on the first request after a deploy. They are addit
 
 Development always shows the demo catalogue. Production shows it with `DEMO_SEED=true`, or when an admin presses «Namuna bizneslarni ko‘rsatish» in Admin → Sozlamalar (no redeploy; «yashirish» hides it again). Demo businesses and deals carry `is_demo = 1`, never have phone numbers, and are hidden again as soon as the flag is off. Ended demo deals restart automatically every few minutes, and a new catalogue version (`DEMO_CATALOG_VERSION`) loads the same way, with no need to switch demo mode off and on.
 
+## Search engines
+
+1. Add the site in Google Search Console (URL prefix `https://bugunbor.uz/`, method «HTML tag») and in Yandex Webmaster (method «Мета-тег»).
+2. Paste each code, or the whole `<meta …>` tag, in **Admin → Sozlamalar → Qidiruv tizimlari** and save. The home page carries them within two minutes; then press Verify / Проверить there. An empty field takes a code away.
+3. Submit `https://bugunbor.uz/sitemap.xml` in both (Google: Sitemaps; Yandex: Индексирование → Файлы Sitemap). It lists the static pages, the categories, the cities that have a real deal (`/discover?city=…`), live real deals and public businesses, each in Uzbek (the plain address) and in Russian (`/ru/…`) with `hreflang` links between them; samples are never in it.
+
+Every public page names its address in the language it is shown in (`canonical`) and both versions (`hreflang` uz, ru, x-default = Uzbek). Russian pages live at `/ru/…` (`lib/locale-paths.ts`, `worker.ts`), so search engines index both languages; the language cookie alone never changes what a search engine sees.
+
 ## Speed
 
 - Guests' public pages (home, deals, categories, business pages, FAQ, offer) are kept in the edge cache for 30 seconds (`worker.ts`, `lib/page-cache.ts`); the `x-page-cache: HIT|MISS` header shows it. Signed-in visitors, responses that set cookies and client navigation payloads are never cached.
@@ -54,6 +62,18 @@ Development always shows the demo catalogue. Production shows it with `DEMO_SEED
 ## Photos
 
 Uploaded photos live in D1 (`media`) and are served from `/media/:id` with a one-year cache. If storage grows past a few GB, move `modules/media/service.ts` to R2; the URLs stay the same.
+
+### Automatic photo check
+
+Every public photo (deal photo, logo, cover), from the site and the app alike, is looked at by Claude before it is kept (`modules/media/check.ts`). A photo with military, political or religious content (even in the background), nudity, alcohol, tobacco or drugs, gambling, hate symbols or a personal document is refused with the reason in the uploader's language, nothing of it is stored, and **Admin → Audit** gets a `media.refused` line. If the service does not answer (two tries, 12 s each), the upload is refused with "try again in a minute". Profile photos are not sent: only their owner sees them.
+
+To switch it on, add BugunBor's **own** Anthropic API key as a Worker secret — never another project's key:
+
+1. console.anthropic.com → create a key for BugunBor (set a monthly spend limit there).
+2. Cloudflare → Workers & Pages → the BugunBor Worker → Settings → Variables and Secrets → Add → type **Secret**, name `ANTHROPIC_API_KEY`, paste the key → Deploy. (Or `npx wrangler secret put ANTHROPIC_API_KEY`.)
+3. **Admin → Sozlamalar → Avtomatik moderatsiya** shows «Rasmlarni avtomatik tekshirish: Yoqilgan».
+
+Optional: `PHOTO_CHECK_MODEL` picks another Claude model (default `claude-sonnet-5`). Without the key photos are kept as before and marked `UNCHECKED` in `media.check_status`; moderators can still remove a business's or deal's photos.
 
 Demo photos are static files in `public/photos` with authors in `lib/stock-photos.ts` (see `docs/RASMLAR.md`):
 

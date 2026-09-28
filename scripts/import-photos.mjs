@@ -14,7 +14,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { extname, basename, join } from 'node:path';
 
-import { MILITARY, writePhoto, writePhotos } from './fetch-stock-photos.mjs';
+import { MILITARY, SENSITIVE, writePhoto, writePhotos } from './fetch-stock-photos.mjs';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 
@@ -109,6 +109,10 @@ for (const file of files) {
   const credit = credits.get(file.toLowerCase()) ?? { author: option('author', 'BugunBor'), license: option('license', 'Own photo'), url: '/credits' };
   if (MILITARY.test(`${file} ${credit.url} ${credit.author}`)) {
     console.warn(`✗ ${file}: military subject, not allowed`);
+    continue;
+  }
+  if (SENSITIVE.test(`${file} ${credit.url}`)) {
+    console.warn(`✗ ${file}: political or religious subject, not allowed`);
     continue;
   }
   const url = licenseUrl(credit.license);

@@ -169,4 +169,7 @@ extension ThemeX on BuildContext {
   /// Errors and "delete" / "cancel" actions, readable in both themes (plain
   /// red is too light on white and too dark on the dark surface).
   Color get dangerText => isDark ? const Color(0xFFFF8A80) : const Color(0xFFB3261E);
+
+  /// Rules and cautions (what a photo must not show), amber in both themes.
+  Color get warningText => isDark ? const Color(0xFFFBBF24) : const Color(0xFF92400E);
 }

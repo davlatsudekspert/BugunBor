@@ -3,13 +3,15 @@ import { AlertTriangle, Clock3, Download, Play, PlayCircle, RefreshCw, Smartphon
 
 import { getDb } from '@/db/client';
 import { getConfig } from '@/lib/env';
+import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
-import { APP_PAGE, appStores, type AppStores } from '@/modules/app-stores';
+import { localeAlternates } from '@/lib/locale-paths';
+import { APP_PAGE, appStores, latestApkSize, type AppStores } from '@/modules/app-stores';
 import { APK_GUIDE, GUIDES_PAGE } from '@/modules/guides';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getI18n();
-  return { title: t.appPage.metaTitle, description: t.appPage.metaDescription, alternates: { canonical: APP_PAGE } };
+  const { t, locale } = await getI18n();
+  return { title: t.appPage.metaTitle, description: t.appPage.metaDescription, alternates: localeAlternates(APP_PAGE, locale) };
 }
 
 // The phone app: the APK from this site with the install steps, Google Play
@@ -17,6 +19,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function AppPage() {
   const { t } = await getI18n();
   const stores: AppStores = await getDb().then(appStores).catch(() => ({ mode: 'off', android: null }));
+  // The size of the file the button gives today ("39,6 MB"), read from the release rather than written once.
+  const size = stores.mode === 'apk' ? await latestApkSize() : null;
   const p = t.appPage;
   const origin = getConfig().appUrl ?? 'https://bugunbor.uz';
   const app = {
@@ -48,7 +52,7 @@ export default async function AppPage() {
               <Download className="size-6 shrink-0" aria-hidden />
               <span className="text-lg">{p.download}</span>
             </a>
-            <p className="mt-3 text-sm text-slate-600">{p.downloadNote}</p>
+            <p className="mt-3 text-sm text-slate-600">{size ? fmt(p.downloadNote, { size: (size / 1e6).toFixed(1).replace('.', ',') }) : p.downloadNoteNoSize}</p>
             <a href={`${APP_PAGE}/yuklash?v=32`} className="inline-block py-2 text-sm font-bold text-primary hover:underline">{p.old}</a>
           </>
         ) : stores.mode === 'play' && stores.android ? (

@@ -16,8 +16,9 @@ import { DEMO_SETTING, forgetDemoSetting } from '@/modules/demo';
 import { DomainError } from '@/modules/errors';
 import { forgetCachedMedia } from '@/modules/media/service';
 import { AUTO_SETTING_KEYS, autoModerateBusiness, autoModerateDeal, autoModeratePendingDeals } from '@/modules/moderation/auto';
-import { archiveDealByModerator, decideBusiness, decideDeal, releaseDealHold, removeImagesByModerator, setBusinessSuspended } from '@/modules/moderation/service';
+import { archiveDealByModerator, decideBusiness, decideDeal, releaseDealHold, removeImagesByModerator, setBusinessBadge, setBusinessCategory, setBusinessSuspended } from '@/modules/moderation/service';
 import { resolveReport } from '@/modules/reports';
+import { updateSiteVerification, verificationCode, type SearchEngine } from '@/modules/search-engines';
 import { createTelegramApi } from '@/modules/telegram/api';
 import { ensureTelegramWebhook } from '@/modules/telegram/setup';
 
@@ -26,12 +27,22 @@ const decision = z.enum(['APPROVE', 'REJECT']);
 const reason = z.string().trim().max(800).default('');
 const limit = z.number().int().min(1).max(100_000).nullable();
 const planCode = z.enum(['START', 'BIZNES', 'PREMIUM']);
+/** A search engine's verification code, or its whole <meta> tag reduced to the code. */
+const verification = (engine: SearchEngine) =>
+  z.string().max(400).default('').transform((value, context) => {
+    const code = verificationCode(engine, value);
+    if (code !== null) return code;
+    context.addIssue({ code: 'custom', message: engine });
+    return z.NEVER;
+  });
 
 const actionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('deal.decide'), dealId: id, decision, reason }),
   z.object({ type: z.literal('deal.archive'), dealId: id, reason }),
   z.object({ type: z.literal('deal.release'), dealId: id }),
   z.object({ type: z.literal('business.decide'), businessId: id, decision, reason }),
+  z.object({ type: z.literal('business.badge'), businessId: id, on: z.boolean() }),
+  z.object({ type: z.literal('business.category'), businessId: id, categoryId: id }),
   z.object({ type: z.literal('message.status'), messageId: id, status: z.enum(['NEW', 'READ', 'ARCHIVED']) }),
   z.object({ type: z.literal('images.remove'), target: z.enum(['BUSINESS', 'DEAL']), id, reason }),
   z.object({ type: z.literal('review.visibility'), reviewId: id, hidden: z.boolean(), reason }),
@@ -76,10 +87,13 @@ const actionSchema = z.discriminatedUnion('type', [
     address: z.string().trim().max(240),
     phone: z.string().trim().max(30),
     email: z.string().trim().max(120).refine((value) => !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)),
+    // A Telegram username (5–32 letters, digits, _), with or without @ or t.me/.
+    telegram: z.string().trim().max(60).transform((value) => value.replace(/^(?:https?:\/\/)?(?:t\.me\/|@)/i, '')).refine((value) => !value || /^[A-Za-z0-9_]{5,32}$/.test(value)).default(''),
   }),
+  z.object({ type: z.literal('seo.verification'), google: verification('google'), yandex: verification('yandex') }),
 ]);
 
-const moderatorActions = new Set(['deal.decide', 'deal.archive', 'deal.release', 'business.decide', 'message.status', 'images.remove', 'review.visibility', 'report.resolve']);
+const moderatorActions = new Set(['deal.decide', 'deal.archive', 'deal.release', 'business.decide', 'business.badge', 'business.category', 'message.status', 'images.remove', 'review.visibility', 'report.resolve']);
 
 export const POST = route(async (request: Request) => {
   assertSameOrigin(request);
@@ -104,6 +118,12 @@ export const POST = route(async (request: Request) => {
       if (result.status === 'VERIFIED') await autoModeratePendingDeals(db, action.businessId);
       return json({ data: result });
     }
+    case 'business.badge':
+      await setBusinessBadge(db, { actorId, businessId: action.businessId, on: action.on });
+      return json({ data: { ok: true } });
+    case 'business.category':
+      await setBusinessCategory(db, { actorId, businessId: action.businessId, categoryId: action.categoryId });
+      return json({ data: { ok: true } });
     case 'message.status':
       await setMessageStatus(db, { messageId: action.messageId, status: action.status });
       return json({ data: { ok: true } });
@@ -167,8 +187,13 @@ export const POST = route(async (request: Request) => {
     case 'company.update': {
       const phone = action.phone ? tryNormalizeUzbekPhone(action.phone) : '';
       if (phone === null) throw new DomainError('VALIDATION');
-      await updateCompanyInfo(db, { actorId, info: { legalName: action.legalName, tin: action.tin, registration: action.registration, address: action.address, phone, email: action.email } });
+      await updateCompanyInfo(db, { actorId, info: { legalName: action.legalName, tin: action.tin, registration: action.registration, address: action.address, phone, email: action.email, telegram: action.telegram } });
       return json({ data: { ok: true } });
+    }
+    case 'seo.verification': {
+      const codes = { google: action.google, yandex: action.yandex };
+      await updateSiteVerification(db, { actorId, codes });
+      return json({ data: codes });
     }
     case 'automation.update': {
       await updateSettings(db, { actorId, values: { [AUTO_SETTING_KEYS[action.key]]: action.on ? '1' : '0' } });

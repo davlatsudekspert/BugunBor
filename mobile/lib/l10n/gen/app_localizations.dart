@@ -2355,6 +2355,12 @@ abstract class L {
   /// **'Mahsulot yoki xizmatingizning o‘zingiz olgan haqiqiy fotosurati. Rasm bo‘lmasa, chiroyli belgi ko‘rsatiladi.'**
   String get dealPhotoHint;
 
+  /// No description provided for @photoRules.
+  ///
+  /// In uz, this message translates to:
+  /// **'Harbiy kiyim, qurol, siyosiy va diniy mavzudagi rasmlar qabul qilinmaydi: bunday rasm rad etiladi.'**
+  String get photoRules;
+
   /// No description provided for @dealPhotoAdd.
   ///
   /// In uz, this message translates to:
@@ -2694,7 +2700,7 @@ abstract class L {
   /// No description provided for @profilePhotoHint.
   ///
   /// In uz, this message translates to:
-  /// **'Rasm faqat sizga ko‘rinadi.'**
+  /// **'Rasm faqat sizga ko‘rinadi. Harbiy, siyosiy va diniy mavzudagi rasm qo‘ymang.'**
   String get profilePhotoHint;
 
   /// No description provided for @homeHowTitle.

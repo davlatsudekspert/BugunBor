@@ -3,10 +3,12 @@
 import { Languages } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
+import { withoutLocale } from '@/lib/locale-paths';
 import { cn } from '@/lib/utils';
 
 export function LanguageSwitch({ locale, label, className, full = false }: { locale: 'uz' | 'ru'; label: string; className?: string; full?: boolean }) {
-  const pathname = usePathname();
+  // The page's plain address: on /ru/… the browser shows the prefix the server never saw.
+  const pathname = withoutLocale(usePathname());
   const search = useSearchParams().toString();
   const target = locale === 'uz' ? 'ru' : 'uz';
   const next = `${pathname}${search ? `?${search}` : ''}`;

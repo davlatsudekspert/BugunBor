@@ -16,6 +16,7 @@
   "visual": null,
   "photo": null,
   "isDemo": false,
+  "set": null,
   "category": {
     "slug": "taomlar",
     "nameUz": "Taomlar",
@@ -35,7 +36,9 @@
     "isDemo": false,
     "logo": null,
     "rating": null,
-    "onAir": true
+    "onAir": true,
+    "badge": false,
+    "isNew": true
   },
   "branches": [
     {
@@ -65,6 +68,5 @@
   "following": false,
   "followers": 0,
   "usedCount": 0,
-  "activeRedemptionId": null,
-  "set": null
+  "activeRedemptionId": null
 }

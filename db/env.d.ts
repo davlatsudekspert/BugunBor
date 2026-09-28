@@ -42,5 +42,9 @@ declare namespace Cloudflare {
     REVIEW_LOGIN_CODE?: string;
     /** Oldest app build that may still be used; older builds are asked to update. */
     MIN_APP_BUILD?: string;
+    /** BugunBor's own Anthropic API key (secret): Claude checks every public photo before it is kept. Unset = photos are kept unchecked. */
+    ANTHROPIC_API_KEY?: string;
+    /** Model for the photo check; defaults to PHOTO_CHECK_MODEL in modules/media/check.ts. */
+    PHOTO_CHECK_MODEL?: string;
   }
 }

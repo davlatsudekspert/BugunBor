@@ -930,6 +930,21 @@ class _DealFormState extends ConsumerState<_DealForm> {
         ),
         const SizedBox(height: Gap.xs),
         Text(l.dealPhotoHint, style: TextStyle(color: context.mutedText, fontSize: 12.5, height: 1.4)),
+        const SizedBox(height: Gap.xs),
+        // What is never accepted, shown to everyone who adds a photo.
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.shield_outlined, size: 16, color: context.warningText),
+            const SizedBox(width: Gap.xs),
+            Expanded(
+              child: Text(
+                l.photoRules,
+                style: TextStyle(color: context.warningText, fontSize: 12.5, height: 1.4, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }

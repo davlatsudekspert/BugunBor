@@ -7,6 +7,7 @@ import { cityName, isCitySlug, nearestCity } from '@/lib/cities';
 import { getPreferredCity } from '@/lib/city-cookie';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
+import { categoryAbout, cityAbout } from '@/lib/place-texts';
 import { cn } from '@/lib/utils';
 import { getCurrentUser } from '@/modules/auth/current';
 import { SORT_KEYS, categoryName, getFavoriteIds, listCategories, listLiveDeals, type Category, type SortKey } from '@/modules/catalog/queries';
@@ -53,7 +54,7 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
 
   const demo = await demoEnabled(db);
   const [deals, categories, favorites] = await Promise.all([
-    listLiveDeals(db, { city, category: categorySlug, query: params.q, sort, sets, near, demo }),
+    listLiveDeals(db, { city, category: categorySlug, query: params.q, sort, sets, near, demo, locale }),
     category ? Promise.resolve([] as Category[]) : listCategories(db),
     user ? getFavoriteIds(db, user.id) : Promise.resolve(new Set<string>()),
   ]);
@@ -62,6 +63,7 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
   // Nothing found because of a search, a place or «Setlar» (a category page may still have other deals).
   const filteredOut = hasFilters && (!category || sets || Boolean(params.q) || Boolean(near));
   const sortLabels: Record<SortKey, string> = t.discover.sort;
+  const about = category ? categoryAbout(category, locale) : cityAbout(city, locale);
 
   return (
     <main>
@@ -81,6 +83,7 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
               <h1 className="mt-2 text-4xl font-black tracking-[-.05em] text-navy">{t.discover.title}</h1>
             </>
           )}
+          {about ? <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">{about}</p> : null}
 
           <form action={basePath} className="mt-6 flex max-w-3xl flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm sm:flex-row">
             <label className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-xl px-3 focus-within:ring-2 focus-within:ring-primary/25">

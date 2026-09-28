@@ -8,12 +8,13 @@ import { cityName } from '@/lib/cities';
 import { getPreferredCity } from '@/lib/city-cookie';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
+import { localeAlternates } from '@/lib/locale-paths';
 import { cn } from '@/lib/utils';
 import { categoryName, countByCategory, listCategories, listLiveDeals } from '@/modules/catalog/queries';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getI18n();
-  return { title: t.categories.title, description: t.categories.text, alternates: { canonical: '/categories' } };
+  const { t, locale } = await getI18n();
+  return { title: t.categories.title, description: t.categories.text, alternates: localeAlternates('/categories', locale) };
 }
 
 export default async function CategoriesPage() {

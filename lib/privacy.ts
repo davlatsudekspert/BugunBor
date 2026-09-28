@@ -13,11 +13,14 @@ import { SESSION_DAYS } from '@/modules/auth/sessions';
 export const PRIVACY_LOCALES = ['uz', 'ru', 'en'] as const;
 export type PrivacyLocale = (typeof PRIVACY_LOCALES)[number];
 
+/** Each language's own address: the plain one for Uzbek (the site's default). */
+export const PRIVACY_LANGUAGES: Record<PrivacyLocale, string> = { uz: '/privacy', ru: '/privacy?lang=ru', en: '/privacy?lang=en' };
+
 export const isPrivacyLocale = (value: unknown): value is PrivacyLocale =>
   typeof value === 'string' && (PRIVACY_LOCALES as readonly string[]).includes(value);
 
 /** The text's date. Each user's consent is stored with the version they accepted. */
-export const PRIVACY_VERSION = '2026-09-26';
+export const PRIVACY_VERSION = '2026-09-28';
 
 /** Minutes a Telegram login request stays open (modules/auth/login.ts LOGIN_TTL_MINUTES). */
 export const LOGIN_REQUEST_MINUTES = 10;
@@ -139,7 +142,8 @@ function uz(d: Values, r: Periods): PrivacyPolicy {
       ] },
       { id: 'photos', title: 'Rasmlar va avtomatik tekshiruv', paragraphs: [
         'Biznes logotipi, muqovasi va aksiya rasmlari yuklashdan oldin brauzeringizning o‘zida qayta chiziladi va siqiladi — bunda fayl ichidagi yashirin ma’lumotlar (masalan, suratga olingan joy koordinatalari) olib tashlanadi. Rasmlar serverimizda saqlanadi va biznes sahifasida hammaga ko‘rinadi; hech qayerda ishlatilmayotgan rasm 1 kun ichida o‘chiriladi. Profil rasmingiz ham shunday siqiladi, lekin uni faqat o‘zingiz ko‘rasiz (saytdagi kabinetingiz va ilovadagi Profil); uni istalgan vaqtda olib tashlashingiz mumkin, yangisi eskisining o‘rniga yoziladi.',
-        'Yangi biznes, aksiya va sharhlar matni avtomatik tekshiriladi (havola, taqiqlangan mavzu, karta raqami, haqoratli so‘z, shubhali narx). Tekshiruv o‘z serverimizda bajariladi — matn va rasmlar tashqi xizmat yoki sun’iy intellektga yuborilmaydi. Avtomatik tekshiruv hech narsani rad etmaydi: toza e’lon darhol chiqadi, shubhalisini moderator ko‘rib chiqadi; haqoratli so‘z topilgan sharh avtomatik yashiriladi.',
+        'Yangi biznes, aksiya va sharhlar matni o‘z serverimizda avtomatik tekshiriladi (havola, taqiqlangan mavzu, karta raqami, haqoratli so‘z, shubhali narx) — matn tashqi xizmatga yuborilmaydi. Matn tekshiruvi hech narsani rad etmaydi: toza e’lon darhol chiqadi, shubhalisini moderator ko‘rib chiqadi; haqoratli so‘z topilgan sharh avtomatik yashiriladi.',
+        'Biznes yuklagan ochiq rasmlar (aksiya rasmi, logotip, muqova) saqlanishidan oldin Anthropic kompaniyasining Claude sun’iy intellekt xizmatiga faqat qoidalarga mosligini tekshirish uchun yuboriladi: harbiy, siyosiy va diniy mavzu, odob-axloqqa zid narsa, alkogol, tamaki va giyohvand modda, qimor, nafrat belgilari va shaxsiy hujjatlar bo‘lmasligi kerak. Rasm bilan birga boshqa ma’lumot (ism, telefon, biznes nomi) yuborilmaydi. Qoidaga zid rasm rad etiladi va saqlanmaydi; jurnalga faqat rad etish sababi yoziladi. Profil rasmingiz tekshiruvga yuborilmaydi.',
       ] },
       { id: 'location', title: 'Joylashuv', paragraphs: [
         '«Yaqinimdagilar» tugmasini bossangiz, brauzer ruxsat so‘raydi. Ruxsat bersangiz, joylashuvingiz taxminan 100 metrgacha yaxlitlanib, faqat aksiyalarni masofa bo‘yicha saralash uchun serverga yuboriladi va bazaga yozilmaydi. Joylashuv fonda olinmaydi.',
@@ -157,11 +161,12 @@ function uz(d: Values, r: Periods): PrivacyPolicy {
       ], after: 'Reklama, kuzatuv va analitika cookie’lari ishlatilmaydi. Cookie’larni brauzer sozlamalarida o‘chirishingiz mumkin, ammo unda tizimga kira olmaysiz.' },
       { id: 'services', title: 'Ma’lumot yuboriladigan xizmatlar', items: [
         'Cloudflare, Inc. — sayt serveri, ma’lumotlar bazasi, rasmlarni saqlash va sahifalar keshi.',
+        'Anthropic, PBC (Claude) — biznes yuklagan ochiq rasmlarni qoidalarga mosligini avtomatik tekshirish; faqat rasmning o‘zi yuboriladi.',
         'Telegram — kirish tasdig‘i va xabarnomalar: botimiz sizga Telegram ID raqamingiz orqali xabar yuboradi (xabarda aksiya nomi, manzil, kod muddati kabi ma’lumotlar bo‘ladi).',
         'Google Firebase Cloud Messaging — ilova xabarnomalarini telefoningizga yetkazish: qurilma tokeni va xabar matni uzatiladi. Ilovani o‘rnatgan bo‘lsangiz, xabarnoma Telegram o‘rniga ilovaga keladi.',
         'Payme va Click — faqat tariflar ochilganda, biznes tarifini to‘lash uchun: to‘lov sahifasiga buyurtma raqami va summa uzatiladi, karta ma’lumotlarini faqat to‘lov tizimi ko‘radi. Hozircha tariflar yopiq va onlayn to‘lov o‘chiq.',
         'Google Xaritalar — faqat «Yo‘l ko‘rsatish» tugmasini bosganingizda (filial manzili uzatiladi).',
-      ], after: 'Cloudflare va Firebase ma’lumotni faqat bizning topshirig‘imiz bilan va faqat shu maqsadlarda qayta ishlaydi; Telegram, Payme, Click va Google esa ularning xizmatidan foydalanganingizda o‘z shartlari bo‘yicha ishlaydi. Elektron pochta, SMS, reklama, analitika yoki sun’iy intellekt xizmatlariga ma’lumot yuborilmaydi. Qonun talab qilgan holatlardan tashqari ma’lumot boshqa uchinchi shaxslarga berilmaydi.' },
+      ], after: 'Cloudflare, Firebase va Anthropic ma’lumotni faqat bizning topshirig‘imiz bilan va faqat shu maqsadlarda qayta ishlaydi; Telegram, Payme, Click va Google esa ularning xizmatidan foydalanganingizda o‘z shartlari bo‘yicha ishlaydi. Elektron pochta, SMS, reklama yoki analitika xizmatlariga ma’lumot yuborilmaydi; sun’iy intellektga faqat biznes rasmlari tekshiruv uchun yuboriladi. Qonun talab qilgan holatlardan tashqari ma’lumot boshqa uchinchi shaxslarga berilmaydi.' },
       { id: 'age', title: 'Yosh cheklovi', paragraphs: [
         `BugunBor ${d.age} yoshga to‘lgan foydalanuvchilar uchun. Bu yoshga to‘lmagan bo‘lsangiz, ro‘yxatdan o‘tmang. Bunday hisob aniqlansa, u o‘chiriladi. Biznesni faqat uning egasi yoki vakolatli vakili ro‘yxatdan o‘tkazadi.`,
       ] },
@@ -190,7 +195,7 @@ function uz(d: Values, r: Periods): PrivacyPolicy {
       ] },
       { id: 'storage', title: 'Ma’lumotlar qayerda saqlanadi va chegaradan tashqariga uzatish', paragraphs: [
         `Ma’lumotlar bazasi va yuklangan rasmlar Cloudflare, Inc. (AQSh) serverlarida saqlanadi; bazaning mintaqasi — ${d.region}. Qonunning 27¹-moddasiga ko‘ra O‘zbekiston hududida saqlanishi majburiy bo‘lgan biometrik va genetik ma’lumotlar BugunBor tomonidan yig‘ilmaydi.`,
-        'Boshqa ma’lumotlar Vazirlar Mahkamasining 2026-yil 29-iyuldagi 415-son qarori bilan tasdiqlangan, shaxsga doir ma’lumotlarning teng darajada himoyasini ta’minlovchi xorijiy davlatlar ro‘yxati asosida chet elda saqlanadi: AQSh bu ro‘yxatga EI–AQSh «Data Privacy Framework» dasturi ishtirokchilari uchun kiritilgan, Cloudflare esa shu dastur ishtirokchisi. Telegram va Google (Firebase) serverlari ham O‘zbekistondan tashqarida bo‘lishi mumkin; ularga faqat kirish va xabarnomalar uchun zarur ma’lumot uzatiladi. Ro‘yxatdan o‘tishda (tizimga kirishda) siz bunga rozilik berasiz.',
+        'Boshqa ma’lumotlar Vazirlar Mahkamasining 2026-yil 29-iyuldagi 415-son qarori bilan tasdiqlangan, shaxsga doir ma’lumotlarning teng darajada himoyasini ta’minlovchi xorijiy davlatlar ro‘yxati asosida chet elda saqlanadi: AQSh bu ro‘yxatga EI–AQSh «Data Privacy Framework» dasturi ishtirokchilari uchun kiritilgan, Cloudflare esa shu dastur ishtirokchisi. Telegram va Google (Firebase) serverlari ham O‘zbekistondan tashqarida bo‘lishi mumkin; ularga faqat kirish va xabarnomalar uchun zarur ma’lumot uzatiladi. Biznes rasmlari tekshiruv uchun Anthropic (AQSh) serverlariga ham uzatiladi. Ro‘yxatdan o‘tishda (tizimga kirishda) siz bunga rozilik berasiz.',
       ] },
       { id: 'deletion', title: 'Hisobni va ma’lumotni o‘chirish', paragraphs: [
         'Hisobingizni istalgan vaqtda o‘zingiz o‘chirishingiz mumkin: bugunbor.uz/delete-account sahifasida yoki saytga kirib → «Kabinet» (telefonda pastki menyuda «Profil») → «Hisobni o‘chirish». Hisob darhol o‘chiriladi: telefon raqamingiz, Telegram ma’lumotlaringiz, ismingiz va profil rasmingiz o‘chiriladi, barcha sessiyalar yopiladi, faol kodlar bekor qilinadi, saqlangan aksiyalar, obunalar va xabarnomalar o‘chiriladi, sharhlaringiz matni olib tashlanadi (baho anonim qoladi), biznes jamoalaridan chiqarilasiz, ilova qurilmalari, qiziqishlar, bloklar va xabarnoma hududi o‘chiriladi. Kodlar tarixi bizneslar statistikasi uchun anonim holda qoladi. Ilovada ham: Profil → «Hisobni o‘chirish».',
@@ -232,7 +237,8 @@ function ru(d: Values, r: Periods): PrivacyPolicy {
       ] },
       { id: 'photos', title: 'Фото и автоматическая проверка', paragraphs: [
         'Логотип, обложка и фото акций перед загрузкой перерисовываются и сжимаются прямо в вашем браузере — при этом удаляются скрытые данные файла (например, координаты места съёмки). Фото хранятся на нашем сервере и видны всем на странице бизнеса; фото, которое нигде не используется, удаляется в течение 1 дня. Фото профиля сжимается так же, но его видите только вы (кабинет на сайте и «Профиль» в приложении); его можно удалить в любой момент, новое фото заменяет старое.',
-        'Тексты новых бизнесов, акций и отзывов проверяются автоматически (ссылки, запрещённые темы, номера карт, оскорбления, подозрительные цены). Проверка выполняется на нашем сервере — тексты и фото не передаются внешним сервисам или искусственному интеллекту. Автоматическая проверка ничего не отклоняет: чистое объявление публикуется сразу, подозрительное смотрит модератор; отзыв с оскорблениями скрывается автоматически.',
+        'Тексты новых бизнесов, акций и отзывов проверяются автоматически на нашем сервере (ссылки, запрещённые темы, номера карт, оскорбления, подозрительные цены) — тексты не передаются внешним сервисам. Проверка текста ничего не отклоняет: чистое объявление публикуется сразу, подозрительное смотрит модератор; отзыв с оскорблениями скрывается автоматически.',
+        'Публичные фото бизнеса (фото акции, логотип, обложка) перед сохранением отправляются в сервис искусственного интеллекта Claude компании Anthropic только для проверки на соответствие правилам: на них не должно быть военной, политической и религиозной тематики, непристойного, алкоголя, табака и наркотиков, азартных игр, символов ненависти и личных документов. Вместе с фото никакие другие данные (имя, телефон, название бизнеса) не передаются. Фото, нарушающее правила, отклоняется и не сохраняется; в журнал записывается только причина отказа. Фото профиля на проверку не отправляется.',
       ] },
       { id: 'location', title: 'Геолокация', paragraphs: [
         'Когда вы нажимаете «Рядом со мной», браузер запрашивает разрешение. Если вы разрешите, местоположение округляется примерно до 100 метров и отправляется на сервер только для сортировки акций по расстоянию; в базу оно не записывается. В фоновом режиме геолокация не используется.',
@@ -250,11 +256,12 @@ function ru(d: Values, r: Periods): PrivacyPolicy {
       ], after: 'Рекламные, трекинговые и аналитические cookie не используются. Cookie можно отключить в настройках браузера, но тогда войти не получится.' },
       { id: 'services', title: 'Сервисы, которым передаются данные', items: [
         'Cloudflare, Inc. — сервер сайта, база данных, хранение фото и кеш страниц.',
+        'Anthropic, PBC (Claude) — автоматическая проверка публичных фото бизнеса на соответствие правилам; передаётся только само фото.',
         'Telegram — подтверждение входа и уведомления: наш бот отправляет вам сообщения по вашему Telegram ID (в сообщении — название акции, адрес, срок кода и т. п.).',
         'Google Firebase Cloud Messaging — доставка уведомлений приложения на телефон: передаются токен устройства и текст уведомления. Если приложение установлено, уведомления приходят в него вместо Telegram.',
         'Payme и Click — только когда тарифы открыты, для оплаты тарифа бизнеса: на страницу оплаты передаются номер заказа и сумма, данные карты видит только платёжная система. Сейчас тарифы закрыты, онлайн-оплата выключена.',
         'Google Карты — только когда вы нажимаете «Маршрут» (передаётся адрес филиала).',
-      ], after: 'Cloudflare и Firebase обрабатывают данные только по нашему поручению и только для этих целей; Telegram, Payme, Click и Google действуют по своим условиям, когда вы пользуетесь их сервисами. Данные не передаются сервисам электронной почты, SMS, рекламы, аналитики или искусственного интеллекта. Другим третьим лицам данные не передаются, кроме случаев, требуемых законом.' },
+      ], after: 'Cloudflare, Firebase и Anthropic обрабатывают данные только по нашему поручению и только для этих целей; Telegram, Payme, Click и Google действуют по своим условиям, когда вы пользуетесь их сервисами. Данные не передаются сервисам электронной почты, SMS, рекламы или аналитики; искусственному интеллекту передаются только фото бизнеса для проверки. Другим третьим лицам данные не передаются, кроме случаев, требуемых законом.' },
       { id: 'age', title: 'Возрастное ограничение', paragraphs: [
         `BugunBor предназначен для пользователей, которым исполнилось ${d.age} лет. Если вам меньше, не регистрируйтесь. Такой аккаунт при обнаружении удаляется. Зарегистрировать бизнес может только его владелец или уполномоченный представитель.`,
       ] },
@@ -283,7 +290,7 @@ function ru(d: Values, r: Periods): PrivacyPolicy {
       ] },
       { id: 'storage', title: 'Где хранятся данные и трансграничная передача', paragraphs: [
         `База данных и загруженные фото хранятся на серверах Cloudflare, Inc. (США); регион базы данных — ${d.region}. Биометрические и генетические данные, которые по статье 27¹ Закона обязательно хранятся на территории Узбекистана, BugunBor не собирает.`,
-        'Остальные данные хранятся за рубежом на основании перечня иностранных государств, обеспечивающих равноценную защиту персональных данных, утверждённого постановлением Кабинета Министров от 29 июля 2026 года № 415: США включены в перечень для участников программы EU–U.S. Data Privacy Framework, а Cloudflare — её участник. Серверы Telegram и Google (Firebase) также могут находиться за пределами Узбекистана; им передаются только данные, необходимые для входа и уведомлений. При регистрации (входе) вы даёте на это согласие.',
+        'Остальные данные хранятся за рубежом на основании перечня иностранных государств, обеспечивающих равноценную защиту персональных данных, утверждённого постановлением Кабинета Министров от 29 июля 2026 года № 415: США включены в перечень для участников программы EU–U.S. Data Privacy Framework, а Cloudflare — её участник. Серверы Telegram и Google (Firebase) также могут находиться за пределами Узбекистана; им передаются только данные, необходимые для входа и уведомлений. Фото бизнеса для проверки передаются также на серверы Anthropic (США). При регистрации (входе) вы даёте на это согласие.',
       ] },
       { id: 'deletion', title: 'Удаление аккаунта и данных', paragraphs: [
         'Удалить аккаунт можно в любой момент самостоятельно: на странице bugunbor.uz/delete-account или войдя на сайт → «Кабинет» (на телефоне в нижнем меню — «Профиль») → «Удалить аккаунт». Аккаунт удаляется сразу: номер телефона, данные Telegram, имя и фото профиля стираются, все сессии закрываются, активные коды отменяются, сохранённые акции, подписки и уведомления удаляются, текст ваших отзывов убирается (оценка остаётся анонимно), вы выходите из команд бизнесов, удаляются устройства приложения, интересы, блокировки и район для уведомлений. История кодов остаётся анонимно для статистики бизнесов. В приложении: Профиль → «Удалить аккаунт».',
@@ -325,7 +332,8 @@ function en(d: Values, r: Periods): PrivacyPolicy {
       ] },
       { id: 'photos', title: 'Photos and automatic checks', paragraphs: [
         'Logos, covers and deal photos are redrawn and compressed in your own browser before upload, which removes hidden file data (such as the place where the photo was taken). Photos are stored on our server and are visible to everyone on the business page; a photo that is not used anywhere is deleted within 1 day. A profile photo is compressed the same way, but only you see it (your account page on the site and Profile in the app); you can remove it at any time, and a new one replaces the old.',
-        'The text of new businesses, deals and reviews is checked automatically (links, prohibited topics, card numbers, insults, suspicious prices). The check runs on our own server — texts and photos are not sent to external services or artificial intelligence. Automatic checks never reject anything: a clean listing goes live at once and a suspicious one is reviewed by a moderator; a review with insults is hidden automatically.',
+        'The text of new businesses, deals and reviews is checked automatically on our own server (links, prohibited topics, card numbers, insults, suspicious prices) — texts are not sent to external services. The text check never rejects anything: a clean listing goes live at once and a suspicious one is reviewed by a moderator; a review with insults is hidden automatically.',
+        'Public business photos (deal photos, logos, covers) are sent, before they are kept, to Claude, the artificial intelligence service of Anthropic, only to check them against the rules: no military, political or religious subjects, nothing indecent, no alcohol, tobacco or drugs, gambling, hate symbols or personal documents. No other data (name, phone, business name) is sent with the photo. A photo that breaks the rules is refused and not kept; only the reason is written to the log. Your profile photo is not sent for checking.',
       ] },
       { id: 'location', title: 'Location', paragraphs: [
         'When you tap the near-me button (Yaqinimdagilar), your browser asks for permission. If you allow it, your location is rounded to about 100 metres and sent to the server only to sort deals by distance; it is not written to the database. Location is never collected in the background.',
@@ -343,11 +351,12 @@ function en(d: Values, r: Periods): PrivacyPolicy {
       ], after: 'No advertising, tracking or analytics cookies are used. You can block cookies in your browser settings, but then you will not be able to sign in.' },
       { id: 'services', title: 'Service providers', items: [
         'Cloudflare, Inc. — website server, database, photo storage and page cache.',
+        'Anthropic, PBC (Claude) — automatic check of public business photos against the rules; only the photo itself is sent.',
         'Telegram — sign-in confirmation and notifications: our bot messages you by your Telegram ID (a message contains details such as the deal title, address and code expiry).',
         'Google Firebase Cloud Messaging — delivering app notifications to your phone: the device token and the notification text are passed on. If you have the app, notifications go to the app instead of Telegram.',
         'Payme and Click — only once plans are open, to pay for a business plan: the order number and amount are passed to the payment page, and card details are seen only by the payment system. Plans are closed and online payment is switched off for now.',
         'Google Maps — only when you tap the directions button (the branch address is passed on).',
-      ], after: 'Cloudflare and Firebase process data only on our behalf and only for these purposes; Telegram, Payme, Click and Google act under their own terms when you use their services. No data is sent to email, SMS, advertising, analytics or artificial intelligence services. Data is not shared with other third parties except where required by law.' },
+      ], after: 'Cloudflare, Firebase and Anthropic process data only on our behalf and only for these purposes; Telegram, Payme, Click and Google act under their own terms when you use their services. No data is sent to email, SMS, advertising or analytics services; only business photos are sent to artificial intelligence, for the check. Data is not shared with other third parties except where required by law.' },
       { id: 'age', title: 'Age restriction', paragraphs: [
         `BugunBor is for users aged ${d.age} and over. If you are younger, do not sign up. Such accounts are deleted when found. Only the owner of a business or their authorised representative may register it.`,
       ] },
@@ -376,7 +385,7 @@ function en(d: Values, r: Periods): PrivacyPolicy {
       ] },
       { id: 'storage', title: 'Where data is stored and cross-border transfer', paragraphs: [
         `The database and uploaded photos are stored on servers of Cloudflare, Inc. (USA); database region: ${d.region}. BugunBor does not collect biometric or genetic data, which under Article 27¹ of the Law must be stored in Uzbekistan.`,
-        'Other data is stored abroad on the basis of the list of foreign states providing equivalent protection of personal data approved by Cabinet of Ministers Resolution No. 415 of 29 July 2026: the USA is on the list for participants of the EU–U.S. Data Privacy Framework, and Cloudflare is a participant. Telegram’s and Google’s (Firebase) servers may also be outside Uzbekistan; only the data needed for sign-in and notifications is sent to them. You consent to this when signing up (signing in).',
+        'Other data is stored abroad on the basis of the list of foreign states providing equivalent protection of personal data approved by Cabinet of Ministers Resolution No. 415 of 29 July 2026: the USA is on the list for participants of the EU–U.S. Data Privacy Framework, and Cloudflare is a participant. Telegram’s and Google’s (Firebase) servers may also be outside Uzbekistan; only the data needed for sign-in and notifications is sent to them. Business photos are also sent to Anthropic’s servers (USA) for the check. You consent to this when signing up (signing in).',
       ] },
       { id: 'deletion', title: 'Account and data deletion', paragraphs: [
         'You can delete your account yourself at any time: on the bugunbor.uz/delete-account page, or sign in → your account page (Kabinet; on a phone, Profil in the bottom menu) → Hisobni o‘chirish (Delete account). The account is deleted immediately: your phone number, Telegram details, name and profile photo are erased, all sessions are closed, active codes are cancelled, saved deals, follows and notifications are deleted, the text of your reviews is removed (the rating stays anonymously), you leave business teams, and app devices, interests, blocks and the notification area are deleted. Code history stays anonymously for businesses’ statistics. In the app: Profile → Delete account.',

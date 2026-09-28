@@ -38,6 +38,7 @@ export default async function EditDealPage({ params }: { params: Promise<{ id: s
           <DealForm
             businessId={membership.businessId}
             businessName={membership.name}
+            businessBadge={membership.badge}
             dealId={deal.id}
             categories={categories.map((category) => ({ id: category.id, name: categoryName(category, locale), slug: category.slug }))}
             branches={branches.map((branch) => ({ id: branch.id, name: branch.name }))}

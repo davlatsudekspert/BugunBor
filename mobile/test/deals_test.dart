@@ -328,6 +328,27 @@ void main() {
     expect(find.text('Rasm qo‘shish'), findsOneWidget);
   });
 
+  testWidgets('the photo rules are under the photo, and a refused photo says why in the server’s words', (tester) async {
+    final server = ownerServer();
+    const refused = 'Rasm qabul qilinmadi: unda siyosiy mavzu bor (bayroq, gerb, siyosatchi yoki siyosiy yozuv). Boshqa rasm tanlang.';
+    server.routes['POST /api/v1/business/:id/media'] = (_) => const Reply(422, {
+      'error': {'code': 'PHOTO_POLITICAL', 'message': refused},
+    });
+    await pumpApp(tester, server: server, token: 't', photo: smallJpeg());
+    await go(tester, '/business/biz/deals/new');
+    await scrollDealForm(tester, find.text('Rasm qo‘shish'));
+    expect(find.text('Harbiy kiyim, qurol, siyosiy va diniy mavzudagi rasmlar qabul qilinmaydi: bunday rasm rad etiladi.'), findsOneWidget);
+
+    await tester.tap(find.text('Rasm qo‘shish'));
+    await settle(tester);
+    await tester.tap(find.text('Galereya'));
+    await settle(tester);
+    expect(server.requests.where((request) => request.path == '/api/v1/business/biz/media'), hasLength(1));
+    expect(find.text(refused), findsOneWidget);
+    // Nothing was kept: the form still offers to add a photo.
+    expect(find.text('Rasm qo‘shish'), findsOneWidget);
+  });
+
   testWidgets('times: a quick length, then the date and time pickers keep it', (tester) async {
     final server = ownerServer();
     await pumpApp(tester, server: server, token: 't');

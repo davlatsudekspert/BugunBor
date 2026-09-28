@@ -33,6 +33,18 @@ android {
         // CI passes --build-number=<run number>, so every build counts up.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // The site's APKs are one per CPU type, and each carries that type's
+        // native libraries only (`-P disable-abi-filtering=true -P bugunbor-abi=arm64-v8a`;
+        // the first keeps Flutter from putting its own list back). With plugin
+        // libraries for other types inside, a phone picks a type the app was not
+        // built for and closes at start (a 64-bit phone given the 32-bit APK did).
+        (project.findProperty("bugunbor-abi") as String?)?.let { abi ->
+            ndk {
+                abiFilters.clear()
+                abiFilters += abi
+            }
+        }
     }
 
     signingConfigs {

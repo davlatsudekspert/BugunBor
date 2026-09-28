@@ -1,7 +1,7 @@
 import { CITIES } from '@/lib/cities';
 import { buildSearchText } from '@/lib/search';
 import { addMinutes, toDbTime } from '@/lib/time';
-import { buildDemoCatalog, DEMO_CATALOG_VERSION } from './demo-catalog';
+import { buildDemoCatalog, DEMO_CATALOG_VERSION, inBothLanguages } from './demo-catalog';
 
 // Fictional demo data. Only loaded in development or when DEMO_SEED=true, and
 // always marked is_demo = 1 so production listings can hide it. Demo
@@ -123,7 +123,7 @@ export async function seedDemoData(db: D1Database, now = new Date(), options: { 
     ...businesses.map((business) => {
       const verified = business.status === 'VERIFIED';
       return [business.id, business.slug, business.name, business.description, business.city, business.category, business.status,
-        verified ? nowDb : null, 1, buildSearchText(business.name, business.description), verified ? trialEndsAt : null];
+        verified ? nowDb : null, 1, buildSearchText(business.name, ...inBothLanguages(business.description)), verified ? trialEndsAt : null];
     }),
     ...catalog.businesses.map((business) => [business.id, business.slug, business.name, business.description, business.city,
       business.categoryId, 'VERIFIED', nowDb, 1, business.searchText, trialEndsAt]),
@@ -137,7 +137,7 @@ export async function seedDemoData(db: D1Database, now = new Date(), options: { 
   const dealRows: SqlValue[][] = [
     ...deals.map((deal) => [deal.id, deal.business, deal.category, deal.slug, deal.title, deal.description, deal.terms, deal.original, deal.price,
       Math.round(((deal.original - deal.price) / deal.original) * 100), toDbTime(addMinutes(now, deal.startMin)), toDbTime(addMinutes(now, deal.endMin)),
-      deal.total, deal.remaining, deal.limit, deal.status, deal.ttl, deal.visual, null, null, buildSearchText(deal.title, deal.description), nowDb,
+      deal.total, deal.remaining, deal.limit, deal.status, deal.ttl, deal.visual, null, null, buildSearchText(...inBothLanguages(deal.title, deal.description)), nowDb,
       deal.status === 'ACTIVE' ? nowDb : null, 'ONSITE_CODE', 'usr_owner_demo', 1]),
     ...catalog.deals.map((deal) => [deal.id, deal.businessId, deal.categoryId, deal.slug, deal.title, deal.description, deal.terms, deal.originalPrice,
       deal.price, deal.discountPercent, deal.startsAt, deal.endsAt, deal.totalQuantity, deal.remainingQuantity, deal.perCustomerLimit, 'ACTIVE',

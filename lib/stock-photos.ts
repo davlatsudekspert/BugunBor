@@ -64,11 +64,11 @@ export const STOCK_PHOTOS: Record<string, StockPhoto> = {
   },
   "books": {
     "src": "/photos/books.webp",
-    "title": "Bookstore shelves",
-    "author": "Punker1999",
+    "title": "A pile of books (29767858348)",
+    "author": "freestocks.org from Olsztyn, Poland",
     "license": "CC0",
     "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
-    "source": "https://commons.wikimedia.org/wiki/File:Bookstore_shelves.jpg"
+    "source": "https://commons.wikimedia.org/wiki/File:A_pile_of_books_(29767858348).jpg"
   },
   "bowling": {
     "src": "/photos/bowling.webp",
@@ -80,11 +80,11 @@ export const STOCK_PHOTOS: Record<string, StockPhoto> = {
   },
   "boxing": {
     "src": "/photos/boxing.webp",
-    "title": "Boxing gloves Bail 10-OZ (4)",
-    "author": "Sevela.p",
-    "license": "CC BY-SA 4.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Boxing_gloves_Bail_10-OZ_(4).jpg"
+    "title": "Pair of boxing gloves",
+    "author": "Petey21",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "source": "https://commons.wikimedia.org/wiki/File:Pair_of_boxing_gloves.jpg"
   },
   "bread": {
     "src": "/photos/bread.webp",
@@ -96,11 +96,11 @@ export const STOCK_PHOTOS: Record<string, StockPhoto> = {
   },
   "breakfast": {
     "src": "/photos/breakfast.webp",
-    "title": "Omelette 20210505 075028",
-    "author": "Ka23 13",
+    "title": "Chicken cheese omelette chips salad Enjoy Cafe Tottenham High Road Haringey London England",
+    "author": "Acabashi",
     "license": "CC BY-SA 4.0",
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Omelette_20210505_075028.jpg"
+    "source": "https://commons.wikimedia.org/wiki/File:Chicken_cheese_omelette_chips_salad_Enjoy_Cafe_Tottenham_High_Road_Haringey_London_England.jpg"
   },
   "burger": {
     "src": "/photos/burger.webp",
@@ -224,11 +224,11 @@ export const STOCK_PHOTOS: Record<string, StockPhoto> = {
   },
   "doll": {
     "src": "/photos/doll.webp",
-    "title": "224 Molí paperer Meros (Konigil, Samarcanda), ninos",
-    "author": "Enric",
+    "title": "Uzbek dolls",
+    "author": "Shahriyor06",
     "license": "CC BY-SA 4.0",
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:224_Mol%C3%AD_paperer_Meros_(Konigil,_Samarcanda),_ninos.jpg"
+    "source": "https://commons.wikimedia.org/wiki/File:Uzbek_dolls.jpg"
   },
   "doppi": {
     "src": "/photos/doppi.webp",
@@ -384,11 +384,11 @@ export const STOCK_PHOTOS: Record<string, StockPhoto> = {
   },
   "kurash": {
     "src": "/photos/kurash.webp",
-    "title": "Tournoi de Kurash 27",
-    "author": "Kani Beat",
-    "license": "CC0",
-    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
-    "source": "https://commons.wikimedia.org/wiki/File:Tournoi_de_Kurash_27.jpg"
+    "title": "Kurash at village. Uzbek national sport",
+    "author": "Sinchalak Musulmon",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Kurash_at_village._Uzbek_national_sport.jpg"
   },
   "laptop": {
     "src": "/photos/laptop.webp",
@@ -552,11 +552,11 @@ export const STOCK_PHOTOS: Record<string, StockPhoto> = {
   },
   "samsa-3": {
     "src": "/photos/samsa-3.webp",
-    "title": "'Parmuda'-uzbek samsa-02",
-    "author": "Shuhrataxmedov",
-    "license": "CC BY-SA 3.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
-    "source": "https://commons.wikimedia.org/wiki/File:%27Parmuda%27-uzbek_samsa-02.jpg"
+    "title": "Uyda tayyorlangan somsa",
+    "author": "Panpanchik",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Uyda_tayyorlangan_somsa.jpg"
   },
   "sewing": {
     "src": "/photos/sewing.webp",
@@ -704,11 +704,11 @@ export const STOCK_PHOTOS: Record<string, StockPhoto> = {
   },
   "woodcarving": {
     "src": "/photos/woodcarving.webp",
-    "title": "Djouma mosque column detail 2",
-    "author": "Faqscl",
-    "license": "CC BY-SA 3.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Djouma_mosque_column_detail_2.JPG"
+    "title": "Tashkent, Museo de Artes Decorativas 09",
+    "author": "LBM1948",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Tashkent,_Museo_de_Artes_Decorativas_09.jpg"
   },
   "woodcarving-2": {
     "src": "/photos/woodcarving-2.webp",

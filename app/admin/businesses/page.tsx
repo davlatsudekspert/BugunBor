@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Search } from 'lucide-react';
 
-import { ActionButton, DecisionForm } from '@/components/admin/admin-controls';
+import { ActionButton, BusinessCategoryControl, DecisionForm } from '@/components/admin/admin-controls';
 import { AdminShell } from '@/components/admin/admin-shell';
 import { getDb } from '@/db/client';
 import { cityName } from '@/lib/cities';
@@ -11,6 +11,7 @@ import { getI18n } from '@/lib/i18n/server';
 import { formatNumericDate, parseDbTime, toDbTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { listAdminBusinesses, type AdminListFilter } from '@/modules/admin/service';
+import { categoryName, listCategories } from '@/modules/catalog/queries';
 import { requireModerator } from '@/modules/auth/current';
 import { getBillingSettings } from '@/modules/billing/service';
 import { flagText, parseFlags } from '@/modules/moderation/auto';
@@ -28,7 +29,8 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
   const user = await requireModerator('/admin/businesses');
   const [{ t, locale }, db] = await Promise.all([getI18n(), getDb()]);
   const filter: AdminListFilter = f === 'all' || f === 'auto' ? f : 'pending';
-  const [businesses, billing] = await Promise.all([listAdminBusinesses(db, { list: filter, query: q }), getBillingSettings(db)]);
+  const [businesses, billing, categories] = await Promise.all([listAdminBusinesses(db, { list: filter, query: q }), getBillingSettings(db), listCategories(db)]);
+  const categoryOptions = categories.map((category) => ({ id: category.id, name: categoryName(category, locale) }));
   const isAdmin = user.role === 'ADMIN';
   const a = t.admin;
   const nowDb = toDbTime(new Date());
@@ -62,6 +64,7 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
                   <div className="flex shrink-0 flex-col items-end gap-1">
                     <span className={cn('rounded-full px-2.5 py-1 text-xs font-bold', statusTone[business.verificationStatus] ?? 'bg-slate-100 text-slate-600')}>{a.businesses.status[business.verificationStatus as keyof typeof a.businesses.status] ?? business.verificationStatus}</span>
                     {business.autoDecided && business.verificationStatus === 'VERIFIED' ? <span title={a.auto.badgeHint} className="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-bold text-sky-700">{a.auto.badge}</span> : null}
+                    {business.badgeAt && business.verificationStatus === 'VERIFIED' ? <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">{a.businesses.badgeOn}</span> : null}
                     {business.suspendedAt ? <span className="rounded-full bg-red-600 px-2.5 py-1 text-xs font-bold text-white">{a.businesses.suspended}</span> : null}
                     {business.isDemo ? <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">{t.common.demo}</span> : null}
                   </div>
@@ -92,6 +95,11 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
                 </dl>
                 {business.rejectionReason && business.verificationStatus === 'REJECTED' ? <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{business.rejectionReason}</p> : null}
                 {business.suspendedReason ? <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{business.suspendedReason}</p> : null}
+                {business.isDemo ? null : (
+                  <div className="mt-3">
+                    <BusinessCategoryControl businessId={business.id} categoryId={business.categoryId} categories={categoryOptions} labels={{ label: a.businesses.category, save: a.businesses.categorySave, networkError: t.common.networkError }} />
+                  </div>
+                )}
 
                 {business.verificationStatus === 'PENDING' && parseFlags(business.autoNote).length ? (
                   <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">{fmt(a.auto.held, { reasons: flagText(parseFlags(business.autoNote), t) })}</p>
@@ -104,6 +112,14 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
 
                 <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
                   {business.verificationStatus === 'VERIFIED' ? <a href={`/businesses/${business.slug}`} className="inline-flex h-9 items-center rounded-lg border border-slate-200 px-3 text-xs font-bold text-navy">{t.biz.viewPublic}</a> : null}
+                  {/* The public «Tasdiqlangan biznes» mark: a person's decision, after checking by hand. */}
+                  {business.verificationStatus === 'VERIFIED' && !business.isDemo ? (
+                    business.badgeAt ? (
+                      <ActionButton payload={{ type: 'business.badge', businessId: business.id, on: false }} label={a.businesses.badgeRemove} networkError={t.common.networkError} />
+                    ) : (
+                      <ActionButton payload={{ type: 'business.badge', businessId: business.id, on: true }} label={a.businesses.badgeGrant} confirmText={a.businesses.badgeHint} tone="success" networkError={t.common.networkError} />
+                    )
+                  ) : null}
                   {business.logoId || business.coverId ? (
                     <ActionButton payload={{ type: 'images.remove', target: 'BUSINESS', id: business.id }} label={a.removeImages} reasonPrompt={a.removeImagesReason} tone="danger" networkError={t.common.networkError} />
                   ) : null}

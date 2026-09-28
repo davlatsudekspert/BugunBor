@@ -2,7 +2,8 @@
 
 Demo katalogdagi har bir aksiya o‘z turiga mos **haqiqiy fotosurat** bilan chiqadi: osh, somsa, tandir non, navvot, Siyob bozori, Chust do‘ppisi, Xiva o‘ymakorligi, so‘zana, kurash va boshqalar. Jami 76 tur uchun 91 ta foto bor; mashhur turlarda 2–3 xil foto. Bitta aksiya har doim o‘sha fotoni ko‘rsatadi, turli shaharlarda esa fotolar almashib turadi.
 
-- **Manba:** Wikimedia Commons, erkin litsenziya (CC0, Public domain, CC BY, CC BY-SA). AI rasm, ikonka, kartina, brend logotipi va harbiy mavzu (qurol, harbiy forma, harbiy texnika) yo‘q. Har bir foto qo‘lda tekshirilgan.
+- **Manba:** Wikimedia Commons, erkin litsenziya (CC0, Public domain, CC BY, CC BY-SA). AI rasm, ikonka, kartina va brend logotipi yo‘q. Har bir foto qo‘lda tekshirilgan.
+- **Mumkin emas (hatto orqa fonda ham):** harbiy mavzu (qurol, harbiy forma, kamuflyaj, harbiy texnika), siyosiy mavzu (bayroq, gerb, siyosatchi, miting, siyosiy yozuv) va diniy mavzu (masjid, cherkov va boshqa ibodatxona, diniy belgi, diniy kiyim, muqaddas kitob). `photos:fetch` va `photos:import` nomida shunday so‘z bo‘lgan faylni o‘zi rad etadi, qolganini ko‘z bilan tekshiramiz.
 - **Mualliflar:** «Rasm mualliflari» sahifasida (`/credits`, saytning pastki qismidagi havola).
 - **Fayllar:** `public/photos/<kalit>.webp` (1200 px) va `<kalit>.sm.webp` (720 px, telefonlar uchun).
 - **Faqat demo uchun.** Haqiqiy biznes aksiyasiga o‘z mahsulotining fotosini o‘zi yuklaydi.
@@ -31,7 +32,8 @@ QAT’IY QOIDALAR
 4. Yuzi aniq ko‘rinadigan odam bo‘lmasin. Qo‘llar, orqa tomon yoki uzoqdan olingan kadr mumkin. Bolalarning yuzi umuman bo‘lmasin.
 5. Kadr gorizontal, kamida 1280×960 piksel bo‘lsin. Asosiy narsa markazda tursin, chunki sayt suratni 4:3 qilib kesadi.
 6. Taom va hunarmandchilikda o‘zbekcha variant afzal (osh, somsa, lag‘mon, Rishton sopoli, atlas, do‘ppi).
-7. Harbiy mavzu umuman bo‘lmasin: qurol, harbiy forma, harbiy texnika va urush sahnasi mumkin emas. Harbiylar biror narsani ta’mirlayotgan yoki tuzatayotgan fotolar ham olinmaydi.
+7. Harbiy mavzu umuman bo‘lmasin: qurol, harbiy forma, kamuflyaj, harbiy texnika va urush sahnasi mumkin emas. Harbiylar biror narsani ta’mirlayotgan yoki tuzatayotgan fotolar ham olinmaydi.
+8. Siyosiy va diniy mavzu ham bo‘lmasin, hatto orqa fonda ham: bayroq, gerb, siyosatchi, miting, siyosiy yozuv, masjid, cherkov va boshqa ibodatxona, diniy belgi, diniy kiyim, muqaddas kitob mumkin emas.
 
 QANDAY TOPSHIRISH
 - Fayl nomi aynan quyidagi kalit bo‘lsin, masalan plov.jpg. Bir tur uchun 2–3 xil foto bo‘lsa: plov.jpg, plov-2.jpg, plov-3.jpg.
@@ -45,7 +47,7 @@ Taomlar: plov — laganda osh, yaqindan | noodles — lag‘mon | shashlik — s
 
 Kafe va shirinliklar: coffee — kapuchino | breakfast — omletli nonushta | tea — choynak va piyola | cake — tort bo‘lagi | dessert — pishiriq yoki kapkeyk | icecream — muzqaymoq sharlari | sweets — navvot, holva, parvarda
 
-Xaridlar: *shopping — bozorda guruch, un, yog‘ (oila savati) | clothes — kiyim do‘koni | *sneakers — brendsiz krossovka | backpack — maktab ryukzagi | books — kitob javoni | gift — sovg‘a qutisi | nuts — quruq meva va yong‘oq | *kitchen — kastryulka va tova to‘plami | flowers — atirgul guldastasi | *phone — smartfon, g‘ilof va himoya oynasi | bedding — yotoqdagi choyshab to‘plami | towels — taxlangan sochiqlar | crafts — Rishton kosalari | doppi — Chust do‘ppisi | woodcarving — Xiva yog‘och o‘ymakorligi | doll — milliy libosli qo‘g‘irchoq | fabric — Marg‘ilon atlasi | suzani — so‘zana
+Xaridlar: *shopping — bozorda guruch, un, yog‘ (oila savati) | clothes — kiyim do‘koni | *sneakers — brendsiz krossovka | backpack — maktab ryukzagi | books — kitoblar uyumi (yozuvsiz) | gift — sovg‘a qutisi | nuts — quruq meva va yong‘oq | *kitchen — kastryulka va tova to‘plami | flowers — atirgul guldastasi | *phone — smartfon, g‘ilof va himoya oynasi | bedding — yotoqdagi choyshab to‘plami | towels — taxlangan sochiqlar | crafts — Rishton kosalari | doppi — Chust do‘ppisi | woodcarving — yog‘och o‘ymakorligi (naqshli panno) | doll — milliy libosli qo‘g‘irchoq | fabric — Marg‘ilon atlasi | suzani — so‘zana
 
 Go‘zallik: beauty — manikyur | makeup — kiprik yoki qosh | hair — ayollar soch turmagi | barber — barbershop | spa — massaj | facial — yuzni tozalash (kosmetolog)
 

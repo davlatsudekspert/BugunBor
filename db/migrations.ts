@@ -563,6 +563,42 @@ const dealSets: Migration = {
   },
 };
 
+/** Whether Claude looked at an uploaded photo before it was kept (modules/media/check.ts); older photos were not. */
+const photoChecks: Migration = {
+  id: '0014_photo_checks',
+  async build({ db, columns }) {
+    if ((await columns('media')).has('check_status')) return [];
+    return [db.prepare(`ALTER TABLE media ADD COLUMN check_status TEXT NOT NULL DEFAULT 'UNCHECKED'`)];
+  },
+};
+
+/**
+ * The public «Tasdiqlangan biznes» mark: only a moderator gives it
+ * (modules/moderation/service.ts). Businesses a person already approved keep it.
+ */
+const businessBadge: Migration = {
+  id: '0015_business_badge',
+  async build({ db, columns }) {
+    const existing = await columns('businesses');
+    const statements: D1PreparedStatement[] = [];
+    if (!existing.has('badge_verified_at')) statements.push(db.prepare(`ALTER TABLE businesses ADD COLUMN badge_verified_at TEXT`));
+    if (!existing.has('badge_verified_by')) statements.push(db.prepare(`ALTER TABLE businesses ADD COLUMN badge_verified_by TEXT`));
+    statements.push(
+      db.prepare(`UPDATE businesses SET
+          badge_verified_at = (SELECT MAX(ma.created_at) FROM moderation_actions ma
+            WHERE ma.target_type = 'Business' AND ma.target_id = businesses.id AND ma.action = 'APPROVE' AND ma.actor_user_id != 'usr_system'),
+          badge_verified_by = (SELECT ma.actor_user_id FROM moderation_actions ma
+            WHERE ma.target_type = 'Business' AND ma.target_id = businesses.id AND ma.action = 'APPROVE' AND ma.actor_user_id != 'usr_system'
+            ORDER BY ma.created_at DESC LIMIT 1)
+        WHERE badge_verified_at IS NULL AND verification_status = 'VERIFIED' AND is_demo = 0
+          AND EXISTS (SELECT 1 FROM moderation_actions ma
+            WHERE ma.target_type = 'Business' AND ma.target_id = businesses.id AND ma.action = 'APPROVE' AND ma.actor_user_id != 'usr_system')`),
+    );
+    return statements;
+  },
+};
+
 export const migrations: readonly Migration[] = [
   baseline, systemV1, billing, media, engagement, payments, autoModeration, freeLaunch, privacyConsent, appSupport, userAvatars, codeIssues, dealSets,
+  photoChecks, businessBadge,
 ];

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { SET_RULES } from '@/lib/deal-set';
+import { calmCaps } from '@/lib/text';
 import { tashkentInputToDate } from '@/lib/time';
 import { DEAL_VISUAL_KEYS } from '@/lib/visuals';
 import { DEAL_RULES, discountPercent } from './status';
@@ -23,8 +24,8 @@ export const dealSetSchema = z.object({
 export const dealInputSchema = z
   .object({
     title: text(5, 90),
-    description: text(20, 600),
-    terms: text(5, 600),
+    description: text(20, 600).transform(calmCaps),
+    terms: text(5, 600).transform(calmCaps),
     categoryId: z.string().min(1, 'invalid').max(60),
     visual: z.enum(DEAL_VISUAL_KEYS, { message: 'invalid' }),
     originalPrice: price.min(1000, 'invalid'),

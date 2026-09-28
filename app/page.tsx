@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { ArrowRight, Clock3, LocateFixed, MapPin, Search, ShieldCheck, Smartphone, Sparkles, Store } from 'lucide-react';
+import { ArrowRight, Clock3, LocateFixed, MapPin, Search, ShieldCheck, Sparkles, Store } from 'lucide-react';
 
 import { CategoryIcon, categoryColor } from '@/components/deals/category-icon';
 import { CitySelect } from '@/components/deals/city-select';
@@ -8,10 +8,8 @@ import { DealCard } from '@/components/deals/deal-card';
 import { DealVisual } from '@/components/deals/deal-visual';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
-import { AppBadges } from '@/components/site/app-badges';
 import { JsonLd } from '@/components/site/json-ld';
 import { getDb } from '@/db/client';
-import { appStores } from '@/modules/app-stores';
 import { demoEnabled } from '@/modules/demo';
 import { cityName } from '@/lib/cities';
 import { getPreferredCity } from '@/lib/city-cookie';
@@ -19,38 +17,49 @@ import { getConfig } from '@/lib/env';
 import { formatCompactSum, formatSum } from '@/lib/format';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
+import { localeAlternates } from '@/lib/locale-paths';
 import { cn } from '@/lib/utils';
 import { getCurrentUser } from '@/modules/auth/current';
 import { categoryName, countByCategory, getFavoriteIds, listCategories, listLiveDeals, platformSavings } from '@/modules/catalog/queries';
 import { inBackground } from '@/modules/jobs';
 import { runMaintenance } from '@/modules/redemptions/service';
+import { siteVerification } from '@/modules/search-engines';
 
-// The home page is its own canonical address (the other pages set theirs).
-export const metadata: Metadata = { alternates: { canonical: '/' } };
+// The home page is its own canonical address (the other pages set theirs), and
+// carries the verification codes an admin entered for Google and Yandex.
+export async function generateMetadata(): Promise<Metadata> {
+  const [{ locale }, codes] = await Promise.all([getI18n(), getDb().then(siteVerification).catch(() => null)]);
+  const verification = { ...(codes?.google ? { google: codes.google } : {}), ...(codes?.yandex ? { yandex: codes.yandex } : {}) };
+  return { alternates: localeAlternates('/', locale), ...(Object.keys(verification).length ? { verification } : {}) };
+}
 
 export default async function Home() {
   const [{ t, locale }, city, user, db] = await Promise.all([getI18n(), getPreferredCity(), getCurrentUser(), getDb()]);
   // Releasing expired codes can wait until after the page is sent.
   inBackground(runMaintenance(db), 'Maintenance failed');
   const demo = await demoEnabled(db);
-  const [deals, categories, favorites, savings, stores] = await Promise.all([
-    listLiveDeals(db, { city, demo, sort: 'ending' }),
+  const [deals, categories, favorites, savings] = await Promise.all([
+    listLiveDeals(db, { city, demo, sort: 'ending', locale }),
     listCategories(db),
     user ? getFavoriteIds(db, user.id) : Promise.resolve(new Set<string>()),
-    platformSavings(db, { demo }),
-    appStores(db),
+    platformSavings(db, { demo: false }),
   ]);
-  const businessCount = new Set(deals.map((deal) => deal.business.id)).size;
-  const maxDiscount = deals.reduce((max, deal) => Math.max(max, deal.discountPercent), 0);
+  // Every number on the page counts real deals only: samples show how the
+  // site works, they are not offers anyone can use.
+  const real = deals.filter((deal) => !deal.isDemo);
+  const businessCount = new Set(real.map((deal) => deal.business.id)).size;
+  const maxDiscount = real.reduce((max, deal) => Math.max(max, deal.discountPercent), 0);
   const stats = [
-    { value: String(deals.length), label: t.home.stats.deals },
+    { value: String(real.length), label: t.home.stats.deals },
     { value: String(businessCount), label: t.home.stats.businesses },
     ...(maxDiscount ? [{ value: `−${maxDiscount}%`, label: t.home.stats.maxDiscount }] : []),
     // Only worth showing once it is a meaningful number.
     ...(savings.saved >= 1_000_000 ? [{ value: formatCompactSum(savings.saved, t), label: t.home.stats.saved }] : []),
   ];
-  const counts = countByCategory(deals);
-  const featured = deals[0];
+  const counts = countByCategory(real);
+  const samples = countByCategory(deals);
+  const onlySamples = deals.length > 0 && real.length === 0;
+  const featured = real[0] ?? deals[0];
   const cityLabel = cityName(city, locale);
 
   const origin = getConfig().appUrl ?? 'https://bugunbor.uz';
@@ -71,7 +80,7 @@ export default async function Home() {
         <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[1.06fr_.94fr] lg:px-8 lg:py-20">
           <div>
             <Badge className="mb-5 h-7 border-orange-200 bg-orange-50 px-3 text-orange-700" variant="outline">
-              <Sparkles className="size-3.5" aria-hidden /> {fmt(deals.length ? t.home.badge : t.home.badgeSoon, { city: cityLabel, count: deals.length })}
+              <Sparkles className="size-3.5" aria-hidden /> {fmt(real.length ? t.home.badge : t.home.badgeSoon, { city: cityLabel, count: real.length })}
             </Badge>
             <h1 className="max-w-3xl text-[clamp(2.4rem,5vw,4.5rem)] font-black leading-[.95] tracking-[-.055em] text-navy">
               {t.home.heroLead} <span className="text-primary">{t.home.heroAccent}</span> {t.home.heroTail}
@@ -115,26 +124,31 @@ export default async function Home() {
             <div className="rounded-[32px] border border-white/80 bg-navy p-4 shadow-[0_30px_80px_rgba(18,43,61,.24)] sm:p-5">
               <div className="mb-4 flex items-center justify-between px-1 text-white">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[.14em] text-orange-200">{t.home.liveKicker}</p>
-                  <p className="mt-1 text-xl font-bold">{t.home.liveTitle}</p>
+                  <p className="text-xs font-bold uppercase tracking-[.14em] text-orange-200">{featured?.isDemo ? t.common.sample : t.home.liveKicker}</p>
+                  <p className="mt-1 text-xl font-bold">{featured?.isDemo ? t.home.sampleTitle : t.home.liveTitle}</p>
                 </div>
-                <span className="flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-2 text-xs font-semibold">
-                  <span className="size-2 animate-pulse rounded-full bg-emerald-400" aria-hidden /> {t.home.liveBadge}
-                </span>
+                {featured?.isDemo ? null : (
+                  <span className="flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-2 text-xs font-semibold">
+                    <span className="size-2 animate-pulse rounded-full bg-emerald-400" aria-hidden /> {t.home.liveBadge}
+                  </span>
+                )}
               </div>
               {featured ? (
                 <a href={`/deals/${featured.slug}`} className="group block overflow-hidden rounded-[24px] bg-[#f7efe5]">
                   <div className="relative p-5">
                     <DealVisual visual={featured.visual} categorySlug={featured.categorySlug} photo={featured.photo} priority sizes="144px" className="absolute right-0 top-0 h-32 w-36 rounded-bl-[70px]" emojiClassName="-bottom-4 -right-2 text-7xl" />
                     <div className="relative max-w-[62%]">
-                      <Badge className="bg-navy text-white">-{featured.discountPercent}%</Badge>
+                      <span className="flex flex-wrap gap-2">
+                        <Badge className="bg-navy text-white">-{featured.discountPercent}%</Badge>
+                        {featured.isDemo ? <Badge className="bg-amber-100 font-black text-amber-900">{t.common.sample}</Badge> : null}
+                      </span>
                       <h2 className="mt-8 text-2xl font-black leading-tight tracking-[-.04em] text-navy">{featured.title}</h2>
                       <p className="mt-2 text-sm font-semibold text-slate-600">{featured.business.name}</p>
                       <p className="mt-5 text-2xl font-black text-primary">{formatSum(featured.price, t)}</p>
                     </div>
                     <div className="mt-5 flex items-center justify-between rounded-2xl bg-white p-3 shadow-sm">
-                      <span className="flex items-center gap-2 text-sm font-bold text-navy"><Clock3 className="size-4 text-primary" aria-hidden /> <Countdown target={featured.endsAt} daysLabel={t.common.daysShort} className="tabular" /></span>
-                      <span className="text-sm font-bold text-primary">{t.home.view} <ArrowRight className="ml-1 inline size-4" aria-hidden /></span>
+                      {featured.isDemo ? null : <span className="flex items-center gap-2 text-sm font-bold text-navy"><Clock3 className="size-4 text-primary" aria-hidden /> <Countdown target={featured.endsAt} daysLabel={t.common.daysShort} className="tabular" /></span>}
+                      <span className="ml-auto text-sm font-bold text-primary">{t.home.view} <ArrowRight className="ml-1 inline size-4" aria-hidden /></span>
                     </div>
                   </div>
                 </a>
@@ -150,7 +164,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {deals.length ? (
+      {real.length ? (
         <section aria-label={cityLabel} className="border-b border-slate-200/70 bg-white">
           <dl className="mx-auto grid max-w-7xl grid-cols-2 gap-y-5 px-4 py-6 sm:px-6 md:flex md:justify-around lg:px-8">
             {stats.map((item) => (
@@ -176,7 +190,7 @@ export default async function Home() {
           {categories.slice(0, 8).map((category) => (
             <a key={category.slug} href={`/categories/${category.slug}`} className="group flex min-w-0 items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-lg">
               <span className={cn('grid size-11 shrink-0 place-items-center rounded-xl', categoryColor(category.slug))}><CategoryIcon icon={category.icon} className="size-5" /></span>
-              <span className="min-w-0"><strong className="block truncate text-navy">{categoryName(category, locale)}</strong><small className="text-slate-500">{counts.get(category.slug) ? fmt(t.home.categoryCount, { count: counts.get(category.slug) ?? 0 }) : t.home.categorySoon}</small></span>
+              <span className="min-w-0"><strong className="block truncate text-navy">{categoryName(category, locale)}</strong><small className="text-slate-500">{counts.get(category.slug) ? fmt(t.home.categoryCount, { count: counts.get(category.slug) ?? 0 }) : samples.get(category.slug) ? t.home.categorySamples : t.home.categorySoon}</small></span>
             </a>
           ))}
         </div>
@@ -185,8 +199,9 @@ export default async function Home() {
       <section id="deals" className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[.12em] text-primary">{t.home.dealsKicker}</p>
-            <h2 className="mt-2 text-3xl font-black tracking-[-.04em] text-navy">{t.home.dealsTitle}</h2>
+            {/* Only samples so far: say so instead of «Vaqt ketmoqda». */}
+            <p className="text-sm font-bold uppercase tracking-[.12em] text-primary">{onlySamples ? t.home.samplesKicker : t.home.dealsKicker}</p>
+            <h2 className="mt-2 text-3xl font-black tracking-[-.04em] text-navy">{onlySamples ? t.home.samplesTitle : t.home.dealsTitle}</h2>
           </div>
           <div className="flex gap-2">
             <a href="/discover?sort=ending" className="rounded-full bg-navy px-4 py-2 text-xs font-bold text-white">{t.home.sortEnding}</a>
@@ -245,18 +260,6 @@ export default async function Home() {
         </div>
       </section>
 
-      <section id="app" className="border-t border-slate-200/70 bg-cream">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-12 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-          <div className="flex items-start gap-4">
-            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary text-white"><Smartphone className="size-6" aria-hidden /></span>
-            <div>
-              <h2 className="text-2xl font-black tracking-[-.03em] text-navy">{t.appStores.title}</h2>
-              <p className="mt-1 max-w-xl leading-7 text-slate-600">{t.appStores.text}</p>
-            </div>
-          </div>
-          <AppBadges stores={stores} t={t} />
-        </div>
-      </section>
     </main>
   );
 }

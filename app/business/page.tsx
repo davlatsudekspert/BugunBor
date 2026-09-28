@@ -6,14 +6,15 @@ import { getDb } from '@/db/client';
 import { formatSum } from '@/lib/format';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
+import { localeAlternates } from '@/lib/locale-paths';
 import { cn } from '@/lib/utils';
 import { getCurrentUser } from '@/modules/auth/current';
 import { getBillingSettings, listPlans } from '@/modules/billing/service';
 import { listMemberships } from '@/modules/businesses/access';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getI18n();
-  return { title: t.nav.forBusiness, description: t.forBusiness.text, alternates: { canonical: '/business' } };
+  const { t, locale } = await getI18n();
+  return { title: t.nav.forBusiness, description: t.forBusiness.text, alternates: localeAlternates('/business', locale) };
 }
 
 const featureIcons = [Wallet, BellRing, QrCode, Star, Building2, BarChart3];

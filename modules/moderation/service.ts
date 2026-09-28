@@ -54,7 +54,14 @@ export async function decideDeal(db: D1Database, input: { actorId: string; dealI
   return { status: next };
 }
 
-/** Verifying a business starts its free period (length from settings). */
+/** Signs automatic decisions (migration 0007). It has no phone or Telegram, so nobody can log in as it. */
+export const SYSTEM_MODERATOR_ID = 'usr_system';
+
+/**
+ * Verifying a business starts its free period (length from settings). A
+ * person's approval also gives the public «Tasdiqlangan biznes» mark; the
+ * system's approval does not (a moderator can give it later).
+ */
 export async function decideBusiness(db: D1Database, input: { actorId: string; businessId: string; decision: Decision; reason: string }, now = new Date()) {
   checkReason(input.decision, input.reason);
   const business = await db
@@ -70,9 +77,11 @@ export async function decideBusiness(db: D1Database, input: { actorId: string; b
   const statements = [
     db.prepare(`UPDATE businesses SET verification_status = ?2, updated_at = ?3,
         verified_at = CASE WHEN ?2 = 'VERIFIED' THEN ?3 ELSE verified_at END,
-        rejection_reason = CASE WHEN ?2 = 'REJECTED' THEN ?4 ELSE NULL END
+        rejection_reason = CASE WHEN ?2 = 'REJECTED' THEN ?4 ELSE NULL END,
+        badge_verified_at = CASE WHEN ?2 = 'VERIFIED' AND ?5 != ?6 THEN ?3 WHEN ?2 = 'REJECTED' THEN NULL ELSE badge_verified_at END,
+        badge_verified_by = CASE WHEN ?2 = 'VERIFIED' AND ?5 != ?6 THEN ?5 WHEN ?2 = 'REJECTED' THEN NULL ELSE badge_verified_by END
       WHERE id = ?1 AND verification_status = 'PENDING'`)
-      .bind(input.businessId, next, nowDb, reason),
+      .bind(input.businessId, next, nowDb, reason, input.actorId, SYSTEM_MODERATOR_ID),
     moderationStatement(db, { actorId: input.actorId, targetType: 'Business', targetId: input.businessId, action: input.decision, reason, before: { status: business.status }, after: { status: next } }, nowDb),
     auditStatement(db, { actorUserId: input.actorId, businessId: input.businessId, action: 'business.moderated', targetType: 'Business', targetId: input.businessId, reason, before: { status: business.status }, after: { status: next } }, nowDb),
   ];
@@ -85,6 +94,41 @@ export async function decideBusiness(db: D1Database, input: { actorId: string; b
   const results = await db.batch(statements);
   if ((results[0].meta.changes ?? 0) !== 1) throw new DomainError('CONFLICT');
   return { status: next };
+}
+
+/** Moves a business to another active category, e.g. curtains and tablecloths from «Xizmatlar» to «Xaridlar». */
+export async function setBusinessCategory(db: D1Database, input: { actorId: string; businessId: string; categoryId: string }, now = new Date()) {
+  const [business, category] = await Promise.all([
+    db.prepare(`SELECT category_id AS categoryId FROM businesses WHERE id = ?1 AND deleted_at IS NULL`).bind(input.businessId).first<{ categoryId: string | null }>(),
+    db.prepare(`SELECT id FROM categories WHERE id = ?1 AND is_active = 1`).bind(input.categoryId).first<{ id: string }>(),
+  ]);
+  if (!business) throw new DomainError('NOT_FOUND');
+  if (!category) throw new DomainError('VALIDATION');
+  if (business.categoryId === input.categoryId) return;
+  const nowDb = toDbTime(now);
+  await db.batch([
+    db.prepare(`UPDATE businesses SET category_id = ?2, updated_at = ?3 WHERE id = ?1`).bind(input.businessId, input.categoryId, nowDb),
+    auditStatement(db, {
+      actorUserId: input.actorId, businessId: input.businessId, action: 'business.category', targetType: 'Business', targetId: input.businessId,
+      before: { categoryId: business.categoryId }, after: { categoryId: input.categoryId },
+    }, nowDb),
+  ]);
+}
+
+/** Gives or takes back the public «Tasdiqlangan biznes» mark of an approved, real business. */
+export async function setBusinessBadge(db: D1Database, input: { actorId: string; businessId: string; on: boolean }, now = new Date()) {
+  const business = await db
+    .prepare(`SELECT verification_status AS status, is_demo AS isDemo FROM businesses WHERE id = ?1 AND deleted_at IS NULL`)
+    .bind(input.businessId)
+    .first<{ status: string; isDemo: number }>();
+  if (!business) throw new DomainError('NOT_FOUND');
+  if (business.status !== 'VERIFIED' || business.isDemo) throw new DomainError('INVALID_TRANSITION');
+  const nowDb = toDbTime(now);
+  await db.batch([
+    db.prepare(`UPDATE businesses SET badge_verified_at = ?2, badge_verified_by = ?3, updated_at = ?4 WHERE id = ?1`)
+      .bind(input.businessId, input.on ? nowDb : null, input.on ? input.actorId : null, nowDb),
+    auditStatement(db, { actorUserId: input.actorId, businessId: input.businessId, action: input.on ? 'business.badge.granted' : 'business.badge.removed', targetType: 'Business', targetId: input.businessId }, nowDb),
+  ]);
 }
 
 export async function setBusinessSuspended(db: D1Database, input: { actorId: string; businessId: string; suspended: boolean; reason: string }, now = new Date()) {

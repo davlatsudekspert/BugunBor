@@ -1223,6 +1223,9 @@ class LRu extends L {
   String get dealPhotoHint => 'Настоящее фото вашего товара или услуги, снятое вами. Без фото покажем красивую иконку.';
 
   @override
+  String get photoRules => 'Фото с военной формой, оружием, политической или религиозной тематикой не принимаются: такое фото будет отклонено.';
+
+  @override
   String get dealPhotoAdd => 'Добавить фото';
 
   @override
@@ -1399,7 +1402,7 @@ class LRu extends L {
   String get profilePhotoRemove => 'Удалить фото';
 
   @override
-  String get profilePhotoHint => 'Фото видите только вы.';
+  String get profilePhotoHint => 'Фото видите только вы. Не ставьте фото с военной, политической или религиозной тематикой.';
 
   @override
   String get homeHowTitle => 'Как работает BugunBor';

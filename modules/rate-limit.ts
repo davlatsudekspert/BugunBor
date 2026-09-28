@@ -13,6 +13,8 @@ export const RATE_RULES = {
   contact: { limit: 5, windowSeconds: 600 },
   dealView: { limit: 120, windowSeconds: 600 },
   write: { limit: 60, windowSeconds: 60 },
+  // Each automatic photo check is a paid call: per business, whoever uploads.
+  photoCheck: { limit: 40, windowSeconds: 3600 },
 } satisfies Record<string, RateRule>;
 
 /** Fixed-window counter stored in D1. Returns the count including this hit. */

@@ -2,10 +2,11 @@ import type { Metadata } from 'next';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 
 import { getI18n } from '@/lib/i18n/server';
+import { localeAlternates } from '@/lib/locale-paths';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getI18n();
-  return { title: t.how.title, description: t.how.text, alternates: { canonical: '/how-it-works' } };
+  const { t, locale } = await getI18n();
+  return { title: t.how.title, description: t.how.text, alternates: localeAlternates('/how-it-works', locale) };
 }
 
 function Steps({ title, steps }: { title: string; steps: readonly { title: string; text: string }[] }) {

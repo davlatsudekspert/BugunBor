@@ -126,6 +126,35 @@ export function UserControls({ userId, role, status, labels }: {
   );
 }
 
+/** Moves a business to the category that fits what it sells (a moderator's fix). */
+export function BusinessCategoryControl({ businessId, categoryId, categories, labels }: {
+  businessId: string;
+  categoryId: string | null;
+  categories: Array<{ id: string; name: string }>;
+  labels: { label: string; save: string; networkError: string };
+}) {
+  const [value, setValue] = useState(categoryId ?? '');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  async function save() {
+    setBusy(true);
+    setError('');
+    const result = await post({ type: 'business.category', businessId, categoryId: value }, labels.networkError);
+    setBusy(false);
+    if (!result.ok) setError(result.message);
+    else window.location.reload();
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <select value={value} onChange={(event) => setValue(event.target.value)} className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-xs font-semibold text-navy" aria-label={labels.label}>
+        {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+      </select>
+      <button type="button" disabled={busy || !value || value === categoryId} onClick={() => void save()} className={cn(small, 'border-slate-200 text-navy')}>{labels.save}</button>
+      <ErrorLine text={error} />
+    </div>
+  );
+}
+
 type CategoryValue = { id: string | null; slug: string; nameUz: string; nameRu: string; icon: string; sortOrder: number; isActive: boolean };
 
 export function CategoryForm({ value, icons, labels }: {
