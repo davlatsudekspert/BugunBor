@@ -131,6 +131,18 @@ describe('public pages', () => {
     expect(old).not.toContain(uz.business.newBusiness);
   });
 
+  it('a review names its deal as a deal, so a short title is not read as the reviewer’s phone', async () => {
+    await state.db.batch([
+      state.db.prepare(`UPDATE deals SET title = 'Win 11' WHERE id = 'deal'`),
+      state.db.prepare(`INSERT INTO redemptions(id, deal_id, branch_id, user_id, idempotency_key, code_hash, code_hint, status, expires_at, completed_at)
+        VALUES ('r1', 'deal', 'br1', 'alice', 'key-r1', 'hash-r1', 'AB', 'COMPLETED', ?1, ?1)`).bind(minutes(-10)),
+      state.db.prepare(`INSERT INTO reviews(id, redemption_id, business_id, deal_id, user_id, rating, comment) VALUES ('v1', 'r1', 'biz', 'deal', 'alice', 5, 'Juda zo‘r')`),
+    ]);
+    const page = await business('kafe');
+    expect(page).toContain('Alice K.');
+    expect(page).toContain('Aksiya: «Win 11»');
+  });
+
   it('views show to the business only once there are enough to mean something', async () => {
     state.cookies[SESSION_COOKIE] = (await createSession(state.db, 'owner', {})).token;
     expect(await deal('osh')).not.toContain(uz.biz.deals.views);

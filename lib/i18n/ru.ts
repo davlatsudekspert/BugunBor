@@ -254,6 +254,7 @@ export const ru: Dictionary = {
     noReviews: 'Оценок пока нет. Оценки оставляют клиенты, воспользовавшиеся акцией.',
     ratingCount: 'Оценок: {count}',
     verifiedReview: 'Подтверждённый визит',
+    reviewDeal: 'Акция: {title}',
   },
   login: {
     title: 'Вход',

@@ -165,7 +165,8 @@ export default async function BusinessPage({ params }: { params: Promise<{ slug:
                 {review.comment ? <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">{review.comment}</p> : null}
                 <p className="mt-2 flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
                   <span className="font-bold text-navy">{review.author ?? t.common.anonymous}</span>
-                  <span>· {review.dealTitle}</span>
+                  {/* Named as the deal, so a short title («Win 11») is not taken for the reviewer's device. */}
+                  <span>· {fmt(t.business.reviewDeal, { title: `«${review.dealTitle}»` })}</span>
                   <span className="inline-flex items-center gap-1 text-emerald-700"><BadgeCheck className="size-3.5" aria-hidden /> {t.business.verifiedReview}</span>
                 </p>
               </article>

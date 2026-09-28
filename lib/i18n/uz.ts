@@ -252,6 +252,7 @@ export const uz = {
     noReviews: 'Hali baholar yo‘q. Aksiyadan foydalangan mijozlar baho qoldiradi.',
     ratingCount: '{count} ta baho',
     verifiedReview: 'Tasdiqlangan tashrif',
+    reviewDeal: 'Aksiya: {title}',
   },
   login: {
     title: 'Kirish',
