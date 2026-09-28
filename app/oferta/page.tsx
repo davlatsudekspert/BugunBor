@@ -4,15 +4,16 @@ import { getDb } from '@/db/client';
 import { formatPhone } from '@/lib/format';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
+import { localeAlternates } from '@/lib/locale-paths';
 import { offerSections } from '@/lib/offer';
 import { BILLING_PERIODS } from '@/modules/billing/pricing';
 import { getBillingSettings, listPlans } from '@/modules/billing/service';
 import { getCompanyInfo } from '@/modules/company';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getI18n();
+  const { t, locale } = await getI18n();
   const settings = await getBillingSettings(await getDb());
-  return { title: t.legal.offerTitle, description: t.legal.offerSubtitle, alternates: { canonical: '/oferta' }, robots: settings.tariffsEnabled ? undefined : { index: false, follow: true } };
+  return { title: t.legal.offerTitle, description: t.legal.offerSubtitle, alternates: localeAlternates('/oferta', locale), robots: settings.tariffsEnabled ? undefined : { index: false, follow: true } };
 }
 
 export default async function OfferPage() {

@@ -17,6 +17,7 @@ import { getConfig } from '@/lib/env';
 import { formatDay, formatPhone, formatWorkingHours } from '@/lib/format';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
+import { localeAlternates } from '@/lib/locale-paths';
 import { directionsUrl, instagramUrl, telegramUrl } from '@/lib/maps';
 import { parseDbTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
@@ -42,12 +43,12 @@ async function load(slug: string) {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const [{ t }, business] = await Promise.all([getI18n(), load(slug)]);
+  const [{ t, locale }, business] = await Promise.all([getI18n(), load(slug)]);
   if (!business) return { title: t.business.notFoundTitle, robots: { index: false } };
   return {
     title: business.name,
     description: business.description.slice(0, 200),
-    alternates: { canonical: `/businesses/${business.slug}` },
+    alternates: localeAlternates(`/businesses/${business.slug}`, locale),
     // Sample (demo) businesses are made up: shown to people, not to search engines.
     robots: { index: !business.isDemo, follow: true },
   };

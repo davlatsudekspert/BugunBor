@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 import { getI18n } from '@/lib/i18n/server';
-import { LANGUAGE_NAMES, PRIVACY_LOCALES, isPrivacyLocale, privacyPolicy, type PrivacyLocale } from '@/lib/privacy';
+import { LANGUAGE_NAMES, PRIVACY_LANGUAGES, PRIVACY_LOCALES, isPrivacyLocale, privacyPolicy, type PrivacyLocale } from '@/lib/privacy';
 import { cn } from '@/lib/utils';
 import { firstValues } from '@/lib/search-params';
 
@@ -17,16 +17,13 @@ async function chosenLocale(searchParams: Props['searchParams']): Promise<Privac
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-  const { lang } = firstValues(await searchParams);
-  const policy = privacyPolicy(await chosenLocale(searchParams));
+  const shown = await chosenLocale(searchParams);
+  const policy = privacyPolicy(shown);
   return {
     title: policy.title,
     description: policy.intro,
-    // A chosen language version is its own page; the plain address follows the site's language.
-    alternates: {
-      canonical: isPrivacyLocale(lang) ? `/privacy?lang=${lang}` : '/privacy',
-      languages: { 'uz-Latn': '/privacy?lang=uz', ru: '/privacy?lang=ru', en: '/privacy?lang=en' },
-    },
+    // Each language has its own address: the plain one for Uzbek, ?lang=ru and ?lang=en for the others.
+    alternates: { canonical: PRIVACY_LANGUAGES[shown], languages: { ...PRIVACY_LANGUAGES, 'x-default': PRIVACY_LANGUAGES.uz } },
   };
 }
 

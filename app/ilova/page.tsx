@@ -5,12 +5,13 @@ import { getDb } from '@/db/client';
 import { getConfig } from '@/lib/env';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
+import { localeAlternates } from '@/lib/locale-paths';
 import { APP_PAGE, appStores, latestApkSize, type AppStores } from '@/modules/app-stores';
 import { APK_GUIDE, GUIDES_PAGE } from '@/modules/guides';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getI18n();
-  return { title: t.appPage.metaTitle, description: t.appPage.metaDescription, alternates: { canonical: APP_PAGE } };
+  const { t, locale } = await getI18n();
+  return { title: t.appPage.metaTitle, description: t.appPage.metaDescription, alternates: localeAlternates(APP_PAGE, locale) };
 }
 
 // The phone app: the APK from this site with the install steps, Google Play

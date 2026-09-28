@@ -22,6 +22,7 @@ import { getConfig } from '@/lib/env';
 import { formatDurationMinutes, formatMoment, formatNumber, formatPhone, formatSum, formatWorkingHours } from '@/lib/format';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
+import { localeAlternates } from '@/lib/locale-paths';
 import { minutesUntilOpen, parseHours } from '@/lib/hours';
 import { directionsUrl } from '@/lib/maps';
 import { formatClock, formatNumericDate, parseDbTime, toDbTime } from '@/lib/time';
@@ -42,7 +43,7 @@ async function loadDeal(slug: string) {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const [{ t }, deal] = await Promise.all([getI18n(), loadDeal(slug)]);
+  const [{ t, locale }, deal] = await Promise.all([getI18n(), loadDeal(slug)]);
   if (!deal || !deal.isPublic) return { title: t.deal.notFoundTitle, robots: { index: false, follow: false } };
   const title = fmt(t.deal.shareText, { title: deal.title, percent: deal.discountPercent });
   const description = `${deal.business.name}: ${deal.description}`.slice(0, 200);
@@ -50,7 +51,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title,
     description,
-    alternates: { canonical: `/deals/${deal.slug}` },
+    alternates: localeAlternates(`/deals/${deal.slug}`, locale),
     robots: { index: indexable, follow: true },
     // Telegram and other link previews show the deal's own photo when it has one.
     openGraph: { title, description, ...(deal.photo ? { images: [{ url: deal.photo, width: 1280, height: 960, alt: deal.title }] } : {}) },

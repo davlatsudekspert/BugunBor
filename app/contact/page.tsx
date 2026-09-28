@@ -5,13 +5,14 @@ import { ContactForm } from '@/components/site/contact-form';
 import { getDb } from '@/db/client';
 import { formatPhone } from '@/lib/format';
 import { getI18n } from '@/lib/i18n/server';
+import { localeAlternates } from '@/lib/locale-paths';
 import { PRIVACY_DETAILS } from '@/lib/privacy';
 import { getCurrentUser } from '@/modules/auth/current';
 import { getCompanyInfo } from '@/modules/company';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getI18n();
-  return { title: t.footer.contact, description: t.contact.text, alternates: { canonical: '/contact' } };
+  const { t, locale } = await getI18n();
+  return { title: t.footer.contact, description: t.contact.text, alternates: localeAlternates('/contact', locale) };
 }
 
 export default async function ContactPage({ searchParams }: { searchParams: Promise<{ subject?: string }> }) {

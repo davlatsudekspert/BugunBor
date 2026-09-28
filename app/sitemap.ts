@@ -3,16 +3,29 @@ import type { MetadataRoute } from 'next';
 import { getDb } from '@/db/client';
 import { isCitySlug } from '@/lib/cities';
 import { getConfig } from '@/lib/env';
+import { localeAlternates, localizedHref } from '@/lib/locale-paths';
+import { PRIVACY_LANGUAGES } from '@/lib/privacy';
 import { toDbTime } from '@/lib/time';
 import { PUBLIC_BUSINESS_SQL, liveDealSql } from '@/modules/deals/status';
 
+type Entry = MetadataRoute.Sitemap[number];
+
+// Every page is listed in Uzbek (the plain address) and in Russian (/ru/…);
+// each lists the other as its language version, Uzbek being the default.
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const BASE = getConfig().appUrl ?? 'https://bugunbor.uz';
-  const staticPages: MetadataRoute.Sitemap = ['/', '/discover', '/categories', '/business', '/how-it-works', '/faq', '/ilova', '/qollanma', '/contact', '/terms', '/privacy', '/oferta'].map((path) => ({
-    url: `${BASE}${path}`,
-    changeFrequency: path === '/' || path === '/discover' ? 'hourly' : 'weekly',
-    priority: path === '/' ? 1 : 0.6,
-  }));
+  const absolute = (languages: Record<string, string>) => Object.fromEntries(Object.entries(languages).map(([language, href]) => [language, `${BASE}${href}`]));
+  const both = (path: string, entry: Omit<Entry, 'url'>): Entry[] => {
+    const alternates = { languages: absolute(localeAlternates(path, 'uz').languages) };
+    return [path, localizedHref(path, 'ru')].map((href) => ({ ...entry, url: `${BASE}${href}`, alternates }));
+  };
+  const privacy = { languages: absolute({ ...PRIVACY_LANGUAGES, 'x-default': PRIVACY_LANGUAGES.uz }) };
+  const staticPages: MetadataRoute.Sitemap = [
+    ...['/', '/discover', '/categories', '/business', '/how-it-works', '/faq', '/ilova', '/qollanma', '/contact', '/terms', '/oferta'].flatMap((path) =>
+      both(path, { changeFrequency: path === '/' || path === '/discover' ? 'hourly' : 'weekly', priority: path === '/' ? 1 : 0.6 })),
+    ...Object.values(PRIVACY_LANGUAGES).map((href) => ({ url: `${BASE}${href}`, changeFrequency: 'weekly' as const, priority: 0.6, alternates: privacy })),
+  ];
   try {
     const db = await getDb();
     const now = toDbTime(new Date());
@@ -28,10 +41,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ]);
     return [
       ...staticPages,
-      ...categories.results.map((row) => ({ url: `${BASE}/categories/${row.slug}`, changeFrequency: 'daily' as const, priority: 0.7 })),
-      ...cities.results.filter((row) => isCitySlug(row.city)).map((row) => ({ url: `${BASE}/discover?city=${row.city}`, changeFrequency: 'hourly' as const, priority: 0.7 })),
-      ...deals.results.map((row) => ({ url: `${BASE}/deals/${row.slug}`, changeFrequency: 'hourly' as const, priority: 0.8 })),
-      ...businesses.results.map((row) => ({ url: `${BASE}/businesses/${row.slug}`, changeFrequency: 'daily' as const, priority: 0.5 })),
+      ...categories.results.flatMap((row) => both(`/categories/${row.slug}`, { changeFrequency: 'daily', priority: 0.7 })),
+      ...cities.results.filter((row) => isCitySlug(row.city)).flatMap((row) => both(`/discover?city=${row.city}`, { changeFrequency: 'hourly', priority: 0.7 })),
+      ...deals.results.flatMap((row) => both(`/deals/${row.slug}`, { changeFrequency: 'hourly', priority: 0.8 })),
+      ...businesses.results.flatMap((row) => both(`/businesses/${row.slug}`, { changeFrequency: 'daily', priority: 0.5 })),
     ];
   } catch {
     return staticPages;

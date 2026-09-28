@@ -5,6 +5,7 @@ import { DiscoverView, type DiscoverParams } from '@/components/deals/discover-v
 import { getDb } from '@/db/client';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
+import { localeAlternates } from '@/lib/locale-paths';
 import { categoryAbout } from '@/lib/place-texts';
 import { categoryName, listCategories } from '@/modules/catalog/queries';
 import { firstValues } from '@/lib/search-params';
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: fmt(t.discover.placeTitle, { name: categoryName(category, locale) }),
     description: categoryAbout(category, locale),
-    alternates: { canonical: `/categories/${category.slug}` },
+    alternates: localeAlternates(`/categories/${category.slug}`, locale),
   };
 }
 

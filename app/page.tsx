@@ -17,6 +17,7 @@ import { getConfig } from '@/lib/env';
 import { formatCompactSum, formatSum } from '@/lib/format';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
+import { localeAlternates } from '@/lib/locale-paths';
 import { cn } from '@/lib/utils';
 import { getCurrentUser } from '@/modules/auth/current';
 import { categoryName, countByCategory, getFavoriteIds, listCategories, listLiveDeals, platformSavings } from '@/modules/catalog/queries';
@@ -27,9 +28,9 @@ import { siteVerification } from '@/modules/search-engines';
 // The home page is its own canonical address (the other pages set theirs), and
 // carries the verification codes an admin entered for Google and Yandex.
 export async function generateMetadata(): Promise<Metadata> {
-  const codes = await siteVerification(await getDb()).catch(() => null);
+  const [{ locale }, codes] = await Promise.all([getI18n(), getDb().then(siteVerification).catch(() => null)]);
   const verification = { ...(codes?.google ? { google: codes.google } : {}), ...(codes?.yandex ? { yandex: codes.yandex } : {}) };
-  return { alternates: { canonical: '/' }, ...(Object.keys(verification).length ? { verification } : {}) };
+  return { alternates: localeAlternates('/', locale), ...(Object.keys(verification).length ? { verification } : {}) };
 }
 
 export default async function Home() {

@@ -206,10 +206,35 @@ describe('public pages', () => {
     expect(urls).not.toContain('https://bugunbor.uz/deals/namuna-somsa');
   });
 
+  it('the sitemap lists every page in Uzbek and in Russian, each naming the other', async () => {
+    const entries = await sitemap();
+    const find = (url: string) => entries.find((entry) => entry.url === url);
+    const languages = { uz: 'https://bugunbor.uz/deals/osh', ru: 'https://bugunbor.uz/ru/deals/osh', 'x-default': 'https://bugunbor.uz/deals/osh' };
+    expect(find('https://bugunbor.uz/deals/osh')?.alternates).toEqual({ languages });
+    expect(find('https://bugunbor.uz/ru/deals/osh')?.alternates).toEqual({ languages });
+    for (const url of ['https://bugunbor.uz/ru', 'https://bugunbor.uz/ru/discover?city=tashkent', 'https://bugunbor.uz/ru/categories/taomlar', 'https://bugunbor.uz/ru/businesses/kafe']) {
+      expect(find(url), url).toBeTruthy();
+    }
+    // The privacy policy has its own address per language.
+    expect(find('https://bugunbor.uz/privacy?lang=ru')?.alternates?.languages).toMatchObject({ uz: 'https://bugunbor.uz/privacy', en: 'https://bugunbor.uz/privacy?lang=en' });
+    expect(find('https://bugunbor.uz/ru/privacy')).toBeUndefined();
+    expect(new Set(entries.map((entry) => entry.url)).size).toBe(entries.length);
+  });
+
+  it('a page shown in Russian names its /ru/ address as its own', async () => {
+    state.cookies[LOCALE_COOKIE] = 'ru';
+    expect(await discoverPage.generateMetadata({ searchParams: Promise.resolve({ city: 'samarkand' }) })).toMatchObject({
+      alternates: { canonical: '/ru/discover?city=samarkand', languages: { uz: '/discover?city=samarkand', ru: '/ru/discover?city=samarkand', 'x-default': '/discover?city=samarkand' } },
+    });
+    expect(await categoryPage.generateMetadata({ params: Promise.resolve({ slug: 'taomlar' }) })).toMatchObject({ alternates: { canonical: '/ru/categories/taomlar' } });
+    expect((await homeMetadata()).alternates).toMatchObject({ canonical: '/ru' });
+  });
+
   it('the home page carries the codes an admin entered for Google and Yandex, and none before that', async () => {
-    expect(await homeMetadata()).toEqual({ alternates: { canonical: '/' } });
+    const alternates = { canonical: '/', languages: { uz: '/', ru: '/ru', 'x-default': '/' } };
+    expect(await homeMetadata()).toEqual({ alternates });
     await updateSiteVerification(state.db, { actorId: 'mod', codes: { google: 'googleCode_12345', yandex: '' } });
-    expect(await homeMetadata()).toEqual({ alternates: { canonical: '/' }, verification: { google: 'googleCode_12345' } });
+    expect(await homeMetadata()).toEqual({ alternates, verification: { google: 'googleCode_12345' } });
   });
 
   it('on the Russian site a sample reads in Russian; a business’s own words stay as written', async () => {

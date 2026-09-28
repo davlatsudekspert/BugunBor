@@ -2,14 +2,16 @@ import { getDb } from '@/db/client';
 import { isSecureRequest, readCookie, serializeCookie } from '@/lib/cookies';
 import { safeReturnPath } from '@/lib/http';
 import { LOCALE_COOKIE, isLocale } from '@/lib/i18n';
+import { localizedHref } from '@/lib/locale-paths';
 import { SESSION_COOKIE, getSessionUser } from '@/modules/auth/sessions';
 
-// GET /lang/ru?next=/discover — remembers the language and returns to the page.
+// GET /lang/ru?next=/discover — remembers the language and returns to the page,
+// at its address in that language (/ru/discover; /discover for Uzbek).
 export async function GET(request: Request, context: { params: Promise<{ locale: string }> }) {
   const { locale } = await context.params;
   const url = new URL(request.url);
   const next = safeReturnPath(url.searchParams.get('next'), '/');
-  const headers = new Headers({ location: next, 'cache-control': 'no-store' });
+  const headers = new Headers({ location: isLocale(locale) ? localizedHref(next, locale) : next, 'cache-control': 'no-store' });
   if (isLocale(locale)) {
     headers.append('set-cookie', serializeCookie(LOCALE_COOKIE, locale, { maxAge: 365 * 24 * 60 * 60, httpOnly: false, secure: isSecureRequest(request) }));
     const token = readCookie(request, SESSION_COOKIE);

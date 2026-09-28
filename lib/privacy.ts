@@ -13,6 +13,9 @@ import { SESSION_DAYS } from '@/modules/auth/sessions';
 export const PRIVACY_LOCALES = ['uz', 'ru', 'en'] as const;
 export type PrivacyLocale = (typeof PRIVACY_LOCALES)[number];
 
+/** Each language's own address: the plain one for Uzbek (the site's default). */
+export const PRIVACY_LANGUAGES: Record<PrivacyLocale, string> = { uz: '/privacy', ru: '/privacy?lang=ru', en: '/privacy?lang=en' };
+
 export const isPrivacyLocale = (value: unknown): value is PrivacyLocale =>
   typeof value === 'string' && (PRIVACY_LOCALES as readonly string[]).includes(value);
 

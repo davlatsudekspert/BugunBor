@@ -43,7 +43,9 @@ Development always shows the demo catalogue. Production shows it with `DEMO_SEED
 
 1. Add the site in Google Search Console (URL prefix `https://bugunbor.uz/`, method «HTML tag») and in Yandex Webmaster (method «Мета-тег»).
 2. Paste each code, or the whole `<meta …>` tag, in **Admin → Sozlamalar → Qidiruv tizimlari** and save. The home page carries them within two minutes; then press Verify / Проверить there. An empty field takes a code away.
-3. Submit `https://bugunbor.uz/sitemap.xml` in both (Google: Sitemaps; Yandex: Индексирование → Файлы Sitemap). It lists the static pages, the categories, the cities that have a real deal (`/discover?city=…`), live real deals and public businesses; samples are never in it.
+3. Submit `https://bugunbor.uz/sitemap.xml` in both (Google: Sitemaps; Yandex: Индексирование → Файлы Sitemap). It lists the static pages, the categories, the cities that have a real deal (`/discover?city=…`), live real deals and public businesses, each in Uzbek (the plain address) and in Russian (`/ru/…`) with `hreflang` links between them; samples are never in it.
+
+Every public page names its address in the language it is shown in (`canonical`) and both versions (`hreflang` uz, ru, x-default = Uzbek). Russian pages live at `/ru/…` (`lib/locale-paths.ts`, `worker.ts`), so search engines index both languages; the language cookie alone never changes what a search engine sees.
 
 ## Speed
 
