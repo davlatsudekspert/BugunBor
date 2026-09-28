@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Search } from 'lucide-react';
 
-import { ActionButton, DecisionForm } from '@/components/admin/admin-controls';
+import { ActionButton, BusinessCategoryControl, DecisionForm } from '@/components/admin/admin-controls';
 import { AdminShell } from '@/components/admin/admin-shell';
 import { getDb } from '@/db/client';
 import { cityName } from '@/lib/cities';
@@ -11,6 +11,7 @@ import { getI18n } from '@/lib/i18n/server';
 import { formatNumericDate, parseDbTime, toDbTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { listAdminBusinesses, type AdminListFilter } from '@/modules/admin/service';
+import { categoryName, listCategories } from '@/modules/catalog/queries';
 import { requireModerator } from '@/modules/auth/current';
 import { getBillingSettings } from '@/modules/billing/service';
 import { flagText, parseFlags } from '@/modules/moderation/auto';
@@ -28,7 +29,8 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
   const user = await requireModerator('/admin/businesses');
   const [{ t, locale }, db] = await Promise.all([getI18n(), getDb()]);
   const filter: AdminListFilter = f === 'all' || f === 'auto' ? f : 'pending';
-  const [businesses, billing] = await Promise.all([listAdminBusinesses(db, { list: filter, query: q }), getBillingSettings(db)]);
+  const [businesses, billing, categories] = await Promise.all([listAdminBusinesses(db, { list: filter, query: q }), getBillingSettings(db), listCategories(db)]);
+  const categoryOptions = categories.map((category) => ({ id: category.id, name: categoryName(category, locale) }));
   const isAdmin = user.role === 'ADMIN';
   const a = t.admin;
   const nowDb = toDbTime(new Date());
@@ -93,6 +95,11 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
                 </dl>
                 {business.rejectionReason && business.verificationStatus === 'REJECTED' ? <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{business.rejectionReason}</p> : null}
                 {business.suspendedReason ? <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{business.suspendedReason}</p> : null}
+                {business.isDemo ? null : (
+                  <div className="mt-3">
+                    <BusinessCategoryControl businessId={business.id} categoryId={business.categoryId} categories={categoryOptions} labels={{ label: a.businesses.category, save: a.businesses.categorySave, networkError: t.common.networkError }} />
+                  </div>
+                )}
 
                 {business.verificationStatus === 'PENDING' && parseFlags(business.autoNote).length ? (
                   <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">{fmt(a.auto.held, { reasons: flagText(parseFlags(business.autoNote), t) })}</p>

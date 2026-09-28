@@ -772,6 +772,8 @@ export const ru: Dictionary = {
       suspendReason: 'Причина приостановки (минимум 10 символов)',
       suspended: 'Приостановлен',
       status: { PENDING: 'На проверке', VERIFIED: 'Проверен', REJECTED: 'Отклонён' },
+      category: 'Категория',
+      categorySave: 'Сменить категорию',
       badgeOn: '✓ Знак проверки',
       badgeGrant: 'Дать знак проверки',
       badgeRemove: 'Снять знак проверки',

@@ -2,6 +2,7 @@ import { distanceKm } from '@/lib/cities';
 import { parseDealSet, type DealSet } from '@/lib/deal-set';
 import { dealPhotoUrl, mediaUrl } from '@/lib/photos';
 import { wordSearchPattern } from '@/lib/search';
+import { calmCaps, tidyAddress } from '@/lib/text';
 import { parseDbTime, toDbTime } from '@/lib/time';
 import { PUBLIC_BUSINESS_SQL, effectiveDealStatus, liveDealSql, subscriptionActiveSql, type EffectiveDealStatus } from '@/modules/deals/status';
 
@@ -93,7 +94,7 @@ type Point = { latitude: number; longitude: number };
 function groupDeals(rows: DealBranchRow[], near: Point | null, now: Date): DealCard[] {
   const grouped = new Map<string, DealCard>();
   for (const row of rows) {
-    const branch: BranchSummary = { id: row.branchId, name: row.branchName, address: row.address, city: row.city, latitude: row.lat / 1e6, longitude: row.lon / 1e6, hoursJson: row.hoursJson };
+    const branch: BranchSummary = { id: row.branchId, name: row.branchName, address: tidyAddress(row.address), city: row.city, latitude: row.lat / 1e6, longitude: row.lon / 1e6, hoursJson: row.hoursJson };
     const distance = near ? distanceKm(near, branch) : null;
     const current = grouped.get(row.id);
     if (current) {
@@ -262,7 +263,7 @@ async function dealBranches(db: D1Database, dealId: string) {
       WHERE db.deal_id = ?1 AND br.deleted_at IS NULL ORDER BY br.name`)
     .bind(dealId)
     .all<{ id: string; name: string; address: string; city: string; lat: number; lon: number; phone: string | null; hoursJson: string }>();
-  return rows.results.map(({ lat, lon, ...branch }) => ({ ...branch, latitude: lat / 1e6, longitude: lon / 1e6 }));
+  return rows.results.map(({ lat, lon, ...branch }) => ({ ...branch, address: tidyAddress(branch.address), latitude: lat / 1e6, longitude: lon / 1e6 }));
 }
 
 const PUBLIC_STORED_STATUSES = new Set(['ACTIVE', 'PAUSED', 'ARCHIVED']);
@@ -293,8 +294,9 @@ export async function getDealBySlug(db: D1Database, slug: string, options: { dem
     id: row.id,
     slug: row.slug,
     title: row.title,
-    description: row.description,
-    terms: row.terms,
+    // Older records typed in capitals read like the rest (new ones are fixed on save).
+    description: calmCaps(row.description),
+    terms: calmCaps(row.terms),
     originalPrice: row.originalPrice,
     price: row.price,
     discountPercent: row.discountPercent,
@@ -316,7 +318,7 @@ export async function getDealBySlug(db: D1Database, slug: string, options: { dem
       id: row.businessId,
       slug: row.businessSlug,
       name: row.businessName,
-      description: row.businessDescription,
+      description: calmCaps(row.businessDescription),
       phone: row.businessPhone,
       telegram: row.telegram,
       instagram: row.instagram,
@@ -372,12 +374,13 @@ export async function getPublicBusiness(db: D1Database, slug: string, options: {
   const { logoId, coverId, ratingBp, reviewCount, isDemo, badgeAt, publicSince, ...rest } = business;
   return {
     ...rest,
+    description: calmCaps(rest.description),
     isDemo: Boolean(isDemo),
     trust: trust(badgeAt, publicSince, now),
     logo: mediaUrl(logoId),
     cover: mediaUrl(coverId),
     rating: rating(ratingBp, reviewCount),
-    branches: branches.results.map(({ lat, lon, ...branch }) => ({ ...branch, latitude: lat / 1e6, longitude: lon / 1e6 })),
+    branches: branches.results.map(({ lat, lon, ...branch }) => ({ ...branch, address: tidyAddress(branch.address), latitude: lat / 1e6, longitude: lon / 1e6 })),
     deals: cards.filter((deal) => deal.effective === 'LIVE'),
     upcoming: cards.filter((deal) => deal.effective === 'SCHEDULED'),
   };

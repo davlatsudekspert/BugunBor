@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { CITY_SLUGS } from '@/lib/cities';
 import { isTime } from '@/lib/hours';
+import { calmCaps, tidyAddress } from '@/lib/text';
 import { tryNormalizeUzbekPhone } from '@/modules/auth/phone';
 
 // Shared by business forms (client) and the API (server). Messages are keys of `t.validation`.
@@ -51,7 +52,7 @@ const coordinate = (limit: number) => z.coerce.number().min(-limit).max(limit).n
 
 export const businessProfileSchema = z.object({
   name: text(2, 80),
-  description: text(20, 1200),
+  description: text(20, 1200).transform(calmCaps),
   categoryId: z.string().min(1, 'invalid').max(60),
   city: z.enum(CITY_SLUGS, { message: 'invalid' }),
   phone: uzPhone,
@@ -66,7 +67,7 @@ export const businessProfileSchema = z.object({
 const time = z.string().refine(isTime, 'time');
 
 export const onboardingSchema = businessProfileSchema.extend({
-  address: text(5, 240),
+  address: text(5, 240).transform(tidyAddress),
   latitude: coordinate(90),
   longitude: coordinate(180),
   /** Working hours of the first branch; 09:00–21:00 when left out. */
@@ -77,7 +78,7 @@ export const onboardingSchema = businessProfileSchema.extend({
 export const branchSchema = z.object({
   name: text(2, 80),
   city: z.enum(CITY_SLUGS, { message: 'invalid' }),
-  address: text(5, 240),
+  address: text(5, 240).transform(tidyAddress),
   phone: z
     .string()
     .trim()

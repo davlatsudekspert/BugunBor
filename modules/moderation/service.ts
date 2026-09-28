@@ -96,6 +96,25 @@ export async function decideBusiness(db: D1Database, input: { actorId: string; b
   return { status: next };
 }
 
+/** Moves a business to another active category, e.g. curtains and tablecloths from «Xizmatlar» to «Xaridlar». */
+export async function setBusinessCategory(db: D1Database, input: { actorId: string; businessId: string; categoryId: string }, now = new Date()) {
+  const [business, category] = await Promise.all([
+    db.prepare(`SELECT category_id AS categoryId FROM businesses WHERE id = ?1 AND deleted_at IS NULL`).bind(input.businessId).first<{ categoryId: string | null }>(),
+    db.prepare(`SELECT id FROM categories WHERE id = ?1 AND is_active = 1`).bind(input.categoryId).first<{ id: string }>(),
+  ]);
+  if (!business) throw new DomainError('NOT_FOUND');
+  if (!category) throw new DomainError('VALIDATION');
+  if (business.categoryId === input.categoryId) return;
+  const nowDb = toDbTime(now);
+  await db.batch([
+    db.prepare(`UPDATE businesses SET category_id = ?2, updated_at = ?3 WHERE id = ?1`).bind(input.businessId, input.categoryId, nowDb),
+    auditStatement(db, {
+      actorUserId: input.actorId, businessId: input.businessId, action: 'business.category', targetType: 'Business', targetId: input.businessId,
+      before: { categoryId: business.categoryId }, after: { categoryId: input.categoryId },
+    }, nowDb),
+  ]);
+}
+
 /** Gives or takes back the public «Tasdiqlangan biznes» mark of an approved, real business. */
 export async function setBusinessBadge(db: D1Database, input: { actorId: string; businessId: string; on: boolean }, now = new Date()) {
   const business = await db

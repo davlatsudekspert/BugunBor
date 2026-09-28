@@ -4,7 +4,7 @@ import { applyMigrations } from '@/db/migrate';
 import { migrations } from '@/db/migrations';
 import { createTestD1 } from '@/test/d1';
 import { NOW, marketplace } from '@/test/fixtures';
-import { SYSTEM_MODERATOR_ID, decideBusiness, setBusinessBadge } from './service';
+import { SYSTEM_MODERATOR_ID, decideBusiness, setBusinessBadge, setBusinessCategory } from './service';
 
 // The public «Tasdiqlangan biznes» mark is a person's decision: the automatic
 // approval that puts a business on the site within seconds does not give it.
@@ -66,5 +66,17 @@ describe('the «Tasdiqlangan biznes» mark', () => {
     expect(await badge(db, 'by-person')).toEqual({ at: '2026-09-20 10:00:00', by: 'mod' });
     expect(await badge(db, 'by-system')).toEqual({ at: null, by: null });
     expect(await badge(db, 'sample')).toEqual({ at: null, by: null });
+  });
+});
+
+describe('a moderator fixing a business’s category', () => {
+  it('moves it to another active category and writes down the change', async () => {
+    const db = await marketplace();
+    await setBusinessCategory(db, { actorId: 'mod', businessId: 'biz', categoryId: 'cat_shop' }, NOW);
+    expect(await db.prepare(`SELECT category_id AS id FROM businesses WHERE id = 'biz'`).first()).toEqual({ id: 'cat_shop' });
+    const audit = await db.prepare(`SELECT before_json AS before, after_json AS after FROM audit_logs WHERE action = 'business.category'`).first();
+    expect(audit).toEqual({ before: JSON.stringify({ categoryId: 'cat_food' }), after: JSON.stringify({ categoryId: 'cat_shop' }) });
+    expect(await errorCode(setBusinessCategory(db, { actorId: 'mod', businessId: 'biz', categoryId: 'no-such' }, NOW))).toBe('VALIDATION');
+    expect(await errorCode(setBusinessCategory(db, { actorId: 'mod', businessId: 'missing', categoryId: 'cat_shop' }, NOW))).toBe('NOT_FOUND');
   });
 });

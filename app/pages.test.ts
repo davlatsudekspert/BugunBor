@@ -143,6 +143,18 @@ describe('public pages', () => {
     expect(page).toContain('Aksiya: «Win 11»');
   });
 
+  it('an older text typed in capitals and an address written its own way read like the rest', async () => {
+    await state.db.batch([
+      state.db.prepare(`UPDATE businesses SET description = 'DASTURXON VA PARDALAR' WHERE id = 'biz'`),
+      state.db.prepare(`UPDATE branches SET address = 'Andijon Shahar' WHERE id = 'br1'`),
+    ]);
+    const page = await business('kafe');
+    expect(page).toContain('Dasturxon va pardalar');
+    expect(page).not.toContain('DASTURXON VA PARDALAR');
+    expect(page).toContain('Andijon shahar');
+    expect(page).not.toContain('Andijon Shahar');
+  });
+
   it('views show to the business only once there are enough to mean something', async () => {
     state.cookies[SESSION_COOKIE] = (await createSession(state.db, 'owner', {})).token;
     expect(await deal('osh')).not.toContain(uz.biz.deals.views);

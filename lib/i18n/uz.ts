@@ -770,6 +770,8 @@ export const uz = {
       suspendReason: 'To‘xtatish sababi (kamida 10 belgi)',
       suspended: 'To‘xtatilgan',
       status: { PENDING: 'Tekshiruvda', VERIFIED: 'Tasdiqlangan', REJECTED: 'Rad etilgan' },
+      category: 'Kategoriya',
+      categorySave: 'Kategoriyani o‘zgartirish',
       badgeOn: '✓ Tasdiq belgisi',
       badgeGrant: 'Tasdiq belgisini berish',
       badgeRemove: 'Tasdiq belgisini olib tashlash',

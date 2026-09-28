@@ -45,7 +45,7 @@ const autoDecidedSql = (targetType: 'Business' | 'Deal', alias: string) =>
   `(SELECT ma.actor_user_id = 'usr_system' FROM moderation_actions ma WHERE ma.target_type = '${targetType}' AND ma.target_id = ${alias}.id ORDER BY ma.created_at DESC, ma.rowid DESC LIMIT 1)`;
 
 export type AdminBusiness = {
-  id: string; slug: string; name: string; description: string; city: string; phone: string | null; categoryName: string | null;
+  id: string; slug: string; name: string; description: string; city: string; phone: string | null; categoryName: string | null; categoryId: string | null;
   verificationStatus: string; rejectionReason: string | null; suspendedAt: string | null; suspendedReason: string | null;
   createdAt: string; trialEndsAt: string | null; paidUntil: string | null; planCode: string | null; isDemo: number;
   ownerName: string | null; ownerPhone: string | null; branchCount: number; dealCount: number;
@@ -67,7 +67,7 @@ export async function listAdminBusinesses(db: D1Database, filter: { list: AdminL
         ? `b.verification_status = 'VERIFIED' AND b.verified_at >= ?2 AND ${autoDecidedSql('Business', 'b')} = 1`
         : `1 = 1`;
   const rows = await db
-    .prepare(`SELECT b.id, b.slug, b.name, b.description, b.city, b.phone, c.name_uz AS categoryName, b.verification_status AS verificationStatus,
+    .prepare(`SELECT b.id, b.slug, b.name, b.description, b.city, b.phone, c.name_uz AS categoryName, b.category_id AS categoryId, b.verification_status AS verificationStatus,
         b.rejection_reason AS rejectionReason, b.suspended_at AS suspendedAt, b.suspended_reason AS suspendedReason, b.created_at AS createdAt,
         b.trial_ends_at AS trialEndsAt, b.paid_until AS paidUntil, b.plan_code AS planCode, b.is_demo AS isDemo,
         b.logo_id AS logoId, b.cover_id AS coverId, b.auto_review_note AS autoNote, ${autoDecidedSql('Business', 'b')} AS autoDecided, b.badge_verified_at AS badgeAt,
