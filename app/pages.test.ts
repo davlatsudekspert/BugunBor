@@ -46,6 +46,7 @@ vi.mock('@/lib/env', () => ({
 const { default: Home } = await import('./page');
 const { default: DealPage } = await import('./deals/[slug]/page');
 const { default: BusinessPage } = await import('./businesses/[slug]/page');
+const { default: ContactPage } = await import('./contact/page');
 
 const minutes = (value: number) => toDbTime(new Date(NOW.getTime() + value * 60_000));
 const html = async (page: Promise<React.ReactNode>) => renderToStaticMarkup(await page);
@@ -153,6 +154,18 @@ describe('public pages', () => {
     expect(page).not.toContain('DASTURXON VA PARDALAR');
     expect(page).toContain('Andijon shahar');
     expect(page).not.toContain('Andijon Shahar');
+  });
+
+  it('the contact page gives a direct way to write and when to expect a reply, not only the form', async () => {
+    const contact = () => html(ContactPage({ searchParams: Promise.resolve({}) }));
+    const page = await contact();
+    expect(page).toContain('mailto:davlatsudekspert@gmail.com');
+    expect(page).toContain(uz.contact.responseTime);
+    expect(page).not.toContain('t.me/');
+    await state.db.prepare(`INSERT INTO app_settings(key, value) VALUES ('company_telegram', 'bugunbor_yordam')`).run();
+    const { forgetCompanyInfo } = await import('@/modules/company');
+    forgetCompanyInfo(state.db);
+    expect(await contact()).toContain('href="https://t.me/bugunbor_yordam"');
   });
 
   it('views show to the business only once there are enough to mean something', async () => {

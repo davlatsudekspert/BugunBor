@@ -78,6 +78,8 @@ const actionSchema = z.discriminatedUnion('type', [
     address: z.string().trim().max(240),
     phone: z.string().trim().max(30),
     email: z.string().trim().max(120).refine((value) => !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)),
+    // A Telegram username (5–32 letters, digits, _), with or without @ or t.me/.
+    telegram: z.string().trim().max(60).transform((value) => value.replace(/^(?:https?:\/\/)?(?:t\.me\/|@)/i, '')).refine((value) => !value || /^[A-Za-z0-9_]{5,32}$/.test(value)).default(''),
   }),
 ]);
 
@@ -175,7 +177,7 @@ export const POST = route(async (request: Request) => {
     case 'company.update': {
       const phone = action.phone ? tryNormalizeUzbekPhone(action.phone) : '';
       if (phone === null) throw new DomainError('VALIDATION');
-      await updateCompanyInfo(db, { actorId, info: { legalName: action.legalName, tin: action.tin, registration: action.registration, address: action.address, phone, email: action.email } });
+      await updateCompanyInfo(db, { actorId, info: { legalName: action.legalName, tin: action.tin, registration: action.registration, address: action.address, phone, email: action.email, telegram: action.telegram } });
       return json({ data: { ok: true } });
     }
     case 'automation.update': {

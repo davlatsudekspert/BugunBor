@@ -7,7 +7,8 @@ import { auditStatement } from '@/modules/audit';
 // nothing is invented. A sole trader publishes the state registration
 // certificate; personal identification numbers and home addresses never go here.
 
-export type CompanyInfo = { legalName: string; tin: string; registration: string; address: string; phone: string; email: string };
+/** `telegram` is the support account's username (without @), shown on the contact page. */
+export type CompanyInfo = { legalName: string; tin: string; registration: string; address: string; phone: string; email: string; telegram: string };
 
 export const COMPANY_KEYS = {
   legalName: 'company_legal_name',
@@ -16,9 +17,10 @@ export const COMPANY_KEYS = {
   address: 'company_address',
   phone: 'company_phone',
   email: 'company_email',
+  telegram: 'company_telegram',
 } as const satisfies Record<keyof CompanyInfo, string>;
 
-export const EMPTY_COMPANY: CompanyInfo = { legalName: '', tin: '', registration: '', address: '', phone: '', email: '' };
+export const EMPTY_COMPANY: CompanyInfo = { legalName: '', tin: '', registration: '', address: '', phone: '', email: '', telegram: '' };
 
 // The footer shows these on every page, so they are kept for a minute per database.
 const cache = new WeakMap<D1Database, { value: CompanyInfo; at: number }>();
@@ -28,7 +30,7 @@ export async function getCompanyInfo(db: D1Database, options: { fresh?: boolean 
   const hit = cache.get(db);
   if (hit && !options.fresh && Date.now() - hit.at < CACHE_MS) return hit.value;
   const rows = await db
-    .prepare(`SELECT key, value FROM app_settings WHERE key IN (?1, ?2, ?3, ?4, ?5, ?6)`)
+    .prepare(`SELECT key, value FROM app_settings WHERE key IN (?1, ?2, ?3, ?4, ?5, ?6, ?7)`)
     .bind(...Object.values(COMPANY_KEYS))
     .all<{ key: string; value: string }>();
   const map = new Map(rows.results.map((row) => [row.key, row.value]));
@@ -39,9 +41,15 @@ export async function getCompanyInfo(db: D1Database, options: { fresh?: boolean 
     address: map.get(COMPANY_KEYS.address) ?? '',
     phone: map.get(COMPANY_KEYS.phone) ?? '',
     email: map.get(COMPANY_KEYS.email) ?? '',
+    telegram: map.get(COMPANY_KEYS.telegram) ?? '',
   };
   cache.set(db, { value, at: Date.now() });
   return value;
+}
+
+/** Drops the remembered details, e.g. after they were changed outside updateCompanyInfo. */
+export function forgetCompanyInfo(db: D1Database) {
+  cache.delete(db);
 }
 
 export async function updateCompanyInfo(db: D1Database, input: { actorId: string; info: CompanyInfo }, now = new Date()) {

@@ -5,8 +5,11 @@ import { useState } from 'react';
 
 import { apiRequest } from '@/lib/api-client';
 
-type Company = { legalName: string; tin: string; registration: string; address: string; phone: string; email: string };
-type Labels = { legalName: string; tin: string; tinHint: string; registration: string; registrationHint: string; address: string; addressHint: string; phone: string; email: string; save: string; saved: string; networkError: string };
+type Company = { legalName: string; tin: string; registration: string; address: string; phone: string; email: string; telegram: string };
+type Labels = {
+  legalName: string; tin: string; tinHint: string; registration: string; registrationHint: string; address: string; addressHint: string; phone: string; email: string;
+  telegram: string; telegramHint: string; save: string; saved: string; networkError: string;
+};
 
 const input = 'h-11 w-full rounded-xl border border-slate-200 px-3 text-sm text-navy outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20';
 
@@ -45,6 +48,7 @@ export function CompanyForm({ initial, labels }: { initial: Company; labels: Lab
         {field('address', labels.address, { maxLength: 240 }, labels.addressHint)}
         {field('phone', labels.phone, { type: 'tel', inputMode: 'tel', maxLength: 20, placeholder: '+998' })}
         {field('email', labels.email, { type: 'email', maxLength: 120 })}
+        {field('telegram', labels.telegram, { maxLength: 60, placeholder: '@username', autoCapitalize: 'none' }, labels.telegramHint)}
       </div>
       <div className="flex items-center gap-3">
         <button disabled={state === 'saving'} className="inline-flex h-10 items-center gap-2 rounded-xl bg-navy px-4 text-sm font-bold text-white disabled:opacity-60">

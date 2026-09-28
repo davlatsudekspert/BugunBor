@@ -102,12 +102,14 @@
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
-  /* Long Russian words ("конфиденциальности") must not push the page sideways. */
+  /* Long Russian words ("конфиденциальности") must not push the page sideways,
+     but headings are never hyphenated («мо-жет» in the home title): a word is
+     only broken when it cannot fit a line at all. */
   h1,
   h2,
   h3 {
     overflow-wrap: break-word;
-    hyphens: auto;
+    hyphens: none;
   }
 }
 
