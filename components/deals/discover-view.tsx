@@ -54,7 +54,7 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
 
   const demo = await demoEnabled(db);
   const [deals, categories, favorites] = await Promise.all([
-    listLiveDeals(db, { city, category: categorySlug, query: params.q, sort, sets, near, demo }),
+    listLiveDeals(db, { city, category: categorySlug, query: params.q, sort, sets, near, demo, locale }),
     category ? Promise.resolve([] as Category[]) : listCategories(db),
     user ? getFavoriteIds(db, user.id) : Promise.resolve(new Set<string>()),
   ]);

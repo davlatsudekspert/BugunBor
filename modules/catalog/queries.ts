@@ -1,5 +1,7 @@
+import { sampleInRussian } from '@/db/demo-ru';
 import { distanceKm } from '@/lib/cities';
 import { parseDealSet, type DealSet } from '@/lib/deal-set';
+import type { Locale } from '@/lib/i18n/config';
 import { dealPhotoUrl, mediaUrl } from '@/lib/photos';
 import { wordSearchPattern } from '@/lib/search';
 import { calmCaps, tidyAddress } from '@/lib/text';
@@ -38,6 +40,16 @@ const trust = (badgeAt: string | null, publicSince: string | null, now: Date): T
   badge: Boolean(badgeAt),
   isNew: !badgeAt && Boolean(publicSince) && parseDbTime(publicSince!).getTime() > now.getTime() - NEW_BUSINESS_DAYS * 86_400_000,
 });
+
+const asWritten = (text: string) => text;
+
+/**
+ * Samples are written in Uzbek; on the Russian site they read in Russian
+ * (db/demo-ru.ts). What businesses write themselves is shown as they wrote it.
+ */
+const sampleText = (isDemo: boolean, locale: Locale | undefined) => (isDemo && locale === 'ru' ? sampleInRussian : asWritten);
+
+const setIn = (set: DealSet | null, text: (value: string) => string) => set && { ...set, items: set.items.map((item) => ({ ...item, name: text(item.name) })) };
 
 const TRUST_COLUMNS = `b.badge_verified_at AS badgeAt, COALESCE(b.verified_at, b.created_at) AS publicSince`;
 
@@ -91,10 +103,11 @@ const DEAL_BRANCH_COLUMNS = `d.id, d.slug, d.title, d.original_price_uzs AS orig
 
 type Point = { latitude: number; longitude: number };
 
-function groupDeals(rows: DealBranchRow[], near: Point | null, now: Date): DealCard[] {
+function groupDeals(rows: DealBranchRow[], near: Point | null, now: Date, locale?: Locale): DealCard[] {
   const grouped = new Map<string, DealCard>();
   for (const row of rows) {
-    const branch: BranchSummary = { id: row.branchId, name: row.branchName, address: tidyAddress(row.address), city: row.city, latitude: row.lat / 1e6, longitude: row.lon / 1e6, hoursJson: row.hoursJson };
+    const text = sampleText(Boolean(row.isDemo || row.businessIsDemo), locale);
+    const branch: BranchSummary = { id: row.branchId, name: text(row.branchName), address: tidyAddress(row.address), city: row.city, latitude: row.lat / 1e6, longitude: row.lon / 1e6, hoursJson: row.hoursJson };
     const distance = near ? distanceKm(near, branch) : null;
     const current = grouped.get(row.id);
     if (current) {
@@ -110,7 +123,7 @@ function groupDeals(rows: DealBranchRow[], near: Point | null, now: Date): DealC
     grouped.set(row.id, {
       id: row.id,
       slug: row.slug,
-      title: row.title,
+      title: text(row.title),
       originalPrice: row.originalPrice,
       price: row.price,
       discountPercent: row.discountPercent,
@@ -130,7 +143,7 @@ function groupDeals(rows: DealBranchRow[], near: Point | null, now: Date): DealC
       distanceKm: distance,
       effective: effectiveDealStatus({ status: row.status, startsAt: row.startsAt, endsAt: row.endsAt, remainingQuantity: row.remaining }, now),
       isDemo: Boolean(row.isDemo || row.businessIsDemo),
-      set: parseDealSet(row.setItemsJson, row.setPersons),
+      set: setIn(parseDealSet(row.setItemsJson, row.setPersons), text),
     });
   }
   return [...grouped.values()];
@@ -157,6 +170,8 @@ export type DealFilters = {
   near?: Point | null;
   demo: boolean;
   now?: Date;
+  /** The site's language: samples read in it. */
+  locale?: Locale;
 };
 
 /**
@@ -201,7 +216,7 @@ export async function listLiveDeals(db: D1Database, filters: DealFilters) {
       ...(sort === 'near' && near ? [Math.round(near.latitude * 1e6), Math.round(near.longitude * 1e6)] : []),
     )
     .all<DealBranchRow>();
-  return sortDeals(groupDeals(rows.results, near, now), sort);
+  return sortDeals(groupDeals(rows.results, near, now, filters.locale), sort);
 }
 
 export type Category = { id: string; slug: string; nameUz: string; nameRu: string | null; icon: string | null; sortOrder: number; isActive: boolean };
@@ -256,19 +271,19 @@ type DealDetailRow = Omit<DealDetail, 'category' | 'business' | 'branches' | 'ef
   badgeAt: string | null; publicSince: string | null;
 };
 
-async function dealBranches(db: D1Database, dealId: string) {
+async function dealBranches(db: D1Database, dealId: string, text: (value: string) => string) {
   const rows = await db
     .prepare(`SELECT br.id, br.name, br.address, br.city, br.latitude_e6 AS lat, br.longitude_e6 AS lon, br.phone, br.working_hours_json AS hoursJson
       FROM deal_branches db JOIN branches br ON br.id = db.branch_id
       WHERE db.deal_id = ?1 AND br.deleted_at IS NULL ORDER BY br.name`)
     .bind(dealId)
     .all<{ id: string; name: string; address: string; city: string; lat: number; lon: number; phone: string | null; hoursJson: string }>();
-  return rows.results.map(({ lat, lon, ...branch }) => ({ ...branch, address: tidyAddress(branch.address), latitude: lat / 1e6, longitude: lon / 1e6 }));
+  return rows.results.map(({ lat, lon, ...branch }) => ({ ...branch, name: text(branch.name), address: tidyAddress(branch.address), latitude: lat / 1e6, longitude: lon / 1e6 }));
 }
 
 const PUBLIC_STORED_STATUSES = new Set(['ACTIVE', 'PAUSED', 'ARCHIVED']);
 
-export async function getDealBySlug(db: D1Database, slug: string, options: { demo: boolean; now?: Date }): Promise<DealDetail | null> {
+export async function getDealBySlug(db: D1Database, slug: string, options: { demo: boolean; now?: Date; locale?: Locale }): Promise<DealDetail | null> {
   const now = options.now ?? new Date();
   const row = await db
     .prepare(`SELECT d.id, d.slug, d.title, d.description, d.terms, d.original_price_uzs AS originalPrice,
@@ -290,13 +305,14 @@ export async function getDealBySlug(db: D1Database, slug: string, options: { dem
   if (!row) return null;
   const businessPublic = row.verificationStatus === 'VERIFIED' && !row.suspendedAt && !row.businessDeletedAt;
   const demoVisible = options.demo || !(row.isDemo || row.businessIsDemo);
+  const text = sampleText(Boolean(row.isDemo || row.businessIsDemo), options.locale);
   return {
     id: row.id,
     slug: row.slug,
-    title: row.title,
+    title: text(row.title),
     // Older records typed in capitals read like the rest (new ones are fixed on save).
-    description: calmCaps(row.description),
-    terms: calmCaps(row.terms),
+    description: calmCaps(text(row.description)),
+    terms: calmCaps(text(row.terms)),
     originalPrice: row.originalPrice,
     price: row.price,
     discountPercent: row.discountPercent,
@@ -312,13 +328,13 @@ export async function getDealBySlug(db: D1Database, slug: string, options: { dem
     isDemo: Boolean(row.isDemo),
     viewCount: row.viewCount,
     rejectionReason: row.rejectionReason,
-    set: parseDealSet(row.setItemsJson, row.setPersons),
+    set: setIn(parseDealSet(row.setItemsJson, row.setPersons), text),
     category: { slug: row.categorySlug, nameUz: row.categoryNameUz, nameRu: row.categoryNameRu },
     business: {
       id: row.businessId,
       slug: row.businessSlug,
       name: row.businessName,
-      description: calmCaps(row.businessDescription),
+      description: calmCaps(text(row.businessDescription)),
       phone: row.businessPhone,
       telegram: row.telegram,
       instagram: row.instagram,
@@ -331,7 +347,7 @@ export async function getDealBySlug(db: D1Database, slug: string, options: { dem
       onAir: Boolean(row.onAir),
       ...trust(row.badgeAt, row.publicSince, now),
     },
-    branches: await dealBranches(db, row.id),
+    branches: await dealBranches(db, row.id, text),
     effective: effectiveDealStatus({ status: row.status, startsAt: row.startsAt, endsAt: row.endsAt, remainingQuantity: row.remaining }, now),
     isPublic: businessPublic && demoVisible && PUBLIC_STORED_STATUSES.has(row.status),
   };
@@ -347,7 +363,7 @@ export type PublicBusiness = {
   upcoming: DealCard[];
 };
 
-export async function getPublicBusiness(db: D1Database, slug: string, options: { demo: boolean; now?: Date }): Promise<PublicBusiness | null> {
+export async function getPublicBusiness(db: D1Database, slug: string, options: { demo: boolean; now?: Date; locale?: Locale }): Promise<PublicBusiness | null> {
   const now = options.now ?? new Date();
   const business = await db
     .prepare(`SELECT b.id, b.slug, b.name, b.description, b.city, b.phone, b.telegram, b.instagram, b.website, c.slug AS categorySlug,
@@ -370,17 +386,18 @@ export async function getPublicBusiness(db: D1Database, slug: string, options: {
       .bind(business.id, toDbTime(now), options.demo ? 1 : 0)
       .all<DealBranchRow>(),
   ]);
-  const cards = sortDeals(groupDeals(dealRows.results, null, now), 'ending');
+  const cards = sortDeals(groupDeals(dealRows.results, null, now, options.locale), 'ending');
   const { logoId, coverId, ratingBp, reviewCount, isDemo, badgeAt, publicSince, ...rest } = business;
+  const text = sampleText(Boolean(isDemo), options.locale);
   return {
     ...rest,
-    description: calmCaps(rest.description),
+    description: calmCaps(text(rest.description)),
     isDemo: Boolean(isDemo),
     trust: trust(badgeAt, publicSince, now),
     logo: mediaUrl(logoId),
     cover: mediaUrl(coverId),
     rating: rating(ratingBp, reviewCount),
-    branches: branches.results.map(({ lat, lon, ...branch }) => ({ ...branch, address: tidyAddress(branch.address), latitude: lat / 1e6, longitude: lon / 1e6 })),
+    branches: branches.results.map(({ lat, lon, ...branch }) => ({ ...branch, name: text(branch.name), address: tidyAddress(branch.address), latitude: lat / 1e6, longitude: lon / 1e6 })),
     deals: cards.filter((deal) => deal.effective === 'LIVE'),
     upcoming: cards.filter((deal) => deal.effective === 'SCHEDULED'),
   };
@@ -392,7 +409,7 @@ export async function getFavoriteIds(db: D1Database, userId: string) {
 }
 
 /** Saved deals, live ones first; ended deals are kept so the user can see what they missed. */
-export async function listFavoriteDeals(db: D1Database, userId: string, options: { demo: boolean; now?: Date }) {
+export async function listFavoriteDeals(db: D1Database, userId: string, options: { demo: boolean; now?: Date; locale?: Locale }) {
   const now = options.now ?? new Date();
   const rows = await db
     .prepare(`SELECT ${DEAL_BRANCH_COLUMNS}, ${subscriptionActiveSql('?3')} AS onAir
@@ -405,7 +422,7 @@ export async function listFavoriteDeals(db: D1Database, userId: string, options:
     .bind(userId, options.demo ? 1 : 0, toDbTime(now))
     .all<DealBranchRow & { onAir: number }>();
   const offAir = new Set(rows.results.filter((row) => !row.onAir).map((row) => row.id));
-  const cards = groupDeals(rows.results, null, now);
+  const cards = groupDeals(rows.results, null, now, options.locale);
   const available = (deal: DealCard) => (deal.effective === 'LIVE' || deal.effective === 'SCHEDULED') && !offAir.has(deal.id);
   return {
     live: cards.filter(available),

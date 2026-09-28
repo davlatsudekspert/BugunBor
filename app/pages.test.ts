@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { LOCALE_COOKIE } from '@/lib/i18n/config';
 import { uz } from '@/lib/i18n/uz';
 import { categoryAbout, cityAbout } from '@/lib/place-texts';
 import { toDbTime } from '@/lib/time';
@@ -209,6 +210,22 @@ describe('public pages', () => {
     expect(await homeMetadata()).toEqual({ alternates: { canonical: '/' } });
     await updateSiteVerification(state.db, { actorId: 'mod', codes: { google: 'googleCode_12345', yandex: '' } });
     expect(await homeMetadata()).toEqual({ alternates: { canonical: '/' }, verification: { google: 'googleCode_12345' } });
+  });
+
+  it('on the Russian site a sample reads in Russian; a business’s own words stay as written', async () => {
+    await state.db.batch([
+      state.db.prepare(`UPDATE deals SET title = 'Kapuchino + kruassan', description = 'Katta kapuchino va sariyog‘li kruassan.' WHERE id = 'demo_deal'`),
+      state.db.prepare(`UPDATE deals SET title = 'Kapuchino + kruassan' WHERE id = 'deal'`),
+    ]);
+    state.cookies[LOCALE_COOKIE] = 'ru';
+    const sample = await deal('namuna-somsa');
+    expect(sample).toContain('Капучино + круассан');
+    expect(sample).toContain('Большой капучино и круассан на сливочном масле.');
+    expect(sample).toContain('Основной филиал');
+    expect(await deal('osh')).toContain('Kapuchino + kruassan');
+    const home = await html(Home());
+    expect(home).toContain('Капучино + круассан');
+    expect(home).toContain('Kapuchino + kruassan');
   });
 
   it('views show to the business only once there are enough to mean something', async () => {

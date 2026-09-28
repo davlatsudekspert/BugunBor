@@ -21,7 +21,7 @@ export default async function SavedPage() {
   const user = await requireUser('/account/saved');
   const [{ t, locale }, db] = await Promise.all([getI18n(), getDb()]);
   const demo = await demoEnabled(db);
-  const [{ live, ended }, followed] = await Promise.all([listFavoriteDeals(db, user.id, { demo }), listFollowedBusinesses(db, user.id, { demo })]);
+  const [{ live, ended }, followed] = await Promise.all([listFavoriteDeals(db, user.id, { demo, locale }), listFollowedBusinesses(db, user.id, { demo })]);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">

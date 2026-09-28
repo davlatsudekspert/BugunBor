@@ -38,7 +38,7 @@ export default async function Home() {
   inBackground(runMaintenance(db), 'Maintenance failed');
   const demo = await demoEnabled(db);
   const [deals, categories, favorites, savings] = await Promise.all([
-    listLiveDeals(db, { city, demo, sort: 'ending' }),
+    listLiveDeals(db, { city, demo, sort: 'ending', locale }),
     listCategories(db),
     user ? getFavoriteIds(db, user.id) : Promise.resolve(new Set<string>()),
     platformSavings(db, { demo: false }),

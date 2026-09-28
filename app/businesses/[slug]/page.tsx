@@ -36,8 +36,8 @@ function safeHost(url: string | null) {
 }
 
 async function load(slug: string) {
-  const db = await getDb();
-  return getPublicBusiness(db, slug, { demo: await demoEnabled(db) });
+  const [db, { locale }] = await Promise.all([getDb(), getI18n()]);
+  return getPublicBusiness(db, slug, { demo: await demoEnabled(db), locale });
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

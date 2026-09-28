@@ -3,6 +3,7 @@ import { type DealSet, serializeSetItems } from '@/lib/deal-set';
 import { buildSearchText, slugify } from '@/lib/search';
 import { addMinutes, toDbTime } from '@/lib/time';
 import type { DealVisualKey } from '@/lib/visuals';
+import { sampleInRussian } from './demo-ru';
 
 // Generated demo catalog: one fictional business in every city for every
 // category, each with two deals. Prices are Tashkent shelf prices for 2026
@@ -10,7 +11,10 @@ import type { DealVisualKey } from '@/lib/visuals';
 // Everything here is is_demo = 1 and only ever shown in demo mode.
 
 /** Bump when the catalog content changes so existing databases pick it up. */
-export const DEMO_CATALOG_VERSION = '2026-09-27.1';
+export const DEMO_CATALOG_VERSION = '2026-09-28.1';
+
+/** A sample's words and their Russian (db/demo-ru.ts), so a search in either language finds it. */
+export const inBothLanguages = (...texts: string[]) => [...new Set(texts.flatMap((text) => [text, sampleInRussian(text)]))];
 
 export const DEMO_CATEGORIES = ['food', 'coffee', 'shop', 'beauty', 'sport', 'fun', 'services', 'delivery'] as const;
 export type DemoCategory = (typeof DEMO_CATEGORIES)[number];
@@ -596,7 +600,7 @@ function shopDeals(shop: Shop, templates: [Template, Template], windowFor: (slot
       setItemsJson: template.set ? serializeSetItems(template.set.items) : null,
       setPersons: template.set?.persons ?? null,
       // What a set holds is searched too, as for a business's own sets.
-      searchText: buildSearchText(template.title, template.description, ...(template.set?.items.map((item) => item.name) ?? []), shop.name, shop.city.uz, shop.city.ru),
+      searchText: buildSearchText(...inBothLanguages(template.title, template.description, ...(template.set?.items.map((item) => item.name) ?? [])), shop.name, shop.city.uz, shop.city.ru),
     };
   });
 }
@@ -628,7 +632,7 @@ export function buildDemoCatalog(now: Date) {
         description,
         city: city.slug,
         categoryId: DEMO_CATEGORY_IDS[category],
-        searchText: buildSearchText(spec.name, description, city.uz, city.ru),
+        searchText: buildSearchText(spec.name, ...inBothLanguages(description), city.uz, city.ru),
       });
       branches.push({
         id: branchId,
@@ -657,7 +661,7 @@ export function buildDemoCatalog(now: Date) {
       description: extra.description,
       city: city.slug,
       categoryId: DEMO_CATEGORY_IDS.shop,
-      searchText: buildSearchText(extra.name, extra.description, city.uz, city.ru),
+      searchText: buildSearchText(extra.name, ...inBothLanguages(extra.description), city.uz, city.ru),
     });
     branches.push({
       id: branchId,
