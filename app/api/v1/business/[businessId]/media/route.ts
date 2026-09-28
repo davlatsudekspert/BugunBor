@@ -1,8 +1,10 @@
 import { getDb } from '@/db/client';
+import { getConfig } from '@/lib/env';
 import { assertSameOrigin, json, route } from '@/lib/http';
 import { apiUser } from '@/modules/auth/api-user';
 import { requireMembership } from '@/modules/businesses/access';
 import { DomainError } from '@/modules/errors';
+import { photoChecker } from '@/modules/media/check';
 import { MEDIA_KINDS, MEDIA_RULES, saveMedia, type MediaKind } from '@/modules/media/service';
 import { RATE_RULES, enforceRateLimit } from '@/modules/rate-limit';
 
@@ -24,5 +26,8 @@ export const POST = route(async (request: Request, context: { params: Promise<{ 
   await enforceRateLimit(db, `media:${user.id}`, RATE_RULES.write);
   if (file.size > MEDIA_RULES.maxBytes) throw new DomainError('IMAGE_TOO_LARGE', 413);
   const bytes = new Uint8Array(await file.arrayBuffer());
-  return json({ data: await saveMedia(db, { businessId, userId: user.id, kind, bytes }) }, { status: 201 });
+  // Every photo here is public (deal, logo, cover): Claude looks at it first when the key is set.
+  const check = photoChecker(getConfig().photoCheck);
+  if (check) await enforceRateLimit(db, `photo-check:${businessId}`, RATE_RULES.photoCheck);
+  return json({ data: await saveMedia(db, { businessId, userId: user.id, kind, bytes, check }) }, { status: 201 });
 });

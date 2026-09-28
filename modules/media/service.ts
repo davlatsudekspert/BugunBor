@@ -1,7 +1,9 @@
 import { mediaUrl } from '@/lib/photos';
 import { RETENTION } from '@/lib/retention';
 import { toDbTime } from '@/lib/time';
+import { auditStatement } from '@/modules/audit';
 import { DomainError } from '@/modules/errors';
+import type { PhotoChecker } from './check';
 
 // Original photos uploaded by businesses. Browsers resize and re-encode them
 // to WebP before upload (see components/business/photo-picker.tsx); the
@@ -91,8 +93,16 @@ async function sha256(bytes: Uint8Array<ArrayBuffer>) {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-/** Validates and stores an uploaded image for a business. */
-export async function saveMedia(db: D1Database, input: { businessId: string; userId: string; kind: MediaKind; bytes: Uint8Array<ArrayBuffer> }, now = new Date()) {
+/**
+ * Validates and stores an uploaded image for a business. With a checker
+ * (modules/media/check.ts) the photo is looked at first: a refused one is not
+ * kept, only an audit line with the reason.
+ */
+export async function saveMedia(
+  db: D1Database,
+  input: { businessId: string; userId: string; kind: MediaKind; bytes: Uint8Array<ArrayBuffer>; check?: PhotoChecker | null },
+  now = new Date(),
+) {
   const { bytes } = input;
   if (bytes.length === 0 || bytes.length > MEDIA_RULES.maxBytes) throw new DomainError('IMAGE_TOO_LARGE', 413);
   const mime = detectImageType(bytes);
@@ -102,14 +112,29 @@ export async function saveMedia(db: D1Database, input: { businessId: string; use
     throw new DomainError('IMAGE_INVALID', 415);
   }
   const dayAgo = toDbTime(new Date(now.getTime() - 24 * 60 * 60_000));
-  const count = await db.prepare(`SELECT COUNT(*) AS n FROM media WHERE business_id = ?1 AND created_at >= ?2`).bind(input.businessId, dayAgo).first<{ n: number }>();
+  // Refused photos count too: each one was checked.
+  const count = await db
+    .prepare(`SELECT (SELECT COUNT(*) FROM media WHERE business_id = ?1 AND created_at >= ?2)
+        + (SELECT COUNT(*) FROM audit_logs WHERE business_id = ?1 AND action = 'media.refused' AND created_at >= ?2) AS n`)
+    .bind(input.businessId, dayAgo)
+    .first<{ n: number }>();
   if ((count?.n ?? 0) >= MEDIA_RULES.maxPerDay) throw new DomainError('MEDIA_LIMIT', 429);
+
+  const hash = await sha256(bytes);
+  const verdict = input.check ? await input.check(bytes, mime) : null;
+  if (verdict && !verdict.allowed) {
+    await auditStatement(db, {
+      actorUserId: input.userId, businessId: input.businessId, action: 'media.refused', targetType: 'Media', targetId: hash,
+      reason: `${input.kind} ${verdict.reason}: ${verdict.note}`,
+    }, toDbTime(now)).run();
+    throw new DomainError(verdict.code, 422);
+  }
 
   const id = crypto.randomUUID();
   await db
-    .prepare(`INSERT INTO media(id, business_id, kind, mime, data_base64, size, width, height, sha256, uploaded_by, created_at)
-      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)`)
-    .bind(id, input.businessId, input.kind, mime, bytesToBase64(bytes), bytes.length, size.width, size.height, await sha256(bytes), input.userId, toDbTime(now))
+    .prepare(`INSERT INTO media(id, business_id, kind, mime, data_base64, size, width, height, sha256, uploaded_by, created_at, check_status)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)`)
+    .bind(id, input.businessId, input.kind, mime, bytesToBase64(bytes), bytes.length, size.width, size.height, hash, input.userId, toDbTime(now), verdict ? 'PASSED' : 'UNCHECKED')
     .run();
   return { id, url: mediaUrl(id)!, width: size.width, height: size.height };
 }

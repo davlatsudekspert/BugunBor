@@ -563,6 +563,16 @@ const dealSets: Migration = {
   },
 };
 
+/** Whether Claude looked at an uploaded photo before it was kept (modules/media/check.ts); older photos were not. */
+const photoChecks: Migration = {
+  id: '0014_photo_checks',
+  async build({ db, columns }) {
+    if ((await columns('media')).has('check_status')) return [];
+    return [db.prepare(`ALTER TABLE media ADD COLUMN check_status TEXT NOT NULL DEFAULT 'UNCHECKED'`)];
+  },
+};
+
 export const migrations: readonly Migration[] = [
   baseline, systemV1, billing, media, engagement, payments, autoModeration, freeLaunch, privacyConsent, appSupport, userAvatars, codeIssues, dealSets,
+  photoChecks,
 ];

@@ -73,6 +73,13 @@ export default async function AdminSettingsPage() {
             </li>
           ))}
         </ul>
+        <div className="border-t border-slate-100 py-3">
+          <p className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-sm font-semibold text-navy">{auto.photos}</span>
+            <span className={config.photoCheck ? 'rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700' : 'rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800'}>{config.photoCheck ? auto.on : auto.photosOff}</span>
+          </p>
+          <p className="mt-1.5 text-xs leading-5 text-slate-500">{auto.photosHint}</p>
+        </div>
         <p className="mt-2 rounded-xl bg-slate-50 p-4 text-xs leading-5 text-slate-600">{auto.alerts}</p>
       </section>
 

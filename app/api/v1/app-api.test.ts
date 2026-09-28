@@ -12,7 +12,7 @@ import { NOW, marketplace } from '@/test/fixtures';
 // sides instead of silently showing an empty screen.
 // UPDATE_CONTRACTS=1 npx vitest run app/api/v1/app-api.test.ts rewrites them.
 
-const state = vi.hoisted(() => ({ db: null as unknown as D1Database, reviewCode: null as string | null }));
+const state = vi.hoisted(() => ({ db: null as unknown as D1Database, reviewCode: null as string | null, photoCheck: null as { apiKey: string; model: string | null } | null }));
 
 vi.mock('@/db/client', () => ({ getDb: async () => state.db }));
 vi.mock('@/lib/env', () => ({
@@ -27,6 +27,7 @@ vi.mock('@/lib/env', () => ({
     telegram: { botToken: '1:token', botUsername: 'bugunborbot', webhookSecret: 'hook' },
     app: { fcmServiceAccount: null, reviewLoginCode: state.reviewCode, minBuild: 3 },
     payments: { enabled: false, payme: null, click: null },
+    photoCheck: state.photoCheck,
   }),
 }));
 
@@ -319,6 +320,31 @@ describe('app API', () => {
     });
     expect((counter.body.data.recent as Array<{ status: string }>).every((code) => code.status === 'CLAIMED')).toBe(true);
     expect((await workspace(req('/api/v1/business/biz', { token: alice }), params({ businessId: 'biz' }))).status).toBe(403);
+  });
+
+  it('refuses a photo the automatic check finds religious, military or political, with the reason in the app’s language', async () => {
+    const owner = (await createSession(state.db, 'owner', { client: 'app' })).token;
+    const png = new Uint8Array(64);
+    png.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52]);
+    new DataView(png.buffer).setUint32(16, 640);
+    new DataView(png.buffer).setUint32(20, 480);
+    state.photoCheck = { apiKey: 'test-key', model: null };
+    const claude = vi.fn(async () =>
+      Response.json({ content: [{ type: 'tool_use', name: 'verdict', input: { allowed: false, reason: 'RELIGIOUS', note: 'A mosque dome behind the shop.' } }] }));
+    vi.stubGlobal('fetch', claude);
+    try {
+      const form = new FormData();
+      form.set('kind', 'COVER');
+      form.set('file', new Blob([png], { type: 'image/png' }), 'cover.png');
+      const response = await read(await uploadMedia(new Request('https://bugunbor.uz/api/v1/business/biz/media', { method: 'POST', headers: { ...APP_HEADERS, authorization: `Bearer ${owner}` }, body: form }), params({ businessId: 'biz' })));
+      expect(response.status).toBe(422);
+      expect(response.body.error).toMatchObject({ code: 'PHOTO_RELIGIOUS', message: expect.stringContaining('diniy mavzu') });
+      expect(claude).toHaveBeenCalledTimes(1);
+      expect(await state.db.prepare(`SELECT COUNT(*) AS n FROM media`).first()).toEqual({ n: 0 });
+    } finally {
+      vi.unstubAllGlobals();
+      state.photoCheck = null;
+    }
   });
 
   it('lets an owner add a deal with a photo from the app and run it; cashiers cannot', async () => {

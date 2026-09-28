@@ -55,6 +55,18 @@ Development always shows the demo catalogue. Production shows it with `DEMO_SEED
 
 Uploaded photos live in D1 (`media`) and are served from `/media/:id` with a one-year cache. If storage grows past a few GB, move `modules/media/service.ts` to R2; the URLs stay the same.
 
+### Automatic photo check
+
+Every public photo (deal photo, logo, cover), from the site and the app alike, is looked at by Claude before it is kept (`modules/media/check.ts`). A photo with military, political or religious content (even in the background), nudity, alcohol, tobacco or drugs, gambling, hate symbols or a personal document is refused with the reason in the uploader's language, nothing of it is stored, and **Admin → Audit** gets a `media.refused` line. If the service does not answer (two tries, 12 s each), the upload is refused with "try again in a minute". Profile photos are not sent: only their owner sees them.
+
+To switch it on, add BugunBor's **own** Anthropic API key as a Worker secret — never another project's key:
+
+1. console.anthropic.com → create a key for BugunBor (set a monthly spend limit there).
+2. Cloudflare → Workers & Pages → the BugunBor Worker → Settings → Variables and Secrets → Add → type **Secret**, name `ANTHROPIC_API_KEY`, paste the key → Deploy. (Or `npx wrangler secret put ANTHROPIC_API_KEY`.)
+3. **Admin → Sozlamalar → Avtomatik moderatsiya** shows «Rasmlarni avtomatik tekshirish: Yoqilgan».
+
+Optional: `PHOTO_CHECK_MODEL` picks another Claude model (default `claude-sonnet-5`). Without the key photos are kept as before and marked `UNCHECKED` in `media.check_status`; moderators can still remove a business's or deal's photos.
+
 Demo photos are static files in `public/photos` with authors in `lib/stock-photos.ts` (see `docs/RASMLAR.md`):
 
 - `npm run photos:fetch` downloads the curated Commons picks again (needs access to `commons.wikimedia.org` and `upload.wikimedia.org`); `npm run photos:fetch -- --search "Chust doppi"` lists candidates.

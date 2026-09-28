@@ -1224,6 +1224,9 @@ class LUz extends L {
   String get dealPhotoHint => 'Mahsulot yoki xizmatingizning o‘zingiz olgan haqiqiy fotosurati. Rasm bo‘lmasa, chiroyli belgi ko‘rsatiladi.';
 
   @override
+  String get photoRules => 'Harbiy kiyim, qurol, siyosiy va diniy mavzudagi rasmlar qabul qilinmaydi: bunday rasm rad etiladi.';
+
+  @override
   String get dealPhotoAdd => 'Rasm qo‘shish';
 
   @override
@@ -1400,7 +1403,7 @@ class LUz extends L {
   String get profilePhotoRemove => 'Rasmni olib tashlash';
 
   @override
-  String get profilePhotoHint => 'Rasm faqat sizga ko‘rinadi.';
+  String get profilePhotoHint => 'Rasm faqat sizga ko‘rinadi. Harbiy, siyosiy va diniy mavzudagi rasm qo‘ymang.';
 
   @override
   String get homeHowTitle => 'BugunBor qanday ishlaydi';

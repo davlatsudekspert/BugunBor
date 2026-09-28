@@ -1222,6 +1222,9 @@ class LEn extends L {
   String get dealPhotoHint => 'A real photo of your product or service that you took yourself. Without one, a neat icon is shown.';
 
   @override
+  String get photoRules => 'Photos with military clothing, weapons, political or religious subjects are not accepted: such a photo is refused.';
+
+  @override
   String get dealPhotoAdd => 'Add a photo';
 
   @override
@@ -1398,7 +1401,7 @@ class LEn extends L {
   String get profilePhotoRemove => 'Remove photo';
 
   @override
-  String get profilePhotoHint => 'Only you see this photo.';
+  String get profilePhotoHint => 'Only you see this photo. Don’t use military, political or religious images.';
 
   @override
   String get homeHowTitle => 'How BugunBor works';

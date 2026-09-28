@@ -28,7 +28,7 @@ type Props = {
 
 export function DealCard({ deal, t, locale, favorite, loggedIn, showCity = false, priority = false }: Props) {
   const scheduled = deal.effective === 'SCHEDULED';
-  const location = [deal.branch.name, showCity ? cityName(deal.branch.city, locale) : null, deal.distanceKm !== null ? fmt(t.discover.distance, { km: deal.distanceKm.toFixed(1).replace('.', ',') }) : null]
+  const location = [deal.branch.name, showCity ? cityName(deal.branch.city, locale) : null, deal.distanceKm !== null && !deal.isDemo ? fmt(t.discover.distance, { km: deal.distanceKm.toFixed(1).replace('.', ',') }) : null]
     .filter(Boolean)
     .join(' · ');
   return (
@@ -47,14 +47,17 @@ export function DealCard({ deal, t, locale, favorite, loggedIn, showCity = false
         <div className="absolute right-4 top-4 z-10">
           <FavoriteButton dealId={deal.id} initial={favorite} loggedIn={loggedIn} labels={{ save: fmt(t.deal.saveAria, { title: deal.title }), unsave: fmt(t.deal.unsaveAria, { title: deal.title }) }} />
         </div>
-        <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full bg-navy/90 px-3 py-2 text-xs font-bold text-white backdrop-blur">
-          <Clock3 className="size-3.5 text-orange-300" aria-hidden />
-          {scheduled ? (
-            <span>{formatMoment(parseDbTime(deal.startsAt), t, locale)}</span>
-          ) : (
-            <Countdown target={deal.endsAt} daysLabel={t.common.daysShort} className="tabular" />
-          )}
-        </div>
+        {/* A sample has no real clock or stock: no timer or «N ta qoldi» to hurry anyone. */}
+        {deal.isDemo ? null : (
+          <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full bg-navy/90 px-3 py-2 text-xs font-bold text-white backdrop-blur">
+            <Clock3 className="size-3.5 text-orange-300" aria-hidden />
+            {scheduled ? (
+              <span>{formatMoment(parseDbTime(deal.startsAt), t, locale)}</span>
+            ) : (
+              <Countdown target={deal.endsAt} daysLabel={t.common.daysShort} className="tabular" />
+            )}
+          </div>
+        )}
       </DealVisual>
 
       <div className="flex flex-1 flex-col p-5">
@@ -84,9 +87,11 @@ export function DealCard({ deal, t, locale, favorite, loggedIn, showCity = false
             <MapPin className="size-3.5 shrink-0" aria-hidden />
             <span className="truncate">{location}{deal.branchCount > 1 ? ` +${deal.branchCount - 1}` : ''}</span>
           </span>
-          <span className={cn('shrink-0 font-bold', deal.remaining !== null && deal.remaining <= 5 ? 'text-red-600' : 'text-amber-700')}>
-            {deal.remaining === null ? t.deal.unlimited : fmt(t.deal.left, { count: deal.remaining })}
-          </span>
+          {deal.isDemo ? null : (
+            <span className={cn('shrink-0 font-bold', deal.remaining !== null && deal.remaining <= 5 ? 'text-red-600' : 'text-amber-700')}>
+              {deal.remaining === null ? t.deal.unlimited : fmt(t.deal.left, { count: deal.remaining })}
+            </span>
+          )}
         </div>
         <span className={cn(buttonVariants(), 'pointer-events-none mt-5 h-10 w-full rounded-xl font-bold')} aria-hidden>
           {scheduled ? t.deal.status.SCHEDULED : t.deal.viewDeal} <ArrowRight className="ml-1 size-4" />

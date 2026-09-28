@@ -114,21 +114,24 @@ export default async function BusinessPage({ params }: { params: Promise<{ slug:
                 <span className="flex items-center gap-1"><MapPin className="size-4" aria-hidden /> {cityName(business.city, locale)}</span>
               </p>
               <p className="mt-4 max-w-3xl whitespace-pre-line leading-7 text-slate-600">{business.description}</p>
-              <div className="mt-5">
-                <FollowButton
-                  businessId={business.id}
-                  initial={follow}
-                  loggedIn={Boolean(user)}
-                  labels={{ follow: t.business.follow, following: t.business.following, followers: t.business.followers, hint: t.business.followHint, error: t.common.networkError }}
-                />
-              </div>
+              {/* A sample business cannot be followed or reported (the app hides both too). */}
+              {business.isDemo ? null : (
+                <div className="mt-5">
+                  <FollowButton
+                    businessId={business.id}
+                    initial={follow}
+                    loggedIn={Boolean(user)}
+                    labels={{ follow: t.business.follow, following: t.business.following, followers: t.business.followers, hint: t.business.followHint, error: t.common.networkError }}
+                  />
+                </div>
+              )}
               <div className="mt-4 flex flex-wrap gap-2">
                 {business.phone ? <a href={`tel:${business.phone}`} className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-bold text-navy hover:border-primary/40"><Phone className="size-4" aria-hidden /> {formatPhone(business.phone)}</a> : null}
                 {business.telegram ? <a href={telegramUrl(business.telegram)} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-bold text-navy hover:border-primary/40"><Send className="size-4" aria-hidden /> Telegram</a> : null}
                 {business.instagram ? <a href={instagramUrl(business.instagram)} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-bold text-navy hover:border-primary/40"><AtSign className="size-4" aria-hidden /> Instagram</a> : null}
                 {websiteHost ? <a href={business.website!} target="_blank" rel="noreferrer nofollow" className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-bold text-navy hover:border-primary/40"><Globe className="size-4" aria-hidden /> {websiteHost}</a> : null}
               </div>
-              <ComplaintButton targetType="BUSINESS" targetId={business.id} loggedIn={Boolean(user)} loginHref={`/login?returnTo=${encodeURIComponent(`/businesses/${business.slug}`)}`} className="mt-3" {...reportProps(t)} />
+              {business.isDemo ? null : <ComplaintButton targetType="BUSINESS" targetId={business.id} loggedIn={Boolean(user)} loginHref={`/login?returnTo=${encodeURIComponent(`/businesses/${business.slug}`)}`} className="mt-3" {...reportProps(t)} />}
             </div>
           </div>
         </div>
@@ -179,12 +182,15 @@ export default async function BusinessPage({ params }: { params: Promise<{ slug:
             return (
               <div key={branch.id} className="rounded-2xl border border-slate-200 bg-white p-4">
                 <p className="flex items-center gap-2 font-bold text-navy"><MapPin className="size-4 text-primary" aria-hidden /> {branch.name}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-500">{branch.address}, {cityName(branch.city, locale)}</p>
+                {/* A sample's street is made up: no address or directions to send anyone there. */}
+                <p className="mt-2 text-sm leading-6 text-slate-500">{business.isDemo ? cityName(branch.city, locale) : `${branch.address}, ${cityName(branch.city, locale)}`}</p>
                 {hours ? <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500"><CalendarClock className="size-4" aria-hidden /> {hours}</p> : null}
-                <div className="-mb-2 mt-1 flex flex-wrap gap-x-4">
-                  <a href={directionsUrl(branch)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 py-2 text-sm font-bold text-primary"><Navigation className="size-4" aria-hidden /> {t.common.directions}</a>
-                  {branch.phone ? <a href={`tel:${branch.phone}`} className="inline-flex items-center gap-1.5 py-2 text-sm font-bold text-navy"><Phone className="size-4" aria-hidden /> {formatPhone(branch.phone)}</a> : null}
-                </div>
+                {business.isDemo ? null : (
+                  <div className="-mb-2 mt-1 flex flex-wrap gap-x-4">
+                    <a href={directionsUrl(branch)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 py-2 text-sm font-bold text-primary"><Navigation className="size-4" aria-hidden /> {t.common.directions}</a>
+                    {branch.phone ? <a href={`tel:${branch.phone}`} className="inline-flex items-center gap-1.5 py-2 text-sm font-bold text-navy"><Phone className="size-4" aria-hidden /> {formatPhone(branch.phone)}</a> : null}
+                  </div>
+                )}
               </div>
             );
           })}

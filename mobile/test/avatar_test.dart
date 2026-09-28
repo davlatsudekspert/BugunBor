@@ -60,7 +60,8 @@ void main() {
 
     await tester.tap(find.bySemanticsLabel('Rasm qo‘yish'));
     await settle(tester);
-    expect(find.text('Rasm faqat sizga ko‘rinadi.'), findsOneWidget);
+    // Who sees it, and what must not be in it.
+    expect(find.text('Rasm faqat sizga ko‘rinadi. Harbiy, siyosiy va diniy mavzudagi rasm qo‘ymang.'), findsOneWidget);
     expect(find.text('Rasmni olib tashlash'), findsNothing);
     await tester.tap(find.text('Galereya'));
     await settle(tester);

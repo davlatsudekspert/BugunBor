@@ -32,6 +32,9 @@ import { demoEnabled } from '@/modules/demo';
 import { followState } from '@/modules/engagement/follows';
 import { NO_SHOW_RULES, noShowState } from '@/modules/redemptions/no-shows';
 
+/** Fewer views than this are not worth showing on the deal page. */
+const MIN_VIEWS_SHOWN = 10;
+
 async function loadDeal(slug: string) {
   const db = await getDb();
   return getDealBySlug(db, slug, { demo: await demoEnabled(db) });
@@ -87,15 +90,18 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
       ? { text: fmt(t.claim.noShowWarning, { count: noShows.count }), blocking: false }
       : null;
 
-  // Demo deals show how the site works; outside development nobody can claim them.
-  const demoOnly = (deal.isDemo || deal.business.isDemo) && !getConfig().isDevelopment;
+  // Samples show how the site works; outside development nobody can claim them.
+  // They have no street address, directions, timer or stock count either: the
+  // place does not exist and the urgency would be made up.
+  const sample = deal.isDemo || deal.business.isDemo;
+  const demoOnly = sample && !getConfig().isDevelopment;
   const claimable = deal.isPublic && deal.effective === 'LIVE' && deal.business.onAir && !demoOnly;
   const firstBranch = deal.branches[0];
   const moreDeals = business?.deals.filter((item) => item.id !== deal.id).slice(0, 3) ?? [];
   const statusTone = deal.effective === 'LIVE' ? 'bg-emerald-50 text-emerald-700' : deal.effective === 'SCHEDULED' ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-600';
 
   const origin = getConfig().appUrl ?? 'https://bugunbor.uz';
-  const structured = !deal.isPublic || deal.isDemo || deal.business.isDemo
+  const structured = !deal.isPublic || sample
     ? null
     : {
         '@context': 'https://schema.org',
@@ -111,6 +117,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
           priceCurrency: 'UZS',
           availability: `https://schema.org/${{ LIVE: 'InStock', SOLD_OUT: 'SoldOut', SCHEDULED: 'PreOrder' }[deal.effective as string] ?? 'Discontinued'}`,
           validFrom: parseDbTime(deal.startsAt).toISOString(),
+          validThrough: parseDbTime(deal.endsAt).toISOString(),
           // The last day in Tashkent (UTC+5): a deal ending at 02:00 there ends on that day, not the day before.
           priceValidUntil: new Date(parseDbTime(deal.endsAt).getTime() + 5 * 3_600_000).toISOString().slice(0, 10),
           seller: { '@type': 'LocalBusiness', name: deal.business.name },
@@ -134,7 +141,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
         <section className="min-w-0">
           <DealVisual visual={deal.visual} categorySlug={deal.category.slug} photo={deal.photo} priority sizes="(min-width: 1024px) 50vw, 100vw" className="min-h-64 rounded-[28px] p-5 shadow-[0_20px_60px_rgba(245,89,55,.18)] sm:min-h-80" emojiClassName="-bottom-6 right-6 text-[9rem] sm:text-[11rem]">
             <span className="relative inline-flex h-10 items-center rounded-full bg-white px-4 text-lg font-black text-navy shadow-sm">-{deal.discountPercent}%</span>
-            <span className={cn('relative ml-2 inline-flex h-8 items-center rounded-full px-3 text-xs font-bold', statusTone)}>{t.deal.status[deal.effective]}</span>
+            {sample ? null : <span className={cn('relative ml-2 inline-flex h-8 items-center rounded-full px-3 text-xs font-bold', statusTone)}>{t.deal.status[deal.effective]}</span>}
           </DealVisual>
 
           <div className="mt-7 flex flex-wrap items-center justify-between gap-3">
@@ -151,11 +158,12 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
                 </a>
               ) : null}
             </div>
-            {deal.isPublic ? (
+            {/* Nobody to follow or report: a sample business does not exist (the app hides both too). */}
+            {deal.isPublic && !sample ? (
               <FollowButton businessId={deal.business.id} initial={follow} loggedIn={Boolean(user)} compact labels={{ follow: t.business.follow, following: t.business.following, followers: t.business.followers, hint: t.business.followHint, error: t.common.networkError }} />
             ) : null}
           </div>
-          {deal.isDemo || deal.business.isDemo ? <span className="mt-4 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-900">{t.common.sample}</span> : null}
+          {sample ? <span className="mt-4 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-900">{t.common.sample}</span> : null}
           <h1 className="mt-2 text-4xl font-black tracking-[-.05em] text-navy sm:text-5xl">{deal.title}</h1>
           <p className="mt-5 max-w-2xl whitespace-pre-line text-lg leading-8 text-slate-600">{deal.description}</p>
           {deal.set ? (
@@ -181,10 +189,10 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
               return (
                 <div key={branch.id} className="rounded-2xl border border-slate-200 bg-white p-4">
                   <p className="flex items-center gap-2 text-sm font-bold text-navy"><MapPin className="size-4 text-primary" aria-hidden /> {branch.name}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-500">{branch.address}, {cityName(branch.city, locale)}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">{sample ? cityName(branch.city, locale) : `${branch.address}, ${cityName(branch.city, locale)}`}</p>
                   {hours ? <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500"><CalendarClock className="size-4" aria-hidden /> {hours}</p> : null}
                   <OpenBadge hoursJson={branch.hoursJson} t={t} now={now} className="mt-1.5" />
-                  <a href={directionsUrl(branch)} target="_blank" rel="noreferrer" className="-mb-2 mt-1 flex w-fit items-center gap-1.5 py-2 text-sm font-bold text-primary"><Navigation className="size-4" aria-hidden /> {t.common.directions}</a>
+                  {sample ? null : <a href={directionsUrl(branch)} target="_blank" rel="noreferrer" className="-mb-2 mt-1 flex w-fit items-center gap-1.5 py-2 text-sm font-bold text-primary"><Navigation className="size-4" aria-hidden /> {t.common.directions}</a>}
                 </div>
               );
             })}
@@ -197,7 +205,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
               <li className="flex items-center gap-2"><Ticket className="size-4 text-primary" aria-hidden /> {fmt(t.deal.perCustomer, { count: deal.perCustomerLimit })}</li>
               <li className="flex items-center gap-2"><Timer className="size-4 text-primary" aria-hidden /> {fmt(t.deal.codeValidity, { duration: formatDurationMinutes(deal.claimTtlMinutes, t) })}</li>
             </ul>
-            <p className="mt-4 flex items-center gap-2 text-sm text-emerald-700"><ShieldCheck className="size-4" aria-hidden /> {t.deal.verifiedNote}</p>
+            {sample ? null : <p className="mt-4 flex items-center gap-2 text-sm text-emerald-700"><ShieldCheck className="size-4" aria-hidden /> {t.deal.verifiedNote}</p>}
           </div>
 
           <div className="mt-5 flex flex-wrap gap-2">
@@ -206,7 +214,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
                 <Phone className="size-4" aria-hidden /> {formatPhone(deal.business.phone)}
               </a>
             ) : null}
-            {firstBranch ? (
+            {firstBranch && !sample ? (
               <a className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-navy transition hover:border-primary/40" href={directionsUrl(firstBranch)} target="_blank" rel="noreferrer">
                 <Navigation className="size-4" aria-hidden /> {t.common.directions}
               </a>
@@ -214,7 +222,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
             <ShareButton url={`/deals/${deal.slug}`} text={fmt(t.deal.shareText, { title: deal.title, percent: deal.discountPercent })} labels={{ share: t.common.share, copied: t.common.copied }} />
             <FavoriteButton dealId={deal.id} initial={favorites.has(deal.id)} loggedIn={Boolean(user)} labels={{ save: fmt(t.deal.saveAria, { title: deal.title }), unsave: fmt(t.deal.unsaveAria, { title: deal.title }) }} withText={{ save: t.deal.save, saved: t.deal.saved }} />
           </div>
-          {deal.isPublic ? (
+          {deal.isPublic && !sample ? (
             <ComplaintButton targetType="DEAL" targetId={deal.id} loggedIn={Boolean(user)} loginHref={`/login?returnTo=${encodeURIComponent(`/deals/${deal.slug}`)}`} className="mt-5" {...reportProps(t)} />
           ) : null}
         </section>
@@ -232,20 +240,24 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
               </p>
             ) : null}
 
-            <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl bg-navy p-4 text-white">
-              <span className="flex items-center gap-2 text-sm font-bold"><Clock3 className="size-5 text-orange-300" aria-hidden /> {deal.effective === 'SCHEDULED' ? t.deal.startsIn : t.deal.endsIn}</span>
-              {deal.effective === 'LIVE' || deal.effective === 'SCHEDULED' ? (
-                <Countdown target={deal.effective === 'SCHEDULED' ? deal.startsAt : deal.endsAt} daysLabel={t.common.daysShort} className="tabular font-mono text-lg font-black" />
-              ) : (
-                <span className="text-sm font-bold">{t.deal.status[deal.effective]}</span>
-              )}
-            </div>
-            <p className="mt-3 text-xs text-slate-500">
-              {t.deal.endsAt}: {formatMoment(parseDbTime(deal.endsAt), t, locale, now)}
-            </p>
-            <p className={cn('mt-3 text-sm font-semibold', deal.remaining !== null && deal.remaining <= 5 ? 'text-red-600' : 'text-amber-700')}>
-              {deal.remaining === null ? t.deal.unlimited : fmt(t.deal.left, { count: deal.remaining })}
-            </p>
+            {sample ? null : (
+              <>
+                <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl bg-navy p-4 text-white">
+                  <span className="flex items-center gap-2 text-sm font-bold"><Clock3 className="size-5 text-orange-300" aria-hidden /> {deal.effective === 'SCHEDULED' ? t.deal.startsIn : t.deal.endsIn}</span>
+                  {deal.effective === 'LIVE' || deal.effective === 'SCHEDULED' ? (
+                    <Countdown target={deal.effective === 'SCHEDULED' ? deal.startsAt : deal.endsAt} daysLabel={t.common.daysShort} className="tabular font-mono text-lg font-black" />
+                  ) : (
+                    <span className="text-sm font-bold">{t.deal.status[deal.effective]}</span>
+                  )}
+                </div>
+                <p className="mt-3 text-xs text-slate-500">
+                  {t.deal.endsAt}: {formatMoment(parseDbTime(deal.endsAt), t, locale, now)}
+                </p>
+                <p className={cn('mt-3 text-sm font-semibold', deal.remaining !== null && deal.remaining <= 5 ? 'text-red-600' : 'text-amber-700')}>
+                  {deal.remaining === null ? t.deal.unlimited : fmt(t.deal.left, { count: deal.remaining })}
+                </p>
+              </>
+            )}
 
             <div className="mt-5">
               {demoOnly ? (
@@ -293,8 +305,9 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
                 />
               )}
             </div>
-            {isMember || isModerator(user) ? (
-              <p className="mt-4 flex items-center gap-1.5 text-xs text-slate-400"><Eye className="size-3.5" aria-hidden /> {t.biz.deals.views}: {deal.viewCount}</p>
+            {/* Only to the business and moderators, and only once the number says something. */}
+            {(isMember || isModerator(user)) && deal.viewCount >= MIN_VIEWS_SHOWN ? (
+              <p className="mt-4 flex items-center gap-1.5 text-xs text-slate-400"><Eye className="size-3.5" aria-hidden /> {t.biz.deals.views}: {formatNumber(deal.viewCount)}</p>
             ) : null}
           </div>
         </aside>
