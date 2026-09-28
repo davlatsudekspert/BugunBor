@@ -63,6 +63,28 @@ export async function latestApkBuild(fetcher: typeof fetch = fetch, now = Date.n
   return build;
 }
 
+// The newest 64-bit APK's size, for the note under the download button: a
+// one-byte request answers with the whole file's length (Content-Range), so
+// the page always tells the size of the file it gives. Remembered for ten
+// minutes; on a network error the last known size stays.
+let latestSize: { bytes: number | null; at: number } | null = null;
+
+export async function latestApkSize(fetcher: typeof fetch = fetch, now = Date.now()): Promise<number | null> {
+  if (latestSize && now - latestSize.at < LATEST_MS) return latestSize.bytes;
+  let bytes = latestSize?.bytes ?? null;
+  try {
+    const response = await fetcher(`${APK_RELEASE_BASE}/${APK_FILES.arm64}`, { headers: { range: 'bytes=0-0' }, signal: AbortSignal.timeout(2500) });
+    const total = Number(/\/(\d+)$/.exec(response.headers.get('content-range') ?? '')?.[1]);
+    await response.body?.cancel();
+    bytes = total > 0 ? total : response.status === 404 ? null : bytes;
+  } catch {
+    // GitHub unreachable: keep what was known.
+  }
+  latestSize = { bytes, at: now };
+  return bytes;
+}
+
 export function forgetLatestApk() {
   latest = null;
+  latestSize = null;
 }
