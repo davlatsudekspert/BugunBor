@@ -65,15 +65,19 @@ Uploaded photos live in D1 (`media`) and are served from `/media/:id` with a one
 
 ### Automatic photo check
 
-Every public photo (deal photo, logo, cover), from the site and the app alike, is looked at by Claude before it is kept (`modules/media/check.ts`). A photo with military, political or religious content (even in the background), nudity, alcohol, tobacco or drugs, gambling, hate symbols or a personal document is refused with the reason in the uploader's language, nothing of it is stored, and **Admin → Audit** gets a `media.refused` line. If the service does not answer (two tries, 12 s each), the upload is refused with "try again in a minute". Profile photos are not sent: only their owner sees them.
+Every public photo (deal photo, logo, cover), from the site and the app alike, is looked at by an AI service before it is kept (`modules/media/check.ts`): **Claude** (`ANTHROPIC_API_KEY`) first, and **Google Gemini** (`GEMINI_API_KEY`) when Claude has no key or does not answer (an error such as no credit or a limit, a 4xx/5xx or no answer in time). Both get the same rules and give the same verdict. A photo with military, political or religious content (even in the background), nudity, alcohol, tobacco or drugs, gambling, hate symbols or a personal document is refused with the reason in the uploader's language, nothing of it is stored, and **Admin → Audit** gets a `media.refused` line. Profile photos are not sent: only their owner sees them.
 
-To switch it on, add BugunBor's **own** Anthropic API key as a Worker secret — never another project's key:
+The check never blocks an upload. When neither service answers, the photo is kept as `UNCHECKED`, queued (`media.check_after`, `media.check_attempts`) and checked again by the background job (`modules/media/recheck.ts`, a few photos a minute, next try after 15 min, 1 h, 3 h, 6 h, 12 h, then daily). A photo that passes later is marked `PASSED`; one that breaks the rules is taken off its deal or profile and deleted, with a `media.refused` audit line, and the business's owners and managers get a Telegram message. The admins get one Telegram message a day while the check is down, with each service's error.
 
-1. console.anthropic.com → create a key for BugunBor (set a monthly spend limit there).
-2. Cloudflare → Workers & Pages → the BugunBor Worker → Settings → Variables and Secrets → Add → type **Secret**, name `ANTHROPIC_API_KEY`, paste the key → Deploy. (Or `npx wrangler secret put ANTHROPIC_API_KEY`.)
-3. **Admin → Sozlamalar → Avtomatik moderatsiya** shows «Rasmlarni avtomatik tekshirish: Yoqilgan».
+**Admin → Sozlamalar → Avtomatik moderatsiya** shows which service is connected, the last successful check (time and service), the last error and how many photos wait for a new check.
 
-Optional: `PHOTO_CHECK_MODEL` picks another Claude model (default `claude-sonnet-5`). Without the key photos are kept as before and marked `UNCHECKED` in `media.check_status`; moderators can still remove a business's or deal's photos.
+To switch it on, add BugunBor's **own** keys as Worker secrets — never another project's key:
+
+1. Gemini: aistudio.google.com → Get API key, in a Google Cloud project **with billing on** (on the paid tier Google does not use the photos to improve its models; set a budget alert in Cloud Billing). Claude: console.anthropic.com → create a key for BugunBor and set a monthly spend limit there.
+2. Cloudflare → Workers & Pages → the BugunBor Worker → Settings → Variables and Secrets → Add → type **Secret**, name `GEMINI_API_KEY` (or `ANTHROPIC_API_KEY`), paste the key → Deploy. (Or `npx wrangler secret put GEMINI_API_KEY`.)
+3. **Admin → Sozlamalar** shows the service as «ulangan».
+
+Optional: `PHOTO_CHECK_MODEL` picks another Claude model (default `claude-sonnet-5`), `GEMINI_MODEL` another Gemini model (default `gemini-flash-latest`, Google's name for its newest Flash model). Without any key photos are kept as before, marked `UNCHECKED` and not queued; moderators can still remove a business's or deal's photos.
 
 Demo photos are static files in `public/photos` with authors in `lib/stock-photos.ts` (see `docs/RASMLAR.md`):
 

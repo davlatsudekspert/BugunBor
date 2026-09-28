@@ -1,13 +1,17 @@
 import { waitUntil } from 'cloudflare:workers';
 
 import { getConfig, isTelegramConfigured } from '@/lib/env';
+import { photoChecker } from '@/modules/media/check';
+import { recheckPhotos } from '@/modules/media/recheck';
+import { forgetCachedMedia } from '@/modules/media/service';
 import { createFcmSender } from '@/modules/notifications/push';
 import { processNotifications } from '@/modules/notifications/service';
 import { createTelegramApi } from '@/modules/telegram/api';
 import { ensureTelegramWebhook } from '@/modules/telegram/setup';
 
 // Work that should not slow down the request that triggered it: connecting
-// the Telegram bot (first request after a deploy) and sending notifications.
+// the Telegram bot (first request after a deploy), sending notifications and
+// checking again the photos no checking service could look at on upload.
 // Traffic drives it (at most once a minute per isolate); Workers keep the
 // isolate alive for waitUntil promises after the response is sent.
 
@@ -28,6 +32,13 @@ export function tickBackgroundJobs(db: D1Database, now = Date.now()) {
   if (now - lastRun < INTERVAL_MS) return;
   lastRun = now;
   const config = getConfig();
+  const check = photoChecker(config.photoCheck);
+  if (check) {
+    inBackground(
+      recheckPhotos(db, check).then((removed) => forgetCachedMedia(removed, config.appUrl ?? 'https://bugunbor.uz')),
+      'Photo re-check failed',
+    );
+  }
   if (!isTelegramConfigured(config)) return;
   const task = ensureTelegramWebhook(db, config)
     .catch((error: unknown) => console.error('Telegram webhook setup failed', error))

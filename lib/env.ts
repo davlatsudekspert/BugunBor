@@ -31,7 +31,7 @@ export type AppConfig = {
     payme: { merchantId: string; key: string; sandbox: boolean; fiscal: PaymeFiscal | null } | null;
     click: { serviceId: string; merchantId: string; secretKey: string; sandbox: boolean } | null;
   };
-  /** Claude looks at every public photo before it is kept (ANTHROPIC_API_KEY); null = photos are kept unchecked. */
+  /** Who looks at every public photo before it is kept: Claude (ANTHROPIC_API_KEY), then Gemini (GEMINI_API_KEY); null = no key, photos are kept unchecked. */
   photoCheck: PhotoCheckConfig | null;
 };
 
@@ -70,8 +70,12 @@ export function getConfig(): AppConfig {
 }
 
 function photoCheckConfig(): PhotoCheckConfig | null {
-  const apiKey = clean(env.ANTHROPIC_API_KEY);
-  return apiKey ? { apiKey, model: clean(env.PHOTO_CHECK_MODEL) } : null;
+  const provider = (key: string | undefined, model: string | undefined) => {
+    const apiKey = clean(key);
+    return apiKey ? { apiKey, model: clean(model) } : null;
+  };
+  const config = { claude: provider(env.ANTHROPIC_API_KEY, env.PHOTO_CHECK_MODEL), gemini: provider(env.GEMINI_API_KEY, env.GEMINI_MODEL) };
+  return config.claude || config.gemini ? config : null;
 }
 
 function paymeFiscal(): PaymeFiscal | null {

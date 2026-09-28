@@ -26,7 +26,7 @@ export const POST = route(async (request: Request, context: { params: Promise<{ 
   await enforceRateLimit(db, `media:${user.id}`, RATE_RULES.write);
   if (file.size > MEDIA_RULES.maxBytes) throw new DomainError('IMAGE_TOO_LARGE', 413);
   const bytes = new Uint8Array(await file.arrayBuffer());
-  // Every photo here is public (deal, logo, cover): Claude looks at it first when the key is set.
+  // Every photo here is public (deal, logo, cover): Claude or Gemini looks at it first when a key is set.
   const check = photoChecker(getConfig().photoCheck);
   if (check) await enforceRateLimit(db, `photo-check:${businessId}`, RATE_RULES.photoCheck);
   return json({ data: await saveMedia(db, { businessId, userId: user.id, kind, bytes, check }) }, { status: 201 });

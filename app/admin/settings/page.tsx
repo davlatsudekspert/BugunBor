@@ -8,11 +8,14 @@ import { VerificationForm } from '@/components/admin/verification-form';
 import { getDb } from '@/db/client';
 import { DEFAULT_HASH_SECRET, getConfig, isTelegramConfigured } from '@/lib/env';
 import { fmt } from '@/lib/i18n';
+import { formatClock, formatNumericDate, parseDbTime } from '@/lib/time';
 import { getI18n } from '@/lib/i18n/server';
 import { ANDROID_MODES, APK_FILES, APK_RELEASE_BASE, GOOGLE_PLAY_URL, appStores, forgetAppStores } from '@/modules/app-stores';
 import { requireAdmin } from '@/modules/auth/current';
 import { companyComplete, getCompanyInfo } from '@/modules/company';
 import { demoEnabled } from '@/modules/demo';
+import { PHOTO_PROVIDERS, PROVIDER_NAMES } from '@/modules/media/check';
+import { describeFailures, photoCheckStatus } from '@/modules/media/check-status';
 import { getAutoModerationSettings } from '@/modules/moderation/auto';
 import { notificationStats } from '@/modules/notifications/service';
 import { siteVerification } from '@/modules/search-engines';
@@ -29,14 +32,16 @@ export default async function AdminSettingsPage() {
   const [{ t }, db] = await Promise.all([getI18n(), getDb()]);
   // The switch as stored, not as remembered for the site's pages.
   forgetAppStores(db);
-  const [queue, switches, company, demo, stores, seo] = await Promise.all([
+  const [queue, switches, company, demo, stores, seo, photos] = await Promise.all([
     notificationStats(db),
     getAutoModerationSettings(db),
     getCompanyInfo(db, { fresh: true }),
     demoEnabled(db),
     appStores(db),
     siteVerification(db, { fresh: true }),
+    photoCheckStatus(db),
   ]);
+  const when = (at: string) => `${formatNumericDate(parseDbTime(at))} ${formatClock(parseDbTime(at))}`;
   const auto = t.admin.auto;
   const config = getConfig();
   const siteUrl = config.appUrl ?? 'https://bugunbor.uz';
@@ -76,11 +81,22 @@ export default async function AdminSettingsPage() {
             </li>
           ))}
         </ul>
-        <div className="border-t border-slate-100 py-3">
+        <div id="photo-check" className="border-t border-slate-100 py-3">
           <p className="flex flex-wrap items-center justify-between gap-3">
             <span className="text-sm font-semibold text-navy">{auto.photos}</span>
             <span className={config.photoCheck ? 'rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700' : 'rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800'}>{config.photoCheck ? auto.on : auto.photosOff}</span>
           </p>
+          <ul className="mt-2 space-y-1 text-xs leading-5 text-slate-600">
+            {PHOTO_PROVIDERS.map((provider) => (
+              <li key={provider}>
+                <span className="font-semibold text-navy">{PROVIDER_NAMES[provider]}</span> ({auto.photoRoles[provider]}):{' '}
+                <span className={config.photoCheck?.[provider] ? 'font-semibold text-emerald-700' : 'text-slate-500'}>{config.photoCheck?.[provider] ? auto.photoConnected : auto.photoNotConnected}</span>
+              </li>
+            ))}
+            <li><span className="font-semibold text-navy">{auto.photoLastOk}:</span> {photos.lastOk ? `${when(photos.lastOk.at)} · ${PROVIDER_NAMES[photos.lastOk.provider]}` : auto.photoNever}</li>
+            <li className="break-words"><span className="font-semibold text-navy">{auto.photoLastError}:</span> {photos.lastError ? `${when(photos.lastError.at)} — ${describeFailures(photos.lastError.failures)}` : auto.photoNoError}</li>
+            {photos.waiting ? <li className="font-semibold text-amber-800">{fmt(auto.photoWaiting, { count: photos.waiting })}</li> : null}
+          </ul>
           <p className="mt-1.5 text-xs leading-5 text-slate-500">{auto.photosHint}</p>
         </div>
         <p className="mt-2 rounded-xl bg-slate-50 p-4 text-xs leading-5 text-slate-600">{auto.alerts}</p>

@@ -1,23 +1,40 @@
 import type { ErrorCode } from '@/lib/i18n';
-import { DomainError } from '@/modules/errors';
 import { bytesToBase64, type ImageType } from './service';
 
 // Every public photo (a deal's photo, a business's logo and cover) is looked at
-// before it is kept. Claude says whether any part of it, the background and any
-// text included, shows what BugunBor never publishes: military, political or
-// religious subjects, nudity, drugs, alcohol and tobacco, gambling, hate
-// symbols or personal documents. Such a photo is refused with the reason and
-// nothing of it is kept. The key is the ANTHROPIC_API_KEY Worker secret; while
-// it is not set, photos are kept unchecked. Once it is set, a photo that could
-// not be checked is not kept either: the person is asked to try again.
+// before it is kept. An AI service says whether any part of it, the background
+// and any text included, shows what BugunBor never publishes: military,
+// political or religious subjects, nudity, drugs, alcohol and tobacco,
+// gambling, hate symbols or personal documents. Such a photo is refused with
+// the reason and nothing of it is kept.
+//
+// Claude (ANTHROPIC_API_KEY) is asked first and Google Gemini (GEMINI_API_KEY)
+// when Claude does not answer, both with the same rules and the same answer
+// format. The check never blocks an upload: when neither answers, the photo is
+// kept unchecked and checked again later (modules/media/recheck.ts). With no
+// key at all, photos are kept unchecked.
 
 export const PHOTO_REASONS = ['MILITARY', 'POLITICAL', 'RELIGIOUS', 'ADULT', 'VIOLENCE', 'DRUGS', 'GAMBLING', 'HATE', 'PERSONAL_DATA', 'OTHER'] as const;
 export type PhotoReason = (typeof PHOTO_REASONS)[number];
 
-/** `model` null = PHOTO_CHECK_MODEL. */
-export type PhotoCheckConfig = { apiKey: string; model: string | null };
+/** In the order they are asked. */
+export const PHOTO_PROVIDERS = ['claude', 'gemini'] as const;
+export type PhotoProvider = (typeof PHOTO_PROVIDERS)[number];
+export const PROVIDER_NAMES: Record<PhotoProvider, string> = { claude: 'Claude', gemini: 'Gemini' };
+
+/** `model` null = the provider's default model. */
+export type ProviderConfig = { apiKey: string; model: string | null };
+export type PhotoCheckConfig = Record<PhotoProvider, ProviderConfig | null>;
+
 export type PhotoVerdict = { allowed: true } | { allowed: false; reason: PhotoReason; note: string; code: ErrorCode };
-export type PhotoChecker = (bytes: Uint8Array, mime: ImageType) => Promise<PhotoVerdict>;
+export type ProviderFailure = { provider: PhotoProvider; error: string };
+
+/** A verdict from one of the services (with the ones that failed before it), or none of them answered. */
+export type PhotoCheckResult =
+  | { status: 'CHECKED'; provider: PhotoProvider; verdict: PhotoVerdict; failures: ProviderFailure[] }
+  | { status: 'UNAVAILABLE'; failures: ProviderFailure[] };
+
+export type PhotoChecker = (bytes: Uint8Array, mime: ImageType) => Promise<PhotoCheckResult>;
 
 /** What the uploader is told: the reasons they can act on have their own message. */
 const REFUSAL: Record<PhotoReason, ErrorCode> = {
@@ -34,10 +51,13 @@ const REFUSAL: Record<PhotoReason, ErrorCode> = {
 };
 
 export const PHOTO_CHECK_MODEL = 'claude-sonnet-5';
-const API = 'https://api.anthropic.com/v1/messages';
-const ATTEMPTS = 2;
-const TIMEOUT_MS = 12_000;
+/** Google's alias for its newest Flash model, so a retired model name never stops the check; GEMINI_MODEL overrides it. */
+export const GEMINI_CHECK_MODEL = 'gemini-flash-latest';
+const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
+const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta/models';
+const TIMEOUT_MS: Record<PhotoProvider, number> = { claude: 12_000, gemini: 15_000 };
 
+/** The same rules for every service. */
 export const PHOTO_RULES = `You check photos that businesses upload to BugunBor, a deals marketplace in Uzbekistan: a deal's photo, a business logo or a shop cover. The photo will be shown to everyone. Decide whether it may be published.
 
 Refuse it when any part of it shows one of these, including the background, small details and any readable text or sign:
@@ -54,75 +74,130 @@ Refuse it when any part of it shows one of these, including the background, smal
 
 These are fine: food, tea, coffee and soft drinks; products and shops; services and people at work; sport in sportswear (kurash, boxing, football); national dress, the doppi and an ordinary headscarf; ornaments, ceramics, fabrics and woodcarving; logos and plain business text.
 
-Refuse only for a real match, and when you refuse, name the one reason that fits best. Answer with the verdict tool; write the note in English, at most 20 words, saying what you saw.`;
+Refuse only for a real match, and when you refuse, name the one reason that fits best. Give the verdict: allowed (true or false), reason (NONE when allowed) and a note in English, at most 20 words, saying what you saw.`;
+
+const REASON_VALUES = ['NONE', ...PHOTO_REASONS];
+const ASK = 'Check this photo.';
 
 const VERDICT_TOOL = {
   name: 'verdict',
   description: 'Whether the photo may be published on BugunBor.',
   input_schema: {
     type: 'object',
-    properties: {
-      allowed: { type: 'boolean' },
-      reason: { type: 'string', enum: ['NONE', ...PHOTO_REASONS] },
-      note: { type: 'string' },
-    },
+    properties: { allowed: { type: 'boolean' }, reason: { type: 'string', enum: REASON_VALUES }, note: { type: 'string' } },
     required: ['allowed', 'reason', 'note'],
   },
 } as const;
 
-/** Reads the verdict tool call from a Messages API answer; null when it is not there or malformed. */
-export function parseVerdict(answer: unknown): PhotoVerdict | null {
-  const content = (answer as { content?: unknown } | null)?.content;
-  if (!Array.isArray(content)) return null;
-  const call = content.find((item) => item?.type === 'tool_use' && item?.name === VERDICT_TOOL.name) as { input?: Record<string, unknown> } | undefined;
-  const input = call?.input;
+/** The same answer, as Gemini's response schema. */
+const VERDICT_SCHEMA = {
+  type: 'OBJECT',
+  properties: { allowed: { type: 'BOOLEAN' }, reason: { type: 'STRING', enum: REASON_VALUES }, note: { type: 'STRING' } },
+  required: ['allowed', 'reason', 'note'],
+} as const;
+
+/** A verdict from the answer's fields; null when they are not a verdict. */
+export function toVerdict(input: Record<string, unknown> | null | undefined): PhotoVerdict | null {
   if (!input || typeof input.allowed !== 'boolean') return null;
   if (input.allowed) return { allowed: true };
   const reason = (PHOTO_REASONS as readonly string[]).includes(String(input.reason)) ? (input.reason as PhotoReason) : 'OTHER';
   return { allowed: false, reason, note: typeof input.note === 'string' ? input.note.slice(0, 200) : '', code: REFUSAL[reason] };
 }
 
-/** Asks Claude about one photo. Throws PHOTO_CHECK_UNAVAILABLE when no clear answer comes. */
-export async function checkPhoto(config: PhotoCheckConfig, bytes: Uint8Array, mime: ImageType, fetcher: typeof fetch = fetch): Promise<PhotoVerdict> {
-  const body = JSON.stringify({
+/** Reads the verdict tool call from a Messages API answer; null when it is not there or malformed. */
+export function parseVerdict(answer: unknown): PhotoVerdict | null {
+  const content = (answer as { content?: unknown } | null)?.content;
+  if (!Array.isArray(content)) return null;
+  const call = content.find((item) => item?.type === 'tool_use' && item?.name === VERDICT_TOOL.name) as { input?: Record<string, unknown> } | undefined;
+  return toVerdict(call?.input);
+}
+
+/** Gemini's stop reasons for a photo it will not look at: that photo is refused. */
+const GEMINI_BLOCKED = new Set(['SAFETY', 'PROHIBITED_CONTENT', 'BLOCKLIST', 'SPII', 'IMAGE_SAFETY', 'IMAGE_PROHIBITED_CONTENT']);
+
+/** Reads the verdict from a generateContent answer; null when it is not there or malformed. */
+export function parseGeminiVerdict(answer: unknown): PhotoVerdict | null {
+  const data = answer as { promptFeedback?: { blockReason?: string }; candidates?: Array<{ finishReason?: string; content?: { parts?: Array<{ text?: string }> } }> } | null;
+  const blocked = data?.promptFeedback?.blockReason ?? (GEMINI_BLOCKED.has(data?.candidates?.[0]?.finishReason ?? '') ? data?.candidates?.[0]?.finishReason : undefined);
+  if (blocked) return toVerdict({ allowed: false, reason: 'OTHER', note: `Gemini would not look at it (${blocked}).` });
+  const text = data?.candidates?.[0]?.content?.parts?.map((part) => part.text ?? '').join('') ?? '';
+  try {
+    return toVerdict(JSON.parse(text) as Record<string, unknown>);
+  } catch {
+    return null;
+  }
+}
+
+class ProviderError extends Error {}
+
+/** "HTTP 400: Your credit balance is too low…": the status and the service's own words, never the key or the photo. */
+async function httpError(response: Response) {
+  const body = (await response.json().catch(() => null)) as { error?: { message?: unknown } } | null;
+  const message = typeof body?.error?.message === 'string' ? `: ${body.error.message}` : '';
+  return new ProviderError(`HTTP ${response.status}${message}`.slice(0, 200));
+}
+
+async function post(provider: PhotoProvider, url: string, headers: Record<string, string>, body: unknown, fetcher: typeof fetch) {
+  let response: Response;
+  try {
+    response = await fetcher(url, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(TIMEOUT_MS[provider]) });
+  } catch (error) {
+    throw new ProviderError(error instanceof Error && error.name === 'TimeoutError' ? `no answer in ${TIMEOUT_MS[provider] / 1000} s` : 'network error');
+  }
+  if (!response.ok) throw await httpError(response);
+  return response.json().catch(() => null);
+}
+
+async function askClaude(config: ProviderConfig, bytes: Uint8Array, mime: ImageType, fetcher: typeof fetch) {
+  const answer = await post('claude', CLAUDE_API, { 'x-api-key': config.apiKey, 'anthropic-version': '2023-06-01' }, {
     model: config.model ?? PHOTO_CHECK_MODEL,
     max_tokens: 300,
     system: PHOTO_RULES,
     tools: [VERDICT_TOOL],
     tool_choice: { type: 'tool', name: VERDICT_TOOL.name },
-    messages: [{
-      role: 'user',
-      content: [
-        { type: 'image', source: { type: 'base64', media_type: mime, data: bytesToBase64(bytes) } },
-        { type: 'text', text: 'Check this photo.' },
-      ],
-    }],
-  });
-  let status: number | string = 'no answer';
-  for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
-    const response = await fetcher(API, {
-      method: 'POST',
-      headers: { 'x-api-key': config.apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body,
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    }).catch(() => null);
-    if (response?.ok) {
-      const verdict = parseVerdict(await response.json().catch(() => null));
-      if (verdict) return verdict;
-      status = 'unreadable answer';
-      break;
+    messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: mime, data: bytesToBase64(bytes) } }, { type: 'text', text: ASK }] }],
+  }, fetcher);
+  const verdict = parseVerdict(answer);
+  if (!verdict) throw new ProviderError('unreadable answer');
+  return verdict;
+}
+
+async function askGemini(config: ProviderConfig, bytes: Uint8Array, mime: ImageType, fetcher: typeof fetch) {
+  const model = config.model ?? GEMINI_CHECK_MODEL;
+  // The key goes in a header, never in the address (addresses end up in logs).
+  const answer = await post('gemini', `${GEMINI_API}/${encodeURIComponent(model)}:generateContent`, { 'x-goog-api-key': config.apiKey }, {
+    systemInstruction: { parts: [{ text: PHOTO_RULES }] },
+    contents: [{ role: 'user', parts: [{ inlineData: { mimeType: mime, data: bytesToBase64(bytes) } }, { text: ASK }] }],
+    generationConfig: { temperature: 0, responseMimeType: 'application/json', responseSchema: VERDICT_SCHEMA },
+    // The rules above decide; Gemini's own filters would only hide the photos we most need to see.
+    safetySettings: ['HARM_CATEGORY_HARASSMENT', 'HARM_CATEGORY_HATE_SPEECH', 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'HARM_CATEGORY_DANGEROUS_CONTENT']
+      .map((category) => ({ category, threshold: 'BLOCK_NONE' })),
+  }, fetcher);
+  const verdict = parseGeminiVerdict(answer);
+  if (!verdict) throw new ProviderError('unreadable answer');
+  return verdict;
+}
+
+const ASKERS: Record<PhotoProvider, typeof askClaude> = { claude: askClaude, gemini: askGemini };
+
+/** Asks the services in turn until one gives a verdict. Never throws. */
+export async function checkPhoto(config: PhotoCheckConfig, bytes: Uint8Array, mime: ImageType, fetcher: typeof fetch = fetch): Promise<PhotoCheckResult> {
+  const failures: ProviderFailure[] = [];
+  for (const provider of PHOTO_PROVIDERS) {
+    const settings = config[provider];
+    if (!settings) continue;
+    try {
+      return { status: 'CHECKED', provider, verdict: await ASKERS[provider](settings, bytes, mime, fetcher), failures };
+    } catch (error) {
+      failures.push({ provider, error: error instanceof ProviderError ? error.message : 'unexpected error' });
     }
-    status = response?.status ?? 'no answer';
-    // A wrong key or model will not be right a second later; a busy or slow service may be.
-    if (response && response.status < 500 && response.status !== 429) break;
   }
-  // Only the status: never the key, the photo or the answer.
-  console.error('Photo check unavailable', status);
-  throw new DomainError('PHOTO_CHECK_UNAVAILABLE', 503);
+  if (failures.length) console.error('Photo check unavailable', failures.map((failure) => `${failure.provider}: ${failure.error}`).join('; '));
+  return { status: 'UNAVAILABLE', failures };
 }
 
 /** The checker for uploads, or null while no key is set (photos are then kept unchecked). */
 export function photoChecker(config: PhotoCheckConfig | null | undefined, fetcher?: typeof fetch): PhotoChecker | null {
-  if (!config) return null;
+  if (!config || !PHOTO_PROVIDERS.some((provider) => config[provider])) return null;
   return (bytes, mime) => checkPhoto(config, bytes, mime, fetcher);
 }

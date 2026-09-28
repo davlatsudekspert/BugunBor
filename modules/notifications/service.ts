@@ -13,7 +13,8 @@ import { pushFromTelegram, type PushSender } from './push';
 
 export type NotificationKind =
   | 'NEW_DEAL' | 'CODE_REMINDER' | 'REDEEMED' | 'DEAL_APPROVED' | 'DEAL_REJECTED' | 'BUSINESS_APPROVED' | 'BUSINESS_REJECTED' | 'PAYMENT_RECEIVED'
-  | 'REVIEW_NEEDED' | 'PAYMENT_REQUEST' | 'INTEREST_DEAL' | 'REPORT' | 'DEAL_HELD' | 'BOOKING_MESSAGE' | 'BOOKING_CANCELED';
+  | 'REVIEW_NEEDED' | 'PAYMENT_REQUEST' | 'INTEREST_DEAL' | 'REPORT' | 'DEAL_HELD' | 'BOOKING_MESSAGE' | 'BOOKING_CANCELED'
+  | 'PHOTO_CHECK_DOWN' | 'PHOTO_REMOVED';
 
 const RETRY_LIMIT = 3;
 /** Alerts a person can switch off in the profile; only these say so under the message. */
@@ -65,12 +66,12 @@ export function teamStatement(db: D1Database, input: { businessId: string; kind:
 
 /**
  * Work that waits for a person, so nobody has to watch the admin panel: items
- * the automatic checks held back go to moderators and admins, manual payment
- * requests to admins. Once per key.
+ * the automatic checks held back go to moderators and admins; manual payment
+ * requests and a photo check that stopped working, to admins. Once per key.
  */
 export function staffAlertStatement(
   db: D1Database,
-  input: { kind: 'REVIEW_NEEDED' | 'PAYMENT_REQUEST' | 'REPORT' | 'DEAL_HELD'; key: string; payload: Record<string, string>; nowDb: string },
+  input: { kind: 'REVIEW_NEEDED' | 'PAYMENT_REQUEST' | 'REPORT' | 'DEAL_HELD' | 'PHOTO_CHECK_DOWN'; key: string; payload: Record<string, string>; nowDb: string },
   /** Sent only if this holds when the batch reaches it; its parameters are numbered from ?5. */
   onlyIf?: { sql: string; params: unknown[] },
 ) {
@@ -236,6 +237,20 @@ async function render(db: D1Database, row: Row, t: Dictionary, now: Date, locale
       return payload.audience === 'staff'
         ? { text: fmt(n.dealHeldStaff, values), button: n.reviewButton, path: '/admin/reports' }
         : { text: fmt(n.dealHeld, values), button: n.dealHeldButton, path: '/business/deals' };
+    }
+    case 'PHOTO_CHECK_DOWN': {
+      const waiting = await db.prepare(`SELECT COUNT(*) AS n FROM media WHERE check_after IS NOT NULL`).first<{ n: number }>();
+      return { text: fmt(n.photoCheckDown, { errors: escapeHtml(payload.errors ?? ''), waiting: waiting?.n ?? 0 }), button: n.photoCheckButton, path: '/admin/settings#photo-check' };
+    }
+    case 'PHOTO_REMOVED': {
+      const business = await db.prepare(`SELECT name FROM businesses WHERE id = ?1 AND deleted_at IS NULL`).bind(payload.businessId).first<{ name: string }>();
+      if (!business) return null;
+      const kinds = n.photoKinds as Record<string, string>;
+      return {
+        text: fmt(n.photoRemoved, { business: escapeHtml(business.name), what: kinds[payload.kind] ?? kinds.DEAL, reason: (t.errors as Record<string, string>)[payload.code] ?? t.errors.PHOTO_REJECTED }),
+        button: n.businessButton,
+        path: `/business/switch/${payload.businessId}?next=${encodeURIComponent(payload.kind === 'DEAL' ? '/business/deals' : '/business/profile')}`,
+      };
     }
     default:
       return null;
