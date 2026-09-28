@@ -18,6 +18,7 @@ import { forgetCachedMedia } from '@/modules/media/service';
 import { AUTO_SETTING_KEYS, autoModerateBusiness, autoModerateDeal, autoModeratePendingDeals } from '@/modules/moderation/auto';
 import { archiveDealByModerator, decideBusiness, decideDeal, releaseDealHold, removeImagesByModerator, setBusinessBadge, setBusinessCategory, setBusinessSuspended } from '@/modules/moderation/service';
 import { resolveReport } from '@/modules/reports';
+import { updateSiteVerification, verificationCode, type SearchEngine } from '@/modules/search-engines';
 import { createTelegramApi } from '@/modules/telegram/api';
 import { ensureTelegramWebhook } from '@/modules/telegram/setup';
 
@@ -26,6 +27,14 @@ const decision = z.enum(['APPROVE', 'REJECT']);
 const reason = z.string().trim().max(800).default('');
 const limit = z.number().int().min(1).max(100_000).nullable();
 const planCode = z.enum(['START', 'BIZNES', 'PREMIUM']);
+/** A search engine's verification code, or its whole <meta> tag reduced to the code. */
+const verification = (engine: SearchEngine) =>
+  z.string().max(400).default('').transform((value, context) => {
+    const code = verificationCode(engine, value);
+    if (code !== null) return code;
+    context.addIssue({ code: 'custom', message: engine });
+    return z.NEVER;
+  });
 
 const actionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('deal.decide'), dealId: id, decision, reason }),
@@ -81,6 +90,7 @@ const actionSchema = z.discriminatedUnion('type', [
     // A Telegram username (5–32 letters, digits, _), with or without @ or t.me/.
     telegram: z.string().trim().max(60).transform((value) => value.replace(/^(?:https?:\/\/)?(?:t\.me\/|@)/i, '')).refine((value) => !value || /^[A-Za-z0-9_]{5,32}$/.test(value)).default(''),
   }),
+  z.object({ type: z.literal('seo.verification'), google: verification('google'), yandex: verification('yandex') }),
 ]);
 
 const moderatorActions = new Set(['deal.decide', 'deal.archive', 'deal.release', 'business.decide', 'business.badge', 'business.category', 'message.status', 'images.remove', 'review.visibility', 'report.resolve']);
@@ -179,6 +189,11 @@ export const POST = route(async (request: Request) => {
       if (phone === null) throw new DomainError('VALIDATION');
       await updateCompanyInfo(db, { actorId, info: { legalName: action.legalName, tin: action.tin, registration: action.registration, address: action.address, phone, email: action.email, telegram: action.telegram } });
       return json({ data: { ok: true } });
+    }
+    case 'seo.verification': {
+      const codes = { google: action.google, yandex: action.yandex };
+      await updateSiteVerification(db, { actorId, codes });
+      return json({ data: codes });
     }
     case 'automation.update': {
       await updateSettings(db, { actorId, values: { [AUTO_SETTING_KEYS[action.key]]: action.on ? '1' : '0' } });

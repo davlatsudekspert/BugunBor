@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
-import { Bot, Building2, CheckCircle2, CircleAlert, CreditCard, FlaskConical, Smartphone, Sparkles } from 'lucide-react';
+import { Bot, Building2, CheckCircle2, CircleAlert, CreditCard, FlaskConical, Search, Smartphone, Sparkles } from 'lucide-react';
 
 import { ActionButton } from '@/components/admin/admin-controls';
 import { AdminShell } from '@/components/admin/admin-shell';
 import { CompanyForm } from '@/components/admin/company-form';
+import { VerificationForm } from '@/components/admin/verification-form';
 import { getDb } from '@/db/client';
 import { DEFAULT_HASH_SECRET, getConfig, isTelegramConfigured } from '@/lib/env';
 import { fmt } from '@/lib/i18n';
@@ -14,6 +15,7 @@ import { companyComplete, getCompanyInfo } from '@/modules/company';
 import { demoEnabled } from '@/modules/demo';
 import { getAutoModerationSettings } from '@/modules/moderation/auto';
 import { notificationStats } from '@/modules/notifications/service';
+import { siteVerification } from '@/modules/search-engines';
 import { createTelegramApi, type WebhookInfo } from '@/modules/telegram/api';
 import { currentWebhookState } from '@/modules/telegram/setup';
 
@@ -27,12 +29,13 @@ export default async function AdminSettingsPage() {
   const [{ t }, db] = await Promise.all([getI18n(), getDb()]);
   // The switch as stored, not as remembered for the site's pages.
   forgetAppStores(db);
-  const [queue, switches, company, demo, stores] = await Promise.all([
+  const [queue, switches, company, demo, stores, seo] = await Promise.all([
     notificationStats(db),
     getAutoModerationSettings(db),
     getCompanyInfo(db, { fresh: true }),
     demoEnabled(db),
     appStores(db),
+    siteVerification(db, { fresh: true }),
   ]);
   const auto = t.admin.auto;
   const config = getConfig();
@@ -137,6 +140,15 @@ export default async function AdminSettingsPage() {
           initial={company}
           labels={{ legalName: s.legalName, tin: s.tin, tinHint: s.tinHint, registration: s.registration, registrationHint: s.registrationHint, address: s.address, addressHint: s.addressHint, phone: s.phone, email: s.email, telegram: s.telegramSupport, telegramHint: s.telegramSupportHint, save: s.saveCompany, saved: t.common.saved, networkError: t.common.networkError }}
         />
+      </section>
+
+      <section id="seo" className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 className="flex items-center gap-2 text-lg font-black text-navy"><Search className="size-5 text-primary" aria-hidden /> {s.seo}</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600">{s.seoText}</p>
+        <p className="mt-2 text-sm font-semibold text-slate-700">{fmt(s.seoStatus, { google: seo.google ? s.seoOn : s.seoOff, yandex: seo.yandex ? s.seoOn : s.seoOff })}</p>
+        <VerificationForm initial={seo} labels={{ google: s.seoGoogle, yandex: s.seoYandex, hint: s.seoHint, save: s.seoSave, saved: t.common.saved, networkError: t.common.networkError }} />
+        <p className="mt-4 text-sm font-semibold text-navy">{s.seoSitemap}</p>
+        <p className="mt-1 break-all font-mono text-xs text-slate-600">{siteUrl}/sitemap.xml</p>
       </section>
 
       <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">

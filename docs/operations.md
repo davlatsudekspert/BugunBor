@@ -39,6 +39,12 @@ Migrations run automatically on the first request after a deploy. They are addit
 
 Development always shows the demo catalogue. Production shows it with `DEMO_SEED=true`, or when an admin presses «Namuna bizneslarni ko‘rsatish» in Admin → Sozlamalar (no redeploy; «yashirish» hides it again). Demo businesses and deals carry `is_demo = 1`, never have phone numbers, and are hidden again as soon as the flag is off. Ended demo deals restart automatically every few minutes, and a new catalogue version (`DEMO_CATALOG_VERSION`) loads the same way, with no need to switch demo mode off and on.
 
+## Search engines
+
+1. Add the site in Google Search Console (URL prefix `https://bugunbor.uz/`, method «HTML tag») and in Yandex Webmaster (method «Мета-тег»).
+2. Paste each code, or the whole `<meta …>` tag, in **Admin → Sozlamalar → Qidiruv tizimlari** and save. The home page carries them within two minutes; then press Verify / Проверить there. An empty field takes a code away.
+3. Submit `https://bugunbor.uz/sitemap.xml` in both (Google: Sitemaps; Yandex: Индексирование → Файлы Sitemap). It lists the static pages, the categories, the cities that have a real deal (`/discover?city=…`), live real deals and public businesses; samples are never in it.
+
 ## Speed
 
 - Guests' public pages (home, deals, categories, business pages, FAQ, offer) are kept in the edge cache for 30 seconds (`worker.ts`, `lib/page-cache.ts`); the `x-page-cache: HIT|MISS` header shows it. Signed-in visitors, responses that set cookies and client navigation payloads are never cached.

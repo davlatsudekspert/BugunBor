@@ -5,6 +5,7 @@ import { uz } from '@/lib/i18n/uz';
 import { categoryAbout, cityAbout } from '@/lib/place-texts';
 import { toDbTime } from '@/lib/time';
 import { SESSION_COOKIE, createSession } from '@/modules/auth/sessions';
+import { updateSiteVerification } from '@/modules/search-engines';
 import { NOW, marketplace } from '@/test/fixtures';
 
 // The public pages rendered to HTML the way a visitor gets them: what they
@@ -44,7 +45,7 @@ vi.mock('@/lib/env', () => ({
   }),
 }));
 
-const { default: Home } = await import('./page');
+const { default: Home, generateMetadata: homeMetadata } = await import('./page');
 const { default: DealPage } = await import('./deals/[slug]/page');
 const { default: BusinessPage } = await import('./businesses/[slug]/page');
 const { default: ContactPage } = await import('./contact/page');
@@ -202,6 +203,12 @@ describe('public pages', () => {
     expect(urls).not.toContain('https://bugunbor.uz/discover?city=samarkand');
     expect(urls).toContain('https://bugunbor.uz/categories/taomlar');
     expect(urls).not.toContain('https://bugunbor.uz/deals/namuna-somsa');
+  });
+
+  it('the home page carries the codes an admin entered for Google and Yandex, and none before that', async () => {
+    expect(await homeMetadata()).toEqual({ alternates: { canonical: '/' } });
+    await updateSiteVerification(state.db, { actorId: 'mod', codes: { google: 'googleCode_12345', yandex: '' } });
+    expect(await homeMetadata()).toEqual({ alternates: { canonical: '/' }, verification: { google: 'googleCode_12345' } });
   });
 
   it('views show to the business only once there are enough to mean something', async () => {

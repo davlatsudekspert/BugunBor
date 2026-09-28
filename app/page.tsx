@@ -22,9 +22,15 @@ import { getCurrentUser } from '@/modules/auth/current';
 import { categoryName, countByCategory, getFavoriteIds, listCategories, listLiveDeals, platformSavings } from '@/modules/catalog/queries';
 import { inBackground } from '@/modules/jobs';
 import { runMaintenance } from '@/modules/redemptions/service';
+import { siteVerification } from '@/modules/search-engines';
 
-// The home page is its own canonical address (the other pages set theirs).
-export const metadata: Metadata = { alternates: { canonical: '/' } };
+// The home page is its own canonical address (the other pages set theirs), and
+// carries the verification codes an admin entered for Google and Yandex.
+export async function generateMetadata(): Promise<Metadata> {
+  const codes = await siteVerification(await getDb()).catch(() => null);
+  const verification = { ...(codes?.google ? { google: codes.google } : {}), ...(codes?.yandex ? { yandex: codes.yandex } : {}) };
+  return { alternates: { canonical: '/' }, ...(Object.keys(verification).length ? { verification } : {}) };
+}
 
 export default async function Home() {
   const [{ t, locale }, city, user, db] = await Promise.all([getI18n(), getPreferredCity(), getCurrentUser(), getDb()]);
