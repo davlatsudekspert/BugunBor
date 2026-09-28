@@ -53,6 +53,8 @@ export type AdminBusiness = {
   /** Reasons the automatic check held it back ('' = checked, nothing found; null = not checked). */
   autoNote: string | null;
   autoDecided: number | null;
+  /** When a moderator gave the public «Tasdiqlangan biznes» mark; null = none. */
+  badgeAt: string | null;
 };
 
 export type AdminListFilter = 'pending' | 'auto' | 'all';
@@ -68,7 +70,7 @@ export async function listAdminBusinesses(db: D1Database, filter: { list: AdminL
     .prepare(`SELECT b.id, b.slug, b.name, b.description, b.city, b.phone, c.name_uz AS categoryName, b.verification_status AS verificationStatus,
         b.rejection_reason AS rejectionReason, b.suspended_at AS suspendedAt, b.suspended_reason AS suspendedReason, b.created_at AS createdAt,
         b.trial_ends_at AS trialEndsAt, b.paid_until AS paidUntil, b.plan_code AS planCode, b.is_demo AS isDemo,
-        b.logo_id AS logoId, b.cover_id AS coverId, b.auto_review_note AS autoNote, ${autoDecidedSql('Business', 'b')} AS autoDecided,
+        b.logo_id AS logoId, b.cover_id AS coverId, b.auto_review_note AS autoNote, ${autoDecidedSql('Business', 'b')} AS autoDecided, b.badge_verified_at AS badgeAt,
         (SELECT u.display_name FROM business_members m JOIN users u ON u.id = m.user_id WHERE m.business_id = b.id AND m.role = 'OWNER' AND m.revoked_at IS NULL LIMIT 1) AS ownerName,
         (SELECT u.phone FROM business_members m JOIN users u ON u.id = m.user_id WHERE m.business_id = b.id AND m.role = 'OWNER' AND m.revoked_at IS NULL LIMIT 1) AS ownerPhone,
         (SELECT COUNT(*) FROM branches br WHERE br.business_id = b.id AND br.deleted_at IS NULL) AS branchCount,

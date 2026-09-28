@@ -16,7 +16,7 @@ import { DEMO_SETTING, forgetDemoSetting } from '@/modules/demo';
 import { DomainError } from '@/modules/errors';
 import { forgetCachedMedia } from '@/modules/media/service';
 import { AUTO_SETTING_KEYS, autoModerateBusiness, autoModerateDeal, autoModeratePendingDeals } from '@/modules/moderation/auto';
-import { archiveDealByModerator, decideBusiness, decideDeal, releaseDealHold, removeImagesByModerator, setBusinessSuspended } from '@/modules/moderation/service';
+import { archiveDealByModerator, decideBusiness, decideDeal, releaseDealHold, removeImagesByModerator, setBusinessBadge, setBusinessSuspended } from '@/modules/moderation/service';
 import { resolveReport } from '@/modules/reports';
 import { createTelegramApi } from '@/modules/telegram/api';
 import { ensureTelegramWebhook } from '@/modules/telegram/setup';
@@ -32,6 +32,7 @@ const actionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('deal.archive'), dealId: id, reason }),
   z.object({ type: z.literal('deal.release'), dealId: id }),
   z.object({ type: z.literal('business.decide'), businessId: id, decision, reason }),
+  z.object({ type: z.literal('business.badge'), businessId: id, on: z.boolean() }),
   z.object({ type: z.literal('message.status'), messageId: id, status: z.enum(['NEW', 'READ', 'ARCHIVED']) }),
   z.object({ type: z.literal('images.remove'), target: z.enum(['BUSINESS', 'DEAL']), id, reason }),
   z.object({ type: z.literal('review.visibility'), reviewId: id, hidden: z.boolean(), reason }),
@@ -79,7 +80,7 @@ const actionSchema = z.discriminatedUnion('type', [
   }),
 ]);
 
-const moderatorActions = new Set(['deal.decide', 'deal.archive', 'deal.release', 'business.decide', 'message.status', 'images.remove', 'review.visibility', 'report.resolve']);
+const moderatorActions = new Set(['deal.decide', 'deal.archive', 'deal.release', 'business.decide', 'business.badge', 'message.status', 'images.remove', 'review.visibility', 'report.resolve']);
 
 export const POST = route(async (request: Request) => {
   assertSameOrigin(request);
@@ -104,6 +105,9 @@ export const POST = route(async (request: Request) => {
       if (result.status === 'VERIFIED') await autoModeratePendingDeals(db, action.businessId);
       return json({ data: result });
     }
+    case 'business.badge':
+      await setBusinessBadge(db, { actorId, businessId: action.businessId, on: action.on });
+      return json({ data: { ok: true } });
     case 'message.status':
       await setMessageStatus(db, { messageId: action.messageId, status: action.status });
       return json({ data: { ok: true } });

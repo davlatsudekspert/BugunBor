@@ -28,6 +28,8 @@ export type DealFormValues = {
 type Props = {
   businessId: string;
   businessName: string;
+  /** The public «Tasdiqlangan biznes» mark, so the preview matches the site. */
+  businessBadge?: boolean;
   dealId?: string;
   categories: Option[];
   branches: Option[];
@@ -37,7 +39,7 @@ type Props = {
 
 const formatNumber = (value: number) => value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
-export function DealForm({ businessId, businessName, dealId, categories, branches, initial, t }: Props) {
+export function DealForm({ businessId, businessName, businessBadge = false, dealId, categories, branches, initial, t }: Props) {
   const [values, setValues] = useState(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [state, setState] = useState<'idle' | 'saving' | 'error'>('idle');
@@ -250,7 +252,7 @@ export function DealForm({ businessId, businessName, dealId, categories, branche
             <span className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full bg-navy/90 px-3 py-2 text-xs font-bold text-white"><Clock3 className="size-3.5 text-orange-300" aria-hidden /> 04:00:00</span>
           </DealVisual>
           <div className="p-5">
-            <p className="flex items-center gap-2 text-sm font-bold text-slate-700">{businessName} <BadgeCheck className="size-4 fill-emerald-500 text-white" aria-hidden /></p>
+            <p className="flex items-center gap-2 text-sm font-bold text-slate-700">{businessName} {businessBadge ? <BadgeCheck className="size-4 fill-emerald-500 text-white" aria-hidden /> : null}</p>
             {values.isSet ? (
               <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-black text-primary">
                 <Layers className="size-3.5" aria-hidden /> {[t.deal.set.badge, setPersons ? fmt(t.deal.set.persons, { count: setPersons }) : null].filter(Boolean).join(' · ')}

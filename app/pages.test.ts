@@ -106,6 +106,31 @@ describe('public pages', () => {
     for (const shown of ['Amir Temur 1', uz.business.follow, uz.complaint.button]) expect(real).toContain(shown);
   });
 
+  it('«Tasdiqlangan biznes» only after a moderator checked it; until then a new business is «Yangi»', async () => {
+    // Put on the site by the automatic check: new, not checked by a person.
+    expect(await business('kafe')).toContain(uz.business.newBusiness);
+    expect(await business('kafe')).not.toContain(uz.business.verified);
+    const newDeal = await deal('osh');
+    expect(newDeal).toContain(uz.deal.checkedNote);
+    expect(newDeal).not.toContain(uz.deal.verifiedNote);
+    expect(newDeal).not.toContain(`aria-label="${uz.business.verified}"`);
+
+    await state.db.prepare(`UPDATE businesses SET badge_verified_at = ?1, badge_verified_by = 'mod' WHERE id = 'biz'`).bind(minutes(0)).run();
+    const checked = await business('kafe');
+    expect(checked).toContain(uz.business.verified);
+    expect(checked).not.toContain(uz.business.newBusiness);
+    const checkedDeal = await deal('osh');
+    expect(checkedDeal).toContain(uz.deal.verifiedNote);
+    expect(checkedDeal).toContain(`aria-label="${uz.business.verified}"`);
+    expect(await html(Home())).toContain(`aria-label="${uz.business.verified}"`);
+
+    // Long on the site and never checked: neither mark.
+    await state.db.prepare(`UPDATE businesses SET badge_verified_at = NULL, verified_at = ?1 WHERE id = 'biz'`).bind(minutes(-60 * 24 * 60)).run();
+    const old = await business('kafe');
+    expect(old).not.toContain(uz.business.verified);
+    expect(old).not.toContain(uz.business.newBusiness);
+  });
+
   it('views show to the business only once there are enough to mean something', async () => {
     state.cookies[SESSION_COOKIE] = (await createSession(state.db, 'owner', {})).token;
     expect(await deal('osh')).not.toContain(uz.biz.deals.views);

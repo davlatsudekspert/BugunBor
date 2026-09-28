@@ -183,6 +183,7 @@ export const uz = {
     perCustomer: 'Bir mijozga: {count} ta',
     codeValidity: 'Kod {duration} amal qiladi',
     verifiedNote: 'Biznes va aksiya tekshiruvdan o‘tgan.',
+    checkedNote: 'Aksiya sayt qoidalariga muvofiqligi tekshirilgan.',
     report: 'Noto‘g‘ri ma’lumot haqida xabar berish',
     reportSubject: 'Noto‘g‘ri ma’lumot: {title}',
     backToDeals: 'Aksiyalarga qaytish',
@@ -235,6 +236,9 @@ export const uz = {
   },
   business: {
     verified: 'Tasdiqlangan biznes',
+    newBadge: 'Yangi',
+    newBusiness: 'Yangi biznes',
+    newHint: 'BugunBor’da yaqinda paydo bo‘lgan biznes. Moderator hali qo‘lda tasdiqlamagan.',
     branches: 'Filiallar',
     activeDeals: 'Faol aksiyalar',
     noDeals: 'Hozir faol aksiya yo‘q. Keyinroq qaytib ko‘ring.',
@@ -765,6 +769,10 @@ export const uz = {
       suspendReason: 'To‘xtatish sababi (kamida 10 belgi)',
       suspended: 'To‘xtatilgan',
       status: { PENDING: 'Tekshiruvda', VERIFIED: 'Tasdiqlangan', REJECTED: 'Rad etilgan' },
+      badgeOn: '✓ Tasdiq belgisi',
+      badgeGrant: 'Tasdiq belgisini berish',
+      badgeRemove: 'Tasdiq belgisini olib tashlash',
+      badgeHint: 'Saytda «Tasdiqlangan biznes» belgisi chiqadi. Uni faqat biznes haqiqiyligini qo‘lda tekshirgandan keyin bering: egasi bilan gaplashing, manzil va faoliyatini ko‘ring. Moderator arizani qo‘lda tasdiqlasa, belgi o‘zi beriladi; avtomatik tasdiqlanganda berilmaydi.',
     },
     deals: {
       title: 'Aksiyalar',

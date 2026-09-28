@@ -3,15 +3,14 @@ import type { Dictionary } from '@/lib/i18n';
 import { normalizeSearchText } from '@/lib/search';
 import { toDbTime } from '@/lib/time';
 import { staffAlertStatement } from '@/modules/notifications/service';
-import { decideBusiness, decideDeal } from './service';
+import { SYSTEM_MODERATOR_ID, decideBusiness, decideDeal } from './service';
 
 // Automatic moderation. Every submitted business and deal is checked at once:
 // a clean one is approved on the spot (signed by the system moderator), and one
 // with a warning sign stays in the queue with the reasons, and the moderators
 // get a Telegram alert. The system never rejects anything — people do.
 
-/** Signs automatic decisions (migration 0007). It has no phone or Telegram, so nobody can log in as it. */
-export const SYSTEM_MODERATOR_ID = 'usr_system';
+export { SYSTEM_MODERATOR_ID } from './service';
 export const AUTO_REASON = 'Avtomatik tekshiruv';
 
 export const AUTO_SETTING_KEYS = {

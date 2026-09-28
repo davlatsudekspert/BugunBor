@@ -62,6 +62,7 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
                   <div className="flex shrink-0 flex-col items-end gap-1">
                     <span className={cn('rounded-full px-2.5 py-1 text-xs font-bold', statusTone[business.verificationStatus] ?? 'bg-slate-100 text-slate-600')}>{a.businesses.status[business.verificationStatus as keyof typeof a.businesses.status] ?? business.verificationStatus}</span>
                     {business.autoDecided && business.verificationStatus === 'VERIFIED' ? <span title={a.auto.badgeHint} className="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-bold text-sky-700">{a.auto.badge}</span> : null}
+                    {business.badgeAt && business.verificationStatus === 'VERIFIED' ? <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">{a.businesses.badgeOn}</span> : null}
                     {business.suspendedAt ? <span className="rounded-full bg-red-600 px-2.5 py-1 text-xs font-bold text-white">{a.businesses.suspended}</span> : null}
                     {business.isDemo ? <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">{t.common.demo}</span> : null}
                   </div>
@@ -104,6 +105,14 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
 
                 <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
                   {business.verificationStatus === 'VERIFIED' ? <a href={`/businesses/${business.slug}`} className="inline-flex h-9 items-center rounded-lg border border-slate-200 px-3 text-xs font-bold text-navy">{t.biz.viewPublic}</a> : null}
+                  {/* The public «Tasdiqlangan biznes» mark: a person's decision, after checking by hand. */}
+                  {business.verificationStatus === 'VERIFIED' && !business.isDemo ? (
+                    business.badgeAt ? (
+                      <ActionButton payload={{ type: 'business.badge', businessId: business.id, on: false }} label={a.businesses.badgeRemove} networkError={t.common.networkError} />
+                    ) : (
+                      <ActionButton payload={{ type: 'business.badge', businessId: business.id, on: true }} label={a.businesses.badgeGrant} confirmText={a.businesses.badgeHint} tone="success" networkError={t.common.networkError} />
+                    )
+                  ) : null}
                   {business.logoId || business.coverId ? (
                     <ActionButton payload={{ type: 'images.remove', target: 'BUSINESS', id: business.id }} label={a.removeImages} reasonPrompt={a.removeImagesReason} tone="danger" networkError={t.common.networkError} />
                   ) : null}

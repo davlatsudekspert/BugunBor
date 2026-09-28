@@ -10,6 +10,10 @@
   "website": null,
   "categorySlug": "taomlar",
   "isDemo": false,
+  "trust": {
+    "badge": false,
+    "isNew": true
+  },
   "logo": null,
   "cover": null,
   "rating": null,
@@ -58,7 +62,9 @@
         "slug": "kafe",
         "name": "Kafe",
         "logo": null,
-        "rating": null
+        "rating": null,
+        "badge": false,
+        "isNew": true
       },
       "branch": {
         "id": "br2",

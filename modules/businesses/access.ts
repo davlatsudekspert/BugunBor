@@ -14,11 +14,13 @@ export type Membership = {
   isDemo: boolean;
   /** Why the automatic check held the application back, if it did. */
   autoReviewNote: string | null;
+  /** A moderator gave the public «Tasdiqlangan biznes» mark. */
+  badge: boolean;
 };
 
 const COLUMNS = `m.business_id AS businessId, m.role, b.name, b.slug, b.city, b.verification_status AS verificationStatus,
   b.rejection_reason AS rejectionReason, b.suspended_at AS suspendedAt, b.suspended_reason AS suspendedReason, b.is_demo AS isDemo,
-  b.auto_review_note AS autoReviewNote`;
+  b.auto_review_note AS autoReviewNote, b.badge_verified_at IS NOT NULL AS badge`;
 
 export async function listMemberships(db: D1Database, userId: string): Promise<Membership[]> {
   const rows = await db
@@ -26,8 +28,8 @@ export async function listMemberships(db: D1Database, userId: string): Promise<M
       WHERE m.user_id = ?1 AND m.revoked_at IS NULL AND b.deleted_at IS NULL
       ORDER BY CASE m.role WHEN 'OWNER' THEN 0 WHEN 'MANAGER' THEN 1 ELSE 2 END, b.created_at`)
     .bind(userId)
-    .all<Omit<Membership, 'isDemo'> & { isDemo: number }>();
-  return rows.results.map((row) => ({ ...row, isDemo: Boolean(row.isDemo) }));
+    .all<Omit<Membership, 'isDemo' | 'badge'> & { isDemo: number; badge: number }>();
+  return rows.results.map((row) => ({ ...row, isDemo: Boolean(row.isDemo), badge: Boolean(row.badge) }));
 }
 
 /** Server-side tenant check: the user must be an active member whose role grants the action. */
@@ -36,10 +38,10 @@ export async function requireMembership(db: D1Database, userId: string, business
     .prepare(`SELECT ${COLUMNS} FROM business_members m JOIN businesses b ON b.id = m.business_id
       WHERE m.user_id = ?1 AND m.business_id = ?2 AND m.revoked_at IS NULL AND b.deleted_at IS NULL`)
     .bind(userId, businessId)
-    .first<Omit<Membership, 'isDemo'> & { isDemo: number }>();
+    .first<Omit<Membership, 'isDemo' | 'badge'> & { isDemo: number; badge: number }>();
   if (!row) throw new DomainError('FORBIDDEN');
   if (!roleCan(row.role, action)) throw new DomainError('FORBIDDEN');
-  return { ...row, isDemo: Boolean(row.isDemo) };
+  return { ...row, isDemo: Boolean(row.isDemo), badge: Boolean(row.badge) };
 }
 
 /** Writes that change what customers see or can claim are blocked while a business is suspended. */

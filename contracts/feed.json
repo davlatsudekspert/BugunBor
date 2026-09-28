@@ -25,7 +25,9 @@
         "slug": "kafe",
         "name": "Kafe",
         "logo": null,
-        "rating": null
+        "rating": null,
+        "badge": false,
+        "isNew": true
       },
       "branch": {
         "id": "br1",
@@ -66,7 +68,9 @@
         "slug": "kafe",
         "name": "Kafe",
         "logo": null,
-        "rating": null
+        "rating": null,
+        "badge": false,
+        "isNew": true
       },
       "branch": {
         "id": "br1",

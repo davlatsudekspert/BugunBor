@@ -33,6 +33,7 @@ export default async function NewDealPage() {
       <DealForm
         businessId={membership.businessId}
         businessName={membership.name}
+        businessBadge={membership.badge}
         categories={categories.map((category) => ({ id: category.id, name: categoryName(category, locale), slug: category.slug }))}
         branches={branches.map((branch) => ({ id: branch.id, name: branch.name }))}
         initial={{

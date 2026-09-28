@@ -2,7 +2,7 @@ import { distanceKm } from '@/lib/cities';
 import { parseDealSet, type DealSet } from '@/lib/deal-set';
 import { dealPhotoUrl, mediaUrl } from '@/lib/photos';
 import { wordSearchPattern } from '@/lib/search';
-import { toDbTime } from '@/lib/time';
+import { parseDbTime, toDbTime } from '@/lib/time';
 import { PUBLIC_BUSINESS_SQL, effectiveDealStatus, liveDealSql, subscriptionActiveSql, type EffectiveDealStatus } from '@/modules/deals/status';
 
 export type SortKey = 'ending' | 'discount' | 'new' | 'near';
@@ -23,6 +23,23 @@ export type Rating = { basisPoints: number; count: number };
 
 const rating = (basisPoints: number | null, count: number | null): Rating | null => (count ? { basisPoints: basisPoints ?? 0, count } : null);
 
+/** A business is «Yangi» for this many days after it went public. */
+export const NEW_BUSINESS_DAYS = 30;
+
+/**
+ * What a customer is told about a business: `badge` — a moderator checked it
+ * by hand («Tasdiqlangan biznes»); `isNew` — public for under NEW_BUSINESS_DAYS
+ * without that mark yet («Yangi»).
+ */
+export type Trust = { badge: boolean; isNew: boolean };
+
+const trust = (badgeAt: string | null, publicSince: string | null, now: Date): Trust => ({
+  badge: Boolean(badgeAt),
+  isNew: !badgeAt && Boolean(publicSince) && parseDbTime(publicSince!).getTime() > now.getTime() - NEW_BUSINESS_DAYS * 86_400_000,
+});
+
+const TRUST_COLUMNS = `b.badge_verified_at AS badgeAt, COALESCE(b.verified_at, b.created_at) AS publicSince`;
+
 export type DealCard = {
   id: string;
   slug: string;
@@ -41,7 +58,7 @@ export type DealCard = {
   claimTtlMinutes: number;
   publishedAt: string;
   isSponsored: boolean;
-  business: { id: string; slug: string; name: string; logo: string | null; rating: Rating | null };
+  business: { id: string; slug: string; name: string; logo: string | null; rating: Rating | null } & Trust;
   branch: BranchSummary;
   branchCount: number;
   distanceKm: number | null;
@@ -58,6 +75,7 @@ type DealBranchRow = {
   publishedAt: string; isSponsored: number; claimTtlMinutes: number; status: string; categorySlug: string;
   businessId: string; businessSlug: string; businessName: string; logoId: string | null; photoId: string | null; isDemo: number; businessIsDemo: number;
   ratingBp: number | null; reviewCount: number | null; setItemsJson: string | null; setPersons: number | null;
+  badgeAt: string | null; publicSince: string | null;
   branchId: string; branchName: string; address: string; city: string; lat: number; lon: number; hoursJson: string;
 };
 
@@ -67,7 +85,7 @@ const DEAL_BRANCH_COLUMNS = `d.id, d.slug, d.title, d.original_price_uzs AS orig
   COALESCE(d.approved_at, d.created_at) AS publishedAt, d.is_sponsored AS isSponsored, d.claim_ttl_minutes AS claimTtlMinutes,
   c.slug AS categorySlug, b.id AS businessId, b.slug AS businessSlug, b.name AS businessName,
   b.logo_id AS logoId, d.photo_id AS photoId, d.is_demo AS isDemo, b.is_demo AS businessIsDemo, b.rating_basis_points AS ratingBp, b.review_count AS reviewCount,
-  d.set_items_json AS setItemsJson, d.set_persons AS setPersons,
+  d.set_items_json AS setItemsJson, d.set_persons AS setPersons, ${TRUST_COLUMNS},
   br.id AS branchId, br.name AS branchName, br.address, br.city, br.latitude_e6 AS lat, br.longitude_e6 AS lon, br.working_hours_json AS hoursJson`;
 
 type Point = { latitude: number; longitude: number };
@@ -105,7 +123,7 @@ function groupDeals(rows: DealBranchRow[], near: Point | null, now: Date): DealC
       claimTtlMinutes: row.claimTtlMinutes,
       publishedAt: row.publishedAt,
       isSponsored: Boolean(row.isSponsored),
-      business: { id: row.businessId, slug: row.businessSlug, name: row.businessName, logo: mediaUrl(row.logoId), rating: rating(row.ratingBp, row.reviewCount) },
+      business: { id: row.businessId, slug: row.businessSlug, name: row.businessName, logo: mediaUrl(row.logoId), rating: rating(row.ratingBp, row.reviewCount), ...trust(row.badgeAt, row.publicSince, now) },
       branch,
       branchCount: 1,
       distanceKm: distance,
@@ -222,7 +240,7 @@ export type DealDetail = {
     rating: Rating | null;
     /** Free trial or paid period is running, so the business's deals can be claimed. */
     onAir: boolean;
-  };
+  } & Trust;
   branches: Array<BranchSummary & { phone: string | null; hoursJson: string }>;
   effective: EffectiveDealStatus;
   /** Whether customers may open this page at all. */
@@ -234,6 +252,7 @@ type DealDetailRow = Omit<DealDetail, 'category' | 'business' | 'branches' | 'ef
   businessId: string; businessSlug: string; businessName: string; businessDescription: string; businessPhone: string | null;
   telegram: string | null; instagram: string | null; website: string | null; verificationStatus: string;
   suspendedAt: string | null; businessDeletedAt: string | null; businessIsDemo: number; onAir: number;
+  badgeAt: string | null; publicSince: string | null;
 };
 
 async function dealBranches(db: D1Database, dealId: string) {
@@ -261,7 +280,7 @@ export async function getDealBySlug(db: D1Database, slug: string, options: { dem
         c.slug AS categorySlug, c.name_uz AS categoryNameUz, c.name_ru AS categoryNameRu,
         b.id AS businessId, b.slug AS businessSlug, b.name AS businessName, b.description AS businessDescription,
         b.phone AS businessPhone, b.telegram, b.instagram, b.website, b.verification_status AS verificationStatus,
-        b.suspended_at AS suspendedAt, b.deleted_at AS businessDeletedAt, b.is_demo AS businessIsDemo,
+        b.suspended_at AS suspendedAt, b.deleted_at AS businessDeletedAt, b.is_demo AS businessIsDemo, ${TRUST_COLUMNS},
         ${subscriptionActiveSql('?2')} AS onAir
       FROM deals d JOIN businesses b ON b.id = d.business_id JOIN categories c ON c.id = d.category_id
       WHERE d.slug = ?1 AND d.deleted_at IS NULL`)
@@ -308,6 +327,7 @@ export async function getDealBySlug(db: D1Database, slug: string, options: { dem
       logo: mediaUrl(row.logoId),
       rating: rating(row.ratingBp, row.reviewCount),
       onAir: Boolean(row.onAir),
+      ...trust(row.badgeAt, row.publicSince, now),
     },
     branches: await dealBranches(db, row.id),
     effective: effectiveDealStatus({ status: row.status, startsAt: row.startsAt, endsAt: row.endsAt, remainingQuantity: row.remaining }, now),
@@ -321,6 +341,7 @@ export type PublicBusiness = {
   logo: string | null; cover: string | null; rating: Rating | null; isDemo: boolean;
   branches: Array<BranchSummary & { phone: string | null; hoursJson: string }>;
   deals: DealCard[];
+  trust: Trust;
   upcoming: DealCard[];
 };
 
@@ -328,11 +349,11 @@ export async function getPublicBusiness(db: D1Database, slug: string, options: {
   const now = options.now ?? new Date();
   const business = await db
     .prepare(`SELECT b.id, b.slug, b.name, b.description, b.city, b.phone, b.telegram, b.instagram, b.website, c.slug AS categorySlug,
-        b.logo_id AS logoId, b.cover_id AS coverId, b.rating_basis_points AS ratingBp, b.review_count AS reviewCount, b.is_demo AS isDemo
+        b.logo_id AS logoId, b.cover_id AS coverId, b.rating_basis_points AS ratingBp, b.review_count AS reviewCount, b.is_demo AS isDemo, ${TRUST_COLUMNS}
       FROM businesses b LEFT JOIN categories c ON c.id = b.category_id
       WHERE b.slug = ?1 AND ${PUBLIC_BUSINESS_SQL} AND (?2 = 1 OR b.is_demo = 0)`)
     .bind(slug, options.demo ? 1 : 0)
-    .first<Omit<PublicBusiness, 'branches' | 'deals' | 'upcoming' | 'logo' | 'cover' | 'rating' | 'isDemo'> & { logoId: string | null; coverId: string | null; ratingBp: number | null; reviewCount: number | null; isDemo: number }>();
+    .first<Omit<PublicBusiness, 'branches' | 'deals' | 'upcoming' | 'logo' | 'cover' | 'rating' | 'isDemo' | 'trust'> & { logoId: string | null; coverId: string | null; ratingBp: number | null; reviewCount: number | null; isDemo: number; badgeAt: string | null; publicSince: string | null }>();
   if (!business) return null;
   const [branches, dealRows] = await Promise.all([
     db.prepare(`SELECT id, name, address, city, latitude_e6 AS lat, longitude_e6 AS lon, phone, working_hours_json AS hoursJson
@@ -348,10 +369,11 @@ export async function getPublicBusiness(db: D1Database, slug: string, options: {
       .all<DealBranchRow>(),
   ]);
   const cards = sortDeals(groupDeals(dealRows.results, null, now), 'ending');
-  const { logoId, coverId, ratingBp, reviewCount, isDemo, ...rest } = business;
+  const { logoId, coverId, ratingBp, reviewCount, isDemo, badgeAt, publicSince, ...rest } = business;
   return {
     ...rest,
     isDemo: Boolean(isDemo),
+    trust: trust(badgeAt, publicSince, now),
     logo: mediaUrl(logoId),
     cover: mediaUrl(coverId),
     rating: rating(ratingBp, reviewCount),

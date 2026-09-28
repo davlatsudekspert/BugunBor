@@ -149,7 +149,11 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
               <a href={`/businesses/${deal.business.slug}`} className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-primary">
                 <BusinessAvatar name={deal.business.name} logo={deal.business.logo} className="size-8 rounded-full bg-white text-[11px] text-navy ring-1 ring-slate-200" />
                 {deal.business.name}
-                {deal.business.verificationStatus === 'VERIFIED' && !deal.isDemo && !deal.business.isDemo ? <BadgeCheck className="size-5 fill-emerald-500 text-white" aria-label={t.common.verified} /> : null}
+                {sample ? null : deal.business.badge ? (
+                  <BadgeCheck className="size-5 fill-emerald-500 text-white" aria-label={t.business.verified} />
+                ) : deal.business.isNew ? (
+                  <span title={t.business.newHint} className="rounded-full bg-sky-50 px-2 py-0.5 text-xs font-black text-sky-700">{t.business.newBadge}</span>
+                ) : null}
               </a>
               {deal.business.rating ? (
                 <a href={`/businesses/${deal.business.slug}#reviews`} className="ml-10 mt-0.5 flex items-center gap-1.5 text-xs font-bold text-navy">
@@ -205,7 +209,8 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
               <li className="flex items-center gap-2"><Ticket className="size-4 text-primary" aria-hidden /> {fmt(t.deal.perCustomer, { count: deal.perCustomerLimit })}</li>
               <li className="flex items-center gap-2"><Timer className="size-4 text-primary" aria-hidden /> {fmt(t.deal.codeValidity, { duration: formatDurationMinutes(deal.claimTtlMinutes, t) })}</li>
             </ul>
-            {sample ? null : <p className="mt-4 flex items-center gap-2 text-sm text-emerald-700"><ShieldCheck className="size-4" aria-hidden /> {t.deal.verifiedNote}</p>}
+            {/* «Checked» only as far as it is true: the business by a moderator, the deal against the rules. */}
+            {sample ? null : <p className="mt-4 flex items-center gap-2 text-sm text-emerald-700"><ShieldCheck className="size-4 shrink-0" aria-hidden /> {deal.business.badge ? t.deal.verifiedNote : t.deal.checkedNote}</p>}
           </div>
 
           <div className="mt-5 flex flex-wrap gap-2">
