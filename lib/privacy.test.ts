@@ -45,6 +45,19 @@ describe('privacy policy', () => {
       expect(mentions.every((line) => /rasm|фото|photo/i.test(line))).toBe(true);
     }
     expect(text()).toContain('Profil rasmingiz tekshiruvga yuborilmaydi.');
+  });
+
+  it('names Google Gemini as the fallback of the same photo check, and says an unchecked photo is checked later', () => {
+    for (const locale of PRIVACY_LOCALES) {
+      const policy = privacyPolicy(locale);
+      const lines = policy.sections.flatMap((section) => [...(section.paragraphs ?? []), ...(section.items ?? []), section.after ?? '']);
+      const mentions = lines.filter((line) => /Gemini/.test(line));
+      expect(mentions.length).toBeGreaterThanOrEqual(3);
+      expect(mentions.every((line) => /rasm|фото|photo/i.test(line))).toBe(true);
+    }
+    expect(text()).toContain('Google LLC (Gemini API)');
+    expect(text()).toContain('Anthropic yoki Google (AQSh)');
+    expect(text()).toContain('rasm «tekshirilmagan» holda saqlanadi va keyinroq qayta tekshiriladi');
     expect(text()).toContain('matn tashqi xizmatga yuborilmaydi');
   });
 
@@ -58,7 +71,7 @@ describe('privacy policy', () => {
 
   it('describes only BugunBor, with no other product’s features and no home address', () => {
     const all = text();
-    expect(all).not.toMatch(/NFC|Reels|Gemini|Resend|Google Play|auksion|аукцион|nfcstore/i);
+    expect(all).not.toMatch(/NFC|Reels|Resend|Google Play|auksion|аукцион|nfcstore/i);
     expect(all).not.toMatch(/ko‘chasi|улица|ул\.|street|uy\b|дом \d/i);
     expect(all).not.toMatch(/reyestr|реестр|register of personal data/i);
   });

@@ -598,7 +598,23 @@ const businessBadge: Migration = {
   },
 };
 
+/**
+ * A photo no checking service answered for is kept unchecked and waits here to
+ * be checked again (modules/media/recheck.ts): when, and how many tries so far.
+ */
+const photoRechecks: Migration = {
+  id: '0016_photo_rechecks',
+  async build({ db, columns }) {
+    const existing = await columns('media');
+    const statements: D1PreparedStatement[] = [];
+    if (!existing.has('check_after')) statements.push(db.prepare(`ALTER TABLE media ADD COLUMN check_after TEXT`));
+    if (!existing.has('check_attempts')) statements.push(db.prepare(`ALTER TABLE media ADD COLUMN check_attempts INTEGER NOT NULL DEFAULT 0`));
+    statements.push(db.prepare(`CREATE INDEX IF NOT EXISTS idx_media_recheck ON media(check_after) WHERE check_after IS NOT NULL`));
+    return statements;
+  },
+};
+
 export const migrations: readonly Migration[] = [
   baseline, systemV1, billing, media, engagement, payments, autoModeration, freeLaunch, privacyConsent, appSupport, userAvatars, codeIssues, dealSets,
-  photoChecks, businessBadge,
+  photoChecks, businessBadge, photoRechecks,
 ];

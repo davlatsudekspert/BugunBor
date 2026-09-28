@@ -4,6 +4,7 @@ import { toDbTime } from '@/lib/time';
 import { auditStatement } from '@/modules/audit';
 import { DomainError } from '@/modules/errors';
 import type { PhotoChecker } from './check';
+import { checkDownAlertStatement, checkRecordStatements, retryAfter } from './check-status';
 
 // Original photos uploaded by businesses. Browsers resize and re-encode them
 // to WebP before upload (see components/business/photo-picker.tsx); the
@@ -96,7 +97,9 @@ async function sha256(bytes: Uint8Array<ArrayBuffer>) {
 /**
  * Validates and stores an uploaded image for a business. With a checker
  * (modules/media/check.ts) the photo is looked at first: a refused one is not
- * kept, only an audit line with the reason.
+ * kept, only an audit line with the reason. When no checking service answers,
+ * the upload is not blocked: the photo is kept unchecked, waits to be checked
+ * again (modules/media/recheck.ts) and the admins are told, once a day.
  */
 export async function saveMedia(
   db: D1Database,
@@ -121,21 +124,31 @@ export async function saveMedia(
   if ((count?.n ?? 0) >= MEDIA_RULES.maxPerDay) throw new DomainError('MEDIA_LIMIT', 429);
 
   const hash = await sha256(bytes);
-  const verdict = input.check ? await input.check(bytes, mime) : null;
-  if (verdict && !verdict.allowed) {
-    await auditStatement(db, {
-      actorUserId: input.userId, businessId: input.businessId, action: 'media.refused', targetType: 'Media', targetId: hash,
-      reason: `${input.kind} ${verdict.reason}: ${verdict.note}`,
-    }, toDbTime(now)).run();
+  const nowDb = toDbTime(now);
+  const result = input.check ? await input.check(bytes, mime) : null;
+  const record = result ? checkRecordStatements(db, result, nowDb) : [];
+  if (result?.status === 'CHECKED' && !result.verdict.allowed) {
+    const { verdict } = result;
+    await db.batch([
+      auditStatement(db, {
+        actorUserId: input.userId, businessId: input.businessId, action: 'media.refused', targetType: 'Media', targetId: hash,
+        reason: `${input.kind} ${verdict.reason}: ${verdict.note}`,
+      }, nowDb),
+      ...record,
+    ]);
     throw new DomainError(verdict.code, 422);
   }
 
   const id = crypto.randomUUID();
-  await db
-    .prepare(`INSERT INTO media(id, business_id, kind, mime, data_base64, size, width, height, sha256, uploaded_by, created_at, check_status)
-      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)`)
-    .bind(id, input.businessId, input.kind, mime, bytesToBase64(bytes), bytes.length, size.width, size.height, hash, input.userId, toDbTime(now), verdict ? 'PASSED' : 'UNCHECKED')
-    .run();
+  const waiting = result?.status === 'UNAVAILABLE';
+  await db.batch([
+    db.prepare(`INSERT INTO media(id, business_id, kind, mime, data_base64, size, width, height, sha256, uploaded_by, created_at, check_status, check_attempts, check_after)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)`)
+      .bind(id, input.businessId, input.kind, mime, bytesToBase64(bytes), bytes.length, size.width, size.height, hash, input.userId, nowDb,
+        result?.status === 'CHECKED' ? 'PASSED' : 'UNCHECKED', waiting ? 1 : 0, waiting ? retryAfter(1, now) : null),
+    ...record,
+    ...(waiting ? [checkDownAlertStatement(db, result.failures, now)] : []),
+  ]);
   return { id, url: mediaUrl(id)!, width: size.width, height: size.height };
 }
 
