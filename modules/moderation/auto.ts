@@ -1,3 +1,4 @@
+import { parseDealSet } from '@/lib/deal-set';
 import type { Dictionary } from '@/lib/i18n';
 import { normalizeSearchText } from '@/lib/search';
 import { toDbTime } from '@/lib/time';
@@ -37,7 +38,7 @@ export async function getAutoModerationSettings(db: D1Database): Promise<AutoMod
 
 export const AUTO_FLAGS = [
   'LINK', 'BANNED', 'RESTRICTED', 'CARD', 'PROFANITY', 'LOW_QUALITY', 'DUPLICATE_NAME', 'OWNER_HISTORY',
-  'RESUBMITTED', 'LOCATION', 'DISCOUNT_HIGH', 'PRICE_LOW', 'PRICE_HIGH', 'BUSINESS_HISTORY',
+  'RESUBMITTED', 'LOCATION', 'DISCOUNT_HIGH', 'PRICE_LOW', 'PRICE_HIGH', 'BUSINESS_HISTORY', 'COMPLAINT_HOLD',
 ] as const;
 export type AutoFlag = (typeof AUTO_FLAGS)[number];
 
@@ -119,9 +120,13 @@ const DEAL_LIMITS = { maxDiscountPercent: 80, minPriceUzs: 1000, maxOriginalUzs:
 
 const unique = (flags: AutoFlag[]) => AUTO_FLAGS.filter((flag) => flags.includes(flag));
 
-/** Tells the moderators, once per submission, that something waits for them and why. */
+/**
+ * Tells the moderators that something waits for them and why: at most once an
+ * hour per business or deal, so sending it again and again (withdraw, submit,
+ * withdraw…) cannot flood their Telegram.
+ */
 const reviewAlert = (db: D1Database, input: { target: 'Business' | 'Deal'; id: string; submittedAt: string; flags: AutoFlag[]; nowDb: string }) =>
-  staffAlertStatement(db, { kind: 'REVIEW_NEEDED', key: `${input.id}:${input.submittedAt}`, payload: { target: input.target, id: input.id, flags: input.flags.join(',') }, nowDb: input.nowDb });
+  staffAlertStatement(db, { kind: 'REVIEW_NEEDED', key: `${input.id}:${input.nowDb.slice(0, 13)}`, payload: { target: input.target, id: input.id, flags: input.flags.join(',') }, nowDb: input.nowDb });
 
 async function rejectedByPerson(db: D1Database, targetType: 'Business' | 'Deal', targetId: string) {
   const row = await db
@@ -145,8 +150,10 @@ export function businessContentFlags(
 }
 
 /** Checks of the deal itself: its texts and whether the prices make sense. */
-export function dealContentFlags(deal: { title: string; description: string; terms: string; originalPrice: number | null; price: number; discountPercent: number }): AutoFlag[] {
-  const flags = textFlags(`${deal.title}\n${deal.description}\n${deal.terms}`);
+export function dealContentFlags(deal: { title: string; description: string; terms: string; originalPrice: number | null; price: number; discountPercent: number; setItemsJson?: string | null }): AutoFlag[] {
+  // What a set holds is read like the rest of its text.
+  const setText = parseDealSet(deal.setItemsJson, null)?.items.map((item) => item.name).join('\n') ?? '';
+  const flags = textFlags(`${deal.title}\n${deal.description}\n${deal.terms}\n${setText}`);
   if (lowQuality(deal.title, deal.description)) flags.push('LOW_QUALITY');
   if (deal.discountPercent > DEAL_LIMITS.maxDiscountPercent) flags.push('DISCOUNT_HIGH');
   if (deal.price < DEAL_LIMITS.minPriceUzs) flags.push('PRICE_LOW');
@@ -182,20 +189,26 @@ export async function businessFlags(db: D1Database, business: BusinessFacts): Pr
   return unique(flags);
 }
 
-type DealFacts = { id: string; businessId: string; title: string; description: string; terms: string; originalPrice: number | null; price: number; discountPercent: number };
+type DealFacts = { id: string; businessId: string; title: string; description: string; terms: string; originalPrice: number | null; price: number; discountPercent: number; setItemsJson?: string | null };
 
 export async function dealFlags(db: D1Database, deal: DealFacts, now = new Date()): Promise<AutoFlag[]> {
   const since = toDbTime(new Date(now.getTime() - DEAL_LIMITS.historyDays * 86_400_000));
-  const [history, resubmitted] = await Promise.all([
+  const [history, resubmitted, held] = await Promise.all([
     db.prepare(`SELECT 1 AS found FROM moderation_actions ma JOIN deals d ON d.id = ma.target_id
         WHERE ma.target_type = 'Deal' AND ma.action IN ('REJECT', 'ARCHIVE') AND ma.actor_user_id != ?3
           AND d.business_id = ?1 AND d.id != ?2 AND ma.created_at >= ?4 LIMIT 1`)
       .bind(deal.businessId, deal.id, SYSTEM_MODERATOR_ID, since)
       .first<{ found: number }>(),
     rejectedByPerson(db, 'Deal', deal.id),
+    // A deal of the business is held after complaints: its new deals (a copy
+    // of the held one included) wait for a moderator too.
+    db.prepare(`SELECT 1 AS found FROM deals WHERE business_id = ?1 AND id != ?2 AND complaint_hold_at IS NOT NULL AND deleted_at IS NULL LIMIT 1`)
+      .bind(deal.businessId, deal.id)
+      .first<{ found: number }>(),
   ]);
   const flags = dealContentFlags(deal);
   if (history) flags.push('BUSINESS_HISTORY');
+  if (held) flags.push('COMPLAINT_HOLD');
   if (resubmitted) flags.push('RESUBMITTED');
   return unique(flags);
 }
@@ -239,7 +252,7 @@ export async function autoModerateDeal(db: D1Database, dealId: string, now = new
   try {
     const deal = await db
       .prepare(`SELECT d.id, d.business_id AS businessId, d.title, d.description, d.terms, d.original_price_uzs AS originalPrice,
-          d.discounted_price_uzs AS price, d.discount_percent AS discountPercent, d.status, d.submitted_at AS submittedAt,
+          d.discounted_price_uzs AS price, d.discount_percent AS discountPercent, d.set_items_json AS setItemsJson, d.status, d.submitted_at AS submittedAt,
           b.verification_status AS businessStatus, b.suspended_at AS suspendedAt
         FROM deals d JOIN businesses b ON b.id = d.business_id WHERE d.id = ?1 AND d.deleted_at IS NULL`)
       .bind(dealId)

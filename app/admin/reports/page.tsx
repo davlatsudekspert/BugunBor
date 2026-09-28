@@ -40,11 +40,15 @@ export default async function AdminReportsPage({ searchParams }: { searchParams:
                 </div>
                 <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">{r.reasons[report.reason]}</span>
               </div>
+              {report.held ? <p className="mt-2 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-900">⏸ {r.held}</p> : null}
               {report.comment ? <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-700">{report.comment}</p> : null}
               {report.status === 'NEW' ? (
                 <div className="mt-3 flex flex-wrap gap-2">
                   <ActionButton payload={{ type: 'report.resolve', reportId: report.id, status: 'RESOLVED' }} label={r.resolve} networkError={t.common.networkError} />
                   <ActionButton payload={{ type: 'report.resolve', reportId: report.id, status: 'DISMISSED' }} label={r.dismiss} tone="danger" networkError={t.common.networkError} />
+                  {report.held && report.dealId ? (
+                    <ActionButton payload={{ type: 'deal.release', dealId: report.dealId }} label={r.release} confirmText={r.releaseConfirm} tone="success" networkError={t.common.networkError} />
+                  ) : null}
                 </div>
               ) : null}
             </article>

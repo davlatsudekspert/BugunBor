@@ -11,7 +11,7 @@ import { BILLING_PERIODS, requestPlan } from '@/modules/billing/service';
 import { assertNotSuspended, requireMembership } from '@/modules/businesses/access';
 import { branchSchema, businessProfileSchema, teamAddSchema } from '@/modules/businesses/schema';
 import {
-  addMember, businessDashboard, changeMemberRole, createBranch, deleteBranch, listBranches, profileChecklist, removeMember, updateBranch,
+  addMember, businessDashboard, changeMemberRole, createBranch, deleteBranch, listBranches, profileChecklist, recentCodes, removeMember, updateBranch,
   updateBusinessProfile,
 } from '@/modules/businesses/service';
 import { dealInputSchema } from '@/modules/deals/schema';
@@ -21,6 +21,7 @@ import { autoModerateBusiness, autoModerateDeal } from '@/modules/moderation/aut
 import { checkoutAvailable, clickCheckoutUrl, createOrder, paymeCheckoutUrl } from '@/modules/payments/service';
 import { RATE_RULES, enforceRateLimit } from '@/modules/rate-limit';
 import { codeFromScan } from '@/modules/redemptions/codes';
+import { BOOKING_CANCEL_REASONS, BOOKING_MESSAGES, cancelBooking, messageBooking } from '@/modules/redemptions/contact';
 import { completeRedemption, lookupRedemption, runMaintenance } from '@/modules/redemptions/service';
 
 const id = z.string().min(1).max(100);
@@ -41,6 +42,8 @@ const actionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('team.remove'), memberId: id }),
   z.object({ type: z.literal('redeem.lookup'), code: z.string().max(200) }),
   z.object({ type: z.literal('redeem.complete'), redemptionId: id }),
+  z.object({ type: z.literal('booking.message'), redemptionId: id, message: z.enum(BOOKING_MESSAGES) }),
+  z.object({ type: z.literal('booking.cancel'), redemptionId: id, reason: z.enum(BOOKING_CANCEL_REASONS) }),
   z.object({ type: z.literal('billing.request'), planCode: z.string().max(20), months: z.number().int().refine((value) => BILLING_PERIODS.some((period) => period.months === value)) }),
   z.object({ type: z.literal('billing.checkout'), planCode: z.string().max(20), months: z.number().int().refine((value) => BILLING_PERIODS.some((period) => period.months === value)), provider: z.enum(['PAYME', 'CLICK']) }),
 ]);
@@ -62,6 +65,8 @@ const permission: Record<Action['type'], BusinessAction> = {
   'team.remove': 'team.manage',
   'redeem.lookup': 'redemption.validate',
   'redeem.complete': 'redemption.validate',
+  'booking.message': 'redemption.validate',
+  'booking.cancel': 'redemption.validate',
   'billing.request': 'business.edit',
   'billing.checkout': 'business.edit',
 };
@@ -91,13 +96,15 @@ export const GET = route(async (request: Request, context: { params: Promise<{ b
     validate: roleCan(membership.role, 'redemption.validate'),
     analytics: roleCan(membership.role, 'analytics.read'),
   };
-  const [row, dashboard, setup, branches] = await Promise.all([
+  const [row, dashboard, setup, branches, bookings] = await Promise.all([
     db.prepare(`SELECT logo_id AS logoId, category_id AS categoryId FROM businesses WHERE id = ?1`).bind(businessId).first<{ logoId: string | null; categoryId: string | null }>(),
     can.analytics ? businessDashboard(db, businessId) : Promise.resolve(null),
     can.edit ? profileChecklist(db, businessId) : Promise.resolve([]),
     can.deals ? listBranches(db, businessId) : Promise.resolve([]),
+    // A cashier sees no statistics, but still the bookings to message or cancel.
+    !can.analytics && can.validate ? recentCodes(db, businessId, new Date(), { activeOnly: true }) : Promise.resolve([]),
   ]);
-  const { recent, ...stats } = dashboard ?? { recent: [] };
+  const { recent, ...stats } = dashboard ?? { recent: bookings };
   return json({
     data: {
       business: {
@@ -108,7 +115,8 @@ export const GET = route(async (request: Request, context: { params: Promise<{ b
       role: membership.role,
       can,
       stats: dashboard ? stats : null,
-      recent: recent.slice(0, 5),
+      // Every booking that can still be acted on, then the latest others: five at least.
+      recent: recent.filter((code, index) => code.status === 'CLAIMED' || index < 5),
       setup: setup.map(({ key, done }) => ({ key, done })),
       branches: branches.map(({ id, name, address }) => ({ id, name, address })),
     },
@@ -123,6 +131,8 @@ export const POST = route(async (request: Request, context: { params: Promise<{ 
   const { businessId } = await context.params;
   const membership = await requireMembership(db, user.id, businessId, permission[action.type]);
   if (blockedWhenSuspended.has(action.type)) assertNotSuspended(membership);
+  // Every change counts against one budget per person (code checks have their own).
+  if (action.type !== 'redeem.lookup' && action.type !== 'redeem.complete') await enforceRateLimit(db, `write:${user.id}`, RATE_RULES.write);
   const actor = { businessId, userId: user.id };
 
   switch (action.type) {
@@ -171,6 +181,12 @@ export const POST = route(async (request: Request, context: { params: Promise<{ 
     }
     case 'redeem.complete':
       return json({ data: await completeRedemption(db, { businessId, redemptionId: action.redemptionId, staffUserId: user.id }) });
+    // The person's number stays hidden: BugunBor tells them.
+    case 'booking.message':
+      return json({ data: await messageBooking(db, { businessId, staffUserId: user.id, redemptionId: action.redemptionId, message: action.message }) });
+    case 'booking.cancel':
+      await cancelBooking(db, { businessId, staffUserId: user.id, redemptionId: action.redemptionId, reason: action.reason });
+      return json({ data: { ok: true } });
     case 'billing.request':
       return json({ data: await requestPlan(db, { businessId, userId: user.id, planCode: action.planCode, months: action.months }) }, { status: 201 });
     case 'billing.checkout': {

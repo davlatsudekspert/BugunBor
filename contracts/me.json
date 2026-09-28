@@ -28,5 +28,9 @@
   "privacy": {
     "acceptedVersion": null,
     "currentVersion": "2026-09-26"
+  },
+  "noShows": {
+    "count": 0,
+    "pausedUntil": null
   }
 }

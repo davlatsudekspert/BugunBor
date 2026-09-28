@@ -18,17 +18,57 @@ String statusLabel(L l, String status) => switch (status) {
   _ => l.statusCanceled,
 };
 
-String dateLabel(DateTime utc) {
-  final local = toTashkent(utc);
-  String two(int value) => value.toString().padLeft(2, '0');
-  return '${two(local.day)}.${two(local.month)}.${local.year} ${local.hour}:${two(local.minute)}';
-}
+/// What a code's state is for people: a claim whose time ran out is expired
+/// even before the server marks it so.
+String effectiveCodeStatus(Redemption code) => code.status == 'CLAIMED' && !code.isActive ? 'EXPIRED' : code.status;
 
-class CodesScreen extends ConsumerWidget {
-  const CodesScreen({super.key});
+/// Why the business cancelled the booking, when it did.
+String? canceledByBusiness(L l, Redemption code) => code.status != 'CANCELED'
+    ? null
+    : switch (code.cancelReason) {
+        'OUT_OF_STOCK' => l.canceledOutOfStock,
+        'CLOSED' => l.canceledClosed,
+        _ => null,
+      };
+
+/// The person's codes: active ones to show at the counter, and the history.
+/// With [review] (a link from the "rate your visit" message) the history opens
+/// with that visit's rating sheet.
+class CodesScreen extends ConsumerStatefulWidget {
+  const CodesScreen({super.key, this.review});
+  final String? review;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CodesScreen> createState() => _CodesScreenState();
+}
+
+class _CodesScreenState extends ConsumerState<CodesScreen> with SingleTickerProviderStateMixin {
+  late final TabController _tabs = TabController(length: 2, vsync: this);
+  String? _reviewed;
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    super.dispose();
+  }
+
+  /// Opens the rating sheet asked for by the link, once per link.
+  void _openReview(List<Redemption> codes) {
+    final id = widget.review;
+    if (id == null || _reviewed == id) return;
+    final code = codes.where((item) => item.id == id).firstOrNull;
+    if (code == null) return;
+    _reviewed = id;
+    // After this frame: switching tabs or opening a sheet is not allowed while building.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!code.isActive) _tabs.index = 1;
+      if (code.canRate && code.myRating == null) showRateSheet(context, ref, code);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l = L.of(context);
     final signedIn = ref.watch(sessionProvider.select((session) => session.signedIn));
     if (!signedIn) {
@@ -38,41 +78,41 @@ class CodesScreen extends ConsumerWidget {
       );
     }
     final codes = ref.watch(myCodesProvider);
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(l.navCodes),
-          bottom: TabBar(
-            tabs: [
-              Tab(text: l.codesActive),
-              Tab(text: l.codesHistory),
-            ],
-          ),
+    if (codes.value case final value?) _openReview(value);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l.navCodes),
+        bottom: TabBar(
+          controller: _tabs,
+          tabs: [
+            Tab(text: l.codesActive),
+            Tab(text: l.codesHistory),
+          ],
         ),
-        body: switch (codes) {
-          AsyncValue(:final value?) => TabBarView(
-            children: [
-              _CodeList(
-                items: value.where((code) => code.isActive).toList(),
-                empty: StatePanel(
-                  icon: Icons.qr_code_2_rounded,
-                  title: l.codesEmpty,
-                  text: l.codesEmptyText,
-                  actionLabel: l.navSearch,
-                  onAction: () => context.go('/search'),
-                ),
-              ),
-              _CodeList(
-                items: value.where((code) => !code.isActive).toList(),
-                empty: StatePanel(icon: Icons.history_rounded, title: l.historyEmpty),
-              ),
-            ],
-          ),
-          AsyncValue(:final error?) => StatePanel.error(context, error, onRetry: () => ref.invalidate(myCodesProvider)),
-          _ => const SkeletonList(count: 3),
-        },
       ),
+      body: switch (codes) {
+        AsyncValue(:final value?) => TabBarView(
+          controller: _tabs,
+          children: [
+            _CodeList(
+              items: value.where((code) => code.isActive).toList(),
+              empty: StatePanel(
+                icon: Icons.qr_code_2_rounded,
+                title: l.codesEmpty,
+                text: l.codesEmptyText,
+                actionLabel: l.navSearch,
+                onAction: () => context.go('/search'),
+              ),
+            ),
+            _CodeList(
+              items: value.where((code) => !code.isActive).toList(),
+              empty: StatePanel(icon: Icons.history_rounded, title: l.historyEmpty),
+            ),
+          ],
+        ),
+        AsyncValue(:final error?) => StatePanel.error(context, error, onRetry: () => ref.invalidate(myCodesProvider)),
+        _ => const SkeletonList(count: 3),
+      },
     );
   }
 }
@@ -84,7 +124,7 @@ class _CodeList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    Future<void> reload() => ref.refresh(myCodesProvider.future).then((_) {}, onError: (_) {});
+    Future<void> reload() => refreshing(context, ref.refresh(myCodesProvider.future));
     if (items.isEmpty) {
       return RefreshIndicator(
         onRefresh: reload,
@@ -122,7 +162,9 @@ class _CodeCard extends ConsumerWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: active ? () => context.push('/codes/${code.id}') : () => context.push('/deals/${code.dealSlug}'),
+        // The code's own page: the QR while it is valid, afterwards what
+        // happened (and "Aksiya berilmadimi?" for three days).
+        onTap: () => context.push('/codes/${code.id}'),
         child: Padding(
           padding: const EdgeInsets.all(Gap.md),
           child: Column(
@@ -155,7 +197,7 @@ class _CodeCard extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  _StatusChip(status: code.status),
+                  _StatusChip(status: effectiveCodeStatus(code)),
                 ],
               ),
               const SizedBox(height: Gap.sm),
@@ -172,14 +214,31 @@ class _CodeCard extends ConsumerWidget {
                     const SizedBox(width: Gap.sm),
                     const Icon(Icons.schedule_rounded, size: 16),
                     const SizedBox(width: 4),
-                    Countdown(code.expiresAt),
+                    // Time is up: the list asks again, and the code moves to the history
+                    // (an unused code also counts towards the booking pause).
+                    Countdown(
+                      code.expiresAt,
+                      onDone: () => ref
+                        ..invalidate(myCodesProvider)
+                        ..invalidate(meProvider),
+                    ),
                   ],
                 )
               else
                 Row(
                   children: [
                     Expanded(
-                      child: Text(dateLabel(code.completedAt ?? code.createdAt), style: TextStyle(color: context.mutedText, fontSize: 13)),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(momentLabel(code.completedAt ?? code.createdAt), style: TextStyle(color: context.mutedText, fontSize: 13)),
+                          if (canceledByBusiness(l, code) case final reason?)
+                            Text(
+                              reason,
+                              style: TextStyle(color: context.dangerText, fontSize: 13, fontWeight: FontWeight.w700),
+                            ),
+                        ],
+                      ),
                     ),
                     if (code.myRating != null)
                       Text(l.yourRating('${code.myRating}'), style: const TextStyle(fontWeight: FontWeight.w700))
@@ -261,7 +320,11 @@ class _RateSheetState extends ConsumerState<_RateSheet> {
     });
     try {
       await ref.read(apiProvider).rate(widget.code.id, _rating, _comment.text);
-      ref.invalidate(myCodesProvider);
+      // The business's stars count this visit now.
+      ref
+        ..invalidate(myCodesProvider)
+        ..invalidate(businessProvider)
+        ..invalidate(dealProvider);
       if (mounted) Navigator.pop(context, true);
     } catch (error) {
       if (mounted) {
@@ -292,7 +355,7 @@ class _RateSheetState extends ConsumerState<_RateSheet> {
               children: [
                 for (var star = 1; star <= 5; star++)
                   IconButton(
-                    tooltip: '$star',
+                    tooltip: l.ratingLabel('$star'),
                     iconSize: 36,
                     onPressed: () => setState(() => _rating = star),
                     icon: Icon(star <= _rating ? Icons.star_rounded : Icons.star_outline_rounded, color: const Color(0xFFF59E0B)),
@@ -308,7 +371,7 @@ class _RateSheetState extends ConsumerState<_RateSheet> {
               textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(labelText: l.rateComment),
             ),
-            if (_error != null) ...[Text(errorText(context, _error!), style: const TextStyle(color: Colors.red)), const SizedBox(height: Gap.sm)],
+            if (_error != null) ...[Text(errorText(context, _error!), style: TextStyle(color: context.dangerText)), const SizedBox(height: Gap.sm)],
             FilledButton(
               onPressed: _rating == 0 || _sending ? null : _send,
               child: _sending ? const SizedBox.square(dimension: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white)) : Text(l.save),

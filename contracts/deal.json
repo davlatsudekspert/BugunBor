@@ -65,5 +65,6 @@
   "following": false,
   "followers": 0,
   "usedCount": 0,
-  "activeRedemptionId": null
+  "activeRedemptionId": null,
+  "set": null
 }

@@ -33,9 +33,9 @@ erDiagram
 | `business_members` | Staff with role OWNER, MANAGER or CASHIER; revocation instead of deletion |
 | `branches` | Address, coordinates, working hours, optional phone |
 | `categories` | Slug, Uzbek and Russian names, icon, order, active flag |
-| `deals` | Prices, window, stock (`remaining_quantity`), per-customer limit, code lifetime, stored status, moderation fields, visual or photo, search text, views, `is_demo` |
+| `deals` | Prices, window, stock (`remaining_quantity`), per-customer limit, code lifetime, stored status, moderation fields, visual or photo, search text, views, `is_demo`; a set's items and people (`set_items_json`, `set_persons`); `complaint_hold_at` when complaints put it on hold |
 | `deal_branches` | Where a deal can be redeemed |
-| `redemptions` | One claim: status CLAIMED, COMPLETED, CANCELED or EXPIRED; hashed code; idempotency key; at most one active claim per customer and deal |
+| `redemptions` | One claim: status CLAIMED, COMPLETED, CANCELED or EXPIRED; hashed code; idempotency key; at most one active claim per customer and deal; `cancel_reason` (OUT_OF_STOCK, CLOSED) when the business cancelled it |
 | `redemption_events` | Claim and terminal events; one terminal event per redemption (unique index) |
 | `favorites` | Saved deals |
 | `follows` | Customer follows a business |

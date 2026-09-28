@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/links.dart';
 import '../../app/providers.dart';
+import '../../core/api_error.dart';
 import '../../core/env.dart';
 import '../../data/models.dart';
 import '../../design/icons.dart';
@@ -95,15 +96,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     final ok = await applyPlaceChoice(ref, choice);
     if (!mounted) return;
     setState(() => _locationFailed = !ok);
-    if (!ok) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(L.of(context).homeLocationDenied)));
+    if (!ok) showLocationDenied(context);
   }
 
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
     final settings = ref.watch(settingsProvider);
-    final feed = ref.watch(feedProvider);
-    final config = ref.watch(configProvider).value;
+    // Until the first answers arrive, what Home showed last time (see lastAnswersProvider).
+    final last = ref.watch(lastAnswersProvider);
+    final live = ref.watch(feedProvider);
+    final feed = live.hasValue || last.feed == null ? live : AsyncData(last.feed!);
+    final offline = live.hasError && (live.hasValue || last.feed != null);
+    final config = ref.watch(currentConfigProvider);
     final located = settings.useLocation && ref.watch(locationProvider) != null;
     final cityName = config?.city(feed.value?.city ?? settings.city)?.name(settings.locale);
     final placeLabel = located ? l.homeUseLocation : (cityName ?? l.chooseCity);
@@ -154,11 +159,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                 ),
               if (_locationFailed && settings.useLocation)
                 SliverToBoxAdapter(
-                  child: _Note(icon: Icons.location_off_outlined, text: l.homeLocationDenied),
+                  child: _Note(icon: Icons.location_off_outlined, text: l.homeLocationDenied, action: l.openSettings, onAction: openLocationSettings),
                 ),
-              if (feed.hasError && feed.hasValue)
+              if (offline)
                 SliverToBoxAdapter(
-                  child: _Note(icon: Icons.wifi_off_rounded, text: l.offline),
+                  child: live.error is ApiError && (live.error! as ApiError).isNetwork
+                      ? _Note(icon: Icons.wifi_off_rounded, text: l.offline)
+                      : _Note(icon: Icons.sync_problem_rounded, text: l.staleNote),
                 ),
               ..._body(context, feed, located: located, cityName: cityName),
               const SliverToBoxAdapter(child: SizedBox(height: Gap.xl)),
@@ -173,7 +180,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     final l = L.of(context);
     if (!feed.hasValue) {
       if (feed.hasError) {
-        return [SliverFillRemaining(hasScrollBody: false, child: StatePanel.error(context, feed.error!, onRetry: () => ref.invalidate(feedProvider)))];
+        return [SliverFillRemaining(hasScrollBody: false, child: StatePanel.error(context, feed.error!, onRetry: _reload))];
       }
       return const [SliverToBoxAdapter(child: _HomeSkeleton())];
     }
@@ -565,9 +572,11 @@ class _UpdateCard extends StatelessWidget {
 }
 
 class _Note extends StatelessWidget {
-  const _Note({required this.icon, required this.text});
+  const _Note({required this.icon, required this.text, this.action, this.onAction});
   final IconData icon;
   final String text;
+  final String? action;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -580,6 +589,7 @@ class _Note extends StatelessWidget {
           Icon(icon, size: 20, color: Brand.primary),
           const SizedBox(width: Gap.sm),
           Expanded(child: Text(text, style: const TextStyle(height: 1.35))),
+          if (action != null && onAction != null) TextButton(onPressed: onAction, child: Text(action!)),
         ],
       ),
     ),

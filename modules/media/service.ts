@@ -14,7 +14,8 @@ export const MEDIA_RULES = {
   maxBytes: 700_000,
   maxSide: 4096,
   minSide: 64,
-  maxPerBusiness: 300,
+  // Uploads per business per day: stops abuse, never locks out a business that has run many deals.
+  maxPerDay: 100,
 } as const;
 
 export type ImageType = 'image/webp' | 'image/jpeg' | 'image/png';
@@ -100,8 +101,9 @@ export async function saveMedia(db: D1Database, input: { businessId: string; use
   if (!size || size.width < MEDIA_RULES.minSide || size.height < MEDIA_RULES.minSide || size.width > MEDIA_RULES.maxSide || size.height > MEDIA_RULES.maxSide) {
     throw new DomainError('IMAGE_INVALID', 415);
   }
-  const count = await db.prepare(`SELECT COUNT(*) AS n FROM media WHERE business_id = ?1`).bind(input.businessId).first<{ n: number }>();
-  if ((count?.n ?? 0) >= MEDIA_RULES.maxPerBusiness) throw new DomainError('RATE_LIMITED', 429);
+  const dayAgo = toDbTime(new Date(now.getTime() - 24 * 60 * 60_000));
+  const count = await db.prepare(`SELECT COUNT(*) AS n FROM media WHERE business_id = ?1 AND created_at >= ?2`).bind(input.businessId, dayAgo).first<{ n: number }>();
+  if ((count?.n ?? 0) >= MEDIA_RULES.maxPerDay) throw new DomainError('MEDIA_LIMIT', 429);
 
   const id = crypto.randomUUID();
   await db
@@ -121,6 +123,16 @@ export async function getMedia(db: D1Database, id: string) {
   return row ? { mime: row.mime, bytes: base64ToBytes(row.data), etag: `"${row.sha256}"` } : null;
 }
 
+/**
+ * Forgets taken-down images in this data centre's edge cache at once; other
+ * data centres keep them no longer than a day (see app/media/[id]/route.ts).
+ */
+export async function forgetCachedMedia(ids: string[], origin: string) {
+  const cache = (globalThis as { caches?: { default?: { delete(request: Request): Promise<boolean> } } }).caches?.default;
+  if (!cache) return;
+  await Promise.all(ids.map((id) => cache.delete(new Request(new URL(`/media/${id}`, origin).toString())).catch(() => false)));
+}
+
 /** A photo id sent with a deal or profile must belong to that business. */
 export async function assertOwnMedia(db: D1Database, businessId: string, mediaId: string | null | undefined) {
   if (!mediaId) return;
@@ -129,12 +141,12 @@ export async function assertOwnMedia(db: D1Database, businessId: string, mediaId
   if (!row) throw new DomainError('VALIDATION');
 }
 
-/** Uploads never attached to a deal or profile within a day are removed. */
+/** Uploads never attached to a deal or profile within a day are removed, and so are photos of deleted drafts. */
 export function pruneOrphanMediaStatement(db: D1Database, now: Date) {
   const dayAgo = toDbTime(new Date(now.getTime() - RETENTION.unusedPhotoHours * 60 * 60_000));
   return db
     .prepare(`DELETE FROM media WHERE created_at < ?1
-      AND id NOT IN (SELECT photo_id FROM deals WHERE photo_id IS NOT NULL)
+      AND id NOT IN (SELECT photo_id FROM deals WHERE photo_id IS NOT NULL AND deleted_at IS NULL)
       AND id NOT IN (SELECT logo_id FROM businesses WHERE logo_id IS NOT NULL)
       AND id NOT IN (SELECT cover_id FROM businesses WHERE cover_id IS NOT NULL)`)
     .bind(dayAgo);

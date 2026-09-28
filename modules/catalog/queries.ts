@@ -1,4 +1,5 @@
 import { distanceKm } from '@/lib/cities';
+import { parseDealSet, type DealSet } from '@/lib/deal-set';
 import { dealPhotoUrl, mediaUrl } from '@/lib/photos';
 import { wordSearchPattern } from '@/lib/search';
 import { toDbTime } from '@/lib/time';
@@ -47,6 +48,8 @@ export type DealCard = {
   effective: EffectiveDealStatus;
   /** A sample (demo) deal or business: shown with a «Namuna» mark and never claimable. */
   isDemo: boolean;
+  /** A set: what is in it and for how many people; null for a regular deal. */
+  set: DealSet | null;
 };
 
 type DealBranchRow = {
@@ -54,7 +57,7 @@ type DealBranchRow = {
   startsAt: string; endsAt: string; remaining: number | null; total: number | null; visual: string | null;
   publishedAt: string; isSponsored: number; claimTtlMinutes: number; status: string; categorySlug: string;
   businessId: string; businessSlug: string; businessName: string; logoId: string | null; photoId: string | null; isDemo: number; businessIsDemo: number;
-  ratingBp: number | null; reviewCount: number | null;
+  ratingBp: number | null; reviewCount: number | null; setItemsJson: string | null; setPersons: number | null;
   branchId: string; branchName: string; address: string; city: string; lat: number; lon: number; hoursJson: string;
 };
 
@@ -64,6 +67,7 @@ const DEAL_BRANCH_COLUMNS = `d.id, d.slug, d.title, d.original_price_uzs AS orig
   COALESCE(d.approved_at, d.created_at) AS publishedAt, d.is_sponsored AS isSponsored, d.claim_ttl_minutes AS claimTtlMinutes,
   c.slug AS categorySlug, b.id AS businessId, b.slug AS businessSlug, b.name AS businessName,
   b.logo_id AS logoId, d.photo_id AS photoId, d.is_demo AS isDemo, b.is_demo AS businessIsDemo, b.rating_basis_points AS ratingBp, b.review_count AS reviewCount,
+  d.set_items_json AS setItemsJson, d.set_persons AS setPersons,
   br.id AS branchId, br.name AS branchName, br.address, br.city, br.latitude_e6 AS lat, br.longitude_e6 AS lon, br.working_hours_json AS hoursJson`;
 
 type Point = { latitude: number; longitude: number };
@@ -107,6 +111,7 @@ function groupDeals(rows: DealBranchRow[], near: Point | null, now: Date): DealC
       distanceKm: distance,
       effective: effectiveDealStatus({ status: row.status, startsAt: row.startsAt, endsAt: row.endsAt, remainingQuantity: row.remaining }, now),
       isDemo: Boolean(row.isDemo || row.businessIsDemo),
+      set: parseDealSet(row.setItemsJson, row.setPersons),
     });
   }
   return [...grouped.values()];
@@ -127,15 +132,31 @@ export type DealFilters = {
   city?: string | null;
   category?: string | null;
   query?: string | null;
+  /** Only sets («Setlar»). */
+  sets?: boolean;
   sort?: SortKey;
   near?: Point | null;
   demo: boolean;
   now?: Date;
 };
 
+/**
+ * The database keeps the rows the chosen order wants first, so the 2000-row
+ * cap (deal × branch) can only ever drop the least relevant ones.
+ */
+const SQL_ORDER: Record<SortKey, string> = {
+  ending: 'd.is_sponsored DESC, d.ends_at',
+  discount: 'd.discount_percent DESC, d.ends_at',
+  new: 'COALESCE(d.approved_at, d.created_at) DESC',
+  // Squared distance in micro-degrees: enough to keep the nearest rows.
+  near: '(br.latitude_e6 - ?7) * (br.latitude_e6 - ?7) + (br.longitude_e6 - ?8) * (br.longitude_e6 - ?8), d.ends_at',
+};
+
 /** All claimable deals matching the filters, one card per deal. */
 export async function listLiveDeals(db: D1Database, filters: DealFilters) {
   const now = filters.now ?? new Date();
+  const near = filters.near ?? null;
+  const sort = filters.sort === 'near' && !near ? 'ending' : (filters.sort ?? 'ending');
   const rows = await db
     .prepare(`SELECT ${DEAL_BRANCH_COLUMNS}
       FROM deals d
@@ -148,11 +169,19 @@ export async function listLiveDeals(db: D1Database, filters: DealFilters) {
         AND (?3 IS NULL OR br.city = ?3)
         AND (?4 IS NULL OR c.slug = ?4)
         AND (?5 IS NULL OR (' ' || d.search_text) LIKE ?5 OR (' ' || b.search_text) LIKE ?5)
+        AND (?6 = 0 OR d.set_items_json IS NOT NULL)
+      ORDER BY ${SQL_ORDER[sort]}
       LIMIT 2000`)
-    .bind(toDbTime(now), filters.demo ? 1 : 0, filters.city ?? null, filters.category ?? null, wordSearchPattern(filters.query))
+    .bind(
+      toDbTime(now),
+      filters.demo ? 1 : 0,
+      filters.city ?? null,
+      filters.category ?? null,
+      wordSearchPattern(filters.query),
+      filters.sets ? 1 : 0,
+      ...(sort === 'near' && near ? [Math.round(near.latitude * 1e6), Math.round(near.longitude * 1e6)] : []),
+    )
     .all<DealBranchRow>();
-  const near = filters.near ?? null;
-  const sort = filters.sort === 'near' && !near ? 'ending' : (filters.sort ?? 'ending');
   return sortDeals(groupDeals(rows.results, near, now), sort);
 }
 
@@ -183,6 +212,8 @@ export type DealDetail = {
   startsAt: string; endsAt: string; remaining: number | null; total: number | null;
   perCustomerLimit: number; claimTtlMinutes: number; visual: string | null; photo: string | null; status: string;
   isDemo: boolean; viewCount: number; rejectionReason: string | null;
+  /** What the set holds and for how many people; null for a regular deal. */
+  set: DealSet | null;
   category: { slug: string; nameUz: string; nameRu: string | null };
   business: {
     id: string; slug: string; name: string; description: string; phone: string | null; telegram: string | null;
@@ -198,8 +229,8 @@ export type DealDetail = {
   isPublic: boolean;
 };
 
-type DealDetailRow = Omit<DealDetail, 'category' | 'business' | 'branches' | 'effective' | 'isPublic' | 'isDemo' | 'photo'> & {
-  isDemo: number; photoId: string | null; logoId: string | null; ratingBp: number | null; reviewCount: number | null; categorySlug: string; categoryNameUz: string; categoryNameRu: string | null;
+type DealDetailRow = Omit<DealDetail, 'category' | 'business' | 'branches' | 'effective' | 'isPublic' | 'isDemo' | 'photo' | 'set'> & {
+  isDemo: number; photoId: string | null; setItemsJson: string | null; setPersons: number | null; logoId: string | null; ratingBp: number | null; reviewCount: number | null; categorySlug: string; categoryNameUz: string; categoryNameRu: string | null;
   businessId: string; businessSlug: string; businessName: string; businessDescription: string; businessPhone: string | null;
   telegram: string | null; instagram: string | null; website: string | null; verificationStatus: string;
   suspendedAt: string | null; businessDeletedAt: string | null; businessIsDemo: number; onAir: number;
@@ -225,6 +256,7 @@ export async function getDealBySlug(db: D1Database, slug: string, options: { dem
         d.remaining_quantity AS remaining, d.total_quantity AS total, d.per_customer_limit AS perCustomerLimit,
         d.claim_ttl_minutes AS claimTtlMinutes, d.visual, d.status, d.is_demo AS isDemo, d.view_count AS viewCount,
         d.rejection_reason AS rejectionReason, d.photo_id AS photoId, b.logo_id AS logoId,
+        d.set_items_json AS setItemsJson, d.set_persons AS setPersons,
         b.rating_basis_points AS ratingBp, b.review_count AS reviewCount,
         c.slug AS categorySlug, c.name_uz AS categoryNameUz, c.name_ru AS categoryNameRu,
         b.id AS businessId, b.slug AS businessSlug, b.name AS businessName, b.description AS businessDescription,
@@ -259,6 +291,7 @@ export async function getDealBySlug(db: D1Database, slug: string, options: { dem
     isDemo: Boolean(row.isDemo),
     viewCount: row.viewCount,
     rejectionReason: row.rejectionReason,
+    set: parseDealSet(row.setItemsJson, row.setPersons),
     category: { slug: row.categorySlug, nameUz: row.categoryNameUz, nameRu: row.categoryNameRu },
     business: {
       id: row.businessId,

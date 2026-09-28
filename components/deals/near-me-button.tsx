@@ -39,6 +39,7 @@ export function NearMeButton({ labels, active, className }: { labels: Labels; ac
         type="button"
         onClick={locate}
         disabled={state === 'locating'}
+        aria-pressed={active}
         className={cn(
           'inline-flex h-9 items-center gap-1.5 rounded-full border px-4 text-xs font-bold transition',
           active ? 'border-navy bg-navy text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-primary/40',

@@ -4,13 +4,17 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/api_error.dart';
+import '../../core/errors_en.dart';
 import '../../core/format.dart';
+import '../../core/hours.dart';
 import '../../core/media.dart';
+import '../../core/time.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../theme.dart';
 
 /// The text for any error: the server's own (localized) message when it has
-/// one and the app speaks Uzbek or Russian, otherwise the app's wording.
+/// one and the app speaks Uzbek or Russian, the app's English one for its
+/// code in English, otherwise the app's general wording.
 String errorText(BuildContext context, Object error) {
   final l = L.of(context);
   if (error is ApiError) {
@@ -19,13 +23,37 @@ String errorText(BuildContext context, Object error) {
     if (error.code == 'RATE_LIMITED') return l.errorRateLimited;
     if (error.isNotFound) return l.errorNotFound;
     final language = Localizations.localeOf(context).languageCode;
-    if (error.message != null && language != 'en') return error.message!;
+    if (language == 'en') {
+      final english = englishErrors[error.code];
+      if (english != null) return english;
+    } else if (error.message != null) {
+      return error.message!;
+    }
     if (error.code == 'SERVER') return l.errorServer;
   }
   return l.errorGeneric;
 }
 
 String money(BuildContext context, int amount) => L.of(context).sum(groupDigits(amount));
+
+/// Shows [error] in a snackbar, except a session that has just ended: the app
+/// says that once, with a sign-in button (see app.dart).
+void showErrorSnack(BuildContext context, Object error) {
+  if (error is ApiError && error.isUnauthenticated) return;
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(errorText(context, error))));
+}
+
+/// Pull to refresh: waits for the new answer and says so when it failed (the
+/// old one stays on screen, so otherwise nothing would tell).
+Future<void> refreshing(BuildContext context, Future<Object?> answer) async {
+  try {
+    await answer;
+  } catch (error) {
+    if (context.mounted) showErrorSnack(context, error);
+  }
+}
 
 /// How wide [text] is drawn here in [style], with the phone's text size.
 double textWidth(BuildContext context, String text, TextStyle style) {
@@ -209,7 +237,7 @@ class DemoBadge extends StatelessWidget {
     ),
     child: Text(
       L.of(context).demoBadge,
-      style: const TextStyle(color: Color(0xFF92400E), fontSize: 11, fontWeight: FontWeight.w800),
+      style: const TextStyle(color: Color(0xFF92400E), fontSize: 12, fontWeight: FontWeight.w800),
     ),
   );
 }
@@ -262,9 +290,12 @@ class PriceLine extends StatelessWidget {
 
 /// Counts down to [target] every second; "2 kun 3:04:05" style.
 class Countdown extends StatefulWidget {
-  const Countdown(this.target, {super.key, this.style});
+  const Countdown(this.target, {super.key, this.style, this.onDone});
   final DateTime target;
   final TextStyle? style;
+
+  /// Called once when the time runs out while shown (e.g. to reload a code's state).
+  final VoidCallback? onDone;
 
   @override
   State<Countdown> createState() => _CountdownState();
@@ -272,12 +303,18 @@ class Countdown extends StatefulWidget {
 
 class _CountdownState extends State<Countdown> {
   Timer? _timer;
+  bool _done = false;
 
   @override
   void initState() {
     super.initState();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
+      if (!mounted) return;
+      setState(() {});
+      if (!_done && !widget.target.isAfter(DateTime.now().toUtc())) {
+        _done = true;
+        widget.onDone?.call();
+      }
     });
   }
 
@@ -302,10 +339,12 @@ class _CountdownState extends State<Countdown> {
 
 /// Time until [target] in words for cards: "45 daqiqa qoldi", "3 soat qoldi",
 /// "2 kun qoldi". Refreshed every half minute; the last hour stands out.
+/// Before [startsAt] it says when the deal starts, and "Tugagan" once it ended.
 class TimeLeft extends StatefulWidget {
-  const TimeLeft(this.target, {super.key, this.style});
+  const TimeLeft(this.target, {super.key, this.style, this.startsAt});
   final DateTime target;
   final TextStyle? style;
+  final DateTime? startsAt;
 
   @override
   State<TimeLeft> createState() => _TimeLeftState();
@@ -331,7 +370,12 @@ class _TimeLeftState extends State<TimeLeft> {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
-    final left = widget.target.difference(DateTime.now().toUtc());
+    final now = DateTime.now().toUtc();
+    final style = widget.style ?? const TextStyle();
+    final startsAt = widget.startsAt;
+    if (startsAt != null && startsAt.isAfter(now)) return Text(l.dealStartsAt(momentLabel(startsAt)), style: style);
+    final left = widget.target.difference(now);
+    if (left <= Duration.zero) return Text(l.timeEnded, style: style);
     final urgent = left.inMinutes < 60;
     final minutes = left.inMinutes % 60;
     final text = left.inHours >= 24
@@ -342,7 +386,6 @@ class _TimeLeftState extends State<TimeLeft> {
         : left.inHours >= 1
         ? l.timeLeftHoursMinutes('${left.inHours}', '$minutes')
         : l.timeLeftMinutes('${left.inMinutes.clamp(1, 59)}');
-    final style = widget.style ?? const TextStyle();
     return Text(
       text,
       style: urgent ? style.copyWith(color: context.accentText, fontWeight: FontWeight.w800) : style,
@@ -350,21 +393,67 @@ class _TimeLeftState extends State<TimeLeft> {
   }
 }
 
+/// 4.7 → "4,7" as the site writes ratings (a dot in English).
+String ratingValue(BuildContext context, double value) {
+  final text = value.toStringAsFixed(1);
+  return Localizations.localeOf(context).languageCode == 'en' ? text : text.replaceAll('.', ',');
+}
+
+/// Read-only stars. Screen readers hear "Baho: 4,7 / 5", unless the number is
+/// written right next to them (`announce: false`).
 class RatingStars extends StatelessWidget {
-  const RatingStars(this.value, {super.key, this.size = 16});
+  const RatingStars(this.value, {super.key, this.size = 16, this.announce = true});
   final double value;
   final double size;
+  final bool announce;
 
   @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      for (var index = 1; index <= 5; index++)
-        Icon(
-          value >= index - 0.25 ? Icons.star_rounded : (value >= index - 0.75 ? Icons.star_half_rounded : Icons.star_outline_rounded),
-          size: size,
-          color: const Color(0xFFF59E0B),
-        ),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final stars = ExcludeSemantics(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var index = 1; index <= 5; index++)
+            Icon(
+              value >= index - 0.25 ? Icons.star_rounded : (value >= index - 0.75 ? Icons.star_half_rounded : Icons.star_outline_rounded),
+              size: size,
+              color: const Color(0xFFF59E0B),
+            ),
+        ],
+      ),
+    );
+    return announce ? Semantics(label: L.of(context).ratingLabel(ratingValue(context, value)), child: stars) : stars;
+  }
+}
+
+/// "Hozir ochiq" / "22:00 gacha ochiq" / "Yopiq · 09:00 da ochiladi" for a
+/// branch right now, on Tashkent clocks; nothing when its hours are unknown.
+class OpenNow extends StatelessWidget {
+  const OpenNow({super.key, required this.hoursJson});
+  final String? hoursJson;
+
+  @override
+  Widget build(BuildContext context) {
+    final hours = WorkingHours.parse(hoursJson);
+    if (hours == null) return const SizedBox.shrink();
+    final l = L.of(context);
+    final open = hours.isOpenAt(DateTime.now().toUtc());
+    final color = open ? context.successText : context.mutedText;
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ExcludeSemantics(child: Icon(Icons.circle, size: 8, color: color)),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              open ? (hours.allDay ? l.branchOpenNow : l.branchOpenUntil(hours.close)) : l.branchClosedNow(hours.open),
+              style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

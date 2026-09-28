@@ -16,6 +16,38 @@ Json _map(Object? value) => value is Map ? value.cast<String, dynamic>() : const
 List<T> _list<T>(Object? value, T Function(Json) parse) =>
     value is List ? value.whereType<Map<dynamic, dynamic>>().map((item) => parse(item.cast<String, dynamic>())).toList() : <T>[];
 
+/// English names for the app in English (the server knows Uzbek and Russian).
+const _englishCategories = {
+  'taomlar': 'Food',
+  'kofe': 'Coffee',
+  'xaridlar': 'Shopping',
+  'gozallik': 'Beauty',
+  'sport': 'Sport',
+  'kongilochar': 'Fun',
+  'xizmatlar': 'Services',
+  'yetkazish': 'Delivery',
+};
+
+const _englishCities = {
+  'tashkent': 'Tashkent',
+  'samarkand': 'Samarkand',
+  'bukhara': 'Bukhara',
+  'andijan': 'Andijan',
+  'fergana': 'Fergana',
+  'namangan': 'Namangan',
+  'kokand': 'Kokand',
+  'margilan': 'Margilan',
+  'nurafshon': 'Nurafshon',
+  'chirchiq': 'Chirchiq',
+  'navoi': 'Navoi',
+  'jizzakh': 'Jizzakh',
+  'gulistan': 'Gulistan',
+  'karshi': 'Karshi',
+  'termez': 'Termez',
+  'urgench': 'Urgench',
+  'nukus': 'Nukus',
+};
+
 class Category {
   const Category({this.id = '', required this.slug, required this.nameUz, required this.nameRu, this.icon});
   factory Category.fromJson(Json json) => Category(
@@ -33,7 +65,11 @@ class Category {
   final String? nameRu;
   final String? icon;
 
-  String name(String locale) => locale == 'ru' ? (nameRu ?? nameUz) : nameUz;
+  String name(String locale) => switch (locale) {
+    'ru' => nameRu ?? nameUz,
+    'en' => _englishCategories[slug] ?? nameUz,
+    _ => nameUz,
+  };
 }
 
 class City {
@@ -52,7 +88,11 @@ class City {
   final double latitude;
   final double longitude;
 
-  String name(String locale) => locale == 'ru' ? nameRu : nameUz;
+  String name(String locale) => switch (locale) {
+    'ru' => nameRu,
+    'en' => _englishCities[slug] ?? nameUz,
+    _ => nameUz,
+  };
 }
 
 /// A newer app build and the page to get it from (the site's download page).
@@ -182,6 +222,42 @@ class BusinessSummary {
 }
 
 /// One deal in a list (feed, search, business page).
+/// One thing in a set: "2× Osh".
+class SetItem {
+  const SetItem({required this.name, required this.qty});
+  factory SetItem.fromJson(Json json) => SetItem(name: _str(json['name']).trim(), qty: _int(json['qty'], 1).clamp(1, 20));
+  final String name;
+  final int qty;
+
+  Json toJson() => {'name': name, 'qty': qty};
+}
+
+/// A set («to‘plam»): several dishes or things sold together, and for how
+/// many people (lib/deal-set.ts on the site). Null for a regular deal.
+class DealSet {
+  const DealSet({required this.items, this.persons});
+
+  static DealSet? fromJson(Object? json) {
+    if (json is! Map) return null;
+    final map = json.cast<String, dynamic>();
+    final items = _list(map['items'], SetItem.fromJson).where((item) => item.name.isNotEmpty).toList();
+    if (items.isEmpty) return null;
+    final persons = _intOrNull(map['persons']);
+    return DealSet(items: items, persons: persons != null && persons >= 1 ? persons : null);
+  }
+
+  final List<SetItem> items;
+  final int? persons;
+
+  /// One line for a card: "2× Osh · 2× Salat · Choy".
+  String get summary => items.map((item) => item.qty > 1 ? '${item.qty}× ${item.name}' : item.name).join(' · ');
+
+  Json toJson() => {
+    'items': [for (final item in items) item.toJson()],
+    'persons': persons,
+  };
+}
+
 class DealCard {
   const DealCard({
     required this.id,
@@ -202,6 +278,7 @@ class DealCard {
     required this.effective,
     required this.isDemo,
     required this.isSponsored,
+    this.set,
   });
 
   factory DealCard.fromJson(Json json) => DealCard(
@@ -223,6 +300,7 @@ class DealCard {
     effective: _str(json['effective']),
     isDemo: _bool(json['isDemo']),
     isSponsored: _bool(json['isSponsored']),
+    set: DealSet.fromJson(json['set']),
   );
 
   final String id;
@@ -243,6 +321,9 @@ class DealCard {
   final String effective;
   final bool isDemo;
   final bool isSponsored;
+
+  /// What the set holds, or null for a regular deal (and on older servers).
+  final DealSet? set;
 }
 
 class Feed {
@@ -262,6 +343,12 @@ class Feed {
   final List<DealCard> nearby;
   final List<DealCard> ending;
   final int total;
+
+  /// The same feed without the deals that have ended by [now].
+  Feed withoutEnded(DateTime now) {
+    List<DealCard> live(List<DealCard> deals) => deals.where((deal) => deal.endsAt.isAfter(now)).toList();
+    return Feed(city: city, located: located, forYou: live(forYou), nearby: live(nearby), ending: live(ending), total: total);
+  }
 }
 
 class DealPage {
@@ -342,6 +429,7 @@ class DealDetail {
     required this.followers,
     required this.usedCount,
     required this.activeRedemptionId,
+    this.set,
   });
 
   factory DealDetail.fromJson(Json json) => DealDetail(
@@ -370,6 +458,7 @@ class DealDetail {
     followers: _int(json['followers']),
     usedCount: _int(json['usedCount']),
     activeRedemptionId: _strOrNull(json['activeRedemptionId']),
+    set: DealSet.fromJson(json['set']),
   );
 
   final String id;
@@ -397,6 +486,9 @@ class DealDetail {
   final int followers;
   final int usedCount;
   final String? activeRedemptionId;
+
+  /// What the set holds, or null for a regular deal.
+  final DealSet? set;
 
   bool get limitReached => usedCount >= perCustomerLimit;
 
@@ -426,6 +518,7 @@ class DealDetail {
     followers: followers ?? this.followers,
     usedCount: usedCount,
     activeRedemptionId: activeRedemptionId,
+    set: set,
   );
 }
 
@@ -560,11 +653,14 @@ class Me {
     required this.memberships,
     this.telegramUsername,
     this.avatar,
+    this.noShows = 0,
+    this.bookingPausedUntil,
   });
 
   factory Me.fromJson(Json json) {
     final user = _map(json['user']);
     final stats = _map(json['stats']);
+    final noShows = _map(json['noShows']);
     return Me(
       id: _str(user['id']),
       displayName: _str(user['displayName']),
@@ -580,6 +676,8 @@ class Me {
       memberships: _list(json['memberships'], Membership.fromJson),
       telegramUsername: _strOrNull(user['telegramUsername']),
       avatar: _strOrNull(user['avatar']),
+      noShows: _int(noShows['count']),
+      bookingPausedUntil: parseServerTimeOrNull(noShows['pausedUntil']),
     );
   }
 
@@ -601,6 +699,12 @@ class Me {
 
   /// The person's own profile photo (a site path only they can load; it changes with each photo), or null.
   final String? avatar;
+
+  /// Codes that ran out unused this week (after three, booking waits a day).
+  final int noShows;
+
+  /// Booking waits until then after three unused codes this week.
+  final DateTime? bookingPausedUntil;
 
   bool get hasBusiness => memberships.isNotEmpty;
 
@@ -628,6 +732,9 @@ class Redemption {
     required this.code,
     required this.canRate,
     required this.myRating,
+    this.issue,
+    this.canReportIssue = false,
+    this.cancelReason,
   });
 
   factory Redemption.fromJson(Json json) => Redemption(
@@ -649,6 +756,9 @@ class Redemption {
     code: _strOrNull(json['code']),
     canRate: _bool(json['canRate']),
     myRating: _intOrNull(json['myRating']),
+    issue: _strOrNull(json['issue']),
+    canReportIssue: _bool(json['canReportIssue']),
+    cancelReason: _strOrNull(json['cancelReason']),
   );
 
   final String id;
@@ -672,6 +782,15 @@ class Redemption {
   final String? code;
   final bool canRate;
   final int? myRating;
+
+  /// What the person said went wrong at the counter (NOT_AVAILABLE, CODE_REFUSED…), if they did.
+  final String? issue;
+
+  /// "Aksiya berilmadimi?" can still be sent (three days after booking, once).
+  final bool canReportIssue;
+
+  /// Why the business cancelled it (OUT_OF_STOCK, CLOSED), when it did.
+  final String? cancelReason;
 
   /// Can still be shown at the counter (a claim past its time counts as
   /// expired even before the server marks it so).
@@ -857,6 +976,8 @@ class WorkspaceCode {
     required this.dealTitle,
     required this.customerName,
     required this.branchName,
+    this.expiresAt,
+    this.sent = const [],
   });
   factory WorkspaceCode.fromJson(Json json) => WorkspaceCode(
     id: _str(json['id']),
@@ -865,6 +986,8 @@ class WorkspaceCode {
     dealTitle: _str(json['dealTitle']),
     customerName: _str(json['customerName']),
     branchName: _str(json['branchName']),
+    expiresAt: parseServerTimeOrNull(json['expiresAt']),
+    sent: (json['sent'] as List?)?.map((message) => '$message').toList() ?? const [],
   );
   final String id;
   final String status;
@@ -872,6 +995,13 @@ class WorkspaceCode {
   final String dealTitle;
   final String customerName;
   final String branchName;
+  final DateTime? expiresAt;
+
+  /// Ready messages already sent about this booking (WAITING, DELAY).
+  final List<String> sent;
+
+  /// A booking the business can still message or cancel.
+  bool get isActive => status == 'CLAIMED' && (expiresAt?.isAfter(DateTime.now().toUtc()) ?? false);
 }
 
 /// The business profile a member sees: what they may do, and for owners
@@ -1002,6 +1132,8 @@ class BusinessDeal {
     required this.redeemed,
     required this.photo,
     required this.views,
+    this.held = false,
+    this.complaints = 0,
   });
 
   factory BusinessDeal.fromJson(Json json) => BusinessDeal(
@@ -1024,6 +1156,8 @@ class BusinessDeal {
     redeemed: _int(json['redeemed']),
     photo: _strOrNull(json['photo']),
     views: _int(json['views']),
+    held: _bool(json['held']),
+    complaints: _int(json['complaints']),
   );
 
   final String id;
@@ -1050,6 +1184,12 @@ class BusinessDeal {
   final String? photo;
   final int views;
 
+  /// Off the air after customers said it was not honoured: only a moderator resumes it.
+  final bool held;
+
+  /// Open complaints about its codes in the last 30 days.
+  final int complaints;
+
   /// Only drafts and rejected deals can be changed; others are copied.
   bool get editable => status == 'DRAFT' || status == 'REJECTED';
 }
@@ -1075,6 +1215,7 @@ class EditableDeal {
     required this.rejectionReason,
     required this.photoId,
     required this.photo,
+    this.set,
   });
 
   factory EditableDeal.fromJson(Json json) => EditableDeal(
@@ -1096,6 +1237,7 @@ class EditableDeal {
     rejectionReason: _strOrNull(json['rejectionReason']),
     photoId: _strOrNull(json['photoId']),
     photo: _strOrNull(json['photo']),
+    set: DealSet.fromJson(json['set']),
   );
 
   final String id;
@@ -1116,6 +1258,9 @@ class EditableDeal {
   final String? rejectionReason;
   final String? photoId;
   final String? photo;
+
+  /// What the set holds, or null for a regular deal.
+  final DealSet? set;
 }
 
 /// A deal after saving: DRAFT, or ACTIVE / PENDING_REVIEW after the check.

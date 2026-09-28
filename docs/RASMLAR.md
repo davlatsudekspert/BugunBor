@@ -1,6 +1,6 @@
 # Demo fotolar
 
-Demo katalogdagi har bir aksiya o‘z turiga mos **haqiqiy fotosurat** bilan chiqadi: osh, somsa, tandir non, navvot, Siyob bozori, Chust do‘ppisi, Xiva o‘ymakorligi, so‘zana, kurash va boshqalar. Jami 74 tur uchun 85 ta foto bor; mashhur turlarda 2–3 xil foto. Bitta aksiya har doim o‘sha fotoni ko‘rsatadi, turli shaharlarda esa fotolar almashib turadi.
+Demo katalogdagi har bir aksiya o‘z turiga mos **haqiqiy fotosurat** bilan chiqadi: osh, somsa, tandir non, navvot, Siyob bozori, Chust do‘ppisi, Xiva o‘ymakorligi, so‘zana, kurash va boshqalar. Jami 76 tur uchun 91 ta foto bor; mashhur turlarda 2–3 xil foto. Bitta aksiya har doim o‘sha fotoni ko‘rsatadi, turli shaharlarda esa fotolar almashib turadi.
 
 - **Manba:** Wikimedia Commons, erkin litsenziya (CC0, Public domain, CC BY, CC BY-SA). AI rasm, ikonka, kartina, brend logotipi va harbiy mavzu (qurol, harbiy forma, harbiy texnika) yo‘q. Har bir foto qo‘lda tekshirilgan.
 - **Mualliflar:** «Rasm mualliflari» sahifasida (`/credits`, saytning pastki qismidagi havola).
@@ -45,7 +45,7 @@ Taomlar: plov — laganda osh, yaqindan | noodles — lag‘mon | shashlik — s
 
 Kafe va shirinliklar: coffee — kapuchino | breakfast — omletli nonushta | tea — choynak va piyola | cake — tort bo‘lagi | dessert — pishiriq yoki kapkeyk | icecream — muzqaymoq sharlari | sweets — navvot, holva, parvarda
 
-Xaridlar: *shopping — bozorda guruch, un, yog‘ (oila savati) | clothes — kiyim do‘koni | *sneakers — brendsiz krossovka | backpack — maktab ryukzagi | books — kitob javoni | gift — sovg‘a qutisi | nuts — quruq meva va yong‘oq | *kitchen — kastryulka va tova to‘plami | flowers — atirgul guldastasi | *phone — telefon g‘ilofi va himoya oynasi | crafts — Rishton kosalari | doppi — Chust do‘ppisi | woodcarving — Xiva yog‘och o‘ymakorligi | doll — milliy libosli qo‘g‘irchoq | fabric — Marg‘ilon atlasi | suzani — so‘zana
+Xaridlar: *shopping — bozorda guruch, un, yog‘ (oila savati) | clothes — kiyim do‘koni | *sneakers — brendsiz krossovka | backpack — maktab ryukzagi | books — kitob javoni | gift — sovg‘a qutisi | nuts — quruq meva va yong‘oq | *kitchen — kastryulka va tova to‘plami | flowers — atirgul guldastasi | *phone — smartfon, g‘ilof va himoya oynasi | bedding — yotoqdagi choyshab to‘plami | towels — taxlangan sochiqlar | crafts — Rishton kosalari | doppi — Chust do‘ppisi | woodcarving — Xiva yog‘och o‘ymakorligi | doll — milliy libosli qo‘g‘irchoq | fabric — Marg‘ilon atlasi | suzani — so‘zana
 
 Go‘zallik: beauty — manikyur | makeup — kiprik yoki qosh | hair — ayollar soch turmagi | barber — barbershop | spa — massaj | facial — yuzni tozalash (kosmetolog)
 

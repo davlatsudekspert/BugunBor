@@ -56,7 +56,11 @@ export function BusinessForm({ mode, businessId, canResubmit, pending, categorie
     return found ? (locale === 'ru' ? found.ru : found.uz) : slug;
   };
 
+  // A new business is on its way to its dashboard: a second tap must not create another one.
+  const creating = state === 'saving' || (mode === 'create' && state === 'saved');
+
   async function submit(form: HTMLFormElement, resubmit: boolean) {
+    if (creating) return;
     const values = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
     const images = mode === 'edit' ? { logoId, coverId } : {};
     const data = { ...values, ...images, latitude: point?.latitude ?? null, longitude: point?.longitude ?? null };
@@ -229,7 +233,7 @@ export function BusinessForm({ mode, businessId, canResubmit, pending, categorie
         </summary>
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
           <Field label={f.telegram} error={errors.telegram}>
-            <input name="telegram" value={telegram} onChange={(event) => setTelegram(event.target.value)} placeholder={f.telegramPlaceholder} className={inputClass} />
+            <input name="telegram" value={telegram} onChange={(event) => setTelegram(event.target.value)} maxLength={64} placeholder={f.telegramPlaceholder} className={inputClass} />
             {telegramUsername && !telegram ? (
               <button type="button" onClick={() => setTelegram(telegramUsername)} className="mt-2 inline-flex h-8 items-center gap-1.5 rounded-full bg-sky-50 px-3 text-xs font-bold text-sky-700">
                 <Send className="size-3.5" aria-hidden /> {fmt(f.myTelegram, { username: telegramUsername })}
@@ -237,10 +241,10 @@ export function BusinessForm({ mode, businessId, canResubmit, pending, categorie
             ) : null}
           </Field>
           <Field label={f.instagram} error={errors.instagram}>
-            <input name="instagram" defaultValue={initial.instagram ?? ''} placeholder={f.instagramPlaceholder} className={inputClass} />
+            <input name="instagram" defaultValue={initial.instagram ?? ''} maxLength={64} placeholder={f.instagramPlaceholder} className={inputClass} />
           </Field>
           <Field label={f.website} error={errors.website} className="sm:col-span-2">
-            <input name="website" type="url" defaultValue={initial.website ?? ''} placeholder={f.websitePlaceholder} className={inputClass} />
+            <input name="website" type="url" defaultValue={initial.website ?? ''} maxLength={200} placeholder={f.websitePlaceholder} className={inputClass} />
           </Field>
         </div>
       </details>
@@ -248,9 +252,9 @@ export function BusinessForm({ mode, businessId, canResubmit, pending, categorie
       {state === 'error' && message ? <FormMessage tone="error">{message}</FormMessage> : null}
       {state === 'saved' && mode === 'edit' ? <FormMessage tone="success"><CheckCircle2 className="mr-1 inline size-4" aria-hidden />{message}</FormMessage> : null}
       <div className="flex flex-col gap-2 sm:flex-row">
-        <button disabled={state === 'saving'} className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 font-bold text-white disabled:opacity-60">
-          {state === 'saving' ? <LoaderCircle className="size-5 animate-spin" aria-hidden /> : null}
-          {mode === 'create' ? (state === 'saving' ? t.onboarding.submitting : t.onboarding.submit) : t.common.save}
+        <button disabled={creating} className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 font-bold text-white disabled:opacity-60">
+          {creating ? <LoaderCircle className="size-5 animate-spin" aria-hidden /> : null}
+          {mode === 'create' ? (creating ? t.onboarding.submitting : t.onboarding.submit) : t.common.save}
         </button>
         {mode === 'edit' && canResubmit ? (
           <button

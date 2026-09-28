@@ -9,6 +9,7 @@ import '../../app/links.dart';
 import '../../app/providers.dart';
 import '../../core/api_error.dart';
 import '../../core/format.dart';
+import '../../core/hours.dart';
 import '../../core/time.dart';
 import '../../data/models.dart';
 import '../../design/icons.dart';
@@ -18,6 +19,7 @@ import '../../design/widgets/deal_card.dart';
 import '../../design/widgets/photo_app_bar.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../common/report_sheet.dart';
+import '../shell/shell_screen.dart';
 
 String _randomKey() {
   final random = Random.secure();
@@ -76,7 +78,7 @@ class _DealScreenState extends ConsumerState<DealScreen> {
     } catch (error) {
       if (!mounted) return;
       setState(() => _local = deal);
-      _snack(errorText(context, error));
+      showErrorSnack(context, error);
     }
   }
 
@@ -87,11 +89,14 @@ class _DealScreenState extends ConsumerState<DealScreen> {
     try {
       final result = await ref.read(apiProvider).setFollowing(deal.business.id, want);
       if (mounted) setState(() => _local = deal.copyWith(following: result.following, followers: result.followers));
-      ref.invalidate(followsProvider);
+      // The business page (maybe open under this one) shows the same button.
+      ref
+        ..invalidate(followsProvider)
+        ..invalidate(businessProvider);
     } catch (error) {
       if (!mounted) return;
       setState(() => _local = deal);
-      _snack(errorText(context, error));
+      showErrorSnack(context, error);
     }
   }
 
@@ -109,6 +114,7 @@ class _DealScreenState extends ConsumerState<DealScreen> {
     }
     final branch = deal.branches.length == 1 ? deal.branches.first : await _chooseBranch(deal);
     if (branch == null || !mounted) return;
+    if (!await _closedButBook(deal, branch) || !mounted) return;
     final l = L.of(context);
     _claimKey ??= _randomKey();
     setState(() => _booking = true);
@@ -131,9 +137,36 @@ class _DealScreenState extends ConsumerState<DealScreen> {
       if (!(error is ApiError && error.isNetwork)) _claimKey = null;
       if (!mounted) return;
       setState(() => _booking = false);
-      _snack(errorText(context, error));
-      if (error is ApiError && !error.isNetwork) ref.invalidate(dealProvider(widget.slug));
+      showErrorSnack(context, error);
+      // A real answer (a booking pause among them) means the deal or the
+      // person changed: show it, so the button does not invite a retry.
+      if (error is ApiError && !error.isNetwork) {
+        ref
+          ..invalidate(dealProvider(widget.slug))
+          ..invalidate(meProvider);
+      }
     }
+  }
+
+  /// A code that would run out before the branch even opens is worth a
+  /// second thought (as on the site); true to book all the same.
+  Future<bool> _closedButBook(DealDetail deal, Branch branch) async {
+    final hours = WorkingHours.parse(branch.hoursJson);
+    final wait = hours?.minutesUntilOpen(DateTime.now().toUtc()) ?? 0;
+    if (hours == null || wait == 0 || wait < deal.claimTtlMinutes) return true;
+    final l = L.of(context);
+    final book = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.schedule_rounded),
+        content: Text(l.branchClosedWarning(hours.open, '${deal.claimTtlMinutes}')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l.close)),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text(l.dealBook)),
+        ],
+      ),
+    );
+    return book == true;
   }
 
   Future<Branch?> _chooseBranch(DealDetail deal) {
@@ -158,7 +191,13 @@ class _DealScreenState extends ConsumerState<DealScreen> {
                 ListTile(
                   leading: const Icon(Icons.storefront_outlined),
                   title: Text(branch.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                  subtitle: Text(branch.address),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(branch.address),
+                      OpenNow(hoursJson: branch.hoursJson),
+                    ],
+                  ),
                   trailing: position == null
                       ? const Icon(Icons.chevron_right_rounded)
                       : Text(distanceLabel(context, _km(position.latitude, position.longitude, branch.latitude, branch.longitude)) ?? ''),
@@ -191,15 +230,21 @@ class _DealScreenState extends ConsumerState<DealScreen> {
         body: async.hasError
             ? StatePanel.error(context, async.error!, onRetry: () => ref.invalidate(dealProvider(widget.slug)))
             : const SkeletonList(count: 3, height: 140),
+        bottomNavigationBar: const PageTabBar(),
       );
     }
     final locale = ref.watch(settingsProvider.select((settings) => settings.locale));
-    final category = ref.watch(configProvider).value?.category(deal.categorySlug);
+    final category = ref.watch(currentConfigProvider)?.category(deal.categorySlug);
     final saving = (deal.originalPrice ?? 0) - deal.price;
+    // Booked twice this week and never came: a word before the third (the
+    // pause after it is explained next to the book button).
+    final me = ref.watch(sessionProvider.select((session) => session.signedIn)) ? ref.watch(meProvider).value : null;
+    final bookable = !deal.isDemo && deal.claimable && deal.activeRedemptionId == null && !deal.limitReached;
+    final noShowWarning = bookable && me != null && me.noShows >= 2 && !(me.bookingPausedUntil?.isAfter(DateTime.now().toUtc()) ?? false);
 
     return Scaffold(
       body: RefreshIndicator(
-        onRefresh: () => ref.refresh(dealProvider(widget.slug).future).then((_) {}, onError: (_) {}),
+        onRefresh: () => refreshing(context, ref.refresh(dealProvider(widget.slug).future)),
         child: CustomScrollView(
           controller: _header.scroll,
           slivers: [
@@ -263,6 +308,9 @@ class _DealScreenState extends ConsumerState<DealScreen> {
                       style: TextStyle(color: context.successText, fontWeight: FontWeight.w800),
                     ),
                   ],
+                  if (noShowWarning) ...[const SizedBox(height: Gap.md), _BookingNotice(text: l.noShowWarning('${me.noShows}'), blocking: false)],
+                  // A set: what the person gets, before anything else.
+                  if (deal.set case final set?) ...[const SizedBox(height: Gap.lg), _SetContents(set)],
                   const SizedBox(height: Gap.lg),
                   _Facts(deal: deal),
                   if (deal.isDemo) ...[const SizedBox(height: Gap.lg), _DemoNotice(text: l.demoNotice)],
@@ -290,7 +338,16 @@ class _DealScreenState extends ConsumerState<DealScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: deal.isDemo ? null : _BookBar(deal: deal, busy: _booking, onBook: () => _book(deal)),
+      // The book bar sits right over the tabs.
+      bottomNavigationBar: deal.isDemo
+          ? const PageTabBar()
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _BookBar(deal: deal, busy: _booking, onBook: () => _book(deal)),
+                const PageTabBar(),
+              ],
+            ),
     );
   }
 }
@@ -313,7 +370,7 @@ class _Facts extends StatelessWidget {
     final l = L.of(context);
     final now = DateTime.now().toUtc();
     final scheduled = deal.effective == 'SCHEDULED' || deal.startsAt.isAfter(now);
-    final starts = toTashkent(deal.startsAt);
+    final ended = !deal.endsAt.isAfter(now) || const {'EXPIRED', 'ARCHIVED', 'SOLD_OUT'}.contains(deal.effective);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(Gap.md),
@@ -321,20 +378,14 @@ class _Facts extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (scheduled)
-              _Fact(
-                icon: Icons.event_rounded,
-                child: Text(
-                  l.dealStartsAt(
-                    '${starts.day.toString().padLeft(2, '0')}.${starts.month.toString().padLeft(2, '0')} ${starts.hour}:${starts.minute.toString().padLeft(2, '0')}',
-                  ),
-                ),
-              )
+              _Fact(icon: Icons.event_rounded, child: Text(l.dealStartsAt(momentLabel(deal.startsAt))))
             else if (deal.endsAt.isAfter(now))
               _Fact(
                 icon: Icons.schedule_rounded,
                 child: Wrap(spacing: 4, children: [Text(l.endsInLabel), Countdown(deal.endsAt)]),
               ),
-            if (deal.remaining != null) _Fact(icon: Icons.local_fire_department_outlined, child: Text(l.left('${deal.remaining}'))),
+            // How many are left only matters while it can still be booked.
+            if (deal.remaining != null && !ended) _Fact(icon: Icons.local_fire_department_outlined, child: Text(l.left('${deal.remaining}'))),
             _Fact(icon: Icons.person_outline_rounded, child: Text(l.dealPerCustomer('${deal.perCustomerLimit}'))),
             _Fact(icon: Icons.qr_code_2_rounded, child: Text(l.dealCodeValid('${deal.claimTtlMinutes}'))),
           ],
@@ -390,6 +441,92 @@ class _DemoNotice extends StatelessWidget {
   );
 }
 
+/// What is in a set, one line per thing: "Osh  × 2".
+class _SetContents extends StatelessWidget {
+  const _SetContents(this.set);
+  final DealSet set;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(Gap.md, Gap.md, Gap.md, Gap.sm),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Wrap(
+              spacing: Gap.sm,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Icon(Icons.layers_outlined, size: 20, color: Brand.primary),
+                Text(l.setContents, style: Theme.of(context).textTheme.titleMedium),
+                if (set.persons != null)
+                  Text(
+                    l.setPersons(set.persons!),
+                    style: TextStyle(color: context.mutedText, fontWeight: FontWeight.w700),
+                  ),
+              ],
+            ),
+            const SizedBox(height: Gap.xs),
+            for (var index = 0; index < set.items.length; index++) ...[
+              if (index > 0) Divider(height: 1, color: context.borderColor),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  children: [
+                    Expanded(child: Text(set.items[index].name, style: const TextStyle(fontSize: 15.5))),
+                    const SizedBox(width: Gap.md),
+                    Text(
+                      '× ${set.items[index].qty}',
+                      style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800, fontFeatures: [FontFeature.tabularFigures()]),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Above the book button: a heads-up (amber) or why booking waits (red).
+class _BookingNotice extends StatelessWidget {
+  const _BookingNotice({required this.text, required this.blocking});
+  final String text;
+  final bool blocking;
+
+  @override
+  Widget build(BuildContext context) {
+    final (background, border, foreground) = blocking
+        ? (const Color(0xFFFEE2E2), const Color(0xFFFCA5A5), const Color(0xFF991B1B))
+        : (const Color(0xFFFEF3C7), const Color(0xFFFCD34D), const Color(0xFF78350F));
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: Gap.md, vertical: Gap.sm),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(blocking ? Icons.block_rounded : Icons.info_outline_rounded, size: 20, color: foreground),
+          const SizedBox(width: Gap.sm),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(color: foreground, fontSize: 13, height: 1.35, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _BusinessCard extends StatelessWidget {
   const _BusinessCard({required this.deal, required this.onFollow});
   final DealDetail deal;
@@ -425,9 +562,9 @@ class _BusinessCard extends StatelessWidget {
                             spacing: 4,
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              RatingStars(business.rating!.average, size: 14),
+                              RatingStars(business.rating!.average, size: 14, announce: false),
                               Text(
-                                '${business.rating!.average.toStringAsFixed(1)} (${business.rating!.count})',
+                                '${ratingValue(context, business.rating!.average)} (${business.rating!.count})',
                                 style: TextStyle(color: context.mutedText, fontSize: 12.5),
                               ),
                             ],
@@ -479,6 +616,7 @@ class _BranchRow extends StatelessWidget {
                   children: [
                     Text(branch.name, style: const TextStyle(fontWeight: FontWeight.w800)),
                     Text(branch.address, style: TextStyle(color: context.mutedText)),
+                    OpenNow(hoursJson: branch.hoursJson),
                   ],
                 ),
               ),
@@ -531,18 +669,34 @@ class _BookBar extends ConsumerWidget {
     } else if (!deal.claimable) {
       final text = switch (deal.effective) {
         'SOLD_OUT' => l.dealSoldOut,
-        'EXPIRED' => l.dealEnded,
+        'EXPIRED' || 'ARCHIVED' => l.dealEnded,
+        _ when !deal.endsAt.isAfter(DateTime.now().toUtc()) => l.dealEnded,
         'SCHEDULED' => l.dealNotStarted,
         _ => l.dealUnavailable,
       };
       child = FilledButton(onPressed: null, child: Text(text, textAlign: TextAlign.center));
     } else {
-      child = FilledButton(
-        onPressed: busy ? null : onBook,
+      // Three codes this week ran out unused: booking waits a day (the
+      // server holds the same line), and the button says until when.
+      final pausedUntil = signedIn ? ref.watch(meProvider).value?.bookingPausedUntil : null;
+      final paused = pausedUntil != null && pausedUntil.isAfter(DateTime.now().toUtc());
+      final button = FilledButton(
+        onPressed: busy || paused ? null : onBook,
         child: busy
             ? const SizedBox.square(dimension: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
             : Text(signedIn ? l.dealBook : l.dealLoginToBook),
       );
+      child = paused
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _BookingNotice(text: l.noShowPaused(momentLabel(pausedUntil)), blocking: true),
+                const SizedBox(height: Gap.sm),
+                button,
+              ],
+            )
+          : button;
     }
     return Material(
       color: Theme.of(context).colorScheme.surface,

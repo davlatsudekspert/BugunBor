@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, BadgeCheck, CalendarClock, Clock3, Eye, Info, MapPin, Navigation, Phone, ShieldCheck, Ticket, Timer, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, CalendarClock, Clock3, Eye, Info, Layers, MapPin, Navigation, Phone, ShieldCheck, Ticket, Timer } from 'lucide-react';
 
 import { BusinessAvatar } from '@/components/deals/business-avatar';
 import { ClaimPanel } from '@/components/deals/claim-panel';
+import { ComplaintButton } from '@/components/deals/complaint-button';
+import { reportProps } from '@/components/deals/complaint-labels';
 import { Countdown } from '@/components/deals/countdown';
 import { DealCard } from '@/components/deals/deal-card';
 import { DealVisual } from '@/components/deals/deal-visual';
@@ -22,12 +24,13 @@ import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
 import { minutesUntilOpen, parseHours } from '@/lib/hours';
 import { directionsUrl } from '@/lib/maps';
-import { parseDbTime, toDbTime } from '@/lib/time';
+import { formatClock, formatNumericDate, parseDbTime, toDbTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { getCurrentUser, isModerator } from '@/modules/auth/current';
 import { getDealBySlug, getFavoriteIds, getPublicBusiness } from '@/modules/catalog/queries';
 import { demoEnabled } from '@/modules/demo';
 import { followState } from '@/modules/engagement/follows';
+import { NO_SHOW_RULES, noShowState } from '@/modules/redemptions/no-shows';
 
 async function loadDeal(slug: string) {
   const db = await getDb();
@@ -40,7 +43,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!deal || !deal.isPublic) return { title: t.deal.notFoundTitle, robots: { index: false, follow: false } };
   const title = fmt(t.deal.shareText, { title: deal.title, percent: deal.discountPercent });
   const description = `${deal.business.name}: ${deal.description}`.slice(0, 200);
-  const indexable = deal.effective === 'LIVE' || deal.effective === 'SCHEDULED';
+  const indexable = (deal.effective === 'LIVE' || deal.effective === 'SCHEDULED') && !deal.isDemo && !deal.business.isDemo;
   return {
     title,
     description,
@@ -65,7 +68,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
   if (preview && !isMember && !isModerator(user)) notFound();
 
   const now = new Date();
-  const [favorites, usage, business, follow] = await Promise.all([
+  const [favorites, usage, business, follow, noShows] = await Promise.all([
     user ? getFavoriteIds(db, user.id) : Promise.resolve(new Set<string>()),
     user
       ? db.prepare(`SELECT SUM(CASE WHEN status = 'CLAIMED' AND expires_at > ?3 THEN 1 ELSE 0 END) AS active,
@@ -74,7 +77,15 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
       : Promise.resolve(null),
     deal.isPublic ? demoEnabled(db).then((demo) => getPublicBusiness(db, deal.business.slug, { demo })) : Promise.resolve(null),
     followState(db, deal.business.id, user?.id ?? null),
+    user ? noShowState(db, user.id, now) : Promise.resolve(null),
   ]);
+  // Booked and never came: warned after two, booking paused after three (a day).
+  const pausedUntil = noShows?.pausedUntil ? parseDbTime(noShows.pausedUntil) : null;
+  const notice = pausedUntil
+    ? { text: fmt(t.errors.NO_SHOW_PAUSE, { time: `${formatNumericDate(pausedUntil).slice(0, 5)} ${formatClock(pausedUntil)}` }), blocking: true }
+    : noShows && noShows.count >= NO_SHOW_RULES.limit - 1
+      ? { text: fmt(t.claim.noShowWarning, { count: noShows.count }), blocking: false }
+      : null;
 
   // Demo deals show how the site works; outside development nobody can claim them.
   const demoOnly = (deal.isDemo || deal.business.isDemo) && !getConfig().isDevelopment;
@@ -98,9 +109,10 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
           url: `${origin}/deals/${deal.slug}`,
           price: deal.price,
           priceCurrency: 'UZS',
-          availability: deal.effective === 'LIVE' ? 'https://schema.org/InStock' : deal.effective === 'SOLD_OUT' ? 'https://schema.org/SoldOut' : 'https://schema.org/PreOrder',
+          availability: `https://schema.org/${{ LIVE: 'InStock', SOLD_OUT: 'SoldOut', SCHEDULED: 'PreOrder' }[deal.effective as string] ?? 'Discontinued'}`,
           validFrom: parseDbTime(deal.startsAt).toISOString(),
-          priceValidUntil: parseDbTime(deal.endsAt).toISOString().slice(0, 10),
+          // The last day in Tashkent (UTC+5): a deal ending at 02:00 there ends on that day, not the day before.
+          priceValidUntil: new Date(parseDbTime(deal.endsAt).getTime() + 5 * 3_600_000).toISOString().slice(0, 10),
           seller: { '@type': 'LocalBusiness', name: deal.business.name },
         },
         ...(deal.business.rating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: (deal.business.rating.basisPoints / 100).toFixed(1), reviewCount: deal.business.rating.count } } : {}),
@@ -134,18 +146,34 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
               </a>
               {deal.business.rating ? (
                 <a href={`/businesses/${deal.business.slug}#reviews`} className="ml-10 mt-0.5 flex items-center gap-1.5 text-xs font-bold text-navy">
-                  <RatingStars value={deal.business.rating.basisPoints / 100} className="[&>svg]:size-3.5" />
+                  <RatingStars value={deal.business.rating.basisPoints / 100} className="[&>svg]:size-3.5" decorative />
                   {ratingText(deal.business.rating.basisPoints)} <span className="font-semibold text-slate-500">· {fmt(t.business.ratingCount, { count: deal.business.rating.count })}</span>
                 </a>
               ) : null}
             </div>
             {deal.isPublic ? (
-              <FollowButton businessId={deal.business.id} initial={follow} loggedIn={Boolean(user)} compact labels={{ follow: t.business.follow, following: t.business.following, followers: t.business.followers, hint: t.business.followHint }} />
+              <FollowButton businessId={deal.business.id} initial={follow} loggedIn={Boolean(user)} compact labels={{ follow: t.business.follow, following: t.business.following, followers: t.business.followers, hint: t.business.followHint, error: t.common.networkError }} />
             ) : null}
           </div>
           {deal.isDemo || deal.business.isDemo ? <span className="mt-4 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-900">{t.common.sample}</span> : null}
           <h1 className="mt-2 text-4xl font-black tracking-[-.05em] text-navy sm:text-5xl">{deal.title}</h1>
           <p className="mt-5 max-w-2xl whitespace-pre-line text-lg leading-8 text-slate-600">{deal.description}</p>
+          {deal.set ? (
+            <div className="mt-6 max-w-2xl rounded-2xl border border-primary/25 bg-white p-5">
+              <h2 className="flex flex-wrap items-center gap-x-2 font-black text-navy">
+                <Layers className="size-5 text-primary" aria-hidden /> {t.deal.set.contents}
+                {deal.set.persons ? <span className="text-sm font-bold text-slate-500">· {fmt(t.deal.set.persons, { count: deal.set.persons })}</span> : null}
+              </h2>
+              <ul className="mt-3 divide-y divide-slate-100">
+                {deal.set.items.map((item, index) => (
+                  <li key={index} className="flex items-center justify-between gap-4 py-2.5 text-slate-700">
+                    <span>{item.name}</span>
+                    <span className="shrink-0 font-bold text-navy tabular">× {item.qty}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2">
             {deal.branches.map((branch) => {
@@ -186,9 +214,9 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
             <ShareButton url={`/deals/${deal.slug}`} text={fmt(t.deal.shareText, { title: deal.title, percent: deal.discountPercent })} labels={{ share: t.common.share, copied: t.common.copied }} />
             <FavoriteButton dealId={deal.id} initial={favorites.has(deal.id)} loggedIn={Boolean(user)} labels={{ save: fmt(t.deal.saveAria, { title: deal.title }), unsave: fmt(t.deal.unsaveAria, { title: deal.title }) }} withText={{ save: t.deal.save, saved: t.deal.saved }} />
           </div>
-          <a href={`/contact?subject=${encodeURIComponent(fmt(t.deal.reportSubject, { title: deal.title }))}`} className="mt-5 inline-flex items-center gap-2 py-2 text-sm text-slate-500 underline-offset-4 hover:underline">
-            <TriangleAlert className="size-4" aria-hidden /> {t.deal.report}
-          </a>
+          {deal.isPublic ? (
+            <ComplaintButton targetType="DEAL" targetId={deal.id} loggedIn={Boolean(user)} loginHref={`/login?returnTo=${encodeURIComponent(`/deals/${deal.slug}`)}`} className="mt-5" {...reportProps(t)} />
+          ) : null}
         </section>
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
@@ -242,6 +270,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
                   loginHref={`/login?returnTo=${encodeURIComponent(`/deals/${deal.slug}`)}`}
                   claimable={claimable}
                   hasActiveCode={Boolean(usage?.active)}
+                  notice={notice}
                   limitReached={(usage?.used ?? 0) >= deal.perCustomerLimit}
                   labels={{
                     button: t.claim.button,

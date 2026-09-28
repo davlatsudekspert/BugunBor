@@ -1,4 +1,4 @@
-import { ArrowRight, ListFilter, MapPin, Search } from 'lucide-react';
+import { ArrowRight, Layers, ListFilter, MapPin, Search } from 'lucide-react';
 
 import { buttonVariants } from '@/components/ui/button';
 import { getDb } from '@/db/client';
@@ -17,9 +17,11 @@ import { CitySelect } from './city-select';
 import { DealCard } from './deal-card';
 import { NearMeButton } from './near-me-button';
 
-export type DiscoverParams = { q?: string; city?: string; category?: string; sort?: string; lat?: string; lng?: string; page?: string };
+export type DiscoverParams = { q?: string; city?: string; category?: string; sort?: string; lat?: string; lng?: string; page?: string; set?: string };
 
 const PAGE_SIZE = 24;
+/** «More» stops here: a longer list is better narrowed with search or a category. */
+const MAX_PAGE = 20;
 
 function parsePoint(lat?: string, lng?: string) {
   const latitude = Number(lat);
@@ -46,16 +48,19 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
   const requestedSort = SORT_KEYS.includes(params.sort as SortKey) ? (params.sort as SortKey) : 'ending';
   const sort: SortKey = requestedSort === 'near' && !near ? 'ending' : requestedSort;
   const categorySlug = category?.slug ?? (params.category || null);
-  const page = Math.max(1, Math.min(20, Number.parseInt(params.page ?? '1', 10) || 1));
+  const page = Math.max(1, Math.min(MAX_PAGE, Number.parseInt(params.page ?? '1', 10) || 1));
+  const sets = params.set === '1';
 
   const demo = await demoEnabled(db);
   const [deals, categories, favorites] = await Promise.all([
-    listLiveDeals(db, { city, category: categorySlug, query: params.q, sort, near, demo }),
+    listLiveDeals(db, { city, category: categorySlug, query: params.q, sort, sets, near, demo }),
     category ? Promise.resolve([] as Category[]) : listCategories(db),
     user ? getFavoriteIds(db, user.id) : Promise.resolve(new Set<string>()),
   ]);
   const visible = deals.slice(0, page * PAGE_SIZE);
-  const hasFilters = Boolean(params.q || params.category || near || (params.sort && params.sort !== 'ending'));
+  const hasFilters = Boolean(params.q || params.category || near || sets || (params.sort && params.sort !== 'ending'));
+  // Nothing found because of a search, a place or «Setlar» (a category page may still have other deals).
+  const filteredOut = hasFilters && (!category || sets || Boolean(params.q) || Boolean(near));
   const sortLabels: Record<SortKey, string> = t.discover.sort;
 
   return (
@@ -89,6 +94,7 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
             </div>
             {params.category && !category ? <input type="hidden" name="category" value={params.category} /> : null}
             {sort !== 'ending' && sort !== 'near' ? <input type="hidden" name="sort" value={sort} /> : null}
+            {sets ? <input type="hidden" name="set" value="1" /> : null}
             <button type="submit" className="h-12 rounded-xl bg-primary px-6 text-sm font-bold text-white transition hover:bg-primary/90">{t.home.find}</button>
           </form>
 
@@ -99,13 +105,17 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
                 {sortLabels[key]}
               </a>
             ))}
+            {/* Restaurants' sets («to‘plam»): on or off, whatever the order. */}
+            <a href={href(basePath, { ...params, city }, { set: sets ? null : '1', page: null })} aria-current={sets ? 'true' : undefined} className={cn('inline-flex h-9 items-center gap-1.5 rounded-full border px-4 text-xs font-bold transition', sets ? 'border-primary bg-primary text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-primary/40')}>
+              <Layers className="size-3.5" aria-hidden /> {t.discover.sets}
+            </a>
           </div>
 
           {!category && categories.length ? (
             <div className="scrollbar-none -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
-              <a href={href(basePath, params, { category: null, page: null })} className={cn('inline-flex h-9 shrink-0 items-center rounded-full border px-4 text-xs font-bold', !params.category ? 'border-primary bg-primary text-white' : 'border-slate-200 bg-white text-slate-600')}>{t.discover.allCategories}</a>
+              <a href={href(basePath, params, { category: null, page: null })} aria-current={!params.category ? 'true' : undefined} className={cn('inline-flex h-9 shrink-0 items-center rounded-full border px-4 text-xs font-bold', !params.category ? 'border-primary bg-primary text-white' : 'border-slate-200 bg-white text-slate-600')}>{t.discover.allCategories}</a>
               {categories.map((item) => (
-                <a key={item.slug} href={href(basePath, params, { category: item.slug, page: null })} className={cn('inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-4 text-xs font-bold', params.category === item.slug ? 'border-primary bg-primary text-white' : 'border-slate-200 bg-white text-slate-600')}>
+                <a key={item.slug} href={href(basePath, params, { category: item.slug, page: null })} aria-current={params.category === item.slug ? 'true' : undefined} className={cn('inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-4 text-xs font-bold', params.category === item.slug ? 'border-primary bg-primary text-white' : 'border-slate-200 bg-white text-slate-600')}>
                   <CategoryIcon icon={item.icon} className="size-3.5" /> {categoryName(item, locale)}
                 </a>
               ))}
@@ -121,12 +131,13 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         {visible.length ? (
           <>
+            <h2 className="sr-only">{t.nav.deals}</h2>
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {visible.map((deal) => (
                 <DealCard key={deal.id} deal={deal} t={t} locale={locale} favorite={favorites.has(deal.id)} loggedIn={Boolean(user)} />
               ))}
             </div>
-            {deals.length > visible.length ? (
+            {deals.length > visible.length && page < MAX_PAGE ? (
               <div className="mt-8 text-center">
                 <a href={href(basePath, { ...params, city }, { page: String(page + 1) })} className={cn(buttonVariants({ variant: 'outline' }), 'h-11 rounded-xl px-6 font-bold')}>
                   {t.common.more} <ArrowRight className="ml-1 size-4" aria-hidden />
@@ -137,8 +148,8 @@ export async function DiscoverView({ params, basePath, category }: { params: Dis
         ) : (
           <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
             <MapPin className="mx-auto size-10 text-slate-300" aria-hidden />
-            <h2 className="mt-4 text-xl font-bold text-navy">{category ? t.categories.emptyTitle : hasFilters ? t.discover.emptyTitle : t.home.emptyTitle}</h2>
-            <p className="mt-2 text-slate-500">{category ? t.categories.emptyText : hasFilters ? t.discover.emptyText : t.home.emptyText}</p>
+            <h2 className="mt-4 text-xl font-bold text-navy">{filteredOut ? t.discover.emptyTitle : category ? t.categories.emptyTitle : t.home.emptyTitle}</h2>
+            <p className="mt-2 text-slate-500">{filteredOut ? t.discover.emptyText : category ? t.categories.emptyText : t.home.emptyText}</p>
             {hasFilters ? <a href={basePath} className="mt-5 inline-flex font-bold text-primary">{t.discover.clear}</a> : <a href="/business" className="mt-5 inline-flex font-bold text-primary hover:underline">{t.home.emptyBusiness}</a>}
           </div>
         )}

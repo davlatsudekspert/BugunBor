@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { SET_RULES } from '@/lib/deal-set';
 import { tashkentInputToDate } from '@/lib/time';
 import { DEAL_VISUAL_KEYS } from '@/lib/visuals';
 import { DEAL_RULES, discountPercent } from './status';
@@ -9,6 +10,15 @@ import { DEAL_RULES, discountPercent } from './status';
 
 const text = (min: number, max: number) => z.string().trim().min(min, 'tooShort').max(max, 'tooLong');
 const price = z.coerce.number({ message: 'invalid' }).int('invalid').min(0, 'invalid').max(100_000_000, 'invalid');
+
+/** What a set holds (at least two things) and, if it says so, for how many people. */
+export const dealSetSchema = z.object({
+  items: z
+    .array(z.object({ name: text(SET_RULES.nameMin, SET_RULES.nameMax), qty: z.coerce.number().int('invalid').min(1, 'invalid').max(SET_RULES.maxQty, 'invalid') }))
+    .min(SET_RULES.minItems, 'setItems')
+    .max(SET_RULES.maxItems, 'setItems'),
+  persons: z.coerce.number().int('invalid').min(1, 'invalid').max(SET_RULES.maxPersons, 'invalid').nullable(),
+});
 
 export const dealInputSchema = z
   .object({
@@ -27,6 +37,8 @@ export const dealInputSchema = z
     branchIds: z.array(z.string().min(1).max(100)).min(1, 'branchesRequired').max(50),
     /** Uploaded cover photo; omitted keeps the current one, null removes it. */
     photoId: z.string().regex(/^[0-9a-f-]{36}$/, 'invalid').nullable().optional(),
+    /** A set; omitted keeps the current one (older apps do not send it), null makes it a regular deal. */
+    set: dealSetSchema.nullable().optional(),
   })
   .superRefine((value, context) => {
     if (value.price >= value.originalPrice) {

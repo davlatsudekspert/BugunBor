@@ -14,8 +14,9 @@ import { updateCompanyInfo } from '@/modules/company';
 import { ANDROID_MODES, ANDROID_MODE_SETTING, forgetAppStores } from '@/modules/app-stores';
 import { DEMO_SETTING, forgetDemoSetting } from '@/modules/demo';
 import { DomainError } from '@/modules/errors';
+import { forgetCachedMedia } from '@/modules/media/service';
 import { AUTO_SETTING_KEYS, autoModerateBusiness, autoModerateDeal, autoModeratePendingDeals } from '@/modules/moderation/auto';
-import { archiveDealByModerator, decideBusiness, decideDeal, removeImagesByModerator, setBusinessSuspended } from '@/modules/moderation/service';
+import { archiveDealByModerator, decideBusiness, decideDeal, releaseDealHold, removeImagesByModerator, setBusinessSuspended } from '@/modules/moderation/service';
 import { resolveReport } from '@/modules/reports';
 import { createTelegramApi } from '@/modules/telegram/api';
 import { ensureTelegramWebhook } from '@/modules/telegram/setup';
@@ -29,6 +30,7 @@ const planCode = z.enum(['START', 'BIZNES', 'PREMIUM']);
 const actionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('deal.decide'), dealId: id, decision, reason }),
   z.object({ type: z.literal('deal.archive'), dealId: id, reason }),
+  z.object({ type: z.literal('deal.release'), dealId: id }),
   z.object({ type: z.literal('business.decide'), businessId: id, decision, reason }),
   z.object({ type: z.literal('message.status'), messageId: id, status: z.enum(['NEW', 'READ', 'ARCHIVED']) }),
   z.object({ type: z.literal('images.remove'), target: z.enum(['BUSINESS', 'DEAL']), id, reason }),
@@ -77,7 +79,7 @@ const actionSchema = z.discriminatedUnion('type', [
   }),
 ]);
 
-const moderatorActions = new Set(['deal.decide', 'deal.archive', 'business.decide', 'message.status', 'images.remove', 'review.visibility', 'report.resolve']);
+const moderatorActions = new Set(['deal.decide', 'deal.archive', 'deal.release', 'business.decide', 'message.status', 'images.remove', 'review.visibility', 'report.resolve']);
 
 export const POST = route(async (request: Request) => {
   assertSameOrigin(request);
@@ -92,6 +94,9 @@ export const POST = route(async (request: Request) => {
       return json({ data: await decideDeal(db, { actorId, dealId: action.dealId, decision: action.decision, reason: action.reason }) });
     case 'deal.archive':
       await archiveDealByModerator(db, { actorId, dealId: action.dealId, reason: action.reason });
+      return json({ data: { ok: true } });
+    case 'deal.release':
+      await releaseDealHold(db, { actorId, dealId: action.dealId });
       return json({ data: { ok: true } });
     case 'business.decide': {
       const result = await decideBusiness(db, { actorId, businessId: action.businessId, decision: action.decision, reason: action.reason });
@@ -109,7 +114,7 @@ export const POST = route(async (request: Request) => {
       await resolveReport(db, { actorId, reportId: action.reportId, status: action.status });
       return json({ data: { ok: true } });
     case 'images.remove':
-      await removeImagesByModerator(db, { actorId, target: action.target, id: action.id, reason: action.reason });
+      await forgetCachedMedia(await removeImagesByModerator(db, { actorId, target: action.target, id: action.id, reason: action.reason }), request.url);
       return json({ data: { ok: true } });
     case 'business.suspend':
       await setBusinessSuspended(db, { actorId, businessId: action.businessId, suspended: action.suspended, reason: action.reason });

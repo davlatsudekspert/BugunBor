@@ -5,6 +5,8 @@ import { AtSign, BadgeCheck, CalendarClock, Globe, MapPin, Navigation, Phone, Se
 import { BusinessAvatar } from '@/components/deals/business-avatar';
 import { CategoryIcon, categoryColor } from '@/components/deals/category-icon';
 import { DealCard } from '@/components/deals/deal-card';
+import { ComplaintButton } from '@/components/deals/complaint-button';
+import { reportProps } from '@/components/deals/complaint-labels';
 import { FollowButton } from '@/components/deals/follow-button';
 import { RatingStars, ratingText } from '@/components/deals/rating-stars';
 import { JsonLd } from '@/components/site/json-ld';
@@ -42,7 +44,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const [{ t }, business] = await Promise.all([getI18n(), load(slug)]);
   if (!business) return { title: t.business.notFoundTitle, robots: { index: false } };
-  return { title: business.name, description: business.description.slice(0, 200), alternates: { canonical: `/businesses/${business.slug}` } };
+  return {
+    title: business.name,
+    description: business.description.slice(0, 200),
+    alternates: { canonical: `/businesses/${business.slug}` },
+    // Sample (demo) businesses are made up: shown to people, not to search engines.
+    robots: { index: !business.isDemo, follow: true },
+  };
 }
 
 export default async function BusinessPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -96,7 +104,7 @@ export default async function BusinessPage({ params }: { params: Promise<{ slug:
               <h1 className="mt-1 text-4xl font-black tracking-[-.05em] text-navy">{business.name}</h1>
               {business.rating ? (
                 <a href="#reviews" className="mt-2 inline-flex items-center gap-2 text-sm font-bold text-navy">
-                  <RatingStars value={business.rating.basisPoints / 100} />
+                  <RatingStars value={business.rating.basisPoints / 100} decorative />
                   {ratingText(business.rating.basisPoints)}
                   <span className="font-semibold text-slate-500">· {fmt(t.business.ratingCount, { count: business.rating.count })}</span>
                 </a>
@@ -111,7 +119,7 @@ export default async function BusinessPage({ params }: { params: Promise<{ slug:
                   businessId={business.id}
                   initial={follow}
                   loggedIn={Boolean(user)}
-                  labels={{ follow: t.business.follow, following: t.business.following, followers: t.business.followers, hint: t.business.followHint }}
+                  labels={{ follow: t.business.follow, following: t.business.following, followers: t.business.followers, hint: t.business.followHint, error: t.common.networkError }}
                 />
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -120,6 +128,7 @@ export default async function BusinessPage({ params }: { params: Promise<{ slug:
                 {business.instagram ? <a href={instagramUrl(business.instagram)} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-bold text-navy hover:border-primary/40"><AtSign className="size-4" aria-hidden /> Instagram</a> : null}
                 {websiteHost ? <a href={business.website!} target="_blank" rel="noreferrer nofollow" className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-bold text-navy hover:border-primary/40"><Globe className="size-4" aria-hidden /> {websiteHost}</a> : null}
               </div>
+              <ComplaintButton targetType="BUSINESS" targetId={business.id} loggedIn={Boolean(user)} loginHref={`/login?returnTo=${encodeURIComponent(`/businesses/${business.slug}`)}`} className="mt-3" {...reportProps(t)} />
             </div>
           </div>
         </div>
@@ -150,7 +159,7 @@ export default async function BusinessPage({ params }: { params: Promise<{ slug:
                 </div>
                 {review.comment ? <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">{review.comment}</p> : null}
                 <p className="mt-2 flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
-                  <span className="font-bold text-navy">{review.author ?? '—'}</span>
+                  <span className="font-bold text-navy">{review.author ?? t.common.anonymous}</span>
                   <span>· {review.dealTitle}</span>
                   <span className="inline-flex items-center gap-1 text-emerald-700"><BadgeCheck className="size-3.5" aria-hidden /> {t.business.verifiedReview}</span>
                 </p>

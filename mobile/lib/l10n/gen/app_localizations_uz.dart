@@ -1149,7 +1149,7 @@ class LUz extends L {
   String get dealStScheduled => 'Tez orada';
 
   @override
-  String get dealStSoldOut => 'Tugadi';
+  String get dealStSoldOut => 'Hammasi band';
 
   @override
   String get dealStExpired => 'Muddati o‘tgan';
@@ -1433,4 +1433,163 @@ class LUz extends L {
   String timeLeftHoursMinutes(String hours, String minutes) {
     return '$hours soat $minutes daq. qoldi';
   }
+
+  @override
+  String get timeEnded => 'Tugagan';
+
+  @override
+  String get codeUsedText => 'Kod qabul qilindi. Tashrif qanday o‘tdi?';
+
+  @override
+  String get deletedUser => 'O‘chirilgan foydalanuvchi';
+
+  @override
+  String ratingLabel(String value) {
+    return 'Baho: $value / 5';
+  }
+
+  @override
+  String get openSettings => 'Sozlamalar';
+
+  @override
+  String get staleNote => 'Yangilab bo‘lmadi — oxirgi ma’lumot ko‘rsatilmoqda';
+
+  @override
+  String get codeIssueAsk => 'Aksiya berilmadimi?';
+
+  @override
+  String get codeIssueTitle => 'Kassada nima bo‘ldi?';
+
+  @override
+  String get issueNotAvailable => 'Aksiya berilmadi: mahsulot yoki xizmat yo‘q edi';
+
+  @override
+  String get issueCodeRefused => 'Kodni qabul qilishmadi';
+
+  @override
+  String get issueWrongPrice => 'Narx aksiyadagidan boshqa edi';
+
+  @override
+  String get issueBranchClosed => 'Filial yopiq edi';
+
+  @override
+  String get codeIssueSent => 'Shikoyatingiz qabul qilindi. Moderator ko‘rib chiqadi.';
+
+  @override
+  String get canceledOutOfStock => 'Biznes bekor qildi: mahsulot tugadi';
+
+  @override
+  String get canceledClosed => 'Biznes bekor qildi: filial yopiq';
+
+  @override
+  String get dealHeld => 'Shikoyatlar sababli to‘xtatildi — moderator tekshiradi';
+
+  @override
+  String dealComplaints(String count) {
+    return 'Shikoyatlar (30 kun): $count';
+  }
+
+  @override
+  String get bookingWaiting => 'Kutyapmiz';
+
+  @override
+  String get bookingDelay => 'Kechikyapmiz';
+
+  @override
+  String get bookingCancel => 'Bekor qilish';
+
+  @override
+  String get bookingOutOfStock => 'Mahsulot tugadi';
+
+  @override
+  String get bookingClosed => 'Filial yopiq';
+
+  @override
+  String get bookingSent => 'Yuborildi';
+
+  @override
+  String get bookingCancelAsk => 'Bronni bekor qilasizmi? Mijozga sababi bilan xabar boradi, joy boshqalarga qaytadi.';
+
+  @override
+  String get bookingHint => 'Mijoz raqami yashirin: xabar BugunBor orqali boradi.';
+
+  @override
+  String noShowWarning(String count) {
+    return 'Diqqat: oxirgi 7 kunda $count ta kod ishlatilmay qoldi. Yana bittasi bo‘lsa, band qilish 24 soatga to‘xtaydi. Bora olmasangiz, kodni bekor qiling.';
+  }
+
+  @override
+  String noShowPaused(String time) {
+    return 'Oxirgi 7 kunda 3 ta kod ishlatilmay qoldi. Band qilish $time gacha to‘xtatildi.';
+  }
+
+  @override
+  String get branchOpenNow => 'Hozir ochiq';
+
+  @override
+  String branchOpenUntil(String time) {
+    return '$time gacha ochiq';
+  }
+
+  @override
+  String branchClosedNow(String time) {
+    return 'Yopiq · $time da ochiladi';
+  }
+
+  @override
+  String branchClosedWarning(String time, String minutes) {
+    return 'Bu filial hozir yopiq va $time da ochiladi. Kod $minutes daqiqa amal qiladi — ochilishiga yaqinroq band qiling.';
+  }
+
+  @override
+  String get setBadge => 'Set';
+
+  @override
+  String setPersons(int count) {
+    return '$count kishilik';
+  }
+
+  @override
+  String get setContents => 'Set tarkibi';
+
+  @override
+  String get filterSets => 'Setlar';
+
+  @override
+  String get dealSetToggle => 'Bu set (to‘plam)';
+
+  @override
+  String get dealSetHint => 'Bir nechta taom yoki mahsulot birga: masalan, 2 ta osh, 2 ta salat va choy.';
+
+  @override
+  String dealSetItemName(String number) {
+    return '$number. Nomi';
+  }
+
+  @override
+  String get dealSetItemHint => 'Masalan, Osh';
+
+  @override
+  String get dealSetQty => 'Soni';
+
+  @override
+  String get dealSetAdd => 'Yana qo‘shish';
+
+  @override
+  String get dealSetRemove => 'Olib tashlash';
+
+  @override
+  String get dealSetPersons => 'Necha kishilik';
+
+  @override
+  String get dealSetPersonsAny => 'Ko‘rsatilmagan';
+
+  @override
+  String get dealSetPriceHint => 'Asl narx — set ichidagilarning odatdagi narxlari yig‘indisi.';
+
+  @override
+  String get valSetItems => 'Setga kamida 2 ta, ko‘pi bilan 12 ta narsa kiriting.';
+
+  @override
+  String get bizBookings => 'Faol bronlar';
 }

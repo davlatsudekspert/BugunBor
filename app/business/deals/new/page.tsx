@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import { DealForm } from '@/components/business/deal-form';
+import { emptySetItems } from '@/lib/deal-set';
 import { WorkspaceShell } from '@/components/business/workspace-shell';
 import { getI18n } from '@/lib/i18n/server';
 import { dateToTashkentInput } from '@/lib/time';
@@ -50,6 +51,9 @@ export default async function NewDealPage() {
           claimTtlMinutes: String(DEAL_RULES.defaultClaimTtl),
           branchIds: branches.map((branch) => branch.id),
           photoId: null,
+          isSet: false,
+          setItems: emptySetItems(),
+          setPersons: '',
         }}
         t={{ biz: t.biz, validation: t.validation, common: t.common, errors: t.errors, deal: t.deal }}
       />

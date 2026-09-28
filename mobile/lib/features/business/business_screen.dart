@@ -14,6 +14,7 @@ import '../../design/widgets/deal_card.dart';
 import '../../design/widgets/photo_app_bar.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../common/report_sheet.dart';
+import '../shell/shell_screen.dart';
 
 class BusinessScreen extends ConsumerStatefulWidget {
   const BusinessScreen({super.key, required this.slug});
@@ -81,11 +82,14 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
     try {
       final result = await ref.read(apiProvider).setFollowing(business.id, want);
       if (mounted) setState(() => _follow = result);
-      ref.invalidate(followsProvider);
+      // Its deal pages (maybe open under this one) show the same button.
+      ref
+        ..invalidate(followsProvider)
+        ..invalidate(dealProvider);
     } catch (error) {
       if (!mounted) return;
       setState(() => _follow = (following: following, followers: followers));
-      _snack(errorText(context, error));
+      showErrorSnack(context, error);
     }
   }
 
@@ -112,6 +116,7 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
         ..invalidate(meProvider)
         ..invalidate(feedProvider)
         ..invalidate(followsProvider)
+        ..invalidate(favoritesProvider)
         ..invalidate(businessProvider(widget.slug));
       if (!mounted) return;
       setState(() {
@@ -122,7 +127,7 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
     } catch (error) {
       if (!mounted) return;
       setState(() => _busy = false);
-      _snack(errorText(context, error));
+      showErrorSnack(context, error);
     }
   }
 
@@ -140,6 +145,7 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
         body: async.hasError
             ? StatePanel.error(context, async.error!, onRetry: () => ref.invalidate(businessProvider(widget.slug)))
             : const SkeletonList(count: 3, height: 140),
+        bottomNavigationBar: const PageTabBar(),
       );
     }
     final blocked = ref.watch(meProvider).value?.blockedBusinessIds.contains(business.id) ?? false;
@@ -147,8 +153,9 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
     final followers = _follow?.followers ?? business.followers;
 
     return Scaffold(
+      bottomNavigationBar: const PageTabBar(),
       body: RefreshIndicator(
-        onRefresh: () => ref.refresh(businessProvider(widget.slug).future).then((_) {}, onError: (_) {}),
+        onRefresh: () => refreshing(context, ref.refresh(businessProvider(widget.slug).future)),
         child: CustomScrollView(
           controller: _header.scroll,
           slivers: [
@@ -191,10 +198,10 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
                             if (business.rating != null && business.rating!.count > 0)
                               Row(
                                 children: [
-                                  RatingStars(business.rating!.average),
+                                  RatingStars(business.rating!.average, announce: false),
                                   const SizedBox(width: 4),
                                   Text(
-                                    '${business.rating!.average.toStringAsFixed(1)} (${business.rating!.count})',
+                                    '${ratingValue(context, business.rating!.average)} (${business.rating!.count})',
                                     style: TextStyle(color: context.mutedText),
                                   ),
                                 ],
@@ -317,7 +324,13 @@ class _Branch extends StatelessWidget {
         child: ListTile(
           contentPadding: const EdgeInsets.only(left: Gap.md, right: Gap.xs),
           title: Text(branch.name, style: const TextStyle(fontWeight: FontWeight.w800)),
-          subtitle: Text(branch.address),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(branch.address),
+              OpenNow(hoursJson: branch.hoursJson),
+            ],
+          ),
           trailing: IconButton(
             tooltip: l.dealDirections,
             icon: const Icon(Icons.directions_outlined, color: Brand.primary),

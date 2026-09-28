@@ -113,13 +113,28 @@ class BugunBorApi {
 
   // Catalogue ---------------------------------------------------------------
 
-  Future<AppConfig> config() async => AppConfig.fromJson(_data(await _request('GET', '/api/v1/config')));
+  Future<Json> configData() async => _data(await _request('GET', '/api/v1/config'));
 
-  Future<Feed> feed({double? lat, double? lng, String? city, List<String> interests = const []}) async => Feed.fromJson(
-    _data(await _request('GET', '/api/v1/feed', query: {'lat': lat, 'lng': lng, 'city': city, if (interests.isNotEmpty) 'interests': interests.join(',')})),
-  );
+  Future<AppConfig> config() async => AppConfig.fromJson(await configData());
 
-  Future<DealPage> deals({String? city, String? category, String? query, String? sort, double? lat, double? lng, int limit = 24, int offset = 0}) async {
+  Future<Json> feedData({double? lat, double? lng, String? city, List<String> interests = const []}) async =>
+      _data(await _request('GET', '/api/v1/feed', query: {'lat': lat, 'lng': lng, 'city': city, if (interests.isNotEmpty) 'interests': interests.join(',')}));
+
+  Future<Feed> feed({double? lat, double? lng, String? city, List<String> interests = const []}) async =>
+      Feed.fromJson(await feedData(lat: lat, lng: lng, city: city, interests: interests));
+
+  /// Live deals; [sets] keeps only sets («Setlar»).
+  Future<DealPage> deals({
+    String? city,
+    String? category,
+    String? query,
+    String? sort,
+    bool sets = false,
+    double? lat,
+    double? lng,
+    int limit = 24,
+    int offset = 0,
+  }) async {
     final body = await _request(
       'GET',
       '/api/v1/deals',
@@ -128,6 +143,7 @@ class BugunBorApi {
         'category': category,
         'q': (query ?? '').trim().isEmpty ? null : query!.trim(),
         'sort': sort,
+        'set': sets ? '1' : null,
         'lat': lat,
         'lng': lng,
         'limit': limit,
@@ -333,4 +349,15 @@ class BugunBorApi {
 
   Future<void> completeCode(String businessId, String redemptionId) =>
       _request('POST', '/api/v1/business/${Uri.encodeComponent(businessId)}', body: {'type': 'redeem.complete', 'redemptionId': redemptionId});
+
+  /// A ready message (WAITING, DELAY) to the person who booked; their number stays hidden.
+  Future<void> messageBooking(String businessId, String redemptionId, String message) => _request(
+    'POST',
+    '/api/v1/business/${Uri.encodeComponent(businessId)}',
+    body: {'type': 'booking.message', 'redemptionId': redemptionId, 'message': message},
+  );
+
+  /// Cancels an active booking with its reason (OUT_OF_STOCK, CLOSED); the person is told.
+  Future<void> cancelBooking(String businessId, String redemptionId, String reason) =>
+      _request('POST', '/api/v1/business/${Uri.encodeComponent(businessId)}', body: {'type': 'booking.cancel', 'redemptionId': redemptionId, 'reason': reason});
 }

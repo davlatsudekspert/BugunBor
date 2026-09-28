@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import { CITIES } from '@/lib/cities';
 import { createTestD1 } from '@/test/d1';
+import { DEMO_CATEGORIES, EXTRA_SHOPS } from './demo-catalog';
 import { applyMigrations } from './migrate';
 import { migrations } from './migrations';
 import { seedDemoData } from './seed';
@@ -74,7 +76,7 @@ describe('migrations', () => {
     await seedDemoData(db);
     await seedDemoData(db);
     const deals = await db.prepare(`SELECT COUNT(*) AS count FROM deals WHERE is_demo = 1`).first<{ count: number }>();
-    expect(deals?.count).toBe(9 + 17 * 8 * 2);
+    expect(deals?.count).toBe(9 + (CITIES.length * DEMO_CATEGORIES.length + EXTRA_SHOPS.length) * 2);
     const osh = await db.prepare(`SELECT status, remaining_quantity FROM deals WHERE id = 'deal_osh'`).first();
     expect(osh).toEqual({ status: 'ACTIVE', remaining_quantity: 0 });
   });

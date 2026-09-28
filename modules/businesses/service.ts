@@ -9,6 +9,7 @@ import { getUserByPhone } from '@/modules/auth/users';
 import { assertWithinLimit } from '@/modules/billing/service';
 import { DomainError } from '@/modules/errors';
 import { assertOwnMedia } from '@/modules/media/service';
+import { sentMessages } from '@/modules/redemptions/contact';
 import type { BranchInput, BusinessProfileInput, OnboardingInput } from './schema';
 
 const MAX_OWNED_BUSINESSES = 5;
@@ -225,7 +226,11 @@ export async function profileChecklist(db: D1Database, businessId: string): Prom
 export type DashboardData = {
   live: number; pending: number; claimsToday: number; redeemedToday: number; views: number;
   followers: number; ratingBp: number; reviewCount: number;
-  recent: Array<{ id: string; status: string; createdAt: string; completedAt: string | null; dealTitle: string; customerName: string; branchName: string }>;
+  recent: Array<{
+    id: string; status: string; createdAt: string; completedAt: string | null; expiresAt: string; dealTitle: string; customerName: string; branchName: string;
+    /** Ready messages already sent about an active booking (WAITING, DELAY). */
+    sent: string[];
+  }>;
 };
 
 export async function businessDashboard(db: D1Database, businessId: string, now = new Date()): Promise<DashboardData> {
@@ -244,13 +249,7 @@ export async function businessDashboard(db: D1Database, businessId: string, now 
         (SELECT review_count FROM businesses WHERE id = ?1) AS reviewCount`)
       .bind(businessId, nowDb, dayStart)
       .first<Omit<DashboardData, 'recent'>>(),
-    db.prepare(`SELECT r.id, CASE WHEN r.status = 'CLAIMED' AND r.expires_at <= ?2 THEN 'EXPIRED' ELSE r.status END AS status,
-        r.created_at AS createdAt, r.completed_at AS completedAt, d.title AS dealTitle,
-        u.display_name AS customerName, br.name AS branchName
-      FROM redemptions r JOIN deals d ON d.id = r.deal_id JOIN users u ON u.id = r.user_id JOIN branches br ON br.id = r.branch_id
-      WHERE r.business_id = ?1 ORDER BY r.created_at DESC LIMIT 10`)
-      .bind(businessId, nowDb)
-      .all<DashboardData['recent'][number]>(),
+    recentCodes(db, businessId, now),
   ]);
   return {
     live: counts?.live ?? 0,
@@ -261,8 +260,28 @@ export async function businessDashboard(db: D1Database, businessId: string, now 
     followers: counts?.followers ?? 0,
     ratingBp: counts?.ratingBp ?? 0,
     reviewCount: counts?.reviewCount ?? 0,
-    recent: recent.results,
+    recent,
   };
+}
+
+/**
+ * The codes a business sees: every booking still waiting for its customer
+ * (none drops off the list while it can still be messaged or cancelled),
+ * then the latest others, ten at least. `activeOnly` leaves only the bookings.
+ */
+export async function recentCodes(db: D1Database, businessId: string, now = new Date(), options: { activeOnly?: boolean } = {}) {
+  const rows = await db
+    .prepare(`SELECT r.id, CASE WHEN r.status = 'CLAIMED' AND r.expires_at <= ?2 THEN 'EXPIRED' ELSE r.status END AS status,
+        r.created_at AS createdAt, r.completed_at AS completedAt, r.expires_at AS expiresAt, d.title AS dealTitle,
+        u.display_name AS customerName, br.name AS branchName
+      FROM redemptions r JOIN deals d ON d.id = r.deal_id JOIN users u ON u.id = r.user_id JOIN branches br ON br.id = r.branch_id
+      WHERE r.business_id = ?1 AND ((r.status = 'CLAIMED' AND r.expires_at > ?2)
+        OR (?3 = 0 AND r.id IN (SELECT id FROM redemptions WHERE business_id = ?1 ORDER BY created_at DESC LIMIT 10)))
+      ORDER BY r.created_at DESC LIMIT 40`)
+    .bind(businessId, toDbTime(now), options.activeOnly ? 1 : 0)
+    .all<Omit<DashboardData['recent'][number], 'sent'>>();
+  const sent = await sentMessages(db, rows.results.filter((row) => row.status === 'CLAIMED').map((row) => row.id));
+  return rows.results.map((row) => ({ ...row, sent: sent.get(row.id) ?? [] }));
 }
 
 export async function redeemedToday(db: D1Database, businessId: string, now = new Date()) {

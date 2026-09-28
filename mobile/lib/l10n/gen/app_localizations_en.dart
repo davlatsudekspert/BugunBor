@@ -465,7 +465,7 @@ class LEn extends L {
 
   @override
   String liveDeals(String count) {
-    return '$count live deals';
+    return 'Live deals: $count';
   }
 
   @override
@@ -475,7 +475,7 @@ class LEn extends L {
   String get profileGuestText => 'Sign in for your codes, saved deals and notifications.';
 
   @override
-  String get profileSaved => 'Saved';
+  String get profileSaved => 'Money saved';
 
   @override
   String get profileRedeemed => 'Codes used';
@@ -667,7 +667,7 @@ class LEn extends L {
 
   @override
   String followers(String count) {
-    return '$count followers';
+    return 'Followers: $count';
   }
 
   @override
@@ -1431,4 +1431,164 @@ class LEn extends L {
   String timeLeftHoursMinutes(String hours, String minutes) {
     return '$hours h $minutes min left';
   }
+
+  @override
+  String get timeEnded => 'Ended';
+
+  @override
+  String get codeUsedText => 'The code was accepted. How was your visit?';
+
+  @override
+  String get deletedUser => 'Deleted user';
+
+  @override
+  String ratingLabel(String value) {
+    return 'Rating: $value of 5';
+  }
+
+  @override
+  String get openSettings => 'Settings';
+
+  @override
+  String get staleNote => 'Couldn’t refresh — showing the latest data';
+
+  @override
+  String get codeIssueAsk => 'Didn’t get the deal?';
+
+  @override
+  String get codeIssueTitle => 'What happened at the counter?';
+
+  @override
+  String get issueNotAvailable => 'I didn’t get it: the product or service wasn’t available';
+
+  @override
+  String get issueCodeRefused => 'They didn’t accept the code';
+
+  @override
+  String get issueWrongPrice => 'The price wasn’t the deal’s price';
+
+  @override
+  String get issueBranchClosed => 'The branch was closed';
+
+  @override
+  String get codeIssueSent => 'Your complaint was received. A moderator will look into it.';
+
+  @override
+  String get canceledOutOfStock => 'Cancelled by the business: sold out';
+
+  @override
+  String get canceledClosed => 'Cancelled by the business: the branch is closed';
+
+  @override
+  String get dealHeld => 'Paused after complaints — a moderator is checking';
+
+  @override
+  String dealComplaints(String count) {
+    return 'Complaints (30 days): $count';
+  }
+
+  @override
+  String get bookingWaiting => 'We’re waiting';
+
+  @override
+  String get bookingDelay => 'Running late';
+
+  @override
+  String get bookingCancel => 'Cancel';
+
+  @override
+  String get bookingOutOfStock => 'Sold out';
+
+  @override
+  String get bookingClosed => 'Branch closed';
+
+  @override
+  String get bookingSent => 'Sent';
+
+  @override
+  String get bookingCancelAsk => 'Cancel the booking? The customer is told why, and the spot goes back to others.';
+
+  @override
+  String get bookingHint => 'The customer’s number stays hidden: BugunBor delivers the message.';
+
+  @override
+  String noShowWarning(String count) {
+    return 'Heads-up: $count codes went unused in the last 7 days. One more and booking pauses for 24 hours. If you can’t go, cancel the code.';
+  }
+
+  @override
+  String noShowPaused(String time) {
+    return '3 codes went unused in the last 7 days. Booking is paused until $time.';
+  }
+
+  @override
+  String get branchOpenNow => 'Open now';
+
+  @override
+  String branchOpenUntil(String time) {
+    return 'Open until $time';
+  }
+
+  @override
+  String branchClosedNow(String time) {
+    return 'Closed · opens at $time';
+  }
+
+  @override
+  String branchClosedWarning(String time, String minutes) {
+    return 'This branch is closed now and opens at $time. The code lasts $minutes min — book closer to opening time.';
+  }
+
+  @override
+  String get setBadge => 'Set';
+
+  @override
+  String setPersons(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: 'for $count people', one: 'for 1 person');
+    return '$_temp0';
+  }
+
+  @override
+  String get setContents => 'What’s in the set';
+
+  @override
+  String get filterSets => 'Sets';
+
+  @override
+  String get dealSetToggle => 'This is a set';
+
+  @override
+  String get dealSetHint => 'Several dishes or items together, e.g. 2 plov, 2 salads and tea.';
+
+  @override
+  String dealSetItemName(String number) {
+    return '$number. Name';
+  }
+
+  @override
+  String get dealSetItemHint => 'e.g. Plov';
+
+  @override
+  String get dealSetQty => 'Qty';
+
+  @override
+  String get dealSetAdd => 'Add another';
+
+  @override
+  String get dealSetRemove => 'Remove';
+
+  @override
+  String get dealSetPersons => 'For how many people';
+
+  @override
+  String get dealSetPersonsAny => 'Not stated';
+
+  @override
+  String get dealSetPriceHint => 'The regular price is what everything in the set usually costs together.';
+
+  @override
+  String get valSetItems => 'A set needs 2 to 12 items.';
+
+  @override
+  String get bizBookings => 'Active bookings';
 }

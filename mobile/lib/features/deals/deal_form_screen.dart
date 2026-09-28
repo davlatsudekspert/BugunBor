@@ -11,6 +11,7 @@ import '../../data/models.dart';
 import '../../design/icons.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/common.dart';
+import '../../design/widgets/deal_card.dart';
 import '../../design/widgets/form_fields.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'deal_draft.dart';
@@ -88,6 +89,7 @@ const _fields = [
   'photo',
   'title',
   'description',
+  'set',
   'terms',
   'categoryId',
   'visual',
@@ -116,6 +118,13 @@ class _AmountFormatter extends TextInputFormatter {
       selection: TextSelection.collapsed(offset: text.length),
     );
   }
+}
+
+/// One line of a set in the form: its name as typed and how many.
+class _SetLine {
+  _SetLine([String name = '', this.qty = 1]) : name = TextEditingController(text: name);
+  final TextEditingController name;
+  int qty;
 }
 
 class _DealForm extends ConsumerStatefulWidget {
@@ -150,6 +159,9 @@ class _DealFormState extends ConsumerState<_DealForm> {
   String? _photoUrl;
   Uint8List? _photoBytes;
   bool _uploading = false;
+  bool _isSet = false;
+  final _setLines = <_SetLine>[];
+  int? _setPersons;
 
   /// 'submit' or 'draft' while that button's request runs.
   String? _saving;
@@ -188,6 +200,11 @@ class _DealFormState extends ConsumerState<_DealForm> {
       ];
       _photoId = deal.photoId;
       _photoUrl = deal.photo;
+      if (deal.set case final set?) {
+        _isSet = true;
+        _setLines.addAll([for (final item in set.items) _SetLine(item.name, item.qty)]);
+        _setPersons = set.persons;
+      }
     } else {
       _categoryId = widget.workspace.business.categoryId ?? widget.config.categories.firstOrNull?.id;
       _visual = _rules.visualFor(_slugOf(_categoryId));
@@ -196,11 +213,13 @@ class _DealFormState extends ConsumerState<_DealForm> {
       _ttl = _rules.defaultClaimTtl;
       _branchIds = [for (final branch in widget.workspace.branches) branch.id];
     }
+    // Two empty lines to start a set with.
+    if (_setLines.isEmpty) _setLines.addAll([_SetLine(), _SetLine()]);
   }
 
   @override
   void dispose() {
-    for (final controller in [_title, _description, _terms, _original, _price, _quantity]) {
+    for (final controller in [_title, _description, _terms, _original, _price, _quantity, for (final line in _setLines) line.name]) {
       controller.dispose();
     }
     super.dispose();
@@ -222,6 +241,16 @@ class _DealFormState extends ConsumerState<_DealForm> {
     claimTtlMinutes: _ttl,
     branchIds: _branchIds,
     photoId: _photoId,
+    // Lines left empty are not part of the set.
+    set: _isSet
+        ? DealSet(
+            items: [
+              for (final line in _setLines)
+                if (line.name.text.trim().isNotEmpty) SetItem(name: line.name.text.trim(), qty: line.qty),
+            ],
+            persons: _setPersons,
+          )
+        : null,
   );
 
   /// Changes made here clear that field's problem.
@@ -236,6 +265,14 @@ class _DealFormState extends ConsumerState<_DealForm> {
   String? _message(L l, String field) {
     final problem = _errors[field];
     if (problem == null) return null;
+    if (field == 'set') {
+      return switch (problem) {
+        'setItems' => l.valSetItems,
+        'setName' || 'tooShort' => l.valTooShort('2'),
+        'tooLong' => l.valTooLong('60'),
+        _ => l.valInvalid,
+      };
+    }
     final limits = _limits[field];
     return switch (problem) {
       'tooShort' when limits != null => l.valTooShort('${limits.$1}'),
@@ -326,7 +363,7 @@ class _DealFormState extends ConsumerState<_DealForm> {
         _uploading = false;
         _photoBytes = null;
       });
-      _snack(errorText(context, error));
+      showErrorSnack(context, error);
     }
   }
 
@@ -405,8 +442,8 @@ class _DealFormState extends ConsumerState<_DealForm> {
       if (!mounted) return;
       if (error is ApiError && error.code == 'VALIDATION' && error.fields.isNotEmpty) {
         setState(() => _saving = null);
-        // The server names fields by their path, e.g. `input.price`.
-        _show({for (final entry in error.fields.entries) entry.key.split('.').last: entry.value});
+        // The server names fields by their path, e.g. `input.price` or `input.set.items.0.name`.
+        _show({for (final entry in error.fields.entries) (entry.key.split('.').contains('set') ? 'set' : entry.key.split('.').last): entry.value});
         return;
       }
       setState(() {
@@ -510,6 +547,8 @@ class _DealFormState extends ConsumerState<_DealForm> {
             ),
           ),
           const SizedBox(height: Gap.sm),
+          field('set', _setSection(l)),
+          gap,
           field(
             'terms',
             TextField(
@@ -733,6 +772,110 @@ class _DealFormState extends ConsumerState<_DealForm> {
     );
   }
 
+  /// «Bu set (to‘plam)»: when on, what is in it (name and count per line)
+  /// and for how many people.
+  Widget _setSection(L l) {
+    final problem = _message(l, 'set');
+    final lines = _setLines;
+    // A Material, so the switch row's ink shows on the tint.
+    return Material(
+      color: _isSet ? Brand.primary.withValues(alpha: 0.06) : Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Gap.radius),
+        side: BorderSide(color: _isSet ? Brand.primary.withValues(alpha: 0.45) : context.borderColor),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SwitchListTile(
+            value: _isSet,
+            onChanged: (on) => _edit(['set'], () => _isSet = on),
+            secondary: const Icon(Icons.layers_outlined, color: Brand.primary),
+            title: Text(l.dealSetToggle, style: const TextStyle(fontWeight: FontWeight.w700)),
+            subtitle: Text(l.dealSetHint),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Gap.radius)),
+          ),
+          if (_isSet)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(Gap.md, 0, Gap.md, Gap.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(l.setContents, style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(height: Gap.sm),
+                  for (var index = 0; index < lines.length; index++)
+                    Padding(
+                      key: ObjectKey(lines[index]),
+                      padding: const EdgeInsets.only(bottom: Gap.sm),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: lines[index].name,
+                              maxLength: 60,
+                              textCapitalization: TextCapitalization.sentences,
+                              textInputAction: TextInputAction.next,
+                              onChanged: (_) => _edit(['set'], () {}),
+                              decoration: InputDecoration(labelText: l.dealSetItemName('${index + 1}'), hintText: l.dealSetItemHint, counterText: ''),
+                            ),
+                          ),
+                          const SizedBox(width: Gap.sm),
+                          SizedBox(
+                            width: 92,
+                            child: DropdownButtonFormField<int>(
+                              initialValue: lines[index].qty,
+                              isExpanded: true,
+                              decoration: InputDecoration(labelText: l.dealSetQty, contentPadding: const EdgeInsetsDirectional.fromSTEB(14, 16, 8, 16)),
+                              items: [for (var count = 1; count <= 20; count++) DropdownMenuItem(value: count, child: Text('$count'))],
+                              onChanged: (value) => _edit(['set'], () => lines[index].qty = value ?? 1),
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: l.dealSetRemove,
+                            onPressed: lines.length <= 1
+                                ? null
+                                : () => _edit(['set'], () {
+                                    final line = lines.removeAt(index);
+                                    // Its field is still on screen for this frame.
+                                    WidgetsBinding.instance.addPostFrameCallback((_) => line.name.dispose());
+                                  }),
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (lines.length < DealDraft.setMaxItems)
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: TextButton.icon(
+                        onPressed: () => _edit(['set'], () => lines.add(_SetLine())),
+                        icon: const Icon(Icons.add_rounded),
+                        label: Text(l.dealSetAdd),
+                      ),
+                    ),
+                  if (problem != null) FieldError(problem),
+                  const SizedBox(height: Gap.sm),
+                  DropdownButtonFormField<int?>(
+                    initialValue: _setPersons,
+                    decoration: InputDecoration(labelText: l.dealSetPersons),
+                    items: [
+                      DropdownMenuItem(value: null, child: Text(l.dealSetPersonsAny)),
+                      for (var count = 1; count <= 20; count++) DropdownMenuItem(value: count, child: Text(l.setPersons(count))),
+                    ],
+                    onChanged: (value) => _edit(['set'], () => _setPersons = value),
+                  ),
+                  const SizedBox(height: Gap.sm),
+                  Text(l.dealSetPriceHint, style: TextStyle(color: context.mutedText, fontSize: 12.5, height: 1.4)),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _photoCard(L l) {
     final hasPhoto = _photoBytes != null || _photoUrl != null;
     return Column(
@@ -810,7 +953,8 @@ class _DealFormState extends ConsumerState<_DealForm> {
             return Semantics(
               button: true,
               selected: selected,
-              label: visual.key,
+              // The phone reads the picture's name in its own language (not the key, "gift").
+              label: visual.emoji,
               excludeSemantics: true,
               child: InkResponse(
                 onTap: () => _edit(['visual'], () {
@@ -898,12 +1042,20 @@ class _DealFormState extends ConsumerState<_DealForm> {
                     style: TextStyle(color: context.mutedText, fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 2),
+                  if (_draft.set case final set?) ...[SetBadge(set), const SizedBox(height: 4)],
                   Text(
                     title.isEmpty ? l.dealTitleHint : title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(color: title.isEmpty ? context.mutedText : null),
                   ),
+                  if (_draft.set case final set? when set.items.isNotEmpty)
+                    Text(
+                      set.summary,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: context.mutedText, fontSize: 13),
+                    ),
                   const SizedBox(height: Gap.xs),
                   if (price != null) PriceLine(price: price, original: original),
                   if (percent != null) ...[const SizedBox(height: Gap.xs), DiscountBadge(percent)],

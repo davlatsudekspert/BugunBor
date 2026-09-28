@@ -4,6 +4,7 @@ import { ActionButton, DecisionForm } from '@/components/admin/admin-controls';
 import { AdminShell } from '@/components/admin/admin-shell';
 import { DealVisual } from '@/components/deals/deal-visual';
 import { getDb } from '@/db/client';
+import { setSummary } from '@/lib/deal-set';
 import { formatDurationMinutes, formatMoment, formatSum } from '@/lib/format';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
@@ -12,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { listAdminDeals } from '@/modules/admin/service';
 import { requireModerator } from '@/modules/auth/current';
 import { flagText, parseFlags } from '@/modules/moderation/auto';
+import { firstValues } from '@/lib/search-params';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -21,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 type Filter = 'pending' | 'auto' | 'live' | 'all';
 
 export default async function AdminDealsPage({ searchParams }: { searchParams: Promise<{ f?: string }> }) {
-  const { f } = await searchParams;
+  const { f } = firstValues(await searchParams);
   const user = await requireModerator('/admin/deals');
   const [{ t, locale }, db] = await Promise.all([getI18n(), getDb()]);
   const filter: Filter = f === 'live' || f === 'all' || f === 'auto' ? f : 'pending';
@@ -52,6 +54,12 @@ export default async function AdminDealsPage({ searchParams }: { searchParams: P
                 </div>
               </div>
               <p className="mt-3 text-sm leading-6 text-slate-600">{deal.description}</p>
+              {deal.set ? (
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  <strong className="text-navy">{[t.deal.set.contents, deal.set.persons ? fmt(t.deal.set.persons, { count: deal.set.persons }) : null].filter(Boolean).join(' · ')}:</strong>{' '}
+                  {setSummary(deal.set)}
+                </p>
+              ) : null}
               <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">{deal.terms}</p>
               <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
                 <div><dt className="text-slate-400">{t.deal.startsAt}</dt><dd className="font-semibold text-navy">{formatMoment(parseDbTime(deal.startsAt), t, locale)}</dd></div>
@@ -78,7 +86,7 @@ export default async function AdminDealsPage({ searchParams }: { searchParams: P
                     <ActionButton payload={{ type: 'images.remove', target: 'DEAL', id: deal.id }} label={a.removePhoto} reasonPrompt={a.removeImagesReason} tone="danger" networkError={t.common.networkError} />
                   ) : null}
                   {deal.status === 'ACTIVE' || deal.status === 'PAUSED' ? (
-                    <ActionButton payload={{ type: 'deal.archive', dealId: deal.id }} label={a.deals.archive} reasonPrompt={a.reasonHint} tone="danger" networkError={t.common.networkError} />
+                    <ActionButton payload={{ type: 'deal.archive', dealId: deal.id }} label={a.deals.archive} reasonPrompt={a.deals.archiveReason} tone="danger" networkError={t.common.networkError} />
                   ) : null}
                 </div>
               )}

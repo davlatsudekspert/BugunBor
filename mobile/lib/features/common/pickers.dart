@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../design/theme.dart';
+import '../../design/widgets/common.dart';
 import '../../l10n/gen/app_localizations.dart';
 
 /// Result of the city sheet: a city slug, or "use my location".
@@ -38,7 +39,7 @@ class _PlaceSheet extends ConsumerWidget {
     final l = L.of(context);
     final settings = ref.watch(settingsProvider);
     final config = ref.watch(configProvider);
-    final cities = config.value?.cities ?? const [];
+    final cities = ref.watch(currentConfigProvider)?.cities ?? const [];
     return DraggableScrollableSheet(
       expand: false,
       initialChildSize: 0.7,
@@ -58,11 +59,13 @@ class _PlaceSheet extends ConsumerWidget {
               trailing: settings.useLocation ? const Icon(Icons.check_rounded, color: Brand.primary) : null,
               onTap: () => Navigator.pop(context, const LocationChoice()),
             ),
-          if (config.isLoading && cities.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(Gap.xl),
-              child: Center(child: CircularProgressIndicator()),
-            ),
+          if (cities.isEmpty)
+            config.hasError
+                ? StatePanel.error(context, config.error!, onRetry: () => ref.invalidate(configProvider))
+                : const Padding(
+                    padding: EdgeInsets.all(Gap.xl),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
           for (final city in cities)
             ListTile(
               title: Text(city.name(settings.locale)),
@@ -73,6 +76,17 @@ class _PlaceSheet extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// "Location not allowed — showing the city", with a button to the settings.
+void showLocationDenied(BuildContext context) {
+  final l = L.of(context);
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(l.homeLocationDenied),
+      action: SnackBarAction(label: l.openSettings, onPressed: openLocationSettings),
+    ),
+  );
 }
 
 /// Applies the choice. Returns false when the phone refused location

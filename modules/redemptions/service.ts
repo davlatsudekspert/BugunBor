@@ -1,12 +1,13 @@
 import { dealPhotoUrl } from '@/lib/photos';
 import { RETENTION, yearsBefore } from '@/lib/retention';
-import { addMinutes, parseDbTime, toDbTime } from '@/lib/time';
+import { addMinutes, formatClock, formatNumericDate, parseDbTime, toDbTime } from '@/lib/time';
 import { auditStatementIf } from '@/modules/audit';
 import { subscriptionActiveSql } from '@/modules/deals/status';
 import { DomainError } from '@/modules/errors';
 import { pruneOrphanMediaStatement } from '@/modules/media/service';
 import { codeReminderStatement, redeemedStatement } from '@/modules/notifications/service';
 import { deriveRedemptionCode, hashRedemptionCode } from './codes';
+import { noShowState } from './no-shows';
 import { evaluateClaimPolicy } from './policy';
 
 export type ClaimInput = {
@@ -82,6 +83,15 @@ export async function claimDeal(db: D1Database, input: ClaimInput): Promise<Clai
     return { id: replay.id, code: await deriveRedemptionCode(input.secret, replay.id), expiresAt: replay.expiresAt, replayed: true };
   }
   if (await activeClaim(db, input.dealId, input.userId, now)) throw new DomainError('ALREADY_CLAIMED');
+  // A code of theirs that ran out a moment ago may not be marked yet (the
+  // cleanup runs once a minute); it must not block a new one.
+  await expireStaleRedemptions(db, now, { dealId: input.dealId, userId: input.userId });
+  // Booked and never came three times this week: booking waits a day.
+  const noShows = await noShowState(db, input.userId, now);
+  if (noShows.pausedUntil) {
+    const until = parseDbTime(noShows.pausedUntil);
+    throw new DomainError('NO_SHOW_PAUSE', 429, { time: `${formatNumericDate(until).slice(0, 5)} ${formatClock(until)}` });
+  }
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const id = crypto.randomUUID();
@@ -161,19 +171,25 @@ export async function cancelRedemption(db: D1Database, input: { redemptionId: st
   if ((results[0].meta.changes ?? 0) !== 1) throw new DomainError('INVALID_TRANSITION');
 }
 
-/** Expires unused codes and returns their units to the pool. Safe to run any time. */
-export async function expireStaleRedemptions(db: D1Database, now = new Date()) {
+/**
+ * Expires unused codes and returns their units to the pool. Safe to run any
+ * time; `only` limits it to one person's codes for one deal.
+ */
+export async function expireStaleRedemptions(db: D1Database, now = new Date(), only?: { dealId: string; userId: string }) {
   const nowDb = toDbTime(now);
-  const stale = `status = 'CLAIMED' AND expires_at <= ?1`;
+  const scope = only ? ' AND deal_id = ?2 AND user_id = ?3' : '';
+  const stale = `status = 'CLAIMED' AND expires_at <= ?1${scope}`;
+  const staleRow = `r.status = 'CLAIMED' AND r.expires_at <= ?1${only ? ' AND r.deal_id = ?2 AND r.user_id = ?3' : ''}`;
+  const args = only ? [nowDb, only.dealId, only.userId] : [nowDb];
   await db.batch([
     db.prepare(`INSERT OR IGNORE INTO redemption_events(id, redemption_id, actor_user_id, type, metadata_json, created_at)
-      SELECT lower(hex(randomblob(16))), id, NULL, 'EXPIRED', '{}', ?1 FROM redemptions WHERE ${stale}`).bind(nowDb),
+      SELECT lower(hex(randomblob(16))), id, NULL, 'EXPIRED', '{}', ?1 FROM redemptions WHERE ${stale}`).bind(...args),
     db.prepare(`UPDATE deals SET
         remaining_quantity = MIN(COALESCE(total_quantity, 1000000000),
-          remaining_quantity + (SELECT COUNT(*) FROM redemptions r WHERE r.deal_id = deals.id AND r.status = 'CLAIMED' AND r.expires_at <= ?1)),
+          remaining_quantity + (SELECT COUNT(*) FROM redemptions r WHERE r.deal_id = deals.id AND ${staleRow})),
         updated_at = ?1
-      WHERE remaining_quantity IS NOT NULL AND id IN (SELECT deal_id FROM redemptions WHERE ${stale})`).bind(nowDb),
-    db.prepare(`UPDATE redemptions SET status = 'EXPIRED', updated_at = ?1 WHERE ${stale}`).bind(nowDb),
+      WHERE remaining_quantity IS NOT NULL AND id IN (SELECT deal_id FROM redemptions WHERE ${stale})`).bind(...args),
+    db.prepare(`UPDATE redemptions SET status = 'EXPIRED', updated_at = ?1 WHERE ${stale}`).bind(...args),
   ]);
 }
 
@@ -204,11 +220,13 @@ export type CustomerRedemption = {
   completedAt: string | null; dealSlug: string; dealTitle: string; price: number; originalPrice: number | null;
   visual: string | null; photo: string | null; categorySlug: string; businessName: string; branchName: string; address: string;
   latitude: number; longitude: number; code: string | null;
+  /** Why the business cancelled it (OUT_OF_STOCK, CLOSED), when it did. */
+  cancelReason: string | null;
 };
 
 export async function listCustomerRedemptions(db: D1Database, userId: string, secret: string, now = new Date()) {
   const rows = await db
-    .prepare(`SELECT r.id, r.status, r.expires_at AS expiresAt, r.created_at AS createdAt, r.completed_at AS completedAt,
+    .prepare(`SELECT r.id, r.status, r.expires_at AS expiresAt, r.created_at AS createdAt, r.completed_at AS completedAt, r.cancel_reason AS cancelReason,
         d.slug AS dealSlug, d.title AS dealTitle, d.discounted_price_uzs AS price, d.original_price_uzs AS originalPrice,
         d.visual, d.photo_id AS photoId, d.is_demo AS isDemo, c.slug AS categorySlug, b.name AS businessName, br.name AS branchName, br.address,
         br.latitude_e6 AS lat, br.longitude_e6 AS lon

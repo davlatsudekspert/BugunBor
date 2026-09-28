@@ -125,6 +125,7 @@ class SessionNotifier extends Notifier<SessionState> {
 
   Future<void> signOut() async {
     await ref.read(sessionStoreProvider).clear();
+    ref.read(prefsProvider).forgetAccountAnswers();
     state = const SessionState();
   }
 
@@ -132,6 +133,7 @@ class SessionNotifier extends Notifier<SessionState> {
   void expire() {
     if (state.token == null) return;
     ref.read(sessionStoreProvider).clear();
+    ref.read(prefsProvider).forgetAccountAnswers();
     state = const SessionState(expired: true);
   }
 
@@ -150,7 +152,11 @@ final apiProvider = Provider<BugunBorApi>(
   ),
 );
 
-final configProvider = FutureProvider<AppConfig>((ref) => ref.watch(apiProvider).config());
+final configProvider = FutureProvider<AppConfig>((ref) async {
+  final data = await ref.watch(apiProvider).configData();
+  ref.read(prefsProvider).saveAnswer('config', data);
+  return AppConfig.fromJson(data);
+});
 
 /// The signed-in person, or null for guests.
 final meProvider = FutureProvider<Me?>((ref) async {
@@ -181,12 +187,19 @@ class LocationNotifier extends Notifier<Position?> {
   Position? build() => null;
 
   /// Returns false when the phone refused (then the city is used instead).
+  /// Location switched off or no longer allowed also forgets the last place.
   Future<bool> refresh({bool ask = false}) async {
     try {
-      if (!await Geolocator.isLocationServiceEnabled()) return false;
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        state = null;
+        return false;
+      }
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied && ask) permission = await Geolocator.requestPermission();
-      if (permission != LocationPermission.always && permission != LocationPermission.whileInUse) return false;
+      if (permission != LocationPermission.always && permission != LocationPermission.whileInUse) {
+        state = null;
+        return false;
+      }
       final position =
           await Geolocator.getLastKnownPosition() ??
           await Geolocator.getCurrentPosition(
@@ -204,6 +217,20 @@ class LocationNotifier extends Notifier<Position?> {
   }
 
   void clear() => state = null;
+}
+
+/// Opens where the phone lets the app use its location again: the location
+/// switch when it is off for the whole phone, otherwise the app's permissions.
+Future<void> openLocationSettings() async {
+  try {
+    if (await Geolocator.isLocationServiceEnabled()) {
+      await Geolocator.openAppSettings();
+    } else {
+      await Geolocator.openLocationSettings();
+    }
+  } catch (_) {
+    // Nothing to open (an unusual phone): the message already says what happened.
+  }
 }
 
 final locationProvider = NotifierProvider<LocationNotifier, Position?>(LocationNotifier.new);
@@ -237,8 +264,45 @@ final feedProvider = FutureProvider<Feed>((ref) async {
   final guestInterests = ref.watch(settingsProvider.select((settings) => settings.guestInterests));
   final position = useLocation ? ref.watch(locationProvider) : null;
   final token = ref.watch(sessionProvider.select((session) => session.token));
-  return ref.watch(apiProvider).feed(lat: position?.latitude, lng: position?.longitude, city: city, interests: token == null ? guestInterests : const []);
+  final data = await ref
+      .watch(apiProvider)
+      .feedData(lat: position?.latitude, lng: position?.longitude, city: city, interests: token == null ? guestInterests : const []);
+  ref.read(prefsProvider).saveAnswer(feedAnswerName(signedIn: token != null, city: city, near: useLocation), data);
+  return Feed.fromJson(data);
 });
+
+/// Which kept feed belongs to this way of opening Home.
+String feedAnswerName({required bool signedIn, required String? city, required bool near}) =>
+    'feed_${signedIn ? 'account' : 'guest'}_${near ? 'near' : city ?? 'none'}';
+
+/// What Home showed last time, read once when the app starts. It is shown at
+/// once while the first answers load (deals that have ended are left out), so
+/// the app opens with content even on a slow connection.
+final lastAnswersProvider = Provider<({AppConfig? config, Feed? feed})>((ref) {
+  final prefs = ref.read(prefsProvider);
+  final settings = ref.read(settingsProvider);
+  AppConfig? config;
+  Feed? feed;
+  try {
+    final data = prefs.lastAnswer('config');
+    if (data != null) config = AppConfig.fromJson(data);
+  } catch (_) {
+    // An answer from an older app version: wait for the server instead.
+  }
+  try {
+    final name = feedAnswerName(signedIn: ref.read(sessionProvider).token != null, city: settings.city, near: settings.useLocation);
+    final data = prefs.lastAnswer(name);
+    if (data != null) feed = Feed.fromJson(data).withoutEnded(DateTime.now().toUtc());
+  } catch (_) {
+    // As above.
+  }
+  return (config: config, feed: feed);
+});
+
+/// The settings to use now: the server's latest, or the ones kept from last
+/// time while they load or when there is no connection. Null only on a first
+/// start without a connection (then the screens show the error and a retry).
+final currentConfigProvider = Provider<AppConfig?>((ref) => ref.watch(configProvider).value ?? ref.watch(lastAnswersProvider).config);
 
 final dealProvider = FutureProvider.autoDispose.family<DealDetail, String>((ref, slug) {
   ref.watch(sessionProvider.select((session) => session.token));

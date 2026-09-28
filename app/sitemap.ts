@@ -1,13 +1,12 @@
 import type { MetadataRoute } from 'next';
 
 import { getDb } from '@/db/client';
-import { demoEnabled } from '@/modules/demo';
+import { getConfig } from '@/lib/env';
 import { toDbTime } from '@/lib/time';
 import { PUBLIC_BUSINESS_SQL, liveDealSql } from '@/modules/deals/status';
 
-const BASE = 'https://bugunbor.uz';
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const BASE = getConfig().appUrl ?? 'https://bugunbor.uz';
   const staticPages: MetadataRoute.Sitemap = ['/', '/discover', '/categories', '/business', '/how-it-works', '/faq', '/ilova', '/qollanma', '/contact', '/terms', '/privacy', '/oferta'].map((path) => ({
     url: `${BASE}${path}`,
     changeFrequency: path === '/' || path === '/discover' ? 'hourly' : 'weekly',
@@ -16,11 +15,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const db = await getDb();
     const now = toDbTime(new Date());
-    const demo = (await demoEnabled(db)) ? 1 : 0;
     const [categories, deals, businesses] = await Promise.all([
       db.prepare(`SELECT slug FROM categories WHERE is_active = 1`).all<{ slug: string }>(),
-      db.prepare(`SELECT d.slug, d.updated_at AS updatedAt FROM deals d JOIN businesses b ON b.id = d.business_id WHERE ${liveDealSql('?1')} AND (?2 = 1 OR d.is_demo = 0) LIMIT 5000`).bind(now, demo).all<{ slug: string; updatedAt: string }>(),
-      db.prepare(`SELECT b.slug, b.updated_at AS updatedAt FROM businesses b WHERE ${PUBLIC_BUSINESS_SQL} AND (?1 = 1 OR b.is_demo = 0) LIMIT 5000`).bind(demo).all<{ slug: string; updatedAt: string }>(),
+      // Sample (demo) businesses and deals are made up: search engines never get them.
+      db.prepare(`SELECT d.slug, d.updated_at AS updatedAt FROM deals d JOIN businesses b ON b.id = d.business_id WHERE ${liveDealSql('?1')} AND d.is_demo = 0 AND b.is_demo = 0 LIMIT 5000`).bind(now).all<{ slug: string; updatedAt: string }>(),
+      db.prepare(`SELECT b.slug, b.updated_at AS updatedAt FROM businesses b WHERE ${PUBLIC_BUSINESS_SQL} AND b.is_demo = 0 LIMIT 5000`).all<{ slug: string; updatedAt: string }>(),
     ]);
     return [
       ...staticPages,

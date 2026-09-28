@@ -6,7 +6,7 @@ import { STOCK_PHOTOS } from '@/lib/stock-photos';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
-  return { title: t.credits.title };
+  return { title: t.credits.title, description: t.credits.text, alternates: { canonical: '/credits' } };
 }
 
 // Attribution for the freely licensed photos used on demo deals.

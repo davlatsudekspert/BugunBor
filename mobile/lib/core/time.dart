@@ -9,3 +9,12 @@ DateTime? parseServerTimeOrNull(Object? value) => value is String && value.isNot
 
 /// Tashkent is UTC+5 all year (no daylight saving).
 DateTime toTashkent(DateTime utc) => utc.toUtc().add(const Duration(hours: 5));
+
+/// A moment for people, on Tashkent clocks: "25.09 15:00", with the year when
+/// it is not this year's.
+String momentLabel(DateTime utc, {DateTime? now}) {
+  final wall = toTashkent(utc);
+  final year = toTashkent(now ?? DateTime.now().toUtc()).year == wall.year ? '' : '.${wall.year}';
+  String two(int value) => value.toString().padLeft(2, '0');
+  return '${two(wall.day)}.${two(wall.month)}$year ${two(wall.hour)}:${two(wall.minute)}';
+}

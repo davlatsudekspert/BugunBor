@@ -1,24 +1,27 @@
 import { describe, expect, it } from 'vitest';
 
 import { CITIES } from '@/lib/cities';
+import { parseDealSet } from '@/lib/deal-set';
 import { toDbTime } from '@/lib/time';
 import { isDealVisual } from '@/lib/visuals';
 import { listLiveDeals } from '@/modules/catalog/queries';
+import { dealSetSchema } from '@/modules/deals/schema';
 import { createTestD1 } from '@/test/d1';
-import { buildDemoCatalog, DEMO_CATEGORIES, discountedPrice, regionalPrice } from './demo-catalog';
+import { buildDemoCatalog, DEMO_CATEGORIES, discountedPrice, EXTRA_SHOPS, regionalPrice } from './demo-catalog';
 import { applyMigrations } from './migrate';
 import { DEMO_SEED_VERSION, refreshDemoData, seedDemoData } from './seed';
 
 const NOW = new Date('2026-09-25T06:00:00Z'); // 11:00 in Tashkent
 const CURATED_DEALS = 9;
-const GENERATED_DEALS = CITIES.length * DEMO_CATEGORIES.length * 2;
+const GENERATED_BUSINESSES = CITIES.length * DEMO_CATEGORIES.length + EXTRA_SHOPS.length;
+const GENERATED_DEALS = GENERATED_BUSINESSES * 2;
 const unique = (values: string[]) => new Set(values).size === values.length;
 
 describe('demo catalog', () => {
   const catalog = buildDemoCatalog(NOW);
 
   it('has a business in every city for every category, with two deals each', () => {
-    expect(catalog.businesses).toHaveLength(CITIES.length * DEMO_CATEGORIES.length);
+    expect(catalog.businesses).toHaveLength(GENERATED_BUSINESSES);
     expect(catalog.deals).toHaveLength(GENERATED_DEALS);
     for (const city of CITIES) {
       const categories = catalog.businesses.filter((business) => business.city === city.slug).map((business) => business.categoryId);
@@ -59,6 +62,27 @@ describe('demo catalog', () => {
     if (tashkent && nukusSame) expect(nukusSame.originalPrice).toBeLessThan(tashkent.originalPrice);
   });
 
+  it('has home textile and phone shops in several cities, with deals on from the start', () => {
+    const cities = (visual: string) => new Set(catalog.deals.filter((deal) => deal.visual === visual).map((deal) => deal.businessId.split('_')[1]));
+    expect(cities('bedding').size).toBeGreaterThanOrEqual(4);
+    expect(cities('towels').size).toBeGreaterThanOrEqual(4);
+    expect(cities('phone').size).toBeGreaterThanOrEqual(3);
+    const extras = catalog.deals.filter((deal) => EXTRA_SHOPS.some((shop) => deal.businessId === `gbiz_${shop.city}_${shop.key}`));
+    expect(extras).toHaveLength(EXTRA_SHOPS.length * 2);
+    for (const deal of extras) expect(deal.startsAt <= toDbTime(NOW), deal.id).toBe(true);
+  });
+
+  it('writes sets that pass the same rules as the deal form', () => {
+    const sets = catalog.deals.filter((deal) => deal.setItemsJson);
+    expect(sets.length).toBeGreaterThan(20);
+    for (const deal of sets) {
+      const set = parseDealSet(deal.setItemsJson, deal.setPersons);
+      expect(dealSetSchema.safeParse(set).success, deal.id).toBe(true);
+    }
+    expect(catalog.deals.find((deal) => deal.id === 'gdeal_tashkent_tekstil_1')?.setPersons).toBe(2);
+    expect(catalog.deals.filter((deal) => !deal.setItemsJson).every((deal) => deal.setPersons === null)).toBe(true);
+  });
+
   it('gives every city its own mix of deals', () => {
     const signatures = CITIES.map((city) =>
       catalog.deals.filter((deal) => deal.businessId.startsWith(`gbiz_${city.slug}_`)).map((deal) => deal.title).sort().join('|'));
@@ -91,6 +115,20 @@ describe('demo seed', () => {
 
     await seedDemoData(db, NOW, { force: true });
     expect(await db.prepare(`SELECT title FROM deals WHERE id = 'gdeal_tashkent_food_1'`).first('title')).not.toBe('Changed');
+  });
+
+  it('shows the textile and phone sets under «Setlar» and in search', async () => {
+    const db = await seeded();
+    const sets = await listLiveDeals(db, { city: 'tashkent', sets: true, demo: true, now: NOW });
+    expect(sets.map((deal) => deal.title)).toEqual(expect.arrayContaining(['Satin choyshab to‘plami (2 kishilik)', 'Mahra sochiqlar to‘plami (6 dona)']));
+    expect(sets.find((deal) => deal.title.startsWith('Satin choyshab'))?.set).toEqual({
+      items: [{ name: 'Ko‘rpa jildi', qty: 1 }, { name: 'Choyshab', qty: 1 }, { name: 'Yostiq jildi', qty: 2 }],
+      persons: 2,
+    });
+    const found = await listLiveDeals(db, { city: 'tashkent', query: 'yostiq', demo: true, now: NOW });
+    expect(found.map((deal) => deal.title)).toContain('Satin choyshab to‘plami (2 kishilik)');
+    const phones = await listLiveDeals(db, { city: 'tashkent', query: 'smartfon', demo: true, now: NOW });
+    expect(phones.length).toBeGreaterThanOrEqual(2);
   });
 
   it('shows plenty of live deals in every city, and none when demo mode is off', async () => {

@@ -2208,7 +2208,7 @@ abstract class L {
   /// No description provided for @dealStSoldOut.
   ///
   /// In uz, this message translates to:
-  /// **'Tugadi'**
+  /// **'Hammasi band'**
   String get dealStSoldOut;
 
   /// No description provided for @dealStExpired.
@@ -2744,6 +2744,288 @@ abstract class L {
   /// In uz, this message translates to:
   /// **'{hours} soat {minutes} daq. qoldi'**
   String timeLeftHoursMinutes(String hours, String minutes);
+
+  /// No description provided for @timeEnded.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tugagan'**
+  String get timeEnded;
+
+  /// No description provided for @codeUsedText.
+  ///
+  /// In uz, this message translates to:
+  /// **'Kod qabul qilindi. Tashrif qanday o‘tdi?'**
+  String get codeUsedText;
+
+  /// No description provided for @deletedUser.
+  ///
+  /// In uz, this message translates to:
+  /// **'O‘chirilgan foydalanuvchi'**
+  String get deletedUser;
+
+  /// No description provided for @ratingLabel.
+  ///
+  /// In uz, this message translates to:
+  /// **'Baho: {value} / 5'**
+  String ratingLabel(String value);
+
+  /// No description provided for @openSettings.
+  ///
+  /// In uz, this message translates to:
+  /// **'Sozlamalar'**
+  String get openSettings;
+
+  /// No description provided for @staleNote.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yangilab bo‘lmadi — oxirgi ma’lumot ko‘rsatilmoqda'**
+  String get staleNote;
+
+  /// No description provided for @codeIssueAsk.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiya berilmadimi?'**
+  String get codeIssueAsk;
+
+  /// No description provided for @codeIssueTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Kassada nima bo‘ldi?'**
+  String get codeIssueTitle;
+
+  /// No description provided for @issueNotAvailable.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiya berilmadi: mahsulot yoki xizmat yo‘q edi'**
+  String get issueNotAvailable;
+
+  /// No description provided for @issueCodeRefused.
+  ///
+  /// In uz, this message translates to:
+  /// **'Kodni qabul qilishmadi'**
+  String get issueCodeRefused;
+
+  /// No description provided for @issueWrongPrice.
+  ///
+  /// In uz, this message translates to:
+  /// **'Narx aksiyadagidan boshqa edi'**
+  String get issueWrongPrice;
+
+  /// No description provided for @issueBranchClosed.
+  ///
+  /// In uz, this message translates to:
+  /// **'Filial yopiq edi'**
+  String get issueBranchClosed;
+
+  /// No description provided for @codeIssueSent.
+  ///
+  /// In uz, this message translates to:
+  /// **'Shikoyatingiz qabul qilindi. Moderator ko‘rib chiqadi.'**
+  String get codeIssueSent;
+
+  /// No description provided for @canceledOutOfStock.
+  ///
+  /// In uz, this message translates to:
+  /// **'Biznes bekor qildi: mahsulot tugadi'**
+  String get canceledOutOfStock;
+
+  /// No description provided for @canceledClosed.
+  ///
+  /// In uz, this message translates to:
+  /// **'Biznes bekor qildi: filial yopiq'**
+  String get canceledClosed;
+
+  /// No description provided for @dealHeld.
+  ///
+  /// In uz, this message translates to:
+  /// **'Shikoyatlar sababli to‘xtatildi — moderator tekshiradi'**
+  String get dealHeld;
+
+  /// No description provided for @dealComplaints.
+  ///
+  /// In uz, this message translates to:
+  /// **'Shikoyatlar (30 kun): {count}'**
+  String dealComplaints(String count);
+
+  /// No description provided for @bookingWaiting.
+  ///
+  /// In uz, this message translates to:
+  /// **'Kutyapmiz'**
+  String get bookingWaiting;
+
+  /// No description provided for @bookingDelay.
+  ///
+  /// In uz, this message translates to:
+  /// **'Kechikyapmiz'**
+  String get bookingDelay;
+
+  /// No description provided for @bookingCancel.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bekor qilish'**
+  String get bookingCancel;
+
+  /// No description provided for @bookingOutOfStock.
+  ///
+  /// In uz, this message translates to:
+  /// **'Mahsulot tugadi'**
+  String get bookingOutOfStock;
+
+  /// No description provided for @bookingClosed.
+  ///
+  /// In uz, this message translates to:
+  /// **'Filial yopiq'**
+  String get bookingClosed;
+
+  /// No description provided for @bookingSent.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yuborildi'**
+  String get bookingSent;
+
+  /// No description provided for @bookingCancelAsk.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bronni bekor qilasizmi? Mijozga sababi bilan xabar boradi, joy boshqalarga qaytadi.'**
+  String get bookingCancelAsk;
+
+  /// No description provided for @bookingHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Mijoz raqami yashirin: xabar BugunBor orqali boradi.'**
+  String get bookingHint;
+
+  /// No description provided for @noShowWarning.
+  ///
+  /// In uz, this message translates to:
+  /// **'Diqqat: oxirgi 7 kunda {count} ta kod ishlatilmay qoldi. Yana bittasi bo‘lsa, band qilish 24 soatga to‘xtaydi. Bora olmasangiz, kodni bekor qiling.'**
+  String noShowWarning(String count);
+
+  /// No description provided for @noShowPaused.
+  ///
+  /// In uz, this message translates to:
+  /// **'Oxirgi 7 kunda 3 ta kod ishlatilmay qoldi. Band qilish {time} gacha to‘xtatildi.'**
+  String noShowPaused(String time);
+
+  /// No description provided for @branchOpenNow.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hozir ochiq'**
+  String get branchOpenNow;
+
+  /// No description provided for @branchOpenUntil.
+  ///
+  /// In uz, this message translates to:
+  /// **'{time} gacha ochiq'**
+  String branchOpenUntil(String time);
+
+  /// No description provided for @branchClosedNow.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yopiq · {time} da ochiladi'**
+  String branchClosedNow(String time);
+
+  /// No description provided for @branchClosedWarning.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bu filial hozir yopiq va {time} da ochiladi. Kod {minutes} daqiqa amal qiladi — ochilishiga yaqinroq band qiling.'**
+  String branchClosedWarning(String time, String minutes);
+
+  /// No description provided for @setBadge.
+  ///
+  /// In uz, this message translates to:
+  /// **'Set'**
+  String get setBadge;
+
+  /// No description provided for @setPersons.
+  ///
+  /// In uz, this message translates to:
+  /// **'{count} kishilik'**
+  String setPersons(int count);
+
+  /// No description provided for @setContents.
+  ///
+  /// In uz, this message translates to:
+  /// **'Set tarkibi'**
+  String get setContents;
+
+  /// No description provided for @filterSets.
+  ///
+  /// In uz, this message translates to:
+  /// **'Setlar'**
+  String get filterSets;
+
+  /// No description provided for @dealSetToggle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bu set (to‘plam)'**
+  String get dealSetToggle;
+
+  /// No description provided for @dealSetHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bir nechta taom yoki mahsulot birga: masalan, 2 ta osh, 2 ta salat va choy.'**
+  String get dealSetHint;
+
+  /// No description provided for @dealSetItemName.
+  ///
+  /// In uz, this message translates to:
+  /// **'{number}. Nomi'**
+  String dealSetItemName(String number);
+
+  /// No description provided for @dealSetItemHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Masalan, Osh'**
+  String get dealSetItemHint;
+
+  /// No description provided for @dealSetQty.
+  ///
+  /// In uz, this message translates to:
+  /// **'Soni'**
+  String get dealSetQty;
+
+  /// No description provided for @dealSetAdd.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yana qo‘shish'**
+  String get dealSetAdd;
+
+  /// No description provided for @dealSetRemove.
+  ///
+  /// In uz, this message translates to:
+  /// **'Olib tashlash'**
+  String get dealSetRemove;
+
+  /// No description provided for @dealSetPersons.
+  ///
+  /// In uz, this message translates to:
+  /// **'Necha kishilik'**
+  String get dealSetPersons;
+
+  /// No description provided for @dealSetPersonsAny.
+  ///
+  /// In uz, this message translates to:
+  /// **'Ko‘rsatilmagan'**
+  String get dealSetPersonsAny;
+
+  /// No description provided for @dealSetPriceHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Asl narx — set ichidagilarning odatdagi narxlari yig‘indisi.'**
+  String get dealSetPriceHint;
+
+  /// No description provided for @valSetItems.
+  ///
+  /// In uz, this message translates to:
+  /// **'Setga kamida 2 ta, ko‘pi bilan 12 ta narsa kiriting.'**
+  String get valSetItems;
+
+  /// No description provided for @bizBookings.
+  ///
+  /// In uz, this message translates to:
+  /// **'Faol bronlar'**
+  String get bizBookings;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

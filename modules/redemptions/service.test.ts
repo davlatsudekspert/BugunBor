@@ -30,6 +30,18 @@ describe('claiming a deal', () => {
     expect(await errorCode(claim(db, 'alice', 'key-alice-000002'))).toBe('ALREADY_CLAIMED');
   });
 
+  it('a code that ran out a moment ago does not block a new one (before the cleanup runs)', async () => {
+    const db = await marketplace();
+    await claim(db, 'alice', 'key-alice-000001');
+    expect(await remaining(db)).toBe(1);
+    const again = await claim(db, 'alice', 'key-alice-000002', { now: new Date(NOW.getTime() + 60 * 60_000 + 20_000) });
+    expect(again.code).toMatch(/^[A-HJ-NP-Z2-9]{6}$/);
+    // The old unit came back and the new one was taken.
+    expect(await remaining(db)).toBe(1);
+    const statuses = await db.prepare(`SELECT status FROM redemptions WHERE user_id = 'alice' ORDER BY created_at`).all<{ status: string }>();
+    expect(statuses.results.map((row) => row.status)).toEqual(['EXPIRED', 'CLAIMED']);
+  });
+
   it('never sells more units than exist', async () => {
     const db = await marketplace();
     await claim(db, 'alice', 'key-alice-000001');

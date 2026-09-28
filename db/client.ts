@@ -35,8 +35,15 @@ export async function getDb(): Promise<D1Database> {
   await ready;
   if (Date.now() - lastDemoRefresh > DEMO_REFRESH_MS && (await demoEnabled(db))) {
     lastDemoRefresh = Date.now();
-    // Restarting ended demo deals never holds up a page.
-    inBackground(refreshDemoData(db), 'Demo refresh failed');
+    // Restarting ended demo deals never holds up a page. A new demo catalogue
+    // version (new businesses, deals or photos) loads here by itself too.
+    inBackground(
+      seedDemoData(db).catch((error: unknown) => {
+        console.error('Demo seed failed', error);
+        return refreshDemoData(db);
+      }),
+      'Demo refresh failed',
+    );
   }
   tickBackgroundJobs(db);
   return db;

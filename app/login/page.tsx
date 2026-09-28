@@ -8,6 +8,7 @@ import { isTelegramConfigured } from '@/lib/env';
 import { safeReturnPath } from '@/lib/http';
 import { getI18n } from '@/lib/i18n/server';
 import { getCurrentUser } from '@/modules/auth/current';
+import { firstValues } from '@/lib/search-params';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -23,7 +24,7 @@ const demoRoles: Record<string, 'CUSTOMER' | 'OWNER' | 'CASHIER' | 'MODERATOR' |
 };
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ returnTo?: string }> }) {
-  const { returnTo } = await searchParams;
+  const { returnTo } = firstValues(await searchParams);
   const target = safeReturnPath(returnTo, '/account');
   const [{ t }, user] = await Promise.all([getI18n(), getCurrentUser()]);
   if (user) redirect(target);

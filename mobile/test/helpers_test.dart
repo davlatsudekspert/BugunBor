@@ -31,6 +31,10 @@ void main() {
     expect(parseServerTime('2026-09-25T10:10:00.000Z'), DateTime.utc(2026, 9, 25, 10, 10));
     expect(toTashkent(DateTime.utc(2026, 9, 25, 20)).hour, 1);
     expect(parseServerTimeOrNull(null), isNull);
+    // One way to write a moment everywhere: Tashkent clocks, the year only when it is another one.
+    final now = DateTime.utc(2026, 9, 26, 12);
+    expect(momentLabel(DateTime.utc(2026, 9, 25, 4, 5), now: now), '25.09 09:05');
+    expect(momentLabel(DateTime.utc(2026, 12, 31, 20), now: now), '01.01.2027 01:00');
   });
 
   test('images become absolute URLs; stock photos use the small copy', () {
@@ -47,7 +51,9 @@ void main() {
     expect(appPathFor('https://bugunbor.uz/deals/osh'), '/deals/osh');
     expect(appPathFor('https://bugunbor.uz/businesses/kafe'), '/businesses/kafe');
     expect(appPathFor('https://bugunbor.uz/r/K7P2QX'), '/r/K7P2QX');
-    expect(appPathFor('https://bugunbor.uz/account/codes#review-1'), '/codes');
+    expect(appPathFor('https://bugunbor.uz/account/codes'), '/codes');
+    // "Rate your visit" opens that visit's rating.
+    expect(appPathFor('https://bugunbor.uz/account/codes#review-1a2b-3c'), '/codes?review=1a2b-3c');
     // "Your business was approved" opens its business profile in the app.
     expect(appPathFor('https://bugunbor.uz/business/switch/b1?next=%2Fbusiness%2Fdashboard'), '/profile?business=b1');
     expect(appPathFor('https://bugunbor.uz/business/dashboard'), '/profile');

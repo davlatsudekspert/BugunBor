@@ -107,14 +107,16 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
     }
   }
 
-  Future<void> _reset() async {
+  /// Back to scanning for the next customer. The scanner comes back on
+  /// screen and starts the camera itself; starting it here as well would
+  /// race it ("still initializing").
+  void _reset() {
     _manual.clear();
     setState(() {
       _found = null;
       _done = false;
       _error = null;
     });
-    await _scanner.start();
   }
 
   @override
@@ -124,6 +126,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
     if (!signedIn) {
       return Scaffold(
         appBar: AppBar(title: Text(l.cashierTitle)),
+        bottomNavigationBar: const PageTabBar(),
         body: const LoginRequired(icon: Icons.qr_code_scanner_rounded),
       );
     }
@@ -132,12 +135,14 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
     if (me.value == null) {
       return Scaffold(
         appBar: AppBar(title: Text(l.cashierTitle)),
+        bottomNavigationBar: const PageTabBar(),
         body: me.hasError ? StatePanel.error(context, me.error!, onRetry: () => ref.invalidate(meProvider)) : const Center(child: CircularProgressIndicator()),
       );
     }
     if (counters.isEmpty) {
       return Scaffold(
         appBar: AppBar(title: Text(l.cashierTitle)),
+        bottomNavigationBar: const PageTabBar(),
         body: StatePanel(
           icon: Icons.storefront_outlined,
           title: l.cashierNoBusiness,
@@ -157,6 +162,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(l.cashierTitle)),
+      bottomNavigationBar: const PageTabBar(),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.xl),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -253,7 +259,7 @@ class _CashierScreenState extends ConsumerState<CashierScreen> {
             const SizedBox(height: Gap.md),
             Text(
               _error is String ? _error! as String : errorText(context, _error!),
-              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
+              style: TextStyle(color: context.dangerText, fontWeight: FontWeight.w600),
             ),
           ],
         ],

@@ -1,7 +1,8 @@
-import { ArrowRight, BadgeCheck, Clock3, MapPin, Star } from 'lucide-react';
+import { ArrowRight, BadgeCheck, Clock3, Layers, MapPin, Star } from 'lucide-react';
 
 import { buttonVariants } from '@/components/ui/button';
 import { cityName } from '@/lib/cities';
+import { setSummary } from '@/lib/deal-set';
 import { formatMoment, formatNumber, formatSum } from '@/lib/format';
 import { fmt, type Dictionary, type Locale } from '@/lib/i18n';
 import { parseDbTime } from '@/lib/time';
@@ -33,8 +34,16 @@ export function DealCard({ deal, t, locale, favorite, loggedIn, showCity = false
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-[0_10px_40px_rgba(25,45,60,.08)] ring-1 ring-slate-200/70 transition hover:-translate-y-1 hover:shadow-[0_18px_55px_rgba(25,45,60,.14)]">
       <DealVisual visual={deal.visual} categorySlug={deal.categorySlug} photo={deal.photo} priority={priority} className="h-44 p-4">
-        <span className="relative inline-flex h-8 items-center rounded-full bg-white px-3 text-base font-black text-navy shadow-sm">-{deal.discountPercent}%</span>
-        {deal.isDemo ? <span className="relative ml-2 inline-flex h-8 items-center rounded-full bg-amber-100 px-3 text-xs font-black text-amber-900 shadow-sm">{t.common.sample}</span> : null}
+        {/* The badges wrap to a second line rather than run under the heart. */}
+        <div className="relative flex flex-wrap items-center gap-2 pr-12">
+          <span className="inline-flex h-8 items-center rounded-full bg-white px-3 text-base font-black text-navy shadow-sm">-{deal.discountPercent}%</span>
+          {deal.set ? (
+            <span className="inline-flex h-8 items-center gap-1.5 rounded-full bg-navy px-3 text-xs font-black text-white shadow-sm">
+              <Layers className="size-3.5 text-orange-300" aria-hidden /> {[t.deal.set.badge, deal.set.persons ? fmt(t.deal.set.persons, { count: deal.set.persons }) : null].filter(Boolean).join(' · ')}
+            </span>
+          ) : null}
+          {deal.isDemo ? <span className="inline-flex h-8 items-center rounded-full bg-amber-100 px-3 text-xs font-black text-amber-900 shadow-sm">{t.common.sample}</span> : null}
+        </div>
         <div className="absolute right-4 top-4 z-10">
           <FavoriteButton dealId={deal.id} initial={favorite} loggedIn={loggedIn} labels={{ save: fmt(t.deal.saveAria, { title: deal.title }), unsave: fmt(t.deal.unsaveAria, { title: deal.title }) }} />
         </div>
@@ -64,6 +73,7 @@ export function DealCard({ deal, t, locale, favorite, loggedIn, showCity = false
             {deal.title}
           </a>
         </h3>
+        {deal.set ? <p className="mt-1 line-clamp-2 text-sm text-slate-500">{setSummary(deal.set)}</p> : null}
         <div className="mt-3 flex flex-wrap items-end gap-x-2">
           <strong className="text-2xl font-black text-primary">{formatSum(deal.price, t)}</strong>
           {deal.originalPrice ? <span className="pb-1 text-sm text-slate-400 line-through">{formatNumber(deal.originalPrice)}</span> : null}

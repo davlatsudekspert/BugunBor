@@ -10,7 +10,7 @@ type Props = {
   businessId: string;
   initial: { following: boolean; followers: number };
   loggedIn: boolean;
-  labels: { follow: string; following: string; followers: string; hint: string };
+  labels: { follow: string; following: string; followers: string; hint: string; error: string };
   compact?: boolean;
 };
 
@@ -18,6 +18,7 @@ type Props = {
 export function FollowButton({ businessId, initial, loggedIn, labels, compact = false }: Props) {
   const [state, setState] = useState(initial);
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   async function toggle() {
     if (!loggedIn) {
@@ -25,10 +26,14 @@ export function FollowButton({ businessId, initial, loggedIn, labels, compact = 
       return;
     }
     setBusy(true);
+    setFailed(false);
     try {
       const response = await fetch(`/api/v1/follows/${encodeURIComponent(businessId)}`, { method: state.following ? 'DELETE' : 'PUT' });
       const payload = (await response.json().catch(() => ({}))) as { data?: { following: boolean; followers: number } };
       if (response.ok && payload.data) setState(payload.data);
+      else setFailed(true);
+    } catch {
+      setFailed(true);
     } finally {
       setBusy(false);
     }
@@ -51,6 +56,7 @@ export function FollowButton({ businessId, initial, loggedIn, labels, compact = 
         {state.following ? labels.following : labels.follow}
       </button>
       {state.followers > 0 ? <span className="text-xs font-semibold text-slate-500">{fmt(labels.followers, { count: state.followers })}</span> : null}
+      {failed ? <output className="basis-full text-xs font-semibold text-red-600">{labels.error}</output> : null}
       {!compact && !state.following ? <span className="basis-full text-xs text-slate-500">{labels.hint}</span> : null}
     </div>
   );

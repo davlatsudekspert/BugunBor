@@ -1,10 +1,11 @@
 'use client';
 
-import { BadgeCheck, Clock3, LoaderCircle, MapPin } from 'lucide-react';
+import { BadgeCheck, Clock3, Layers, LoaderCircle, MapPin, Plus, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { DealVisual } from '@/components/deals/deal-visual';
 import { apiRequest } from '@/lib/api-client';
+import { SET_RULES, setSummary } from '@/lib/deal-set';
 import type { Dictionary } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/config';
 import { DEAL_VISUALS, DEAL_VISUAL_KEYS, dealVisual } from '@/lib/visuals';
@@ -20,6 +21,8 @@ export type DealFormValues = {
   title: string; description: string; terms: string; categoryId: string; visual: string;
   originalPrice: string; price: string; startsAt: string; endsAt: string; quantity: string; unlimited: boolean;
   perCustomerLimit: string; claimTtlMinutes: string; branchIds: string[]; photoId: string | null;
+  /** A set: its items (name and count) and, if given, for how many people. */
+  isSet: boolean; setItems: Array<{ name: string; qty: string }>; setPersons: string;
 };
 
 type Props = {
@@ -47,6 +50,11 @@ export function DealForm({ businessId, businessName, dealId, categories, branche
   const percent = original > 0 && price < original ? discountPercent(original, price) : 0;
   const category = categories.find((item) => item.id === values.categoryId);
   const visual = useMemo(() => dealVisual(values.visual, category?.slug), [values.visual, category?.slug]);
+  // Lines left empty are not part of the set.
+  const setItems = values.setItems.filter((item) => item.name.trim()).map((item) => ({ name: item.name, qty: Number(item.qty) || 1 }));
+  const setPersons = values.setPersons ? Number(values.setPersons) : null;
+  const setItem = (index: number, change: Partial<{ name: string; qty: string }>) =>
+    set('setItems', values.setItems.map((item, at) => (at === index ? { ...item, ...change } : item)));
 
   async function save(submit: boolean) {
     const payload = {
@@ -64,6 +72,7 @@ export function DealForm({ businessId, businessName, dealId, categories, branche
       claimTtlMinutes: values.claimTtlMinutes,
       branchIds: values.branchIds,
       photoId: values.photoId,
+      set: values.isSet ? { items: setItems, persons: setPersons } : null,
     };
     const parsed = dealInputSchema.safeParse(payload);
     if (!parsed.success) {
@@ -95,6 +104,45 @@ export function DealForm({ businessId, businessName, dealId, categories, branche
         <Field label={f.description} error={errors.description}>
           <textarea value={values.description} onChange={(event) => set('description', event.target.value)} rows={3} maxLength={600} placeholder={f.descriptionPlaceholder} aria-invalid={Boolean(errors.description)} className={textareaClass} />
         </Field>
+        <fieldset className={cn('rounded-2xl border p-4', values.isSet ? 'border-primary/40 bg-primary/5' : 'border-slate-200')}>
+          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-bold text-navy">
+            <input type="checkbox" checked={values.isSet} onChange={(event) => set('isSet', event.target.checked)} className="size-4 accent-[var(--primary)]" />
+            <Layers className="size-4 text-primary" aria-hidden />
+            {f.set.toggle}
+          </label>
+          <p className="mt-0.5 pl-7 text-xs text-slate-500">{f.set.hint}</p>
+          {values.isSet ? (
+            <div className="mt-4 space-y-3">
+              <p className="text-sm font-bold text-navy">{f.set.items}</p>
+              {values.setItems.map((item, index) => (
+                // On a phone the name takes its own line, so what was typed can be read back.
+                <div key={index} className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+                  <input value={item.name} onChange={(event) => setItem(index, { name: event.target.value })} maxLength={SET_RULES.nameMax} placeholder={f.set.itemPlaceholder} aria-label={`${f.set.itemName} ${index + 1}`} aria-invalid={Boolean(errors.set)} className={cn(inputClass, 'min-w-0 basis-full sm:basis-0 sm:flex-1')} />
+                  <select value={item.qty} onChange={(event) => setItem(index, { qty: event.target.value })} aria-label={`${f.set.itemQty} ${index + 1}`} className={cn(inputClass, 'w-20 shrink-0 px-2')}>
+                    {Array.from({ length: SET_RULES.maxQty }, (_, count) => count + 1).map((count) => <option key={count} value={count}>{count}</option>)}
+                  </select>
+                  <button type="button" onClick={() => set('setItems', values.setItems.filter((_, at) => at !== index))} disabled={values.setItems.length <= 1} aria-label={`${f.set.removeItem}: ${item.name || index + 1}`} className="grid size-12 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-500 hover:border-red-300 hover:text-red-600 disabled:opacity-40">
+                    <X className="size-4" aria-hidden />
+                  </button>
+                </div>
+              ))}
+              {values.setItems.length < SET_RULES.maxItems ? (
+                <button type="button" onClick={() => set('setItems', [...values.setItems, { name: '', qty: '1' }])} className="inline-flex h-11 items-center gap-1.5 rounded-xl border border-dashed border-primary/50 px-4 text-sm font-bold text-primary hover:bg-primary/5">
+                  <Plus className="size-4" aria-hidden /> {f.set.addItem}
+                </button>
+              ) : null}
+              {errors.set ? <p role="alert" className="text-xs font-semibold text-red-600">{errors.set}</p> : null}
+              <Field label={f.set.persons} className="max-w-60">
+                <select value={values.setPersons} onChange={(event) => set('setPersons', event.target.value)} className={inputClass}>
+                  <option value="">{f.set.personsAny}</option>
+                  {Array.from({ length: SET_RULES.maxPersons }, (_, count) => count + 1).map((count) => <option key={count} value={count}>{fmt(t.deal.set.persons, { count })}</option>)}
+                </select>
+              </Field>
+              <p className="text-xs text-slate-500">{f.set.priceHint}</p>
+            </div>
+          ) : null}
+        </fieldset>
+
         <Field label={f.terms} error={errors.terms}>
           <textarea value={values.terms} onChange={(event) => set('terms', event.target.value)} rows={2} maxLength={600} placeholder={f.termsPlaceholder} aria-invalid={Boolean(errors.terms)} className={textareaClass} />
         </Field>
@@ -119,8 +167,8 @@ export function DealForm({ businessId, businessName, dealId, categories, branche
             <span className="mb-1.5 block text-sm font-bold text-navy">{f.visual}</span>
             <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={f.visual}>
               {DEAL_VISUAL_KEYS.map((key) => (
-                <label key={key} title={key} className={cn('grid size-10 cursor-pointer place-items-center rounded-xl border text-xl transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/40', values.visual === key ? 'border-primary bg-primary/10 ring-2 ring-primary/30' : 'border-slate-200 hover:border-primary/40')}>
-                  <input type="radio" name="deal-visual" value={key} checked={values.visual === key} onChange={() => set('visual', key)} aria-label={key} className="sr-only" />
+                <label key={key} className={cn('grid size-10 cursor-pointer place-items-center rounded-xl border text-xl transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/40', values.visual === key ? 'border-primary bg-primary/10 ring-2 ring-primary/30' : 'border-slate-200 hover:border-primary/40')}>
+                  <input type="radio" name="deal-visual" value={key} checked={values.visual === key} onChange={() => set('visual', key)} aria-label={DEAL_VISUALS[key].emoji} className="sr-only" />
                   <span aria-hidden>{DEAL_VISUALS[key].emoji}</span>
                 </label>
               ))}
@@ -130,10 +178,10 @@ export function DealForm({ businessId, businessName, dealId, categories, branche
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label={`${f.originalPrice}, ${t.common.sum}`} error={errors.originalPrice}>
-            <input value={values.originalPrice} onChange={(event) => set('originalPrice', event.target.value.replace(/\D/g, ''))} inputMode="numeric" aria-invalid={Boolean(errors.originalPrice)} className={inputClass} />
+            <input value={values.originalPrice} onChange={(event) => set('originalPrice', event.target.value.replace(/\D/g, ''))} inputMode="numeric" maxLength={11} aria-invalid={Boolean(errors.originalPrice)} className={inputClass} />
           </Field>
           <Field label={`${f.price}, ${t.common.sum}`} error={errors.price} hint={percent ? fmt(f.discountPreview, { percent }) : undefined}>
-            <input value={values.price} onChange={(event) => set('price', event.target.value.replace(/\D/g, ''))} inputMode="numeric" aria-invalid={Boolean(errors.price)} className={inputClass} />
+            <input value={values.price} onChange={(event) => set('price', event.target.value.replace(/\D/g, ''))} inputMode="numeric" maxLength={11} aria-invalid={Boolean(errors.price)} className={inputClass} />
           </Field>
         </div>
 
@@ -147,12 +195,14 @@ export function DealForm({ businessId, businessName, dealId, categories, branche
         </div>
 
         <div className="grid gap-5 sm:grid-cols-3">
-          <Field label={f.quantity} error={errors.quantity}>
-            <input value={values.unlimited ? '' : values.quantity} disabled={values.unlimited} onChange={(event) => set('quantity', event.target.value.replace(/\D/g, ''))} inputMode="numeric" aria-invalid={Boolean(errors.quantity)} className={inputClass} />
-            <span className="mt-2 flex items-center gap-2 text-sm text-slate-600">
+          <div>
+            <Field label={f.quantity} error={errors.quantity}>
+              <input value={values.unlimited ? '' : values.quantity} disabled={values.unlimited} onChange={(event) => set('quantity', event.target.value.replace(/\D/g, ''))} inputMode="numeric" aria-invalid={Boolean(errors.quantity)} className={inputClass} />
+            </Field>
+            <label className="mt-2 flex min-h-8 cursor-pointer items-center gap-2 text-sm text-slate-600">
               <input type="checkbox" checked={values.unlimited} onChange={(event) => set('unlimited', event.target.checked)} className="size-4 accent-[var(--primary)]" /> {f.unlimited}
-            </span>
-          </Field>
+            </label>
+          </div>
           <Field label={f.perCustomer} error={errors.perCustomerLimit}>
             <select value={values.perCustomerLimit} onChange={(event) => set('perCustomerLimit', event.target.value)} className={inputClass}>
               {Array.from({ length: DEAL_RULES.maxPerCustomer }, (_, index) => index + 1).map((count) => <option key={count} value={count}>{count}</option>)}
@@ -201,7 +251,13 @@ export function DealForm({ businessId, businessName, dealId, categories, branche
           </DealVisual>
           <div className="p-5">
             <p className="flex items-center gap-2 text-sm font-bold text-slate-700">{businessName} <BadgeCheck className="size-4 fill-emerald-500 text-white" aria-hidden /></p>
+            {values.isSet ? (
+              <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-black text-primary">
+                <Layers className="size-3.5" aria-hidden /> {[t.deal.set.badge, setPersons ? fmt(t.deal.set.persons, { count: setPersons }) : null].filter(Boolean).join(' · ')}
+              </p>
+            ) : null}
             <h3 className="mt-2 text-lg font-black text-navy">{values.title || f.titlePlaceholder}</h3>
+            {values.isSet && setItems.length ? <p className="mt-1 text-sm text-slate-500">{setSummary({ items: setItems, persons: setPersons })}</p> : null}
             <p className="mt-2"><strong className="text-2xl font-black text-primary">{formatNumber(price)} {t.common.sum}</strong> {original ? <span className="text-sm text-slate-400 line-through">{formatNumber(original)}</span> : null}</p>
             <p className="mt-2 flex items-center gap-1 text-xs text-slate-500"><MapPin className="size-3.5" aria-hidden /> {branches.find((branch) => values.branchIds.includes(branch.id))?.name ?? '—'}</p>
           </div>

@@ -20,7 +20,10 @@ class AccountService {
         // Interests chosen before signing in move to the account once.
         if (me.interests.isEmpty && settings.guestInterests.isNotEmpty) {
           await api.setInterests(settings.guestInterests);
-          _ref.invalidate(meProvider);
+          // "For you" on Home was asked before the account had them.
+          _ref
+            ..invalidate(meProvider)
+            ..invalidate(feedProvider);
         }
         // Telegram messages follow the app language (the server speaks uz/ru).
         if ((settings.locale == 'uz' || settings.locale == 'ru') && me.locale != settings.locale) {
@@ -44,10 +47,11 @@ class AccountService {
   }
 
   /// Throws [ApiError] `SOLE_OWNER` when the person alone owns a business and
-  /// [closeBusinesses] is false.
+  /// [closeBusinesses] is false (the account and its notifications stay then).
   Future<void> deleteAccount({bool closeBusinesses = false}) async {
-    await _ref.read(pushProvider).unregister();
     await _ref.read(apiProvider).deleteAccount(closeBusinesses: closeBusinesses);
+    // The server forgot this phone together with the account; so does the phone.
+    _ref.read(prefsProvider).pushToken = null;
     await _ref.read(sessionProvider.notifier).signOut();
   }
 

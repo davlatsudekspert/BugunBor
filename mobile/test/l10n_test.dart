@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:bugunbor/core/errors_en.dart';
+import 'package:bugunbor/data/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Map<String, dynamic> arb(String locale) => (jsonDecode(File('lib/l10n/app_$locale.arb').readAsStringSync()) as Map).cast<String, dynamic>();
@@ -39,6 +41,31 @@ void main() {
       // o‘ and g‘ take the turned comma (U+2018).
       expect(RegExp('[oOgG][’ʼ]').hasMatch(text), isFalse, reason: 'uz.$key should use o‘/g‘: $text');
     }
+  });
+
+  test('in English every error people can meet has English words', () {
+    // The server's error codes (the site's dictionary), less those the app
+    // words itself or only admins see.
+    final site = File('../lib/i18n/uz.ts').readAsStringSync();
+    final block = RegExp(r'\n  errors: \{([\s\S]*?)\n  \},').firstMatch(site)!.group(1)!;
+    final codes = RegExp(r'^    ([A-Z_]+):', multiLine: true).allMatches(block).map((match) => match.group(1)!).toSet();
+    expect(codes.length, greaterThan(40));
+    const ownWords = {'UNAUTHENTICATED', 'NOT_FOUND', 'RATE_LIMITED', 'SERVER'};
+    const adminOnly = {'CSRF', 'REASON_REQUIRED', 'SLUG_TAKEN', 'WEBHOOK_FAILED'};
+    expect(codes.difference(ownWords).difference(adminOnly).difference(englishErrors.keys.toSet()), isEmpty);
+    // No code the server does not have.
+    expect(englishErrors.keys.toSet().difference(codes), isEmpty);
+  });
+
+  test('in English categories and cities have English names', () {
+    const food = Category(slug: 'taomlar', nameUz: 'Taomlar', nameRu: 'Еда');
+    expect(food.name('en'), 'Food');
+    expect(food.name('ru'), 'Еда');
+    expect(food.name('uz'), 'Taomlar');
+    const city = City(slug: 'samarkand', nameUz: 'Samarqand', nameRu: 'Самарканд', latitude: 0, longitude: 0);
+    expect(city.name('en'), 'Samarkand');
+    // A category the app does not know yet keeps its Uzbek name.
+    expect(const Category(slug: 'yangi', nameUz: 'Yangi', nameRu: null).name('en'), 'Yangi');
   });
 
   test('Russian texts are Cyrillic', () {

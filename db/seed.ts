@@ -137,11 +137,11 @@ export async function seedDemoData(db: D1Database, now = new Date(), options: { 
   const dealRows: SqlValue[][] = [
     ...deals.map((deal) => [deal.id, deal.business, deal.category, deal.slug, deal.title, deal.description, deal.terms, deal.original, deal.price,
       Math.round(((deal.original - deal.price) / deal.original) * 100), toDbTime(addMinutes(now, deal.startMin)), toDbTime(addMinutes(now, deal.endMin)),
-      deal.total, deal.remaining, deal.limit, deal.status, deal.ttl, deal.visual, buildSearchText(deal.title, deal.description), nowDb,
+      deal.total, deal.remaining, deal.limit, deal.status, deal.ttl, deal.visual, null, null, buildSearchText(deal.title, deal.description), nowDb,
       deal.status === 'ACTIVE' ? nowDb : null, 'ONSITE_CODE', 'usr_owner_demo', 1]),
     ...catalog.deals.map((deal) => [deal.id, deal.businessId, deal.categoryId, deal.slug, deal.title, deal.description, deal.terms, deal.originalPrice,
       deal.price, deal.discountPercent, deal.startsAt, deal.endsAt, deal.totalQuantity, deal.remainingQuantity, deal.perCustomerLimit, 'ACTIVE',
-      deal.claimTtlMinutes, deal.visual, deal.searchText, nowDb, nowDb, 'ONSITE_CODE', 'usr_owner_demo', 1]),
+      deal.claimTtlMinutes, deal.visual, deal.setItemsJson, deal.setPersons, deal.searchText, nowDb, nowDb, 'ONSITE_CODE', 'usr_owner_demo', 1]),
   ];
 
   const dealBranchRows: SqlValue[][] = [
@@ -169,12 +169,13 @@ export async function seedDemoData(db: D1Database, now = new Date(), options: { 
       `ON CONFLICT(business_id, user_id) DO UPDATE SET role = excluded.role, revoked_at = NULL`),
     ...multiRow(db, `INSERT INTO deals(id, business_id, category_id, slug, title, description, terms, original_price_uzs, discounted_price_uzs,
         discount_percent, starts_at, ends_at, total_quantity, remaining_quantity, per_customer_limit, status, claim_ttl_minutes, visual,
-        search_text, submitted_at, approved_at, redemption_method, created_by_id, is_demo)`, dealRows,
+        set_items_json, set_persons, search_text, submitted_at, approved_at, redemption_method, created_by_id, is_demo)`, dealRows,
       `ON CONFLICT(id) DO UPDATE SET business_id = excluded.business_id, category_id = excluded.category_id, slug = excluded.slug,
         title = excluded.title, description = excluded.description, terms = excluded.terms,
         original_price_uzs = excluded.original_price_uzs, discounted_price_uzs = excluded.discounted_price_uzs,
         discount_percent = excluded.discount_percent, per_customer_limit = excluded.per_customer_limit,
-        claim_ttl_minutes = excluded.claim_ttl_minutes, visual = excluded.visual, search_text = excluded.search_text,
+        claim_ttl_minutes = excluded.claim_ttl_minutes, visual = excluded.visual, set_items_json = excluded.set_items_json,
+        set_persons = excluded.set_persons, search_text = excluded.search_text,
         is_demo = 1, deleted_at = NULL, archived_at = NULL,
         status = CASE WHEN ${reset} THEN excluded.status ELSE deals.status END,
         starts_at = CASE WHEN ${reset} THEN excluded.starts_at ELSE deals.starts_at END,

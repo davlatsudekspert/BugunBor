@@ -22,6 +22,7 @@ function BranchEditor({ businessId, branch, locale, t, onDone }: { businessId: s
   const b = t.biz.branches;
 
   async function save(form: HTMLFormElement) {
+    if (saving) return;
     const values = Object.fromEntries(new FormData(form).entries());
     const parsed = branchSchema.safeParse({ ...values, latitude: point?.latitude ?? null, longitude: point?.longitude ?? null });
     if (!parsed.success) {
@@ -32,25 +33,26 @@ function BranchEditor({ businessId, branch, locale, t, onDone }: { businessId: s
     }
     setSaving(true);
     const result = await apiRequest(`/api/v1/business/${businessId}`, branch ? { type: 'branch.update', branchId: branch.id, data: parsed.data } : { type: 'branch.create', data: parsed.data }, { networkError: t.common.networkError });
-    setSaving(false);
     if (!result.ok) {
+      setSaving(false);
       setMessage(result.message);
       setErrors(fieldMessages(result.fields, t.validation as Record<string, string>));
       return;
     }
+    // Stays busy while the list reloads, so a second tap cannot add the branch twice.
     onDone();
   }
 
   return (
     <form noValidate onSubmit={(event) => { event.preventDefault(); void save(event.currentTarget); }} className="grid gap-4 rounded-2xl border border-primary/30 bg-white p-5 sm:grid-cols-2">
-      <Field label={b.name} error={errors.name}><input name="name" defaultValue={branch?.name} placeholder={b.namePlaceholder} className={inputClass} /></Field>
+      <Field label={b.name} error={errors.name}><input name="name" defaultValue={branch?.name} maxLength={80} placeholder={b.namePlaceholder} className={inputClass} /></Field>
       <Field label={b.city} error={errors.city}>
         <select name="city" defaultValue={branch?.city ?? 'tashkent'} className={inputClass}>
           {CITIES.map((city) => <option key={city.slug} value={city.slug}>{locale === 'ru' ? city.ru : city.uz}</option>)}
         </select>
       </Field>
-      <Field label={b.address} error={errors.address} className="sm:col-span-2"><input name="address" defaultValue={branch?.address} className={inputClass} /></Field>
-      <Field label={b.phone} hint={t.common.optional} error={errors.phone}><input name="phone" type="tel" defaultValue={branch?.phone ?? ''} placeholder="+998" className={inputClass} /></Field>
+      <Field label={b.address} error={errors.address} className="sm:col-span-2"><input name="address" defaultValue={branch?.address} maxLength={240} className={inputClass} /></Field>
+      <Field label={b.phone} hint={t.common.optional} error={errors.phone}><input name="phone" type="tel" defaultValue={branch?.phone ?? ''} maxLength={20} placeholder="+998" className={inputClass} /></Field>
       <div className="grid grid-cols-2 gap-3">
         <Field label={b.open} error={errors.open}><input name="open" type="time" defaultValue={branch?.open ?? '09:00'} className={inputClass} /></Field>
         <Field label={b.close} error={errors.close}><input name="close" type="time" defaultValue={branch?.close ?? '21:00'} className={inputClass} /></Field>

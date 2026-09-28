@@ -72,13 +72,6 @@ class JoinScreen extends ConsumerWidget {
         ),
       );
     }
-    // The server's limit, said before the form is filled in.
-    if (meValue.memberships.where((item) => item.role == 'OWNER').length >= maxOwnedBusinesses) {
-      return Scaffold(
-        appBar: AppBar(title: Text(l.addBusiness)),
-        body: StatePanel(icon: Icons.storefront_outlined, title: l.bizLimit, actionLabel: l.bizOpenProfile, onAction: () => context.go('/profile')),
-      );
-    }
     return _JoinForm(me: meValue, config: configValue);
   }
 }
@@ -430,6 +423,14 @@ class _JoinFormState extends ConsumerState<_JoinForm> {
   Widget build(BuildContext context) {
     final l = L.of(context);
     final created = _created;
+    // The server's limit, said before the form is filled in (not after the
+    // fifth business was just added: then its success is shown).
+    if (created == null && widget.me.memberships.where((item) => item.role == 'OWNER').length >= maxOwnedBusinesses) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l.addBusiness)),
+        body: StatePanel(icon: Icons.storefront_outlined, title: l.bizLimit, actionLabel: l.bizOpenProfile, onAction: () => context.go('/profile')),
+      );
+    }
     return PopScope(
       canPop: created != null,
       onPopInvokedWithResult: (didPop, _) {

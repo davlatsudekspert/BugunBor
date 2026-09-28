@@ -39,6 +39,8 @@ export const DEAL_VISUALS = {
   kitchen: { emoji: '🍽️', gradient: 'from-[#a9b8c8] to-[#56687c]' },
   flowers: { emoji: '💐', gradient: 'from-[#f7a6c0] to-[#d2477a]' },
   phone: { emoji: '📱', gradient: 'from-[#7fa7d8] to-[#35598d]' },
+  bedding: { emoji: '🛏️', gradient: 'from-[#c9b6f2] to-[#7f63c4]' },
+  towels: { emoji: '🛁', gradient: 'from-[#9fdcd4] to-[#3f9a90]' },
   crafts: { emoji: '🏺', gradient: 'from-[#6fb1d6] to-[#2a6f9e]' },
   fabric: { emoji: '🧵', gradient: 'from-[#c9a0f0] to-[#8150c4]' },
   suzani: { emoji: '🪡', gradient: 'from-[#f59ab0] to-[#c2415f]' },

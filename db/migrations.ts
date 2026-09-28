@@ -530,4 +530,39 @@ const userAvatars: Migration = {
   },
 };
 
-export const migrations: readonly Migration[] = [baseline, systemV1, billing, media, engagement, payments, autoModeration, freeLaunch, privacyConsent, appSupport, userAvatars];
+/**
+ * Complaints about a booked code and a deal held back after several of them
+ * (modules/reports.ts); why a business cancelled a booking, and codes that
+ * ran out unused (modules/redemptions/contact.ts, no-shows.ts).
+ */
+const codeIssues: Migration = {
+  id: '0012_code_issues',
+  async build({ db, columns }) {
+    const statements: D1PreparedStatement[] = [];
+    if (!(await columns('deals')).has('complaint_hold_at')) statements.push(db.prepare(`ALTER TABLE deals ADD COLUMN complaint_hold_at TEXT`));
+    if (!(await columns('redemptions')).has('cancel_reason')) statements.push(db.prepare(`ALTER TABLE redemptions ADD COLUMN cancel_reason TEXT`));
+    statements.push(
+      ...sql(db, [
+        `CREATE INDEX IF NOT EXISTS idx_reports_target ON reports(target_type, target_id, status)`,
+        `CREATE INDEX IF NOT EXISTS idx_redemptions_user_expiry ON redemptions(user_id, expires_at)`,
+      ]),
+    );
+    return statements;
+  },
+};
+
+/** A deal can be a set: what is in it and for how many people (lib/deal-set.ts). */
+const dealSets: Migration = {
+  id: '0013_deal_sets',
+  async build({ db, columns }) {
+    const existing = await columns('deals');
+    const statements: D1PreparedStatement[] = [];
+    if (!existing.has('set_items_json')) statements.push(db.prepare(`ALTER TABLE deals ADD COLUMN set_items_json TEXT`));
+    if (!existing.has('set_persons')) statements.push(db.prepare(`ALTER TABLE deals ADD COLUMN set_persons INTEGER`));
+    return statements;
+  },
+};
+
+export const migrations: readonly Migration[] = [
+  baseline, systemV1, billing, media, engagement, payments, autoModeration, freeLaunch, privacyConsent, appSupport, userAvatars, codeIssues, dealSets,
+];

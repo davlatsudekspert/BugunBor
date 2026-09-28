@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { requireWorkspace } from '@/modules/businesses/current';
 import { listBusinessDeals, type BusinessDealRow } from '@/modules/deals/service';
 import { flagText, ownerFlags } from '@/modules/moderation/auto';
+import { firstValues } from '@/lib/search-params';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -45,7 +46,7 @@ const tone: Record<string, string> = {
 };
 
 export default async function BusinessDealsPage({ searchParams }: { searchParams: Promise<{ f?: string }> }) {
-  const { f } = await searchParams;
+  const { f } = firstValues(await searchParams);
   const ws = await requireWorkspace('/business/deals', 'deal.write');
   const { t, locale, db, membership } = ws;
   const filter: Filter = FILTERS.includes(f as Filter) ? (f as Filter) : 'all';
@@ -79,7 +80,7 @@ export default async function BusinessDealsPage({ searchParams }: { searchParams
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className={cn('rounded-full px-2.5 py-1 text-xs font-bold', tone[deal.effective] ?? 'bg-slate-100 text-slate-600')}>{t.deal.status[deal.effective]}</span>
-                    {deal.isSponsored ? <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800"><Crown className="size-3.5" aria-hidden /> TOP</span> : null}
+                    {deal.isSponsored ? <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800"><Crown className="size-3.5" aria-hidden /> {t.billing.topBadge}</span> : null}
                     <span className="text-xs text-slate-500">{fmt(d.window, { from: formatMoment(parseDbTime(deal.startsAt), t, locale), to: formatMoment(parseDbTime(deal.endsAt), t, locale) })}</span>
                   </div>
                   <p className="mt-1.5 truncate text-lg font-black text-navy">{deal.title}</p>
@@ -91,6 +92,8 @@ export default async function BusinessDealsPage({ searchParams }: { searchParams
                     <div className="flex gap-1"><dt>{d.views}:</dt><dd className="font-bold text-navy">{deal.viewCount}</dd></div>
                   </dl>
                   {deal.status === 'REJECTED' && deal.rejectionReason ? <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{fmt(d.rejectedReason, { reason: deal.rejectionReason })}</p> : null}
+                  {deal.held ? <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">⏸ {d.held}</p> : null}
+                  {deal.complaints > 0 ? <p className="mt-2 text-xs font-bold text-red-700">{fmt(d.complaints, { count: deal.complaints })}</p> : null}
                   {deal.status === 'PENDING_REVIEW' && ownerFlags(deal.autoNote).length ? <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">{fmt(t.moderation.ownerFixDeal, { reasons: flagText(ownerFlags(deal.autoNote), t) })}</p> : null}
                   <div className="mt-3">
                     <DealActions
@@ -98,6 +101,7 @@ export default async function BusinessDealsPage({ searchParams }: { searchParams
                       dealId={deal.id}
                       slug={deal.slug}
                       status={deal.status}
+                      held={deal.held}
                       isSponsored={deal.isSponsored}
                       labels={{ ...d.actions, confirmEnd: d.confirmEnd, confirmDelete: d.confirmDelete, topOn: t.billing.topOn, topOff: t.billing.topOff, networkError: t.common.networkError }}
                     />

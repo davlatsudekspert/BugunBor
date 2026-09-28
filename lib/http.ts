@@ -109,10 +109,26 @@ export function route<Args extends unknown[]>(handler: (request: Request, ...arg
   };
 }
 
-/** Returns a same-site path to redirect to after login, or the fallback. */
+/**
+ * Returns a same-site path to redirect to after login, or the fallback.
+ * Browsers drop tabs and line breaks and read "\\" as "/" in addresses, so
+ * "/<tab>/evil.example" would become "//evil.example": such values are
+ * refused, and what is left must stay on this site once resolved.
+ */
 export function safeReturnPath(value: unknown, fallback = '/') {
-  if (typeof value !== 'string') return fallback;
-  if (!value.startsWith('/') || value.startsWith('//') || value.startsWith('/\\')) return fallback;
-  if (value.length > 500) return fallback;
-  return value;
+  if (typeof value !== 'string' || value.length > 500) return fallback;
+  let control = false;
+  for (let index = 0; index < value.length; index++) {
+    const code = value.charCodeAt(index);
+    if (code < 0x20 || code === 0x7f) control = true;
+  }
+  if (!value.startsWith('/') || control || value.includes('\\')) return fallback;
+  let url: URL;
+  try {
+    url = new URL(value, 'https://bugunbor.invalid');
+  } catch {
+    return fallback;
+  }
+  if (url.origin !== 'https://bugunbor.invalid') return fallback;
+  return `${url.pathname}${url.search}${url.hash}`;
 }

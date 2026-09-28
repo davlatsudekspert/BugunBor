@@ -72,7 +72,8 @@
       "branchCount": 2,
       "distanceKm": null,
       "effective": "LIVE",
-      "isDemo": false
+      "isDemo": false,
+      "set": null
     }
   ],
   "upcoming": [],

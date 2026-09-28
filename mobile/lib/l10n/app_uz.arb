@@ -627,7 +627,7 @@
   "dealLocked": "Tasdiqlangan aksiyaning shartlarini o‘zgartirib bo‘lmaydi. O‘zgartirish uchun nusxa oling.",
   "dealStLive": "Faol",
   "dealStScheduled": "Tez orada",
-  "dealStSoldOut": "Tugadi",
+  "dealStSoldOut": "Hammasi band",
   "dealStExpired": "Muddati o‘tgan",
   "dealStPaused": "Pauzada",
   "dealStDraft": "Qoralama",
@@ -775,5 +775,118 @@
         "type": "String"
       }
     }
-  }
+  },
+  "timeEnded": "Tugagan",
+  "codeUsedText": "Kod qabul qilindi. Tashrif qanday o‘tdi?",
+  "deletedUser": "O‘chirilgan foydalanuvchi",
+  "ratingLabel": "Baho: {value} / 5",
+  "@ratingLabel": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "openSettings": "Sozlamalar",
+  "staleNote": "Yangilab bo‘lmadi — oxirgi ma’lumot ko‘rsatilmoqda",
+  "codeIssueAsk": "Aksiya berilmadimi?",
+  "codeIssueTitle": "Kassada nima bo‘ldi?",
+  "issueNotAvailable": "Aksiya berilmadi: mahsulot yoki xizmat yo‘q edi",
+  "issueCodeRefused": "Kodni qabul qilishmadi",
+  "issueWrongPrice": "Narx aksiyadagidan boshqa edi",
+  "issueBranchClosed": "Filial yopiq edi",
+  "codeIssueSent": "Shikoyatingiz qabul qilindi. Moderator ko‘rib chiqadi.",
+  "canceledOutOfStock": "Biznes bekor qildi: mahsulot tugadi",
+  "canceledClosed": "Biznes bekor qildi: filial yopiq",
+  "dealHeld": "Shikoyatlar sababli to‘xtatildi — moderator tekshiradi",
+  "dealComplaints": "Shikoyatlar (30 kun): {count}",
+  "@dealComplaints": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "bookingWaiting": "Kutyapmiz",
+  "bookingDelay": "Kechikyapmiz",
+  "bookingCancel": "Bekor qilish",
+  "bookingOutOfStock": "Mahsulot tugadi",
+  "bookingClosed": "Filial yopiq",
+  "bookingSent": "Yuborildi",
+  "bookingCancelAsk": "Bronni bekor qilasizmi? Mijozga sababi bilan xabar boradi, joy boshqalarga qaytadi.",
+  "bookingHint": "Mijoz raqami yashirin: xabar BugunBor orqali boradi.",
+  "noShowWarning": "Diqqat: oxirgi 7 kunda {count} ta kod ishlatilmay qoldi. Yana bittasi bo‘lsa, band qilish 24 soatga to‘xtaydi. Bora olmasangiz, kodni bekor qiling.",
+  "@noShowWarning": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "noShowPaused": "Oxirgi 7 kunda 3 ta kod ishlatilmay qoldi. Band qilish {time} gacha to‘xtatildi.",
+  "@noShowPaused": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "branchOpenNow": "Hozir ochiq",
+  "branchOpenUntil": "{time} gacha ochiq",
+  "@branchOpenUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "branchClosedNow": "Yopiq · {time} da ochiladi",
+  "@branchClosedNow": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "branchClosedWarning": "Bu filial hozir yopiq va {time} da ochiladi. Kod {minutes} daqiqa amal qiladi — ochilishiga yaqinroq band qiling.",
+  "@branchClosedWarning": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "setBadge": "Set",
+  "setPersons": "{count} kishilik",
+  "@setPersons": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "setContents": "Set tarkibi",
+  "filterSets": "Setlar",
+  "dealSetToggle": "Bu set (to‘plam)",
+  "dealSetHint": "Bir nechta taom yoki mahsulot birga: masalan, 2 ta osh, 2 ta salat va choy.",
+  "dealSetItemName": "{number}. Nomi",
+  "@dealSetItemName": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "dealSetItemHint": "Masalan, Osh",
+  "dealSetQty": "Soni",
+  "dealSetAdd": "Yana qo‘shish",
+  "dealSetRemove": "Olib tashlash",
+  "dealSetPersons": "Necha kishilik",
+  "dealSetPersonsAny": "Ko‘rsatilmagan",
+  "dealSetPriceHint": "Asl narx — set ichidagilarning odatdagi narxlari yig‘indisi.",
+  "valSetItems": "Setga kamida 2 ta, ko‘pi bilan 12 ta narsa kiriting.",
+  "bizBookings": "Faol bronlar"
 }

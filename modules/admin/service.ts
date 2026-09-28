@@ -1,3 +1,4 @@
+import { type DealSet, parseDealSet } from '@/lib/deal-set';
 import { dealPhotoUrl } from '@/lib/photos';
 import { searchPattern } from '@/lib/search';
 import { startOfTashkentDay, toDbTime } from '@/lib/time';
@@ -90,6 +91,8 @@ export type AdminDeal = {
   ownPhoto: boolean;
   autoNote: string | null;
   autoDecided: number | null;
+  /** What a set holds, so a moderator reviews it like the rest of the text. */
+  set: DealSet | null;
 };
 
 export async function listAdminDeals(db: D1Database, filter: 'pending' | 'auto' | 'live' | 'all', now = new Date()) {
@@ -109,13 +112,19 @@ export async function listAdminDeals(db: D1Database, filter: 'pending' | 'auto' 
         d.claim_ttl_minutes AS claimTtlMinutes, d.visual, c.slug AS categorySlug, c.name_uz AS categoryName,
         b.id AS businessId, b.name AS businessName, b.verification_status AS businessStatus, d.submitted_at AS submittedAt, d.is_demo AS isDemo,
         d.photo_id AS photoId, d.auto_review_note AS autoNote, ${autoDecidedSql('Deal', 'd')} AS autoDecided,
+        d.set_items_json AS setItemsJson, d.set_persons AS setPersons,
         (SELECT GROUP_CONCAT(br.name, ', ') FROM deal_branches db JOIN branches br ON br.id = db.branch_id WHERE db.deal_id = d.id AND br.deleted_at IS NULL) AS branchNames
       FROM deals d JOIN businesses b ON b.id = d.business_id JOIN categories c ON c.id = d.category_id
       WHERE d.deleted_at IS NULL AND ${where} AND (?1 IS NOT NULL) AND (?2 IS NOT NULL)
       ORDER BY COALESCE(d.submitted_at, d.created_at) ${filter === 'pending' ? 'ASC' : 'DESC'} LIMIT 200`)
     .bind(nowDb, toDbTime(new Date(now.getTime() - 7 * 86_400_000)))
-    .all<Omit<AdminDeal, 'photo' | 'ownPhoto'> & { photoId: string | null }>();
-  return rows.results.map(({ photoId, ...row }) => ({ ...row, photo: dealPhotoUrl({ photoId, isDemo: row.isDemo, visual: row.visual, slug: row.slug }), ownPhoto: Boolean(photoId) }));
+    .all<Omit<AdminDeal, 'photo' | 'ownPhoto' | 'set'> & { photoId: string | null; setItemsJson: string | null; setPersons: number | null }>();
+  return rows.results.map(({ photoId, setItemsJson, setPersons, ...row }) => ({
+    ...row,
+    photo: dealPhotoUrl({ photoId, isDemo: row.isDemo, visual: row.visual, slug: row.slug }),
+    ownPhoto: Boolean(photoId),
+    set: parseDealSet(setItemsJson, setPersons),
+  }));
 }
 
 export type AdminUser = { id: string; displayName: string; phone: string | null; role: PlatformRole; status: UserStatus; createdAt: string; lastLoginAt: string | null; businesses: number };

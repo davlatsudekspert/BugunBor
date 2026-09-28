@@ -13,6 +13,8 @@ export const GUIDES = [
   { slug: '2-royxatdan-otish', seconds: 40 },
   { slug: '3-biznes-qoshish', seconds: 46 },
   { slug: '4-aksiya-qoshish', seconds: 66 },
+  { slug: '5-aksiyani-band-qilish', seconds: 47 },
+  { slug: '6-kodni-tekshirish', seconds: 42 },
 ] as const;
 export type GuideSlug = (typeof GUIDES)[number]['slug'];
 /** Shows the APK being downloaded, so it is listed only while the site serves the APK. */
@@ -38,7 +40,7 @@ const VIDEO_PATH = /^\/qollanma\/video\/([a-z0-9-]+)\.mp4$/;
  * CDN, at the commit that added it. Visitors only ever talk to bugunbor.uz.
  * Change the commit when the videos change.
  */
-export const GUIDE_SOURCE = 'https://cdn.jsdelivr.net/gh/davlatsudekspert/BugunBor@ee940ac/public';
+export const GUIDE_SOURCE = 'https://cdn.jsdelivr.net/gh/davlatsudekspert/BugunBor@3b69dcf/public';
 const SLUGS = new Set<string>([PROMO.slug, ...GUIDES.map((guide) => guide.slug)]);
 
 /**

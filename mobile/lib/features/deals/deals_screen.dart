@@ -11,6 +11,7 @@ import '../../design/widgets/common.dart';
 import '../../design/widgets/form_fields.dart';
 import '../../design/widgets/status_pill.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../shell/shell_screen.dart';
 import 'deal_draft.dart';
 import 'deal_form_screen.dart';
 import 'deal_visual.dart';
@@ -36,14 +37,15 @@ Tone dealTone(String effective) => switch (effective) {
 
 /// What can be done next with [deal] (the server's rules in
 /// modules/deals/service.ts): changed while a draft or rejected, withdrawn
-/// from review, paused, resumed or ended on the air, copied any time.
+/// from review, paused, resumed or ended on the air, copied any time. One
+/// held after customers' complaints only a moderator puts back on the air.
 List<String> dealActions(BusinessDeal deal) {
   final onAir = deal.status == 'ACTIVE' && deal.effective != 'EXPIRED';
   return [
     if (deal.editable) ...['edit', 'submit'],
     if (deal.status == 'PENDING_REVIEW') 'withdraw',
     if (onAir) ...['view', 'pause'],
-    if (deal.status == 'PAUSED') 'resume',
+    if (deal.status == 'PAUSED' && !deal.held) 'resume',
     if (deal.status == 'ACTIVE' || deal.status == 'PAUSED') 'end',
     'duplicate',
     if (deal.editable) 'delete',
@@ -151,7 +153,7 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
       // A copy is made to be changed: open it.
       if (copy != null) await context.push('$_base/$copy/edit');
     } catch (error) {
-      if (mounted) _snack(errorText(context, error));
+      if (mounted) showErrorSnack(context, error);
     } finally {
       if (mounted) setState(() => _busy = null);
     }
@@ -174,6 +176,15 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
                 padding: const EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.sm),
                 child: Text(deal.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium),
               ),
+              // Why "Davom ettirish" is missing: a moderator puts it back.
+              if (deal.held)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.sm),
+                  child: Text(
+                    l.dealHeld,
+                    style: TextStyle(color: danger, fontSize: 13, fontWeight: FontWeight.w700, height: 1.35),
+                  ),
+                ),
               if (!deal.editable && deal.status != 'ARCHIVED')
                 Padding(
                   padding: const EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.sm),
@@ -200,13 +211,14 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
-    final config = ref.watch(configProvider).value;
+    final config = ref.watch(currentConfigProvider);
     // A server without the deal rules (not yet updated) has no deals list
     // either: the site's workspace still works.
     if (config != null && config.deal.visuals.isEmpty) {
       final locale = ref.watch(settingsProvider.select((settings) => settings.locale));
       return Scaffold(
         appBar: AppBar(title: Text(l.dealsTitle)),
+        bottomNavigationBar: const PageTabBar(),
         body: StatePanel(
           icon: Icons.local_offer_outlined,
           title: l.dealsNeedUpdate,
@@ -219,6 +231,7 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
     final visuals = config?.deal ?? const DealRules();
     return Scaffold(
       appBar: AppBar(title: Text(l.dealsTitle)),
+      bottomNavigationBar: const PageTabBar(),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: Brand.primaryStrong,
         foregroundColor: Colors.white,
@@ -228,7 +241,7 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
       ),
       body: switch (deals) {
         AsyncValue(:final value?) => RefreshIndicator(
-          onRefresh: () => ref.refresh(businessDealsProvider(widget.businessId).future).then((_) {}, onError: (_) {}),
+          onRefresh: () => refreshing(context, ref.refresh(businessDealsProvider(widget.businessId).future)),
           child: _list(context, l, value, visuals),
         ),
         AsyncValue(:final error?) => StatePanel.error(context, error, onRetry: () => ref.invalidate(businessDealsProvider(widget.businessId))),
@@ -384,6 +397,21 @@ class _DealCard extends StatelessWidget {
                           Text(
                             l.dealsRejected(deal.rejectionReason!),
                             style: TextStyle(color: errorColor(context), fontSize: 13, fontWeight: FontWeight.w600, height: 1.35),
+                          ),
+                        ],
+                        // Customers said it was not honoured: why it is off, and how often.
+                        if (deal.held) ...[
+                          const SizedBox(height: Gap.xs),
+                          Text(
+                            l.dealHeld,
+                            style: TextStyle(color: errorColor(context), fontSize: 13, fontWeight: FontWeight.w700, height: 1.35),
+                          ),
+                        ],
+                        if (deal.complaints > 0) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            l.dealComplaints('${deal.complaints}'),
+                            style: TextStyle(color: toneColor(context, Tone.warning), fontSize: 13, fontWeight: FontWeight.w700),
                           ),
                         ],
                       ],

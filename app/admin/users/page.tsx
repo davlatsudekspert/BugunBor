@@ -10,6 +10,7 @@ import { parseDbTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { listAdminUsers } from '@/modules/admin/service';
 import { requireAdmin } from '@/modules/auth/current';
+import { firstValues } from '@/lib/search-params';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -17,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AdminUsersPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const { q } = await searchParams;
+  const { q } = firstValues(await searchParams);
   const user = await requireAdmin('/admin/users');
   const [{ t, locale }, db] = await Promise.all([getI18n(), getDb()]);
   const users = await listAdminUsers(db, q ?? null);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { cacheablePage, pageCacheKey } from './page-cache';
+import { apiCacheKey, cacheState, cacheableApi, cacheablePage, pageCacheKey } from './page-cache';
 
 const page = (path: string, headers: Record<string, string> = {}, method = 'GET') =>
   new Request(`https://bugunbor.uz${path}`, { method, headers: { accept: 'text/html,application/xhtml+xml', ...headers } });
@@ -33,5 +33,47 @@ describe('guest page cache', () => {
     expect(cacheablePage(new Response('gone', { status: 404, headers: html }))).toBe(false);
     expect(cacheablePage(new Response('x', { headers: { ...html, 'set-cookie': 'bb_city=tashkent' } }))).toBe(false);
     expect(cacheablePage(new Response('{}', { headers: { 'content-type': 'application/json' } }))).toBe(false);
+  });
+});
+
+describe('public API cache', () => {
+  const call = (path: string, headers: Record<string, string> = {}, method = 'GET') => new Request(`https://bugunbor.uz${path}`, { method, headers: { 'x-app': 'bugunbor', ...headers } });
+
+  it('shares config and the deal list with everyone, keyed by build and language', () => {
+    expect(apiCacheKey(call('/api/v1/config', { 'x-locale': 'ru' }), 'b1')?.key.url).toBe('https://bugunbor.uz/api/v1/config?__build=b1&__locale=ru');
+    expect(apiCacheKey(call('/api/v1/config', { authorization: 'Bearer abcdefghijklmnopqrstu' }), 'b1')?.seconds).toBe(60);
+    expect(apiCacheKey(call('/api/v1/deals?city=tashkent', { cookie: 'bb_session=abc' }), 'b1')?.key.url).toBe('https://bugunbor.uz/api/v1/deals?city=tashkent&__build=b1&__locale=');
+  });
+
+  it('keeps the feed, a deal and a business for guests only', () => {
+    for (const path of ['/api/v1/feed?city=tashkent', '/api/v1/deals/osh-1', '/api/v1/businesses/kafe']) {
+      expect(apiCacheKey(call(path), 'b1'), path).not.toBeNull();
+      expect(apiCacheKey(call(path, { authorization: 'Bearer abcdefghijklmnopqrstu' }), 'b1'), path).toBeNull();
+      expect(apiCacheKey(call(path, { cookie: 'bb_session=abc' }), 'b1'), path).toBeNull();
+    }
+  });
+
+  it('never caches writes, personal answers or answers for a location', () => {
+    expect(apiCacheKey(call('/api/v1/deals/deal-1/view', {}, 'POST'), 'b1')).toBeNull();
+    expect(apiCacheKey(call('/api/v1/deals/deal-1/redemptions', {}, 'POST'), 'b1')).toBeNull();
+    for (const path of ['/api/v1/me', '/api/v1/me/redemptions', '/api/v1/me/avatar', '/api/v1/business/biz', '/api/v1/admin', '/api/v1/auth/telegram/status']) {
+      expect(apiCacheKey(call(path), 'b1'), path).toBeNull();
+    }
+    expect(apiCacheKey(call('/api/v1/feed?lat=41.3&lng=69.2'), 'b1')).toBeNull();
+    expect(apiCacheKey(call('/api/v1/deals?sort=near&lat=41.3&lng=69.2'), 'b1')).toBeNull();
+  });
+
+  it('stores only complete JSON answers without cookies', () => {
+    const json = { 'content-type': 'application/json' };
+    expect(cacheableApi(new Response('{}', { headers: json }))).toBe(true);
+    expect(cacheableApi(new Response('{}', { status: 404, headers: json }))).toBe(false);
+    expect(cacheableApi(new Response('{}', { headers: { ...json, 'set-cookie': 'bb_city=tashkent' } }))).toBe(false);
+    expect(cacheableApi(new Response('<p>', { headers: { 'content-type': 'text/html' } }))).toBe(false);
+  });
+
+  it('serves a fresh copy as is and renews a stale one', () => {
+    expect(cacheState(1_000, 30, 1_000 + 30_000)).toBe('HIT');
+    expect(cacheState(1_000, 30, 1_000 + 30_001)).toBe('STALE');
+    expect(cacheState(0, 30, Date.now())).toBe('STALE');
   });
 });

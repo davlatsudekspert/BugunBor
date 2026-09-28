@@ -180,6 +180,21 @@ describe('automatic moderation', () => {
     expect(await autoModerateBusiness(db, businessId, later(5))).toEqual({ status: 'VERIFIED', flags: [] });
   });
 
+  it('sends the moderators at most one alert an hour for the same business, however often it is sent again', async () => {
+    const withLink = { description: 'Menyu va narxlar: www.mening-kafem.uz saytida, keling!' };
+    const { businessId } = await onboard(withLink);
+    await autoModerateBusiness(db, businessId, NOW);
+    expect(await alerts('REVIEW_NEEDED')).toHaveLength(2);
+    for (const minutes of [5, 10, 20]) {
+      await updateBusinessProfile(db, { businessId, userId: 'owner', data: { ...profile, ...withLink }, resubmit: true }, later(minutes));
+      await autoModerateBusiness(db, businessId, later(minutes));
+    }
+    expect(await alerts('REVIEW_NEEDED')).toHaveLength(2);
+    await updateBusinessProfile(db, { businessId, userId: 'owner', data: { ...profile, ...withLink }, resubmit: true }, later(70));
+    await autoModerateBusiness(db, businessId, later(70));
+    expect(await alerts('REVIEW_NEEDED')).toHaveLength(4);
+  });
+
   it('never approves on its own what a moderator rejected before', async () => {
     const { businessId } = await onboard();
     await updateSettings(db, { actorId: 'admin', values: { auto_approve_businesses: '0' } });

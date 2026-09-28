@@ -2,9 +2,11 @@
 // contracts: every main screen at 360, 390 and 430 px wide, the three states
 // (loading → content, empty, error → retry), tap targets, and the flows that
 // matter most (first start, deal → sign-in, codes, session end).
+import 'package:bugunbor/app/router.dart';
 import 'package:bugunbor/features/deal/deal_screen.dart';
 import 'package:bugunbor/features/home/home_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/fakes.dart';
@@ -69,6 +71,46 @@ void main() {
     }
     // And the longest one still fits its cell.
     expect(tester.getRect(find.text('Ko‘ngilochar')).width, lessThanOrEqualTo(360 / 4));
+  });
+
+  testWidgets('a live deal with distance, time left and few left fits the smallest phone with large text', (tester) async {
+    final server = FakeServer.standard();
+    final feed = contractMap('feed');
+    final deal = {
+      ...(feed['nearby'] as List).first as Map<String, dynamic>,
+      'remaining': 2,
+      'distanceKm': 12.4,
+      'endsAt': serverTime(DateTime.now().toUtc().add(const Duration(hours: 2, minutes: 40))),
+    };
+    server.routes['GET /api/v1/feed'] = (_) => {
+      'data': {
+        ...feed,
+        'nearby': [deal],
+        'ending': [deal],
+      },
+    };
+    for (final locale in ['uz', 'ru']) {
+      await pumpApp(tester, server: server, size: phoneSizes['360']!, textScale: 1.3, locale: locale);
+      await showDeal(tester);
+    }
+  });
+
+  testWidgets('a deal opened from a link has a way back into the app', (tester) async {
+    await pumpApp(tester, server: FakeServer.standard());
+    final container = ProviderScope.containerOf(tester.element(find.byType(MaterialApp)));
+    // As an App Link or a notification opens it: the whole location at once.
+    container.read(routerProvider).go('/deals/osh');
+    await settle(tester);
+    expect(find.byType(DealScreen), findsOneWidget);
+    await tester.tap(find.byType(BackButtonIcon));
+    await settle(tester);
+    expect(find.byType(HomeScreen), findsOneWidget);
+    // The phone's back button does the same.
+    container.read(routerProvider).go('/businesses/kafe');
+    await settle(tester);
+    await tester.binding.handlePopRoute();
+    await settle(tester);
+    expect(find.byType(HomeScreen), findsOneWidget);
   });
 
   testWidgets('first start: language, interests, city — then home', (tester) async {

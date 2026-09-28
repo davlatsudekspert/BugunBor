@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { getBillingSettings, listPlans } from '@/modules/billing/service';
 import { requireWorkspace } from '@/modules/businesses/current';
 import { checkoutAvailable } from '@/modules/payments/service';
+import { firstValues } from '@/lib/search-params';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -27,7 +28,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   const { t, locale, db, membership, subscription } = ws;
   // During the free launch there is nothing to buy.
   if (!subscription.tariffs) redirect('/business/dashboard');
-  const { order: orderId } = await searchParams;
+  const { order: orderId } = firstValues(await searchParams);
   const payments = getConfig().payments;
   // Coming back from Payme or Click: this business's order, as the provider's server left it.
   const returned = orderId

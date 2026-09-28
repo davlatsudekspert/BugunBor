@@ -34,9 +34,11 @@
       "status": "CLAIMED",
       "createdAt": "2026-09-25 10:00:00",
       "completedAt": null,
+      "expiresAt": "2026-09-25 11:00:00",
       "dealTitle": "Osh",
       "customerName": "Alice Karimova",
-      "branchName": "Markaz"
+      "branchName": "Markaz",
+      "sent": []
     }
   ],
   "setup": [

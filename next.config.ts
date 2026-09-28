@@ -11,6 +11,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Titles, descriptions and share previews always go in <head>, for every
+  // visitor: link previews (Telegram, WhatsApp) and search engines read them
+  // there, and a guest page cached for one visitor is right for all of them.
+  htmlLimitedBots: /.*/,
   async headers() {
     // vinext's '/:path*' does not match the root, so '/' is listed on its own.
     return [
