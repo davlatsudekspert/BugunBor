@@ -246,11 +246,11 @@ jobs:
             --dart-define=APP_BUILD=${{ github.run_number }} --dart-define=APP_VERSION=$APP_VERSION \
             --dart-define=PUSH_ENABLED=${PUSH_ENABLED:-false}"
           mkdir -p out
-          flutter build apk $flags --target-platform android-arm64
-          ./tool/check_release.sh build/app/outputs/flutter-apk/app-release.apk
+          flutter build apk $flags --target-platform android-arm64 -P disable-abi-filtering=true -P bugunbor-abi=arm64-v8a
+          ./tool/check_release.sh build/app/outputs/flutter-apk/app-release.apk arm64-v8a
           cp build/app/outputs/flutter-apk/app-release.apk out/BugunBor-arm64.apk
-          flutter build apk $flags --target-platform android-arm
-          ./tool/check_release.sh build/app/outputs/flutter-apk/app-release.apk
+          flutter build apk $flags --target-platform android-arm -P disable-abi-filtering=true -P bugunbor-abi=armeabi-v7a
+          ./tool/check_release.sh build/app/outputs/flutter-apk/app-release.apk armeabi-v7a
           cp build/app/outputs/flutter-apk/app-release.apk out/BugunBor-armv7.apk
           (cd out && sha256sum *.apk > SHA256SUMS.txt && cat SHA256SUMS.txt && ls -la)
       - name: GitHub release (the newest is what the site gives)
