@@ -211,6 +211,7 @@ export const uz = {
   },
   discover: {
     title: 'Bugungi aksiyalar',
+    placeTitle: '{name}: bugungi aksiyalar',
     kicker: 'Jonli katalog',
     searchPlaceholder: 'Taom, xizmat yoki biznes…',
     allCategories: 'Barcha kategoriyalar',
@@ -229,7 +230,7 @@ export const uz = {
   },
   categories: {
     title: 'Kategoriyalar',
-    text: 'Qiziqishingiz bo‘yicha faol aksiyalarni toping.',
+    text: 'Taomlar, kofe, go‘zallik, sport, ko‘ngilochar, xizmatlar va yetkazib berish: yaqin bizneslarning bugungi aksiyalarini qiziqishingiz bo‘yicha toping.',
     count: '{count} ta faol aksiya',
     emptyTitle: 'Bu kategoriyada hozir aksiya yo‘q',
     emptyText: 'Boshqa kategoriya yoki shaharni tanlab ko‘ring.',

@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { uz } from '@/lib/i18n/uz';
+import { categoryAbout, cityAbout } from '@/lib/place-texts';
 import { toDbTime } from '@/lib/time';
 import { SESSION_COOKIE, createSession } from '@/modules/auth/sessions';
 import { NOW, marketplace } from '@/test/fixtures';
@@ -47,11 +48,19 @@ const { default: Home } = await import('./page');
 const { default: DealPage } = await import('./deals/[slug]/page');
 const { default: BusinessPage } = await import('./businesses/[slug]/page');
 const { default: ContactPage } = await import('./contact/page');
+const categoryPage = await import('./categories/[slug]/page');
+const discoverPage = await import('./discover/page');
+const { default: sitemap } = await import('./sitemap');
 
 const minutes = (value: number) => toDbTime(new Date(NOW.getTime() + value * 60_000));
 const html = async (page: Promise<React.ReactNode>) => renderToStaticMarkup(await page);
 const deal = (slug: string) => html(DealPage({ params: Promise.resolve({ slug }) }));
 const business = (slug: string) => html(BusinessPage({ params: Promise.resolve({ slug }) }));
+/** A page that hands over to an async view (the catalogue) is rendered with that view's props. */
+async function view(page: Promise<React.ReactElement>) {
+  const element = (await page) as React.ReactElement<object, (props: object) => Promise<React.ReactNode>>;
+  return html(element.type(element.props));
+}
 
 /** The admin's «Namunalar» switch and a made-up cafe with a street address, a timer and 3 left. */
 async function addSample(db: D1Database) {
@@ -166,6 +175,33 @@ describe('public pages', () => {
     const { forgetCompanyInfo } = await import('@/modules/company');
     forgetCompanyInfo(state.db);
     expect(await contact()).toContain('href="https://t.me/bugunbor_yordam"');
+  });
+
+  it('a category or a city page has its own title and description, and says it under the heading', async () => {
+    const foodAbout = categoryAbout({ slug: 'taomlar', nameUz: 'Taomlar', nameRu: 'Еда' }, 'uz');
+    expect(await categoryPage.generateMetadata({ params: Promise.resolve({ slug: 'taomlar' }) }))
+      .toMatchObject({ title: 'Taomlar: bugungi aksiyalar', description: foodAbout, alternates: { canonical: '/categories/taomlar' } });
+    expect(await view(categoryPage.default({ params: Promise.resolve({ slug: 'taomlar' }), searchParams: Promise.resolve({}) }))).toContain(foodAbout);
+
+    const city = (params: Record<string, string | undefined>) => discoverPage.generateMetadata({ searchParams: Promise.resolve(params) });
+    const samarkand = cityAbout('samarkand', 'uz');
+    expect(await city({ city: 'samarkand' }))
+      .toMatchObject({ title: 'Samarqand: bugungi aksiyalar', description: samarkand, alternates: { canonical: '/discover?city=samarkand' } });
+    // A search or another order inside a city is that city's page to a search engine.
+    expect(await city({ city: 'samarkand', sort: 'discount', q: 'osh' })).toMatchObject({ alternates: { canonical: '/discover?city=samarkand' } });
+    for (const params of [{}, { city: 'moscow' }]) {
+      expect(await city(params)).toMatchObject({ title: uz.discover.title, description: uz.meta.description, alternates: { canonical: '/discover' } });
+    }
+    expect(await view(discoverPage.default({ searchParams: Promise.resolve({ city: 'samarkand' }) }))).toContain(samarkand);
+  });
+
+  it('the sitemap lists a city once it has a real deal; a sample never puts one there', async () => {
+    await state.db.prepare(`UPDATE branches SET city = 'samarkand' WHERE id = 'demo_br'`).run();
+    const urls = (await sitemap()).map((entry) => entry.url);
+    expect(urls).toContain('https://bugunbor.uz/discover?city=tashkent');
+    expect(urls).not.toContain('https://bugunbor.uz/discover?city=samarkand');
+    expect(urls).toContain('https://bugunbor.uz/categories/taomlar');
+    expect(urls).not.toContain('https://bugunbor.uz/deals/namuna-somsa');
   });
 
   it('views show to the business only once there are enough to mean something', async () => {

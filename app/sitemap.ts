@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 import { getDb } from '@/db/client';
+import { isCitySlug } from '@/lib/cities';
 import { getConfig } from '@/lib/env';
 import { toDbTime } from '@/lib/time';
 import { PUBLIC_BUSINESS_SQL, liveDealSql } from '@/modules/deals/status';
@@ -15,15 +16,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const db = await getDb();
     const now = toDbTime(new Date());
-    const [categories, deals, businesses] = await Promise.all([
+    const [categories, deals, businesses, cities] = await Promise.all([
       db.prepare(`SELECT slug FROM categories WHERE is_active = 1`).all<{ slug: string }>(),
       // Sample (demo) businesses and deals are made up: search engines never get them.
       db.prepare(`SELECT d.slug, d.updated_at AS updatedAt FROM deals d JOIN businesses b ON b.id = d.business_id WHERE ${liveDealSql('?1')} AND d.is_demo = 0 AND b.is_demo = 0 LIMIT 5000`).bind(now).all<{ slug: string; updatedAt: string }>(),
       db.prepare(`SELECT b.slug, b.updated_at AS updatedAt FROM businesses b WHERE ${PUBLIC_BUSINESS_SQL} AND b.is_demo = 0 LIMIT 5000`).all<{ slug: string; updatedAt: string }>(),
+      // A city's page once it has a real deal: an empty one tells a searcher nothing.
+      db.prepare(`SELECT DISTINCT br.city FROM deals d JOIN businesses b ON b.id = d.business_id
+        JOIN deal_branches db ON db.deal_id = d.id JOIN branches br ON br.id = db.branch_id AND br.deleted_at IS NULL
+        WHERE ${liveDealSql('?1')} AND d.is_demo = 0 AND b.is_demo = 0`).bind(now).all<{ city: string }>(),
     ]);
     return [
       ...staticPages,
       ...categories.results.map((row) => ({ url: `${BASE}/categories/${row.slug}`, changeFrequency: 'daily' as const, priority: 0.7 })),
+      ...cities.results.filter((row) => isCitySlug(row.city)).map((row) => ({ url: `${BASE}/discover?city=${row.city}`, changeFrequency: 'hourly' as const, priority: 0.7 })),
       ...deals.results.map((row) => ({ url: `${BASE}/deals/${row.slug}`, changeFrequency: 'hourly' as const, priority: 0.8 })),
       ...businesses.results.map((row) => ({ url: `${BASE}/businesses/${row.slug}`, changeFrequency: 'daily' as const, priority: 0.5 })),
     ];
