@@ -21,8 +21,11 @@ export const POST = route(async (request: Request) => {
   const body = await readJson(request, schema);
   const config = getConfig();
   const ipHash = await hashIp(clientIp(request), config.hashSecret);
-  if (body.action === 'setup') return json({ data: await beginAdminSetup(db, user, config.hashSecret, ipHash) });
-  if (body.action === 'verify') return json({ data: await verifyAdminFactor(db, user, body.code, config.hashSecret, ipHash) });
+  // Legacy enrollments keep their HASH_SECRET fallback; a separate key leaves
+  // customer redemption hashes unchanged.
+  const encryptionSecret = config.adminMfaSecret ?? config.hashSecret;
+  if (body.action === 'setup') return json({ data: await beginAdminSetup(db, user, encryptionSecret, ipHash) });
+  if (body.action === 'verify') return json({ data: await verifyAdminFactor(db, user, body.code, encryptionSecret, ipHash) });
   await verifyAdminRecovery(db, user, body.code, ipHash);
   return json({ data: { recoveryCodes: [] } });
 });

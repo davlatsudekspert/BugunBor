@@ -16,6 +16,8 @@ declare namespace Cloudflare {
     TELEGRAM_WEBHOOK_SECRET?: string;
     /** Secret mixed into IP and redemption-code hashes. */
     HASH_SECRET?: string;
+    /** Dedicated stable random key (at least 32 characters) for admin Authenticator encryption. */
+    ADMIN_MFA_SECRET?: string;
     /** Payme Business cashbox ID (Merchant API). */
     PAYME_MERCHANT_ID?: string;
     /** Payme cashbox key; Payme sends it as Basic auth "Paycom:<key>". Use the test key in the sandbox. */
