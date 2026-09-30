@@ -86,6 +86,21 @@ export default async function Home() {
               {t.home.heroLead} <span className="text-primary">{t.home.heroAccent}</span> {t.home.heroTail}
             </h1>
             <p className="mt-6 max-w-xl text-base leading-7 text-slate-700 sm:text-lg">{t.home.heroText}</p>
+            <aside className="mt-5 max-w-xl rounded-2xl border border-orange-200/80 bg-white/80 p-4 shadow-sm sm:p-5" aria-labelledby="launch-welcome-title">
+              <div className="flex items-start gap-3">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-orange-100 text-orange-600" aria-hidden>
+                  <Sparkles className="size-5" />
+                </span>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[.16em] text-orange-600">{t.home.launchBadge}</p>
+                  <h2 id="launch-welcome-title" className="mt-1 text-base font-bold leading-6 text-navy">{t.home.launchTitle}</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{t.home.launchText}</p>
+                  <a href={user ? '/discover' : '/login?returnTo=%2Fdiscover'} className={cn(buttonVariants(), 'mt-4 h-10 rounded-xl px-4 text-sm font-bold shadow-[0_6px_16px_rgba(245,89,55,.18)]')}>
+                    {user ? t.nav.deals : t.home.launchJoin} <ArrowRight className="ml-2 size-4" aria-hidden />
+                  </a>
+                </div>
+              </div>
+            </aside>
             <ol aria-label={t.home.heroStepsLabel} className="mt-5 grid max-w-xl grid-cols-3 gap-2">
               {t.home.heroSteps.map((step, index) => (
                 <li key={step} className="flex flex-col gap-1.5 rounded-2xl border border-orange-100 bg-white/80 p-3 text-xs font-bold leading-4 text-navy sm:flex-row sm:items-center sm:gap-2.5 sm:text-sm sm:leading-5">

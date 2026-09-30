@@ -93,6 +93,10 @@ export const uz = {
     rights: '© {year} BugunBor. Barcha huquqlar himoyalangan.',
   },
   home: {
+    launchJoin: 'Ro‘yxatdan o‘tish',
+    launchBadge: 'Yangi sayt va ilova',
+    launchTitle: 'BugunBor — birga boshlaymiz, birga rivojlanamiz!',
+    launchText: 'BugunBor sayti va ilovasi endi ish boshladi. Siz uchun foydali chegirmalar va manfaatli takliflarni bir joyga jamlayapmiz. Ro‘yxatdan o‘ting, yaqinlaringizga ulashing va bizni qo‘llab-quvvatlang — har biringizning ishonchingiz biz uchun katta kuch!',
     badge: 'Bugun {city}da {count} ta faol aksiya',
     badgeSoon: '{city}da birinchi aksiyalar tez orada',
     stats: { deals: 'faol aksiya', businesses: 'ta biznes kutmoqda', maxDiscount: 'gacha chegirma', saved: 'mijozlar tejadi' },
