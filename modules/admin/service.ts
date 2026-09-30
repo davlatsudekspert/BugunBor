@@ -145,6 +145,7 @@ export async function listAdminUsers(db: D1Database, query: string | null) {
 }
 
 export async function updateUser(db: D1Database, input: { actorId: string; userId: string; role?: PlatformRole; status?: 'ACTIVE' | 'BLOCKED' }, now = new Date()) {
+  if (input.role === 'ADMIN') throw new DomainError('FORBIDDEN');
   if (input.actorId === input.userId) throw new DomainError('SELF_ACTION');
   // The system moderator signs automatic decisions; it is switched on and off in the settings, not here.
   if (input.userId === 'usr_system') throw new DomainError('NOT_FOUND');

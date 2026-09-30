@@ -115,7 +115,7 @@ export function UserControls({ userId, role, status, labels }: {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <select value={value} onChange={(event) => setValue(event.target.value)} className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-xs font-semibold text-navy" aria-label={labels.setRole}>
-        {Object.entries(labels.roles).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+        {Object.entries(labels.roles).filter(([key]) => key !== 'ADMIN' || role === 'ADMIN').map(([key, label]) => <option key={key} value={key} disabled={key === 'ADMIN'}>{label}</option>)}
       </select>
       <button type="button" disabled={busy || value === role} onClick={() => send({ role: value })} className={cn(small, 'border-slate-200 text-navy')}>{labels.setRole}</button>
       <button type="button" disabled={busy} onClick={() => send({ status: status === 'BLOCKED' ? 'ACTIVE' : 'BLOCKED' })} className={cn(small, status === 'BLOCKED' ? 'border-emerald-200 text-emerald-700' : 'border-red-200 text-red-700')}>

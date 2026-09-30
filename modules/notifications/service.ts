@@ -1,3 +1,4 @@
+import { isOwnerPhone } from '@/modules/auth/admin-owner';
 import { formatNumber } from '@/lib/format';
 import { fmt, getDictionary, isLocale, type Dictionary } from '@/lib/i18n';
 import { RETENTION } from '@/lib/retention';
@@ -287,9 +288,9 @@ export async function processNotifications(db: D1Database, sender: Pick<BotSende
         .bind(row.id, status, nowDb, error, retryAt)
         .run();
     const user = await db
-      .prepare(`SELECT telegram_user_id AS chatId, locale, status FROM users WHERE id = ?1`)
+      .prepare(`SELECT telegram_user_id AS chatId, locale, status, phone, phone_verified_at AS phoneVerifiedAt FROM users WHERE id = ?1`)
       .bind(row.userId)
-      .first<{ chatId: string | null; locale: string; status: string }>();
+      .first<{ chatId: string | null; locale: string; status: string; phone: string | null; phoneVerifiedAt: string | null }>();
     const devices = options.push ? await listDevices(db, row.userId) : [];
     if ((!user?.chatId && !devices.length) || user?.status !== 'ACTIVE') {
       await finish('SKIPPED');
@@ -305,6 +306,7 @@ export async function processNotifications(db: D1Database, sender: Pick<BotSende
       message = null;
       console.error('Notification render failed', row.id, error);
     }
+    if (message?.path.startsWith('/admin') && (!user.chatId || !user.phoneVerifiedAt || !await isOwnerPhone(user.phone))) message = null;
     if (!message) {
       await finish('SKIPPED');
       summary.skipped += 1;

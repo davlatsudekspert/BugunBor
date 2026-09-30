@@ -74,10 +74,10 @@ describe('complaints about a booked code', () => {
     await processNotifications(db, sender, { appUrl: 'https://bugunbor.uz', now: later(8) });
     expect(sent.find((message) => message.chatId === '7001')).toMatchObject({ url: 'https://bugunbor.uz/business/deals' });
     expect(sent.find((message) => message.chatId === '7001')!.text).toContain('<b>Osh</b> aksiyasi vaqtincha to‘xtatildi: 3 ta mijoz');
-    // The moderator also has the complaint itself.
+    // A legacy moderator is no longer allowed to receive private admin alerts.
     const held = sent.find((message) => message.chatId === '7009' && message.text.includes('Avtomatik to‘xtatildi'));
-    expect(held).toMatchObject({ url: 'https://bugunbor.uz/admin/reports' });
-    expect(held!.text).toContain('Avtomatik to‘xtatildi: <b>Osh</b> (Kafe)');
+    expect(held).toBeUndefined();
+    expect(sent.some((message) => message.chatId === '7009')).toBe(false);
 
     // The business sees why and cannot put it back itself.
     const [listed] = await listBusinessDeals(db, 'biz', later(9));

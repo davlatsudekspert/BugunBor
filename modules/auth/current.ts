@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 
 import { getDb } from '@/db/client';
+import { adminSessionVerified, isAdminOwner } from './admin-mfa';
 import { SESSION_COOKIE, getSessionUser, type SessionUser } from './sessions';
 
 /** The signed-in user for server components, cached per request. */
@@ -18,20 +19,19 @@ export async function requireUser(returnTo: string) {
   return user;
 }
 
-export function isModerator(user: Pick<SessionUser, 'role'> | null) {
-  return user?.role === 'MODERATOR' || user?.role === 'ADMIN';
+export function isModerator(user: Pick<SessionUser, 'role' | 'adminOwner'> | null) {
+  return isAdminOwner(user);
 }
 
 export async function requireModerator(returnTo: string) {
   const user = await requireUser(returnTo);
-  if (!isModerator(user)) notFound();
+  if (!isAdminOwner(user)) notFound();
+  if (!await adminSessionVerified(await getDb(), user)) redirect(`/admin/security?returnTo=${encodeURIComponent(returnTo)}`);
   return user;
 }
 
 export async function requireAdmin(returnTo: string) {
-  const user = await requireUser(returnTo);
-  if (user.role !== 'ADMIN') notFound();
-  return user;
+  return requireModerator(returnTo);
 }
 
 export { apiAdmin, apiModerator, apiUser, optionalApiUser, requestSessionToken } from './api-user';

@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+// This suite's admin uses a dummy owner identity; no real owner phone is committed.
+vi.mock('@/modules/auth/admin-owner', () => ({ isOwnerPhone: async (phone: string | null) => phone === '+998900000011' }));
+
 import { uz } from '@/lib/i18n/uz';
 import { toDbTime } from '@/lib/time';
 import { NOW, marketplace } from '@/test/fixtures';
@@ -187,7 +190,7 @@ describe('photo check', () => {
   it('when neither answers: keeps the photo unchecked, queues it and tells the admins once a day', async () => {
     const db = await marketplace();
     await db.batch([
-      db.prepare(`INSERT INTO users(id, role, display_name, phone, locale, telegram_user_id) VALUES ('admin', 'ADMIN', 'Admin', '+998900000011', 'uz', '7100')`),
+      db.prepare(`INSERT INTO users(id, role, display_name, phone, locale, telegram_user_id, phone_verified_at) VALUES ('admin', 'ADMIN', 'Admin', '+998900000011', 'uz', '7100', '2026-09-25 10:00:00')`),
       db.prepare(`UPDATE users SET telegram_user_id = '7009' WHERE id = 'mod'`),
     ]);
     vi.spyOn(console, 'error').mockImplementation(() => {});

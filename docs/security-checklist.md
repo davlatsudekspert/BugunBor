@@ -6,7 +6,8 @@
 - [x] Same-origin check (Origin / Sec-Fetch-Site) on every state-changing request.
 - [x] Sessions: random tokens stored as SHA-256, `HttpOnly; SameSite=Lax; Secure`, 30 days, revoked on logout, block or account deletion.
 - [x] Telegram login: one-time token bound to the browser, match code shown on both sides, 10-minute expiry, consumed once; webhook requires the secret header.
-- [x] Admins only via `ADMIN_PHONES` on first login or by another admin; demo accounts carry no phone numbers, and demo login is compiled out of production.
+- [x] Admin pages, API actions and staff notifications are restricted to the approved owner phone verified through Telegram. Other accounts cannot be promoted via `ADMIN_PHONES` or user management. Demo login is compiled out of production.
+- [x] Admin pages and API actions require a session-specific Authenticator verification (12 hours). Initial enrollment requires a fresh Telegram login (10 minutes); seeds are encrypted with AES-GCM, codes have account/IP limits and replay protection, and recovery codes are stored as hashes.
 - [x] Tenant isolation: every business action checks membership and role grant (OWNER, MANAGER, CASHIER); cashiers only see a masked customer phone.
 - [x] Claims are atomic and idempotent; per-customer limit, stock, time window, branch and subscription re-checked inside the insert.
 - [x] Codes derived with HMAC and stored hashed; codes of another business are indistinguishable from unknown codes.
