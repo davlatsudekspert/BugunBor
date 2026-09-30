@@ -614,7 +614,27 @@ const photoRechecks: Migration = {
   },
 };
 
+const adminTwoFactor: Migration = {
+  id: '0017_admin_two_factor',
+  async build({ db, columns }) {
+    const existing = await columns('sessions');
+    const statements: D1PreparedStatement[] = [];
+    if (!existing.has('auth_method')) statements.push(db.prepare(`ALTER TABLE sessions ADD COLUMN auth_method TEXT NOT NULL DEFAULT 'other'`));
+    if (!existing.has('admin_verified_at')) statements.push(db.prepare(`ALTER TABLE sessions ADD COLUMN admin_verified_at TEXT`));
+    statements.push(db.prepare(`CREATE TABLE IF NOT EXISTS admin_mfa (
+      user_id TEXT PRIMARY KEY REFERENCES users(id), secret_encrypted TEXT NOT NULL,
+      setup_session_id TEXT NOT NULL, setup_expires_at TEXT NOT NULL,
+      enabled_at TEXT, last_step INTEGER NOT NULL DEFAULT -1
+    )`));
+    statements.push(db.prepare(`CREATE TABLE IF NOT EXISTS admin_recovery_codes (
+      user_id TEXT NOT NULL REFERENCES users(id), code_hash TEXT NOT NULL,
+      used_at TEXT, PRIMARY KEY(user_id, code_hash)
+    )`));
+    return statements;
+  },
+};
+
 export const migrations: readonly Migration[] = [
   baseline, systemV1, billing, media, engagement, payments, autoModeration, freeLaunch, privacyConsent, appSupport, userAvatars, codeIssues, dealSets,
-  photoChecks, businessBadge, photoRechecks,
+  photoChecks, businessBadge, photoRechecks, adminTwoFactor,
 ];

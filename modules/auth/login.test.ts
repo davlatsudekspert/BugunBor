@@ -98,7 +98,7 @@ describe('Telegram login flow', () => {
     expect(await pollLogin(db, loginCookieValue(login.id, login.browserSecret), now)).toMatchObject({ status: 'WAITING' });
   });
 
-  it('lets a known user confirm with the inline button and promotes admin phones', async () => {
+  it('lets a known user confirm without granting admin to an arbitrary configured phone', async () => {
     const { sent, sender } = fakeSender();
     const first = await startLogin(db, { locale: 'ru', consent: true }, now);
     await handleTelegramUpdate(db, message(700, { text: `/start ${first.token}` }), { sender, adminPhones: ['+998901110033'], siteUrl: 'x', now });
@@ -115,7 +115,7 @@ describe('Telegram login flow', () => {
     const approved = await pollLogin(db, loginCookieValue(second.id, second.browserSecret), now);
     expect(approved.status).toBe('APPROVED');
     const role = await db.prepare(`SELECT role FROM users WHERE telegram_user_id = '700'`).first('role');
-    expect(role).toBe('ADMIN');
+    expect(role).toBe('CUSTOMER');
   });
 
   it('confirms the login even when Telegram rejects the button acknowledgement', async () => {

@@ -3,6 +3,7 @@ import { randomToken, sha256Hex } from '@/lib/crypto';
 import { addMinutes, parseDbTime, toDbTime } from '@/lib/time';
 import { avatarUrl } from './avatar';
 import type { PlatformRole, UserStatus } from './users';
+import { isOwnerPhone } from './admin-owner';
 
 export const SESSION_COOKIE = 'bb_session';
 export const SESSION_DAYS = 30;
@@ -18,17 +19,20 @@ export type SessionUser = {
   status: UserStatus;
   /** The person's own profile photo (only they see it), or null. */
   avatar: string | null;
+  adminOwner: boolean;
+  authMethod: string;
+  createdAt: string;
 };
 
-export async function createSession(db: D1Database, userId: string, meta: { userAgent?: string | null; ipHash?: string | null; client?: 'web' | 'app'; appBuild?: string | null }, now = new Date()) {
+export async function createSession(db: D1Database, userId: string, meta: { userAgent?: string | null; ipHash?: string | null; client?: 'web' | 'app'; appBuild?: string | null; authMethod?: 'telegram' }, now = new Date()) {
   const token = randomToken(32);
   const id = crypto.randomUUID();
   const expiresAt = addMinutes(now, SESSION_DAYS * 24 * 60);
   const nowDb = toDbTime(now);
   await db
-    .prepare(`INSERT INTO sessions(id, user_id, token_hash, created_at, expires_at, last_seen_at, user_agent, ip_hash, client, app_build)
-      VALUES (?1, ?2, ?3, ?4, ?5, ?4, ?6, ?7, ?8, ?9)`)
-    .bind(id, userId, await sha256Hex(token), nowDb, toDbTime(expiresAt), meta.userAgent?.slice(0, 300) ?? null, meta.ipHash ?? null, meta.client ?? 'web', meta.appBuild ?? null)
+    .prepare(`INSERT INTO sessions(id, user_id, token_hash, created_at, expires_at, last_seen_at, user_agent, ip_hash, client, app_build, auth_method)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?4, ?6, ?7, ?8, ?9, ?10)`)
+    .bind(id, userId, await sha256Hex(token), nowDb, toDbTime(expiresAt), meta.userAgent?.slice(0, 300) ?? null, meta.ipHash ?? null, meta.client ?? 'web', meta.appBuild ?? null, meta.authMethod ?? 'other')
     .run();
   return { id, token, expiresAt };
 }
@@ -36,17 +40,19 @@ export async function createSession(db: D1Database, userId: string, meta: { user
 export async function getSessionUser(db: D1Database, token: string | null | undefined, now = new Date()): Promise<SessionUser | null> {
   if (!token || token.length < 20 || token.length > 100) return null;
   const row = await db
-    .prepare(`SELECT s.id AS sessionId, s.last_seen_at AS lastSeenAt, u.id, u.role, u.display_name AS displayName, u.phone, u.locale, u.status, a.sha256 AS avatarSha
+    .prepare(`SELECT s.id AS sessionId, s.last_seen_at AS lastSeenAt, u.id, u.role, u.display_name AS displayName, u.phone, u.locale, u.status, a.sha256 AS avatarSha, u.telegram_user_id AS telegramUserId, u.phone_verified_at AS phoneVerifiedAt, s.auth_method AS authMethod, s.created_at AS createdAt
       FROM sessions s JOIN users u ON u.id = s.user_id LEFT JOIN user_avatars a ON a.user_id = u.id
       WHERE s.token_hash = ?1 AND s.revoked_at IS NULL AND s.expires_at > ?2`)
     .bind(await sha256Hex(token), toDbTime(now))
-    .first<Omit<SessionUser, 'avatar'> & { lastSeenAt: string; avatarSha: string | null }>();
+    .first<Omit<SessionUser, 'avatar' | 'adminOwner'> & { lastSeenAt: string; avatarSha: string | null; telegramUserId: string | null; phoneVerifiedAt: string | null }>();
   if (!row || row.status !== 'ACTIVE') return null;
   if (now.getTime() - parseDbTime(row.lastSeenAt).getTime() > TOUCH_INTERVAL_MS) {
     await db.prepare(`UPDATE sessions SET last_seen_at = ?2 WHERE id = ?1`).bind(row.sessionId, toDbTime(now)).run();
   }
-  const { lastSeenAt: _lastSeenAt, avatarSha, ...user } = row;
-  return { ...user, avatar: avatarSha ? avatarUrl(avatarSha) : null };
+  const adminOwner = Boolean(row.telegramUserId && row.phoneVerifiedAt && await isOwnerPhone(row.phone));
+  const { lastSeenAt: _lastSeenAt, avatarSha, telegramUserId: _telegramId, phoneVerifiedAt: _phoneVerified, ...user } = row;
+  const role: PlatformRole = adminOwner ? 'ADMIN' : user.role === 'ADMIN' ? 'CUSTOMER' : user.role;
+  return { ...user, role, adminOwner, avatar: avatarSha ? avatarUrl(avatarSha) : null };
 }
 
 export async function revokeSessionByToken(db: D1Database, token: string, now = new Date()) {

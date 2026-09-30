@@ -42,7 +42,7 @@ Set these as Worker environment variables / secrets (see `.env.example`):
 | `TELEGRAM_BOT_TOKEN` | Token from @BotFather |
 | `TELEGRAM_BOT_USERNAME` | Bot username without `@` |
 | `TELEGRAM_WEBHOOK_SECRET` | Random string; Telegram sends it with every webhook call |
-| `ADMIN_PHONES` | Comma-separated phones that become admins on first Telegram login, e.g. `+998901234567` |
+| `ADMIN_PHONES` | Legacy setting; cannot grant access. Admin access is restricted to the approved owner and Authenticator verification. |
 | `DEMO_SEED` | `true` to show the demo catalogue in production (off by default) |
 
 After deploying, open the site once: the bot connects itself (Telegram webhook) on the first request. **Admin → Sozlamalar** shows its state. For Cloudflare Workers Builds also set the build variables `D1_DATABASE_ID` and `D1_DATABASE_NAME`.

@@ -1,5 +1,6 @@
 import { auditStatement } from '@/modules/audit';
 import { toDbTime } from '@/lib/time';
+import { isOwnerPhone } from './admin-owner';
 
 export type PlatformRole = 'CUSTOMER' | 'MODERATOR' | 'ADMIN';
 export type UserStatus = 'ACTIVE' | 'BLOCKED' | 'DELETED';
@@ -49,11 +50,11 @@ export type TelegramIdentity = {
  * 3. else a new account. When the phone belongs to an account linked to a
  *    different Telegram user (a recycled number), the phone moves to the new
  *    account so the new owner never inherits someone else's history.
- * Phones listed in ADMIN_PHONES are promoted to ADMIN.
+ * Only the approved owner phone can receive ADMIN.
  */
-export async function upsertTelegramUser(db: D1Database, identity: TelegramIdentity, adminPhones: string[], now: Date): Promise<UserRecord> {
+export async function upsertTelegramUser(db: D1Database, identity: TelegramIdentity, _adminPhones: string[], now: Date): Promise<UserRecord> {
   const nowDb = toDbTime(now);
-  const shouldBeAdmin = adminPhones.includes(identity.phone);
+  const shouldBeAdmin = await isOwnerPhone(identity.phone);
   const byTelegram = await getUserByTelegramId(db, identity.telegramUserId);
   const byPhone = await getUserByPhone(db, identity.phone);
   const phoneTakenByOther = byPhone && byPhone.id !== byTelegram?.id;
@@ -81,14 +82,14 @@ export async function upsertTelegramUser(db: D1Database, identity: TelegramIdent
     return (await getUserById(db, id))!;
   }
 
-  const role: PlatformRole = shouldBeAdmin ? 'ADMIN' : existing.role;
+  const role: PlatformRole = shouldBeAdmin ? 'ADMIN' : existing.role === 'ADMIN' ? 'CUSTOMER' : existing.role;
   statements.push(
     db.prepare(`UPDATE users SET phone = ?2, phone_verified_at = ?3, telegram_user_id = ?4, telegram_username = ?5,
         role = ?6, last_login_at = ?3, updated_at = ?3 WHERE id = ?1`)
       .bind(existing.id, identity.phone, nowDb, identity.telegramUserId, identity.telegramUsername, role),
   );
   if (role !== existing.role) {
-    statements.push(auditStatement(db, { actorUserId: null, action: 'user.role_bootstrap', targetType: 'User', targetId: existing.id, before: { role: existing.role }, after: { role }, reason: 'ADMIN_PHONES' }, nowDb));
+    statements.push(auditStatement(db, { actorUserId: null, action: 'user.role_bootstrap', targetType: 'User', targetId: existing.id, before: { role: existing.role }, after: { role }, reason: 'Single approved owner' }, nowDb));
   }
   await db.batch(statements);
   return (await getUserById(db, existing.id))!;

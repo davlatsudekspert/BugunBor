@@ -21,7 +21,7 @@ export const GET = route(async (request) => {
   }
 
   const { client, build } = requestClient(request);
-  const session = await createSession(db, result.userId, { userAgent: request.headers.get('user-agent'), ipHash, client: appSecret ? 'app' : client, appBuild: build });
+  const session = await createSession(db, result.userId, { userAgent: request.headers.get('user-agent'), ipHash, client: appSecret ? 'app' : client, appBuild: build, authMethod: 'telegram' });
   if (appSecret) {
     return json({ data: { status: 'APPROVED', token: session.token, expiresAt: session.expiresAt.toISOString() } });
   }

@@ -4,7 +4,7 @@
 
 1. Run the gates: `npm run lint && npm run typecheck && npm test && npm run build`.
 2. Deploy the Worker with its D1 binding `DB` (the Sites plugin reads `.openai/hosting.json`).
-3. Set the variables from `.env.example` (at least `APP_URL`, `HASH_SECRET`, the three `TELEGRAM_*` values and `ADMIN_PHONES`).
+3. Set the variables from `.env.example` (at least `APP_URL`, `HASH_SECRET`, the three `TELEGRAM_*` values ).
 4. Open the site once: the first request connects the Telegram bot (webhook) by itself, and again whenever the token, secret or `APP_URL` changes. Then log in with an admin phone through Telegram. **Admin → Sozlamalar** shows which bot the token belongs to and any connection error; **Webhook’ni o‘rnatish** reconnects by hand.
 5. In **Admin → Tariflar** check prices, the free-period length (1–3 months) and the payment instructions shown to businesses.
 6. In **Admin → Sozlamalar** fill in the company details (legal name, STIR, address, phone): the footer, the contact page and the public offer (`/oferta`) show them.
@@ -83,3 +83,15 @@ Demo photos are static files in `public/photos` with authors in `lib/stock-photo
 
 - `npm run photos:fetch` downloads the curated Commons picks again (needs access to `commons.wikimedia.org` and `upload.wikimedia.org`); `npm run photos:fetch -- --search "Chust doppi"` lists candidates.
 - `npm run photos:import -- <folder>` adds photos named by visual (`plov.jpg`, `osh-2.jpg`), with authors from `mualliflar.csv` (`fayl,muallif,litsenziya,manba_url`). Licences with NC or ND are refused.
+
+## Owner admin and Authenticator
+
+Admin access is limited to the one approved phone fingerprint in `modules/auth/admin-owner.ts`. `ADMIN_PHONES` can no longer grant another person access. A verified Telegram account with that phone is required; demo/reviewer sessions cannot enroll or unlock admin access. Other users and business staff continue using their ordinary accounts.
+
+1. Keep the existing production `HASH_SECRET` stable: it must be a random value of at least 32 characters, not the development fallback. Do not rotate it casually: it encrypts the Authenticator seed. If it is missing/weak, enrollment refuses with 503; public pages still work.
+2. Sign out, then sign in through Telegram with the approved owner phone. Within 10 minutes open `/admin/security`.
+3. Choose Authenticator setup, scan its QR in Google/Microsoft Authenticator, and enter the six-digit code. Never share the QR. Save the ten recovery codes privately; they are shown once and each works once.
+4. Admin access is enabled only for that session for 12 hours. Another browser/session needs its own Authenticator code. Telegram login alone does not unlock admin.
+5. If the authenticator is lost, use a saved recovery code. There is deliberately no public reset endpoint; recovery without a saved code requires a separately authorized operator procedure and identity verification.
+
+Migration `0017_admin_two_factor` runs through the existing automatic migration mechanism. It adds two session columns and two tables using conditional ALTERs and CREATE IF NOT EXISTS; it does not erase existing accounts or business data. Existing sessions are classified as `other` and cannot enroll/unlock admin: the owner must sign in through Telegram again.
