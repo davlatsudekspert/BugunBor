@@ -22,7 +22,7 @@ const words = {
     enter: 'Kodlarni saqladim — admin bo‘limiga kirish',
     error: 'Kod qabul qilinmadi yoki so‘rov bajarilmadi. Qayta kirish zarur bo‘lishi mumkin.',
     rate: 'Urinishlar limiti tugadi. 10 daqiqadan keyin urinib ko‘ring.',
-    config: 'Himoyani sozlash uchun server sozlamasi tayyor emas. Sayt egasi HASH_SECRET sozlamasini tekshirishi kerak.',
+    config: 'Himoyani sozlash uchun server sozlamasi tayyor emas. Sayt egasi ADMIN_MFA_SECRET sozlamasini tekshirishi kerak.',
     home: 'Bosh sahifa',
   },
   ru: {
@@ -33,7 +33,7 @@ const words = {
     recovery: 'Войти с резервным кодом', recoveryLabel: 'Резервный код', back: 'Войти с кодом Authenticator',
     saved: 'Сохраните резервные коды в безопасном месте. Каждый действует один раз. Они больше не будут показаны и нужны при потере Authenticator.',
     enter: 'Коды сохранены — открыть панель', error: 'Код не принят или запрос не выполнен. Возможно, нужно войти заново.',
-    rate: 'Лимит попыток исчерпан. Повторите через 10 минут.', config: 'Настройка защиты на сервере не готова. Владелец сайта должен проверить HASH_SECRET.', home: 'Главная',
+    rate: 'Лимит попыток исчерпан. Повторите через 10 минут.', config: 'Настройка защиты на сервере не готова. Владелец сайта должен проверить ADMIN_MFA_SECRET.', home: 'Главная',
   },
 };
 

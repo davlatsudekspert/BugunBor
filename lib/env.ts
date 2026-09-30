@@ -11,6 +11,8 @@ export type AppConfig = {
   isDevelopment: boolean;
   adminPhones: string[];
   hashSecret: string;
+  /** Separate Authenticator encryption key; must not rotate redemption-code hashes. */
+  adminMfaSecret: string | null;
   telegram: {
     botToken: string | null;
     botUsername: string | null;
@@ -54,6 +56,7 @@ export function getConfig(): AppConfig {
       .map((phone) => phone.replace(/[^\d+]/g, ''))
       .filter(Boolean),
     hashSecret: clean(env.HASH_SECRET) ?? DEFAULT_HASH_SECRET,
+    adminMfaSecret: clean(env.ADMIN_MFA_SECRET),
     telegram: {
       botToken: clean(env.TELEGRAM_BOT_TOKEN),
       botUsername: clean(env.TELEGRAM_BOT_USERNAME)?.replace(/^@/, '') ?? null,
