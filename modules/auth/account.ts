@@ -61,7 +61,7 @@ export async function deleteAccount(db: D1Database, userId: string, now = new Da
       db.prepare(`UPDATE business_members SET revoked_at = ?2 WHERE business_id = ?1 AND revoked_at IS NULL`).bind(id, nowDb),
       auditStatement(db, { actorUserId: userId, businessId: id, action: 'business.closed', targetType: 'Business', targetId: id, reason: 'Owner deleted the account' }, nowDb),
     ]),
-    db.prepare(`UPDATE users SET status = 'DELETED', phone = NULL, email = NULL, telegram_user_id = NULL, telegram_username = NULL,
+    db.prepare(`UPDATE users SET status = 'DELETED', phone = NULL, email = NULL, telegram_user_id = NULL, telegram_username = NULL, apple_sub = NULL, apple_refresh_token = NULL,
         display_name = '${DELETED_USER_NAME}', notify_nearby = 0, notify_lat_e2 = NULL, notify_lng_e2 = NULL, notify_city = NULL, notify_area_at = NULL,
         deleted_at = ?2, updated_at = ?2 WHERE id = ?1`).bind(userId, nowDb),
     revokeAllSessionsStatement(db, userId, nowDb),

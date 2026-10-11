@@ -103,6 +103,7 @@
   "loginText": "Sign in to BugunBor with Telegram — no password or SMS.",
   "loginConsent": "I agree to the privacy policy and terms of use",
   "loginButton": "Sign in with Telegram",
+  "loginApple": "Sign in with Apple",
   "loginConsentHint": "Tick the consent box to sign in.",
   "loginMatchCode": "Match code",
   "loginMatchHint": "You’ll see this code in the Telegram bot — confirm if it matches.",

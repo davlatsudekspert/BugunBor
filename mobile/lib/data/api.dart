@@ -174,6 +174,19 @@ class BugunBorApi {
   Future<LoginStatus> loginStatus(String loginSecret) async =>
       LoginStatus.fromJson(_data(await _request('GET', '/api/v1/auth/telegram/status', extra: {'x-login-secret': loginSecret}, withAuth: false)));
 
+  /// Apple's identity token proves who the person is; the name comes only with
+  /// the first sign-in. Consent was ticked on the sign-in screen.
+  Future<AppleLogin> appleLogin({required String identityToken, String? authorizationCode, String? givenName, String? familyName}) async => AppleLogin.fromJson(
+    _data(
+      await _request(
+        'POST',
+        '/api/v1/auth/apple',
+        body: {'identityToken': identityToken, 'authorizationCode': authorizationCode, 'givenName': givenName, 'familyName': familyName, 'consent': true},
+        withAuth: false,
+      ),
+    ),
+  );
+
   Future<String> reviewLogin(String code) async => '${_data(await _request('POST', '/api/v1/auth/review', body: {'code': code}, withAuth: false))['token']}';
 
   Future<void> logout() async => _request('POST', '/api/v1/auth/logout');

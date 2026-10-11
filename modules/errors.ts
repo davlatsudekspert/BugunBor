@@ -9,6 +9,7 @@ const defaultStatus: Partial<Record<ErrorCode, number>> = {
   REASON_REQUIRED: 422,
   ISSUE_TOO_LATE: 422,
   CONSENT_REQUIRED: 422,
+  APPLE_TOKEN_INVALID: 401,
   NOT_FOUND: 404,
   CODE_NOT_FOUND: 404,
   USER_NOT_FOUND: 404,

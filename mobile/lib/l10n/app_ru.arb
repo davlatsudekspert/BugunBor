@@ -103,6 +103,7 @@
   "loginText": "Войдите в BugunBor через Telegram — без пароля и SMS.",
   "loginConsent": "Принимаю политику конфиденциальности и условия использования",
   "loginButton": "Войти через Telegram",
+  "loginApple": "Войти через Apple",
   "loginConsentHint": "Чтобы войти, сначала отметьте согласие.",
   "loginMatchCode": "Код сверки",
   "loginMatchHint": "В боте Telegram вы увидите этот код — если совпадает, подтвердите.",

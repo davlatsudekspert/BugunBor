@@ -711,6 +711,12 @@ abstract class L {
   /// **'Telegram orqali kirish'**
   String get loginButton;
 
+  /// Label of the Sign in with Apple button on the sign-in screen (iPhone only), under the Telegram button
+  ///
+  /// In uz, this message translates to:
+  /// **'Apple orqali kirish'**
+  String get loginApple;
+
   /// No description provided for @loginConsentHint.
   ///
   /// In uz, this message translates to:

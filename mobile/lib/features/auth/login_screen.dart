@@ -1,12 +1,15 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../app/account.dart';
 import '../../app/links.dart';
 import '../../app/providers.dart';
+import '../../core/api_error.dart';
 import '../../data/models.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/common.dart';
@@ -17,6 +20,7 @@ enum _Stage { idle, starting, waiting, expired, denied }
 /// Sign-in through the Telegram bot: the app asks the server for a request,
 /// opens the bot, and polls until the person confirms there. The session
 /// token then goes straight into secure storage. No password, no SMS.
+/// On iPhone, Sign in with Apple sits next to it (App Store rule 4.8).
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -32,6 +36,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WidgetsBindingOb
   Timer? _poll;
   bool _polling = false;
   bool _finishing = false;
+  bool _appleBusy = false;
   Object? _error;
 
   @override
@@ -55,11 +60,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WidgetsBindingOb
 
   void _openPolicy(String path) => openSite(path, lang: ref.read(settingsProvider).locale);
 
+  /// Sign-in starts only once the consent box is ticked; otherwise says so.
+  bool _requireConsent() {
+    if (!_consent) setState(() => _showConsentHint = true);
+    return _consent;
+  }
+
   Future<void> _start() async {
-    if (!_consent) {
-      setState(() => _showConsentHint = true);
-      return;
-    }
+    if (!_requireConsent()) return;
     setState(() {
       _stage = _Stage.starting;
       _error = null;
@@ -121,6 +129,40 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WidgetsBindingOb
       context.pop(true);
     } else {
       context.go('/');
+    }
+  }
+
+  Future<void> _apple() async {
+    if (!_requireConsent()) return;
+    setState(() {
+      _appleBusy = true;
+      _error = null;
+    });
+    try {
+      final credential = await ref.read(appleAuthorizerProvider)();
+      if (!mounted) return;
+      if (credential == null) {
+        // The person closed Apple's sheet: nothing to say.
+        setState(() => _appleBusy = false);
+        return;
+      }
+      final identityToken = credential.identityToken;
+      if (identityToken == null) throw const ApiError('APPLE_TOKEN_INVALID');
+      final login = await ref
+          .read(apiProvider)
+          .appleLogin(
+            identityToken: identityToken,
+            authorizationCode: credential.authorizationCode,
+            givenName: credential.givenName,
+            familyName: credential.familyName,
+          );
+      if (mounted) await _finish(login.token);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _appleBusy = false;
+        _error = error;
+      });
     }
   }
 
@@ -215,12 +257,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WidgetsBindingOb
       const SizedBox(height: Gap.lg),
       FilledButton.icon(
         style: FilledButton.styleFrom(backgroundColor: Brand.telegram),
-        onPressed: _stage == _Stage.starting ? null : _start,
+        onPressed: _stage == _Stage.starting || _appleBusy ? null : _start,
         icon: _stage == _Stage.starting
             ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
             : const Icon(Icons.send_rounded),
         label: Text(_stage == _Stage.expired || _stage == _Stage.denied ? l.loginRestart : l.loginButton),
       ),
+      if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+        const SizedBox(height: Gap.md),
+        // Apple's own look: black on the light theme, white on the dark one.
+        SignInWithAppleButton(
+          text: l.loginApple,
+          height: 52,
+          borderRadius: BorderRadius.circular(14),
+          style: context.isDark ? SignInWithAppleButtonStyle.white : SignInWithAppleButtonStyle.black,
+          onPressed: _appleBusy || _stage == _Stage.starting ? null : _apple,
+        ),
+      ],
     ];
   }
 

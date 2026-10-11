@@ -23,6 +23,7 @@ const englishErrors = <String, String>{
   'CODE_CANCELED': 'This code was cancelled.',
   'TELEGRAM_NOT_CONFIGURED': 'Signing in with Telegram isn’t available yet.',
   'LOGIN_EXPIRED': 'The sign-in request has expired. Please try again.',
+  'APPLE_TOKEN_INVALID': 'Apple sign-in could not be verified. Please try again.',
   'ACCOUNT_BLOCKED': 'Your account is blocked.',
   'SOLE_OWNER': 'You’re the only owner of a business. Add another owner to the team, or close the business, then delete your account.',
   'CONSENT_REQUIRED': 'To continue, agree to the privacy policy and the terms of use.',

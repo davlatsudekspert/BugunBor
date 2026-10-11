@@ -1274,6 +1274,7 @@ export const uz = {
     ACCOUNT_BLOCKED: 'Hisobingiz bloklangan.',
     SOLE_OWNER: 'Siz biznesning yagona egasisiz. Jamoaga boshqa egani qo‘shing yoki biznesni yopib, hisobni o‘chiring.',
     CONSENT_REQUIRED: 'Davom etish uchun maxfiylik siyosati va foydalanish shartlariga rozilik belgisini qo‘ying.',
+    APPLE_TOKEN_INVALID: 'Apple orqali kirib bo‘lmadi. Qaytadan urinib ko‘ring.',
     USER_NOT_FOUND: 'Bu raqam bilan foydalanuvchi topilmadi. Xodim avval BugunBor’ga Telegram orqali kirishi kerak.',
     ALREADY_MEMBER: 'Bu foydalanuvchi allaqachon jamoada.',
     LAST_BRANCH: 'Kamida bitta filial qolishi kerak.',

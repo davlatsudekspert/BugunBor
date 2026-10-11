@@ -634,7 +634,23 @@ const adminTwoFactor: Migration = {
   },
 };
 
+/**
+ * Sign in with Apple (iOS app): Apple's stable id for the person, and the
+ * encrypted refresh token that deleting the account revokes.
+ */
+const appleSignIn: Migration = {
+  id: '0018_apple_sign_in',
+  async build({ db, columns }) {
+    const existing = await columns('users');
+    const statements: D1PreparedStatement[] = [];
+    if (!existing.has('apple_sub')) statements.push(db.prepare(`ALTER TABLE users ADD COLUMN apple_sub TEXT`));
+    if (!existing.has('apple_refresh_token')) statements.push(db.prepare(`ALTER TABLE users ADD COLUMN apple_refresh_token TEXT`));
+    statements.push(db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_apple_unique ON users(apple_sub) WHERE apple_sub IS NOT NULL`));
+    return statements;
+  },
+};
+
 export const migrations: readonly Migration[] = [
   baseline, systemV1, billing, media, engagement, payments, autoModeration, freeLaunch, privacyConsent, appSupport, userAvatars, codeIssues, dealSets,
-  photoChecks, businessBadge, photoRechecks, adminTwoFactor,
+  photoChecks, businessBadge, photoRechecks, adminTwoFactor, appleSignIn,
 ];

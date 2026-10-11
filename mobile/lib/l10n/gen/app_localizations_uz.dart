@@ -344,6 +344,9 @@ class LUz extends L {
   String get loginButton => 'Telegram orqali kirish';
 
   @override
+  String get loginApple => 'Apple orqali kirish';
+
+  @override
   String get loginConsentHint => 'Kirish uchun avval rozilik belgisini qo‘ying.';
 
   @override

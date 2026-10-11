@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../core/storage.dart';
 import '../data/api.dart';
@@ -253,6 +254,19 @@ final pinLocatorProvider = Provider<Future<Pin?> Function()>(
       return (latitude: position.latitude, longitude: position.longitude);
     } catch (_) {
       return null;
+    }
+  },
+);
+
+/// Apple's sign-in sheet (iOS), asking for the name, which Apple gives only
+/// the first time. Null when the person closes the sheet. Tests override it.
+final appleAuthorizerProvider = Provider<Future<AuthorizationCredentialAppleID?> Function()>(
+  (ref) => () async {
+    try {
+      return await SignInWithApple.getAppleIDCredential(scopes: [AppleIDAuthorizationScopes.fullName]);
+    } on SignInWithAppleAuthorizationException catch (error) {
+      if (error.code == AuthorizationErrorCode.canceled) return null;
+      rethrow;
     }
   },
 );

@@ -180,6 +180,10 @@
   "loginText": "BugunBor’ga Telegram orqali kiring — parol va SMS kerak emas.",
   "loginConsent": "Maxfiylik siyosati va foydalanish shartlariga roziman",
   "loginButton": "Telegram orqali kirish",
+  "loginApple": "Apple orqali kirish",
+  "@loginApple": {
+    "description": "Label of the Sign in with Apple button on the sign-in screen (iPhone only), under the Telegram button"
+  },
   "loginConsentHint": "Kirish uchun avval rozilik belgisini qo‘ying.",
   "loginMatchCode": "Moslik kodi",
   "loginMatchHint": "Telegram’dagi botda shu kodni ko‘rasiz — bir xil bo‘lsa, tasdiqlang.",
