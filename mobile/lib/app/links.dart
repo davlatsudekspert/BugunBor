@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/env.dart';
@@ -19,10 +20,13 @@ Future<bool> openSite(String path, {String? lang}) {
 
 Future<bool> callPhone(String phone) => openExternal(Uri(scheme: 'tel', path: phone.replaceAll(RegExp(r'[^\d+]'), '')));
 
-/// Lets the phone pick a maps app (Yandex, Google…); the web map otherwise.
+/// Lets the phone pick a maps app (Yandex, Google…); Apple Maps on iOS, which
+/// has no geo: links; the web map otherwise.
 Future<void> openDirections(double latitude, double longitude, String label) async {
-  final geo = Uri.parse('geo:$latitude,$longitude?q=$latitude,$longitude(${Uri.encodeComponent(label)})');
-  if (await openExternal(geo)) return;
+  final maps = defaultTargetPlatform == TargetPlatform.iOS
+      ? Uri.https('maps.apple.com', '/', {'daddr': '$latitude,$longitude'})
+      : Uri.parse('geo:$latitude,$longitude?q=$latitude,$longitude(${Uri.encodeComponent(label)})');
+  if (await openExternal(maps)) return;
   await openExternal(Uri.https('www.google.com', '/maps/dir/', {'api': '1', 'destination': '$latitude,$longitude'}));
 }
 

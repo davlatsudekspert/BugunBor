@@ -2,8 +2,10 @@ name: App
 # The Android app (mobile/). Every change: format, analyze, tests (incl. the
 # server contracts), E2E on an emulator against the live site, and a release
 # build checked for package id, permissions and signature. A Play upload only
-# happens when the owner starts this workflow by hand with "play_draft", and
-# only as an Internal-testing DRAFT: publishing stays a manual click in Play.
+# happens when the workflow is started by hand with "play_upload": to Internal
+# testing (or Closed testing - Alpha), as a draft or rolled out to the testers
+# (play_status). The very first bundle of the app is uploaded by hand in Play
+# Console; API uploads work after that. Production stays a manual step in Play.
 on:
   pull_request:
     paths: ['mobile/**', 'contracts/**', '.github/workflows/app.yml']
@@ -12,10 +14,20 @@ on:
     paths: ['mobile/**', 'contracts/**', '.github/workflows/app.yml']
   workflow_dispatch:
     inputs:
-      play_draft:
-        description: Upload the signed bundle to Play Internal testing as a draft
+      play_upload:
+        description: Upload the signed bundle to a Google Play test track
         type: boolean
         default: false
+      play_track:
+        description: "Play track: internal (Internal testing) or alpha (Closed testing - Alpha)"
+        type: choice
+        options: [internal, alpha]
+        default: internal
+      play_status:
+        description: "draft = the owner presses Roll out in Play Console; completed = roll out to the testers now"
+        type: choice
+        options: [draft, completed]
+        default: draft
       publish_apk:
         description: Publish the signed APKs as a GitHub release (bugunbor.uz/ilova gives the newest)
         type: boolean
@@ -155,9 +167,9 @@ jobs:
             mobile/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 14
 
-  play-draft:
-    # Only when the owner asks for it, after E2E and the checked build.
-    if: github.event_name == 'workflow_dispatch' && inputs.play_draft
+  play-upload:
+    # Only when started by hand with play_upload, after E2E and the checked build.
+    if: github.event_name == 'workflow_dispatch' && inputs.play_upload
     needs: [e2e, build]
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -183,13 +195,16 @@ jobs:
             cp "mobile/store/whatsnew/${locale%%-*}.txt" "whatsnew/whatsnew-$locale"
           done
           ls whatsnew
-      - uses: r0adkll/upload-google-play@v1
+      # Pinned to the commit of r0adkll/upload-google-play v1.1.5: this step holds the Play credentials.
+      - name: Upload to Google Play (${{ inputs.play_track }}, ${{ inputs.play_status }})
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: uz.bugunbor.app
           releaseFiles: out/bundle/release/app-release.aab
-          track: internal
-          status: draft
+          releaseName: ${{ env.APP_VERSION }} (${{ github.run_number }})
+          track: ${{ inputs.play_track }}
+          status: ${{ inputs.play_status }}
           whatsNewDirectory: whatsnew
 
   apk-release:

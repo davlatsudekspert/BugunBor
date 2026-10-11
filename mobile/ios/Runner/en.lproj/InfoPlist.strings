@@ -1,0 +1,5 @@
+/* Home-screen name and permission texts (en). */
+"CFBundleDisplayName" = "BugunBor";
+"NSLocationWhenInUseUsageDescription" = "BugunBor uses your location only while the app is open, to show deals near you and sort them by distance.";
+"NSCameraUsageDescription" = "The camera scans a customer’s QR code at the till and takes photos for your deals and profile.";
+"NSPhotoLibraryUsageDescription" = "Photos are used only for the deal, business profile or profile picture you choose them for.";

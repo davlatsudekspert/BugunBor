@@ -74,6 +74,10 @@ class Prefs {
   bool get howHidden => _prefs.getBool('how_hidden') ?? false;
   set howHidden(bool value) => _prefs.setBool('how_hidden', value);
 
+  /// Set on the first start; gone after the app is deleted.
+  bool get installed => _prefs.getBool('installed') ?? false;
+  set installed(bool value) => _prefs.setBool('installed', value);
+
   bool get onboarded => _prefs.getBool('onboarded') ?? false;
   set onboarded(bool value) => _prefs.setBool('onboarded', value);
 

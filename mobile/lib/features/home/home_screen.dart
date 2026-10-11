@@ -148,7 +148,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                 ),
               ),
               // An app installed from the site hears about a newer build here.
-              if (config?.update case final update? when update.build > Env.build && update.build > _updateHidden)
+              if (config?.update case final update? when Env.serverUpdates && update.build > Env.build && update.build > _updateHidden)
                 SliverToBoxAdapter(
                   child: _UpdateCard(onOpen: () => openExternal(Uri.parse(update.url)), onHide: () => _hideUpdate(update.build)),
                 ),

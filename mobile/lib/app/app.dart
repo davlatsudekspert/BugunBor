@@ -174,7 +174,7 @@ class _UpdateGate extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final config = ref.watch(configProvider).value;
     final minimum = config?.minAppBuild ?? 0;
-    if (minimum <= Env.build) return child;
+    if (!Env.serverUpdates || minimum <= Env.build) return child;
     final l = L.of(context);
     return Scaffold(
       body: SafeArea(

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// Build-time settings (`--dart-define`). Nothing secret lives in the app.
 class Env {
   const Env._();
@@ -19,4 +21,11 @@ class Env {
   static const e2e = bool.fromEnvironment('E2E');
 
   static const playStoreUrl = 'https://play.google.com/store/apps/details?id=uz.bugunbor.app';
+
+  /// The server's update notice and minimum build are about the Android app
+  /// (its build numbers); the App Store or TestFlight updates the iOS app.
+  static bool get serverUpdates => defaultTargetPlatform == TargetPlatform.android;
+
+  /// The phone's system, as the server's device list names it.
+  static String get platform => defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android';
 }

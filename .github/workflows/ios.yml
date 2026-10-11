@@ -1,0 +1,174 @@
+name: iOS
+# The iOS app (mobile/ios), built the same way as the owner's other apps.
+#
+# Pull requests: an unsigned Release build on macOS, so iOS keeps compiling.
+# By hand (Actions → iOS → Run workflow): an App Store build signed in the cloud
+# (Xcode automatic signing with the App Store Connect API key: no certificate,
+# profile or .p12 is kept anywhere) and, with upload_to_testflight, sent to
+# TestFlight. A read-only App Store Connect check runs first on ubuntu (the
+# bundle id is registered, the app record exists, the next build number).
+#
+# Secrets (the same values as in the owner's other app repositories):
+# IOS_TEAM_ID, ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8_BASE64 (API key with the
+# Admin role: cloud-managed distribution signing needs it). docs/ILOVA-RELIZ.md
+on:
+  pull_request:
+    paths: ['mobile/**', '.github/workflows/ios.yml']
+  workflow_dispatch:
+    inputs:
+      upload_to_testflight:
+        description: Upload the signed build to TestFlight
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: 3.47.5
+  APP_VERSION: 1.0.0
+  BUNDLE_ID: uz.bugunbor.app
+
+jobs:
+  gate:
+    name: App Store Connect check
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      build_number: ${{ steps.gate.outputs.next_build }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: mobile/tool
+      - name: Install PyJWT
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet "PyJWT==2.10.1" "cryptography==44.0.2"
+      - name: Bundle id, app record and next build number
+        id: gate
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+        run: '"$RUNNER_TEMP/venv/bin/python" mobile/tool/asc.py gate --register --bundle-id "$BUNDLE_ID" --min-build "${{ github.run_number }}"'
+
+  build:
+    name: Build (macOS)
+    needs: gate
+    if: always() && (needs.gate.result == 'success' || needs.gate.result == 'skipped')
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      SIGNED: ${{ github.event_name == 'workflow_dispatch' }}
+      BUILD_NUMBER: ${{ needs.gate.outputs.build_number || github.run_number }}
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Select Xcode 26 (App Store Connect requires the iOS 26 SDK)
+        run: |
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | grep -vi beta \
+            | python3 -c 'import re,sys; l=[x.strip() for x in sys.stdin if x.strip()]; print(max(l, key=lambda p: [int(n) for n in re.findall(r"\d+", p)]) if l else "")')
+          [ -n "$XC" ] || { echo "::error::No Xcode 26 on this runner image"; ls -d /Applications/Xcode*.app; exit 1; }
+          sudo xcode-select -s "$XC/Contents/Developer"
+          xcodebuild -version
+          echo "iphoneos SDK: $(xcrun --sdk iphoneos --show-sdk-version)"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Unsigned Release build (pull requests)
+        if: env.SIGNED != 'true'
+        run: |
+          flutter build ios --release --no-codesign --build-number="$BUILD_NUMBER" --build-name="$APP_VERSION" \
+            --dart-define=APP_BUILD="$BUILD_NUMBER" --dart-define=APP_VERSION="$APP_VERSION" --dart-define=PUSH_ENABLED=false
+          APP=build/ios/iphoneos/Runner.app
+          for k in CFBundleIdentifier CFBundleDisplayName CFBundleShortVersionString CFBundleVersion ITSAppUsesNonExemptEncryption MinimumOSVersion DTSDKName; do
+            echo "$k=$(/usr/libexec/PlistBuddy -c "Print :$k" "$APP/Info.plist" 2>/dev/null || echo '(absent)')"
+          done
+          [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")" = "$BUNDLE_ID" ] || { echo "::error::wrong bundle id"; exit 1; }
+          echo "localizations: $(cd "$APP" && ls -d ./*.lproj | sed 's|^\./||; s|\.lproj$||' | tr '\n' ' ')"
+          du -sh "$APP"
+
+      - name: App Store Connect API key file
+        if: env.SIGNED == 'true'
+        env:
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/keys"
+          python3 tool/asc.py write-p8 "$RUNNER_TEMP/keys/AuthKey.p8"
+          echo "ASC_KEY_PATH=$RUNNER_TEMP/keys/AuthKey.p8" >> "$GITHUB_ENV"
+
+      - name: Archive (unsigned; signing happens at export)
+        if: env.SIGNED == 'true'
+        env:
+          # Passed to xcodebuild as DEVELOPMENT_TEAM, so the archive names the team the export signs for.
+          FLUTTER_XCODE_DEVELOPMENT_TEAM: ${{ secrets.IOS_TEAM_ID }}
+        run: |
+          flutter build ipa --release --no-codesign --build-number="$BUILD_NUMBER" --build-name="$APP_VERSION" \
+            --dart-define=APP_BUILD="$BUILD_NUMBER" --dart-define=APP_VERSION="$APP_VERSION" --dart-define=PUSH_ENABLED=false
+          test -d build/ios/archive/Runner.xcarchive
+
+      - name: Export with cloud signing (and upload to TestFlight only if asked)
+        if: env.SIGNED == 'true'
+        env:
+          TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          UPLOAD: ${{ inputs.upload_to_testflight }}
+        run: |
+          DEST=export
+          if [ "$UPLOAD" = "true" ]; then DEST=upload; fi
+          echo "destination=$DEST version=$APP_VERSION build=$BUILD_NUMBER"
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOT
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>${DEST}</string>
+            <key>teamID</key><string>${TEAM_ID}</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+            <key>uploadSymbols</key><true/>
+          </dict></plist>
+          EOT
+          xcodebuild -exportArchive -archivePath build/ios/archive/Runner.xcarchive -exportPath "$RUNNER_TEMP/export" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            > "$RUNNER_TEMP/export.log" 2>&1 \
+            || { grep -iE "error|fail|denied|permission" "$RUNNER_TEMP/export.log" | head -40; tail -40 "$RUNNER_TEMP/export.log"; exit 1; }
+          tail -8 "$RUNNER_TEMP/export.log"
+          echo "iOS build $APP_VERSION ($BUILD_NUMBER): destination=$DEST" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify the signed IPA
+        if: env.SIGNED == 'true' && !inputs.upload_to_testflight
+        run: |
+          set -euo pipefail
+          IPA=$(ls "$RUNNER_TEMP"/export/*.ipa | head -n1)
+          echo "IPA: $(basename "$IPA"), $(du -h "$IPA" | cut -f1)"
+          mkdir -p "$RUNNER_TEMP/ipa" && unzip -q "$IPA" -d "$RUNNER_TEMP/ipa"
+          APP="$RUNNER_TEMP/ipa/Payload/Runner.app"
+          codesign --verify --deep --strict "$APP" && echo "codesign --verify --deep --strict: OK"
+          grep -q "^Authority=Apple Distribution" <<<"$(codesign -dvv "$APP" 2>&1)" || { echo "::error::not signed with an Apple Distribution certificate"; exit 1; }
+          I() { /usr/libexec/PlistBuddy -c "Print :$1" "$APP/Info.plist" 2>/dev/null || echo "(absent)"; }
+          for k in CFBundleIdentifier CFBundleShortVersionString CFBundleVersion ITSAppUsesNonExemptEncryption MinimumOSVersion DTSDKName; do echo "$k=$(I $k)"; done
+          [ "$(I CFBundleIdentifier)" = "$BUNDLE_ID" ] || { echo "::error::wrong bundle id"; exit 1; }
+          [ "$(I CFBundleVersion)" = "$BUILD_NUMBER" ] || { echo "::error::CFBundleVersion is not $BUILD_NUMBER"; exit 1; }
+          [ "$(I ITSAppUsesNonExemptEncryption)" = "false" ] || { echo "::error::ITSAppUsesNonExemptEncryption is not false"; exit 1; }
+          case "$(I DTSDKName)" in iphoneos26*|iphoneos2[7-9]*) ;; *) echo "::error::not built with the iOS 26+ SDK"; exit 1 ;; esac
+
+      - name: Remove the API key file
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/keys"
