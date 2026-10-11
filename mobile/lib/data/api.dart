@@ -246,7 +246,7 @@ class BugunBorApi {
       ((_data(await _request('PUT', '/api/v1/me/interests', body: {'categories': slugs}))['interests'] as List?) ?? const []).map((slug) => '$slug').toList();
 
   Future<void> registerDevice(String token, {required String locale}) =>
-      _request('PUT', '/api/v1/me/devices', body: {'token': token, 'platform': 'android', 'locale': locale});
+      _request('PUT', '/api/v1/me/devices', body: {'token': token, 'platform': Env.platform, 'locale': locale});
 
   Future<void> removeDevice(String token) => _request('DELETE', '/api/v1/me/devices', body: {'token': token});
 

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,8 +12,16 @@ import 'core/storage.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Both are read at the same time; the first screen needs them.
-  final (shared, token) = await (SharedPreferences.getInstance(), SessionStore().read()).wait;
+  var (shared, token) = await (SharedPreferences.getInstance(), SessionStore().read()).wait;
   final prefs = Prefs(shared);
+  if (!prefs.installed) {
+    // The iOS Keychain outlives the app: after a reinstall it starts signed out.
+    if (defaultTargetPlatform == TargetPlatform.iOS && token != null) {
+      await SessionStore().clear();
+      token = null;
+    }
+    prefs.installed = true;
+  }
   runApp(
     ProviderScope(
       // A failed request shows its error with a "Try again" button instead of

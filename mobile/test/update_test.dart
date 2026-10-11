@@ -52,6 +52,15 @@ void main() {
     expect(find.text('Yangi versiya bor'), findsOneWidget);
   });
 
+  testWidgets('on iOS the App Store updates the app: no offer and no block from the Android build numbers', (tester) async {
+    final server = offering({'build': 45, 'url': 'https://bugunbor.uz/ilova'});
+    final config = server.routes['GET /api/v1/config']!;
+    server.routes['GET /api/v1/config'] = (request) => (config(request) as Map<String, dynamic>)..['data']['minAppBuild'] = 99;
+    await pumpApp(tester, server: server);
+    expect(find.text('Ilovani yangilang'), findsNothing);
+    expect(find.text('Yangi versiya bor'), findsNothing);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
   testWidgets('nothing is offered for this build, an older one, or none', (tester) async {
     // A test build is 1.
     for (final update in [

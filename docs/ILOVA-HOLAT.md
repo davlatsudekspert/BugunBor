@@ -43,8 +43,12 @@ Reja: `docs/ILOVA-REJA.md`.
   - Emulyatorda E2E (haqiqiy sayt, faqat o'qish, ko'rishlar sanalmaydi).
   - Release AAB + APK: `versionCode` = run raqami; paket nomi, ruxsatlar ro'yxati
     (`mobile/android/permissions.txt`) va imzo tekshiriladi.
-  - Play: faqat qo'lda (Actions → App → Run workflow → `play_draft`), Internal testing'ga **qoralama**.
-    Chiqarish tugmasini faqat egasi bosadi.
+  - Play: faqat qo'lda (Actions → App → Run workflow → `play_upload`): Internal yoki Closed testing,
+    qoralama yoki testerlarga darhol (`play_status`). Production faqat Play Console'da, qo'lda.
+- [x] **iOS** (2026-10-11): `mobile/ios` (bundle `uz.bugunbor.app`, faqat iPhone, iOS 15+, uz/ru/en nom va
+  ruxsat matnlari), `.github/workflows/ios.yml`: har PR'da imzosiz build, qo'lda — bulutli imzo va TestFlight.
+  iOS'da yangilanishni App Store qiladi (server yuborgan APK yangilanish e'loni ko'rsatilmaydi), xarita — Apple Maps,
+  qayta o'rnatilgach eski sessiya o'chadi. Egasi qiladigan qadamlar: `docs/ILOVA-RELIZ.md`.
 
 - [x] **PR #6, CI yashil** (2026-09-26): check, e2e (emulyator, 13 ta skrinshot), build, verify.
   - Emulyator skrinshotlari bo'yicha tuzatildi: ko'rinmas chip yozuvlari, rasm ustidagi sarlavha,
