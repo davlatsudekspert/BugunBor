@@ -2,12 +2,14 @@ import { z } from 'zod';
 
 import { getDb } from '@/db/client';
 import { isSecureRequest } from '@/lib/cookies';
+import { getConfig } from '@/lib/env';
 import { assertSameOrigin, json, readJson, route } from '@/lib/http';
 import { PRIVACY_VERSION } from '@/lib/privacy';
 import {
   accountStats, deleteAccount, getNotificationSettings, setNotifyNearby, setUserLocale, soleOwnedBusinesses, updateDisplayName, updateNotificationSettings,
 } from '@/modules/auth/account';
 import { apiUser } from '@/modules/auth/api-user';
+import { openRefreshToken, revokeAppleToken } from '@/modules/auth/apple';
 import { avatarUrl } from '@/modules/auth/avatar';
 import { clearSessionCookie } from '@/modules/auth/sessions';
 import { listMemberships } from '@/modules/businesses/access';
@@ -84,6 +86,13 @@ export const DELETE = route(async (request: Request) => {
   const db = await getDb();
   const user = await apiUser(request, db);
   const closing = body.closeBusinesses ? await soleOwnedBusinesses(db, user.id) : [];
+  const apple = await db.prepare(`SELECT apple_refresh_token AS token FROM users WHERE id = ?1`).bind(user.id).first<{ token: string | null }>();
   await deleteAccount(db, user.id, new Date(), { closeBusinesses: body.closeBusinesses });
+  // Signed in with Apple: Apple is told the account is gone (App Store guideline 5.1.1(v)).
+  const { hashSecret, app } = getConfig();
+  if (apple?.token && app.appleKey) {
+    const refreshToken = await openRefreshToken(apple.token, user.id, hashSecret);
+    if (refreshToken) await revokeAppleToken(refreshToken, app.appleKey).catch(() => false);
+  }
   return json({ data: { deleted: true, closedBusinesses: closing } }, { headers: { 'set-cookie': clearSessionCookie(isSecureRequest(request)) } });
 });

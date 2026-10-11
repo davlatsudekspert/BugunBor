@@ -42,6 +42,10 @@ declare namespace Cloudflare {
     FCM_SERVICE_ACCOUNT?: string;
     /** Store reviewers' sign-in code (at least 12 characters). Unset = reviewer sign-in is off. */
     REVIEW_LOGIN_CODE?: string;
+    /** Apple Developer Team ID, and a Sign in with Apple key (id + .p8 text, secret): lets account deletion revoke Apple access. */
+    APPLE_TEAM_ID?: string;
+    APPLE_SIWA_KEY_ID?: string;
+    APPLE_SIWA_PRIVATE_KEY?: string;
     /** Oldest app build that may still be used; older builds are asked to update. */
     MIN_APP_BUILD?: string;
     /** BugunBor's own Anthropic API key (secret): Claude checks every public photo before it is kept. */

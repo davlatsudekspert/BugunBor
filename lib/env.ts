@@ -27,6 +27,8 @@ export type AppConfig = {
     fcmServiceAccount: string | null;
     reviewLoginCode: string | null;
     minBuild: number;
+    /** Sign in with Apple key (APPLE_TEAM_ID, APPLE_SIWA_KEY_ID, APPLE_SIWA_PRIVATE_KEY): revokes Apple access when an account is deleted. */
+    appleKey: { teamId: string; keyId: string; privateKey: string } | null;
   };
   payments: {
     enabled: boolean;
@@ -66,10 +68,18 @@ export function getConfig(): AppConfig {
       fcmServiceAccount: clean(env.FCM_SERVICE_ACCOUNT),
       reviewLoginCode: (clean(env.REVIEW_LOGIN_CODE)?.length ?? 0) >= 12 ? clean(env.REVIEW_LOGIN_CODE) : null,
       minBuild: Number.parseInt(clean(env.MIN_APP_BUILD) ?? '0', 10) || 0,
+      appleKey: appleKeyConfig(),
     },
     payments: paymentsConfig(),
     photoCheck: photoCheckConfig(),
   };
+}
+
+function appleKeyConfig() {
+  const teamId = clean(env.APPLE_TEAM_ID);
+  const keyId = clean(env.APPLE_SIWA_KEY_ID);
+  const privateKey = clean(env.APPLE_SIWA_PRIVATE_KEY);
+  return teamId && keyId && privateKey ? { teamId, keyId, privateKey } : null;
 }
 
 function photoCheckConfig(): PhotoCheckConfig | null {
