@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 /// The server's pinned sample answers (see ../contracts/README.md).
 Object? contract(String name) => jsonDecode(File('../contracts/$name.json').readAsStringSync());
@@ -226,6 +227,7 @@ Future<void> pumpApp(
   Pin? pin,
   Uint8List? photo,
   Future<Uint8List?> Function({required bool camera, PhotoUse use})? picker,
+  Future<AuthorizationCredentialAppleID?> Function()? apple,
   Map<String, Object> prefs = const {},
 }) async {
   SharedPreferences.setMockInitialValues({'onboarded': onboarded, 'locale': locale, 'city': 'tashkent', 'theme': theme, ...prefs});
@@ -248,6 +250,8 @@ Future<void> pumpApp(
         pinLocatorProvider.overrideWithValue(() async => pin),
         // What the camera or gallery "returns" (never the real picker).
         photoPickerProvider.overrideWithValue(picker ?? ({required camera, use = PhotoUse.deal}) async => photo),
+        // What Apple's sign-in sheet "returns" (never the real sheet).
+        appleAuthorizerProvider.overrideWithValue(apple ?? () async => null),
         initialTokenProvider.overrideWithValue(token),
         sessionStoreProvider.overrideWithValue(MemorySessionStore()..token = token),
         apiProvider.overrideWith(

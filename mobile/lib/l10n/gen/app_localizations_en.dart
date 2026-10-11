@@ -343,6 +343,9 @@ class LEn extends L {
   String get loginButton => 'Sign in with Telegram';
 
   @override
+  String get loginApple => 'Sign in with Apple';
+
+  @override
   String get loginConsentHint => 'Tick the consent box to sign in.';
 
   @override

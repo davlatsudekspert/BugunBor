@@ -846,6 +846,14 @@ class LoginStatus {
   final String? token;
 }
 
+/// The session the server opens after Sign in with Apple.
+class AppleLogin {
+  const AppleLogin({required this.token, required this.expiresAt});
+  factory AppleLogin.fromJson(Json json) => AppleLogin(token: _str(json['token']), expiresAt: parseServerTime(_str(json['expiresAt'], '1970-01-01T00:00:00Z')));
+  final String token;
+  final DateTime expiresAt;
+}
+
 class ClaimResult {
   const ClaimResult({required this.id, required this.code, required this.expiresAt});
   factory ClaimResult.fromJson(Json json) =>

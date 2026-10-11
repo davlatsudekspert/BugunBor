@@ -106,6 +106,24 @@ void main() {
     expect(status.token, isNotEmpty);
   });
 
+  test('Apple sign-in sends the identity token with consent and never a stale token', () async {
+    server.routes['POST /api/v1/auth/apple'] = (_) => {
+      'data': {'token': 'session-token', 'expiresAt': '2026-10-25T10:00:00.000Z'},
+    };
+    token = 'stale';
+    final login = await api().appleLogin(identityToken: 'jwt', authorizationCode: 'code', givenName: 'Alice');
+    expect(login.token, 'session-token');
+    expect(login.expiresAt, DateTime.utc(2026, 10, 25, 10));
+    final request = server.requests.single;
+    expect(request.headers.containsKey('authorization'), isFalse);
+    expect(request.data, {'identityToken': 'jwt', 'authorizationCode': 'code', 'givenName': 'Alice', 'familyName': null, 'consent': true});
+
+    server.routes['POST /api/v1/auth/apple'] = (_) => const Reply(401, {
+      'error': {'code': 'APPLE_TOKEN_INVALID'},
+    });
+    await expectLater(api().appleLogin(identityToken: 'bad'), throwsA(isA<ApiError>().having((error) => error.code, 'code', 'APPLE_TOKEN_INVALID')));
+  });
+
   test('no connection becomes a NETWORK error', () async {
     final dio = Dio(BaseOptions(baseUrl: 'https://test.bugunbor.uz'))..httpClientAdapter = _Offline();
     final offline = BugunBorApi(locale: () => 'uz', token: () => null, onUnauthorized: () {}, dio: dio);

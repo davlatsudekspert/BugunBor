@@ -344,6 +344,9 @@ class LRu extends L {
   String get loginButton => 'Войти через Telegram';
 
   @override
+  String get loginApple => 'Войти через Apple';
+
+  @override
   String get loginConsentHint => 'Чтобы войти, сначала отметьте согласие.';
 
   @override
