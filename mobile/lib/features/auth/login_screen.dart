@@ -202,8 +202,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WidgetsBindingOb
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               GestureDetector(
-                // Hidden entry for app-store reviewers (a code the owner sets on the server).
-                onLongPress: _reviewerLogin,
+                // Hidden entry for Play reviewers (a code the owner sets on the server, written
+                // in the Play Console's app-access notes). Not on iPhone: App Review checks
+                // for undocumented features (guideline 2.5.19) and signs in with Apple instead.
+                onLongPress: defaultTargetPlatform == TargetPlatform.iOS ? null : _reviewerLogin,
                 child: Text(l.loginTitle, style: Theme.of(context).textTheme.headlineMedium),
               ),
               const SizedBox(height: Gap.sm),
