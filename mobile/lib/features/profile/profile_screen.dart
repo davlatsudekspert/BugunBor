@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../app/account.dart';
 import '../../app/links.dart';
@@ -186,6 +188,17 @@ class _GuestCard extends StatelessWidget {
               icon: const Icon(Icons.send_rounded),
               label: Text(l.loginButton),
             ),
+            if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+              const SizedBox(height: Gap.sm),
+              // The privacy box is on the sign-in screen, so Apple goes through it too.
+              SignInWithAppleButton(
+                text: l.loginApple,
+                height: 52,
+                borderRadius: BorderRadius.circular(14),
+                style: context.isDark ? SignInWithAppleButtonStyle.white : SignInWithAppleButtonStyle.black,
+                onPressed: () => context.push('/login'),
+              ),
+            ],
           ],
         ),
       ),
