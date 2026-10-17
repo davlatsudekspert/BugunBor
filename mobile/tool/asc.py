@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """App Store Connect helper for the iOS workflow (.github/workflows/ios.yml).
 
-  asc.py gate --bundle-id uz.bugunbor.app --min-build N [--register]
-      Checks that the bundle id is registered (registers it with --register) and
-      that the App Store Connect app record uses it, then prints next_build =
+  asc.py gate --bundle-id uz.bugunbor.app --min-build N [--register] [--sign-in-with-apple]
+      Checks that the bundle id is registered (registers it with --register),
+      turns on its Sign in with Apple capability (--sign-in-with-apple; the
+      cloud-made profile carries the entitlement only then), checks that the App
+      Store Connect app record uses it, then prints next_build =
       max(highest build already uploaded + 1, N) to $GITHUB_OUTPUT.
   asc.py write-p8 PATH
       Writes the API key as a .p8 file (mode 600) for xcodebuild.
@@ -77,6 +79,20 @@ def call(method, path, query=None, body=None, auth=None):
         fail(f'App Store Connect {method} {path}: HTTP {error.code} {detail}'.strip())
 
 
+def ensure_sign_in_with_apple(bundle_resource_id, auth):
+    capabilities = call('GET', f'/bundleIds/{bundle_resource_id}/bundleIdCapabilities', {'limit': 200}, auth=auth).get('data', [])
+    if any(c['attributes'].get('capabilityType') == 'APPLE_ID_AUTH' for c in capabilities):
+        print('Sign in with Apple capability: on')
+        return
+    call('POST', '/bundleIdCapabilities', body={'data': {
+        'type': 'bundleIdCapabilities',
+        'attributes': {'capabilityType': 'APPLE_ID_AUTH', 'settings': [
+            {'key': 'APPLE_ID_AUTH_APP_CONSENT', 'options': [{'key': 'PRIMARY_APP_CONSENT'}]}]},
+        'relationships': {'bundleId': {'data': {'type': 'bundleIds', 'id': bundle_resource_id}}},
+    }}, auth=auth)
+    print('Sign in with Apple capability: turned on')
+
+
 def gate(args):
     auth = token()
     found = call('GET', '/bundleIds', {'filter[identifier]': args.bundle_id, 'limit': 200}, auth=auth)
@@ -84,11 +100,13 @@ def gate(args):
     if not bundle:
         if not args.register:
             fail(f'Bundle id {args.bundle_id} is not registered (run with --register, or add it in Certificates, Identifiers & Profiles)')
-        call('POST', '/bundleIds', body={'data': {'type': 'bundleIds', 'attributes': {
-            'identifier': args.bundle_id, 'name': args.name, 'platform': 'IOS'}}}, auth=auth)
+        bundle = call('POST', '/bundleIds', body={'data': {'type': 'bundleIds', 'attributes': {
+            'identifier': args.bundle_id, 'name': args.name, 'platform': 'IOS'}}}, auth=auth)['data']
         print(f'Registered bundle id {args.bundle_id} ({args.name})')
     else:
         print(f'Bundle id {args.bundle_id}: registered')
+    if args.sign_in_with_apple:
+        ensure_sign_in_with_apple(bundle['id'], auth)
 
     apps = call('GET', '/apps', {'filter[bundleId]': args.bundle_id, 'limit': 10}, auth=auth).get('data', [])
     app = next((a for a in apps if a['attributes']['bundleId'] == args.bundle_id), None)
@@ -123,6 +141,7 @@ def main():
     g.add_argument('--name', default='BugunBor')
     g.add_argument('--min-build', type=int, default=1)
     g.add_argument('--register', action='store_true')
+    g.add_argument('--sign-in-with-apple', action='store_true')
     w = commands.add_parser('write-p8')
     w.add_argument('path')
     args = parser.parse_args()
