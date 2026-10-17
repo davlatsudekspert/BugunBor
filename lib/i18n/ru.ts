@@ -722,6 +722,23 @@ export const ru: Dictionary = {
   },
   admin: {
     title: 'Админ-панель',
+    growth: {
+      title: 'Пользователи и активность',
+      newUsers: 'Новые пользователи: за 7 дней {week}, за 30 дней {month}',
+      signedIn: 'Сейчас в системе: {count}',
+      roles: 'Роли: покупатели {customers} · модераторы {moderators} · админы {admins}',
+      chart: 'Последние 14 дней',
+      chartUsers: 'Новые пользователи',
+      chartCodes: 'Забронированные коды',
+      objects: 'Бизнесы {businesses} · акции {deals} · коды {codes} · отзывы {reviews} · жалобы {reports}',
+    },
+    stores: {
+      title: 'Загрузки и продажи',
+      text: 'Число загрузок сервер не видит: его считают сами магазины приложений.',
+      appStore: 'App Store Connect',
+      play: 'Google Play Console',
+      sales: 'Продажи: 0. Считаются только после подключения платёжной системы.',
+    },
     app: { title: 'Мобильное приложение', summary: 'За 30 дней приложением пользовались: {users} · устройств с уведомлениями: {devices} · последняя сборка: {build}' },
     nav: { overview: 'Обзор', businesses: 'Бизнесы', deals: 'Акции', reviews: 'Отзывы', users: 'Пользователи', categories: 'Категории', messages: 'Обращения', audit: 'Аудит', billing: 'Тарифы', settings: 'Настройки', reports: 'Жалобы' },
     stats: { pendingBusinesses: 'Бизнесы на проверке', pendingDeals: 'Акции на проверке', liveDeals: 'Активные акции', users: 'Пользователи', claimsToday: 'Забронировано сегодня', redeemedToday: 'Использовано сегодня', newMessages: 'Новые обращения' },

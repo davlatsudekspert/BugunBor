@@ -720,6 +720,23 @@ export const uz = {
   },
   admin: {
     title: 'Admin panel',
+    growth: {
+      title: 'Foydalanuvchilar va faollik',
+      newUsers: 'Yangi foydalanuvchilar: oxirgi 7 kunda {week}, 30 kunda {month}',
+      signedIn: 'Hozir tizimda: {count}',
+      roles: 'Rollar: mijozlar {customers} · moderatorlar {moderators} · adminlar {admins}',
+      chart: 'Oxirgi 14 kun',
+      chartUsers: 'Yangi foydalanuvchilar',
+      chartCodes: 'Band qilingan kodlar',
+      objects: 'Bizneslar {businesses} · aksiyalar {deals} · kodlar {codes} · sharhlar {reviews} · shikoyatlar {reports}',
+    },
+    stores: {
+      title: 'Yuklab olishlar va sotuvlar',
+      text: 'Yuklab olishlar sonini server ko‘rmaydi: ularni do‘konlar o‘zi hisoblaydi.',
+      appStore: 'App Store Connect',
+      play: 'Google Play Console',
+      sales: 'Sotuvlar: 0. To‘lov tizimi ulangandan keyingina hisoblanadi.',
+    },
     app: { title: 'Mobil ilova', summary: 'Oxirgi 30 kunda ilovadan {users} kishi foydalandi · xabarnoma yoqilgan qurilmalar: {devices} · eng yangi build: {build}' },
     nav: { overview: 'Umumiy', businesses: 'Bizneslar', deals: 'Aksiyalar', reviews: 'Sharhlar', users: 'Foydalanuvchilar', categories: 'Kategoriyalar', messages: 'Murojaatlar', audit: 'Audit', billing: 'Tariflar', settings: 'Sozlamalar', reports: 'Shikoyatlar' },
     stats: { pendingBusinesses: 'Tekshiruvdagi bizneslar', pendingDeals: 'Tekshiruvdagi aksiyalar', liveDeals: 'Faol aksiyalar', users: 'Foydalanuvchilar', claimsToday: 'Bugun band qilindi', redeemedToday: 'Bugun ishlatildi', newMessages: 'Yangi murojaatlar' },

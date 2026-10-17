@@ -6,7 +6,7 @@ import { getDb } from '@/db/client';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
 import { cn } from '@/lib/utils';
-import { adminOverview, appUsage, automationSummary } from '@/modules/admin/service';
+import { adminOverview, appUsage, automationSummary, growthStats } from '@/modules/admin/service';
 import { requireModerator } from '@/modules/auth/current';
 import { getAutoModerationSettings } from '@/modules/moderation/auto';
 
@@ -21,7 +21,8 @@ const ADMIN_ONLY = ['/admin/billing', '/admin/users'];
 export default async function AdminOverviewPage() {
   const user = await requireModerator('/admin');
   const [{ t }, db] = await Promise.all([getI18n(), getDb()]);
-  const [stats, automation, switches, app] = await Promise.all([adminOverview(db), automationSummary(db), getAutoModerationSettings(db), appUsage(db)]);
+  const [stats, automation, switches, app, growth] = await Promise.all([adminOverview(db), automationSummary(db), getAutoModerationSettings(db), appUsage(db), growthStats(db)]);
+  const peak = Math.max(1, ...growth.days.flatMap((day) => [day.users, day.codes]));
   const auto = t.admin.auto;
   const cards = [
     { label: t.admin.stats.pendingBusinesses, value: stats.pendingBusinesses, href: '/admin/businesses', urgent: stats.pendingBusinesses > 0 },
@@ -49,6 +50,46 @@ export default async function AdminOverviewPage() {
         <h2 className="flex items-center gap-2 text-lg font-black text-navy"><Smartphone className="size-5 text-primary" aria-hidden /> {t.admin.app.title}</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">{fmt(t.admin.app.summary, { users: app.activeUsers, devices: app.devices, build: app.latestBuild ?? '—' })}</p>
       </section>
+      {user.role === 'ADMIN' ? (
+        <>
+          <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
+            <h2 className="text-lg font-black text-navy">{t.admin.growth.title}</h2>
+            <ul className="mt-2 space-y-1 text-sm leading-6 text-slate-600">
+              <li>{fmt(t.admin.growth.newUsers, { week: growth.newUsers7, month: growth.newUsers30 })}</li>
+              <li>{fmt(t.admin.growth.signedIn, { count: growth.signedIn })}</li>
+              <li>{fmt(t.admin.growth.roles, { customers: growth.roles.CUSTOMER, moderators: growth.roles.MODERATOR, admins: growth.roles.ADMIN })}</li>
+              <li>{fmt(t.admin.growth.objects, growth.objects)}</li>
+            </ul>
+            <h3 className="mt-4 text-sm font-bold text-navy">{t.admin.growth.chart}</h3>
+            <div className="mt-2 flex h-28 items-end gap-1" aria-hidden>
+              {growth.days.map((day) => (
+                <div key={day.day} className="flex h-full flex-1 items-end gap-0.5" title={`${day.day}: ${day.users} / ${day.codes}`}>
+                  <span className="w-1/2 rounded-t bg-primary" style={{ height: `${Math.max(day.users ? 4 : 0, (day.users / peak) * 100)}%` }} />
+                  <span className="w-1/2 rounded-t bg-navy/60" style={{ height: `${Math.max(day.codes ? 4 : 0, (day.codes / peak) * 100)}%` }} />
+                </div>
+              ))}
+            </div>
+            <ol className="sr-only">
+              {growth.days.map((day) => (
+                <li key={day.day}>{`${day.day}: ${t.admin.growth.chartUsers} ${day.users}, ${t.admin.growth.chartCodes} ${day.codes}`}</li>
+              ))}
+            </ol>
+            <p className="mt-2 flex gap-4 text-xs text-slate-500">
+              <span><i className="mr-1 inline-block size-2 rounded-sm bg-primary" />{t.admin.growth.chartUsers}</span>
+              <span><i className="mr-1 inline-block size-2 rounded-sm bg-navy/60" />{t.admin.growth.chartCodes}</span>
+            </p>
+          </section>
+          <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
+            <h2 className="text-lg font-black text-navy">{t.admin.stores.title}</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">{t.admin.stores.text}</p>
+            <p className="mt-1 text-sm font-bold text-navy">{t.admin.stores.sales}</p>
+            <div className="mt-3 flex flex-wrap gap-2 text-sm font-bold">
+              <a href="https://appstoreconnect.apple.com/apps" target="_blank" rel="noopener noreferrer" className="rounded-full border border-slate-200 px-4 py-2 text-primary hover:bg-slate-50">{t.admin.stores.appStore}</a>
+              <a href="https://play.google.com/console" target="_blank" rel="noopener noreferrer" className="rounded-full border border-slate-200 px-4 py-2 text-primary hover:bg-slate-50">{t.admin.stores.play}</a>
+            </div>
+          </section>
+        </>
+      ) : null}
       <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="flex items-center gap-2 text-lg font-black text-navy"><Sparkles className="size-5 text-primary" aria-hidden /> {auto.title}</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">{fmt(auto.summary, automation)}</p>

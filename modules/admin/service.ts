@@ -131,15 +131,18 @@ export async function listAdminDeals(db: D1Database, filter: 'pending' | 'auto' 
 
 export type AdminUser = { id: string; displayName: string; phone: string | null; role: PlatformRole; status: UserStatus; createdAt: string; lastLoginAt: string | null; businesses: number };
 
+/** A LIKE pattern for [text] where %, _ and \\ in the text match themselves (used with ESCAPE '\\'). */
+const likeContains = (text: string) => `%${text.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
+
 export async function listAdminUsers(db: D1Database, query: string | null) {
   const digits = query?.replace(/\D/g, '') ?? '';
   const rows = await db
     .prepare(`SELECT u.id, u.display_name AS displayName, u.phone, u.role, u.status, u.created_at AS createdAt, u.last_login_at AS lastLoginAt,
         (SELECT COUNT(*) FROM business_members m WHERE m.user_id = u.id AND m.revoked_at IS NULL) AS businesses
       FROM users u
-      WHERE u.status != 'DELETED' AND u.id != 'usr_system' AND (?1 = '' OR u.display_name LIKE ?2 OR (?3 != '' AND u.phone LIKE ?4))
+      WHERE u.status != 'DELETED' AND u.id != 'usr_system' AND (?1 = '' OR u.display_name LIKE ?2 ESCAPE '\\' OR (?3 != '' AND u.phone LIKE ?4 ESCAPE '\\'))
       ORDER BY CASE u.role WHEN 'ADMIN' THEN 0 WHEN 'MODERATOR' THEN 1 ELSE 2 END, u.created_at DESC LIMIT 200`)
-    .bind(query?.trim() ?? '', `%${query?.trim() ?? ''}%`, digits, `%${digits}%`)
+    .bind(query?.trim() ?? '', likeContains(query?.trim() ?? ''), digits, likeContains(digits))
     .all<AdminUser>();
   return rows.results;
 }
@@ -262,4 +265,57 @@ export async function appUsage(db: D1Database, now = new Date()): Promise<AppUsa
     .bind(since)
     .first<AppUsage>();
   return row ?? { activeUsers: 0, devices: 0, latestBuild: null, openReports: 0 };
+}
+
+export type Growth = {
+  newUsers7: number;
+  newUsers30: number;
+  signedIn: number;
+  roles: Record<PlatformRole, number>;
+  objects: { businesses: number; deals: number; codes: number; reviews: number; reports: number };
+  /** The last 14 Tashkent days, oldest first. */
+  days: Array<{ day: string; users: number; codes: number }>;
+};
+
+/** People and activity numbers for the overview: sign-ups, roles, objects and a 14-day chart. */
+export async function growthStats(db: D1Database, now = new Date()): Promise<Growth> {
+  const day = 86_400_000;
+  const todayStart = startOfTashkentDay(now).getTime();
+  const since14 = toDbTime(new Date(todayStart - 13 * day));
+  const row = await db
+    .prepare(`SELECT
+        (SELECT COUNT(*) FROM users WHERE status != 'DELETED' AND id != 'usr_system' AND created_at >= ?1) AS newUsers7,
+        (SELECT COUNT(*) FROM users WHERE status != 'DELETED' AND id != 'usr_system' AND created_at >= ?2) AS newUsers30,
+        (SELECT COUNT(DISTINCT user_id) FROM sessions WHERE revoked_at IS NULL AND expires_at > ?3) AS signedIn,
+        (SELECT COUNT(*) FROM users WHERE status != 'DELETED' AND id != 'usr_system' AND role = 'CUSTOMER') AS customers,
+        (SELECT COUNT(*) FROM users WHERE status != 'DELETED' AND id != 'usr_system' AND role = 'MODERATOR') AS moderators,
+        (SELECT COUNT(*) FROM users WHERE status != 'DELETED' AND id != 'usr_system' AND role = 'ADMIN') AS admins,
+        (SELECT COUNT(*) FROM businesses WHERE deleted_at IS NULL) AS businesses,
+        (SELECT COUNT(*) FROM deals WHERE deleted_at IS NULL) AS deals,
+        (SELECT COUNT(*) FROM redemptions) AS codes,
+        (SELECT COUNT(*) FROM reviews) AS reviews,
+        (SELECT COUNT(*) FROM reports) AS reports`)
+    .bind(toDbTime(new Date(todayStart - 6 * day)), toDbTime(new Date(todayStart - 29 * day)), toDbTime(now))
+    .first<Record<string, number>>();
+  const perDay = async (table: 'users' | 'redemptions') => {
+    const rows = await db
+      .prepare(`SELECT date(created_at, '+5 hours') AS day, COUNT(*) AS n FROM ${table} WHERE created_at >= ?1${table === 'users' ? " AND id != 'usr_system' AND status != 'DELETED'" : ''} GROUP BY day`)
+      .bind(since14)
+      .all<{ day: string; n: number }>();
+    return new Map(rows.results.map((entry) => [entry.day, entry.n]));
+  };
+  const [users, codes] = await Promise.all([perDay('users'), perDay('redemptions')]);
+  const days = Array.from({ length: 14 }, (_, index) => {
+    const key = new Date(todayStart - (13 - index) * day + 5 * 3_600_000).toISOString().slice(0, 10);
+    return { day: key, users: users.get(key) ?? 0, codes: codes.get(key) ?? 0 };
+  });
+  const r = row ?? {};
+  return {
+    newUsers7: r.newUsers7 ?? 0,
+    newUsers30: r.newUsers30 ?? 0,
+    signedIn: r.signedIn ?? 0,
+    roles: { CUSTOMER: r.customers ?? 0, MODERATOR: r.moderators ?? 0, ADMIN: r.admins ?? 0 },
+    objects: { businesses: r.businesses ?? 0, deals: r.deals ?? 0, codes: r.codes ?? 0, reviews: r.reviews ?? 0, reports: r.reports ?? 0 },
+    days,
+  };
 }
