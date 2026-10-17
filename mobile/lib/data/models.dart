@@ -113,7 +113,6 @@ class AppUpdate {
 class AppConfig {
   const AppConfig({
     required this.demo,
-    required this.tariffsEnabled,
     required this.minAppBuild,
     required this.privacyVersion,
     required this.links,
@@ -127,7 +126,6 @@ class AppConfig {
 
   factory AppConfig.fromJson(Json json) => AppConfig(
     demo: _bool(json['demo']),
-    tariffsEnabled: _bool(json['tariffsEnabled']),
     minAppBuild: _int(json['minAppBuild']),
     privacyVersion: _str(json['privacyVersion']),
     links: _map(json['links']).map((key, value) => MapEntry(key, _str(value))),
@@ -140,7 +138,6 @@ class AppConfig {
   );
 
   final bool demo;
-  final bool tariffsEnabled;
   final int minAppBuild;
   final String privacyVersion;
   final Map<String, String> links;
