@@ -80,7 +80,7 @@ def call(method, path, query=None, body=None, auth=None):
 
 
 def ensure_sign_in_with_apple(bundle_resource_id, auth):
-    capabilities = call('GET', f'/bundleIds/{bundle_resource_id}/bundleIdCapabilities', {'limit': 200}, auth=auth).get('data', [])
+    capabilities = call('GET', f'/bundleIds/{bundle_resource_id}/bundleIdCapabilities', auth=auth).get('data', [])
     if any(c['attributes'].get('capabilityType') == 'APPLE_ID_AUTH' for c in capabilities):
         print('Sign in with Apple capability: on')
         return
