@@ -41,7 +41,8 @@ export default async function GuidesPage() {
       description: video.text,
       thumbnailUrl: `${origin}${guidePoster(video.slug)}`,
       contentUrl: `${origin}${guideVideo(video.slug)}`,
-      uploadDate: '2026-09-26',
+      // Date and time with the time zone (Tashkent), as Google's video markup asks.
+      uploadDate: '2026-09-26T12:00:00+05:00',
       duration: isoDuration(video.seconds),
       inLanguage: 'uz',
     })),
