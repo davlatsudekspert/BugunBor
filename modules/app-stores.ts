@@ -9,6 +9,8 @@ export const ANDROID_MODE_SETTING = 'android_download';
 export const ANDROID_MODES = ['off', 'apk', 'play'] as const;
 export type AndroidMode = (typeof ANDROID_MODES)[number];
 
+/** The iPhone app, live in the App Store. */
+export const APP_STORE_URL = 'https://apps.apple.com/uz/app/bugunbor/id6821543877';
 export const GOOGLE_PLAY_URL = `https://play.google.com/store/apps/details?id=${ANDROID_PACKAGE}`;
 /** The download page with the install steps. */
 export const APP_PAGE = '/ilova';

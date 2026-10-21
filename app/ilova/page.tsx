@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
-import { AlertTriangle, Clock3, Download, Play, PlayCircle, RefreshCw, Smartphone } from 'lucide-react';
+import { AlertTriangle, Download, Play, PlayCircle, RefreshCw, Smartphone } from 'lucide-react';
 
 import { getDb } from '@/db/client';
 import { getConfig } from '@/lib/env';
 import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
 import { localeAlternates } from '@/lib/locale-paths';
-import { APP_PAGE, appStores, latestApkSize, type AppStores } from '@/modules/app-stores';
+import { APP_PAGE, APP_STORE_URL, appStores, latestApkSize, type AppStores } from '@/modules/app-stores';
 import { APK_GUIDE, GUIDES_PAGE } from '@/modules/guides';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -69,8 +69,8 @@ export default async function AppPage() {
           <PlayCircle className="size-5" aria-hidden /> {p.guides}
         </a>
         <p className="mt-6 flex items-start gap-3 border-t border-slate-100 pt-5 text-sm leading-6 text-slate-600">
-          <Clock3 className="mt-0.5 size-5 shrink-0 text-slate-400" aria-hidden />
-          <span><strong className="text-navy">{p.iphoneTitle}.</strong> {p.iphoneText}</span>
+          <Smartphone className="mt-0.5 size-5 shrink-0 text-slate-400" aria-hidden />
+          <span><strong className="text-navy">{p.iphoneTitle}.</strong> {p.iphoneText} <a href={APP_STORE_URL} target="_blank" rel="noopener" className="font-bold text-primary hover:underline">{p.iphoneLink}</a></span>
         </p>
       </section>
 

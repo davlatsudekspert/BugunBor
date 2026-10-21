@@ -954,7 +954,7 @@ export const uz = {
       },
       appModeCurrent: 'Hozir shu',
       appModeChoose: 'Tanlash',
-      appIosNote: 'App Store: saytda «Tez kunda» deb turadi.',
+      appIosNote: 'App Store: ilova chiqqan, saytda doim yuklab olish tugmasi turadi.',
     },
   },
   how: {
@@ -1145,7 +1145,7 @@ export const uz = {
     getApk: 'Saytdan yuklab oling',
     playSoon: 'Tez kunda Google Play’da',
     appStore: 'App Store',
-    soon: 'Tez kunda',
+    getOnAppStore: 'App Store’dan yuklab oling',
   },
   appPage: {
     metaTitle: 'BugunBor ilovasini yuklab olish (Android)',
@@ -1176,7 +1176,8 @@ export const uz = {
       'Ilovani faqat bugunbor.uz saytidan yuklab oling — boshqa joylardagi fayllarga ishonmang.',
     ],
     iphoneTitle: 'iPhone',
-    iphoneText: 'iPhone uchun ilova tez kunda App Store’da chiqadi. Hozircha bugunbor.uz saytidan foydalaning.',
+    iphoneText: 'iPhone uchun ilova App Store’da.',
+    iphoneLink: 'App Store’dan yuklab olish',
     guides: 'Ilovadan qanday foydalanish — video qo‘llanmalar',
   },
   guides: {

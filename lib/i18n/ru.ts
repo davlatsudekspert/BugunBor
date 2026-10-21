@@ -956,7 +956,7 @@ export const ru: Dictionary = {
       },
       appModeCurrent: 'Сейчас так',
       appModeChoose: 'Выбрать',
-      appIosNote: 'App Store: на сайте написано «Скоро».',
+      appIosNote: 'App Store: приложение вышло, на сайте всегда кнопка загрузки.',
     },
   },
   how: {
@@ -1147,7 +1147,7 @@ export const ru: Dictionary = {
     getApk: 'Скачайте с сайта',
     playSoon: 'Скоро в Google Play',
     appStore: 'App Store',
-    soon: 'Скоро',
+    getOnAppStore: 'Скачайте в App Store',
   },
   appPage: {
     metaTitle: 'Скачать приложение BugunBor (Android)',
@@ -1178,7 +1178,8 @@ export const ru: Dictionary = {
       'Скачивайте приложение только с сайта bugunbor.uz — не доверяйте файлам из других мест.',
     ],
     iphoneTitle: 'iPhone',
-    iphoneText: 'Приложение для iPhone скоро появится в App Store. Пока пользуйтесь сайтом bugunbor.uz.',
+    iphoneText: 'Приложение для iPhone — в App Store.',
+    iphoneLink: 'Скачать в App Store',
     guides: 'Как пользоваться приложением — видеоинструкции',
   },
   guides: {
