@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { applyMigrations } from '@/db/migrate';
 import { createTestD1 } from '@/test/d1';
-import { APK_FILES, APK_RELEASE_BASE, GOOGLE_PLAY_URL, appStores, forgetAppStores, forgetLatestApk, latestApkBuild, latestApkSize } from './app-stores';
+import { APK_FILES, APK_RELEASE_BASE, GOOGLE_PLAY_URL, appStores, forgetAppStores, storesFor, forgetLatestApk, latestApkBuild, latestApkSize } from './app-stores';
 
 describe('app store links', () => {
   it('follows the admin’s choice: coming soon, the APK page, or Google Play', async () => {
@@ -77,3 +77,18 @@ describe('app store links', () => {
   });
 });
 
+
+describe('the site buttons for the phone app', () => {
+  it('always send iPhone people to the App Store, whatever Android is set to', async () => {
+    const { renderToStaticMarkup } = await import('react-dom/server');
+    const { createElement } = await import('react');
+    const { AppBadges } = await import('@/components/site/app-badges');
+    const { uz } = await import('@/lib/i18n/uz');
+    for (const mode of ['off', 'apk', 'play'] as const) {
+      const markup = renderToStaticMarkup(createElement(AppBadges, { stores: storesFor(mode), t: uz }));
+      expect(markup).toContain('href="https://apps.apple.com/uz/app/bugunbor/id6821543877"');
+      expect(markup).toContain(uz.appStores.getOnAppStore);
+      expect(markup).not.toContain('Tez kunda</span><span class="block text-base font-black">App Store');
+    }
+  });
+});

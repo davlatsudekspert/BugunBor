@@ -2,14 +2,14 @@ import { Download, Play, Smartphone } from 'lucide-react';
 
 import type { Dictionary } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
-import type { AppStores } from '@/modules/app-stores';
+import { APP_STORE_URL, type AppStores } from '@/modules/app-stores';
 
 const badge = 'inline-flex h-14 min-w-[190px] items-center gap-3 rounded-2xl px-4 text-left';
 
 /**
  * The phone app's buttons: "Android ilova" goes to the site's APK page or to
  * Google Play, as an admin chose (until then it reads "coming soon"); the App
- * Store is "coming soon".
+ * Store button always goes to the iPhone app.
  */
 export function AppBadges({ stores, t, className }: { stores: AppStores; t: Dictionary; className?: string }) {
   const s = t.appStores;
@@ -38,10 +38,10 @@ export function AppBadges({ stores, t, className }: { stores: AppStores; t: Dict
           {line(s.playSoon, s.android, true)}
         </span>
       )}
-      <span className={cn(badge, 'border border-slate-200 bg-white text-navy')}>
-        <Smartphone className="size-6 shrink-0 text-slate-400" aria-hidden />
-        {line(s.soon, s.appStore, true)}
-      </span>
+      <a href={APP_STORE_URL} target="_blank" rel="noopener" className={live}>
+        <Smartphone className="size-6 shrink-0" aria-hidden />
+        {line(s.getOnAppStore, s.appStore, false)}
+      </a>
     </div>
   );
 }
