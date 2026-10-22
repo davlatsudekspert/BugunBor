@@ -13,8 +13,6 @@ name: iOS
 # IOS_TEAM_ID, ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8_BASE64 (API key with the
 # Admin role: cloud-managed distribution signing needs it). docs/ILOVA-RELIZ.md
 on:
-  pull_request:
-    paths: ['mobile/**', '.github/workflows/ios.yml']
   workflow_dispatch:
     inputs:
       upload_to_testflight:
@@ -22,6 +20,7 @@ on:
         type: boolean
         default: false
       screenshots:
+    if: github.event_name == 'workflow_dispatch'
         description: Only take App Store screenshots (6.9-inch iPhone simulator, the live site, read-only)
         type: boolean
         default: false
@@ -43,7 +42,6 @@ jobs:
     # The app's E2E run on the largest iPhone simulator: its screenshots are the
     # 6.9-inch size App Store Connect asks for (1320×2868).
     name: App Store screenshots (simulator)
-    if: github.event_name == 'workflow_dispatch' && inputs.screenshots
     runs-on: macos-15
     timeout-minutes: 60
     defaults:
@@ -113,9 +111,9 @@ jobs:
         run: '"$RUNNER_TEMP/venv/bin/python" mobile/tool/asc.py gate --register --sign-in-with-apple --bundle-id "$BUNDLE_ID" --min-build "${{ github.run_number }}"'
 
   build:
+    if: github.event_name == 'workflow_dispatch'
     name: Build (macOS)
     needs: gate
-    if: always() && !inputs.screenshots && (needs.gate.result == 'success' || needs.gate.result == 'skipped')
     runs-on: macos-15
     timeout-minutes: 60
     env:
