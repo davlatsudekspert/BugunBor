@@ -20,7 +20,6 @@ on:
         type: boolean
         default: false
       screenshots:
-    if: github.event_name == 'workflow_dispatch'
         description: Only take App Store screenshots (6.9-inch iPhone simulator, the live site, read-only)
         type: boolean
         default: false
@@ -39,6 +38,7 @@ env:
 
 jobs:
   screenshots:
+    if: github.event_name == 'workflow_dispatch'
     # The app's E2E run on the largest iPhone simulator: its screenshots are the
     # 6.9-inch size App Store Connect asks for (1320×2868).
     name: App Store screenshots (simulator)
