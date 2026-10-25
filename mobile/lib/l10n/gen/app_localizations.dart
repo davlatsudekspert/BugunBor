@@ -3140,6 +3140,174 @@ abstract class L {
   /// In uz, this message translates to:
   /// **'Google Play Console'**
   String get adminPlayConsole;
+
+  /// No description provided for @adminOpenApp.
+  ///
+  /// In uz, this message translates to:
+  /// **'Admin panelni ochish'**
+  String get adminOpenApp;
+
+  /// No description provided for @adminOpenAppHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tekshiruv, shikoyatlar, murojaatlar, foydalanuvchilar'**
+  String get adminOpenAppHint;
+
+  /// No description provided for @adminQueueTab.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tekshiruv'**
+  String get adminQueueTab;
+
+  /// No description provided for @adminReportsTab.
+  ///
+  /// In uz, this message translates to:
+  /// **'Shikoyatlar'**
+  String get adminReportsTab;
+
+  /// No description provided for @adminMessagesTab.
+  ///
+  /// In uz, this message translates to:
+  /// **'Murojaatlar'**
+  String get adminMessagesTab;
+
+  /// No description provided for @adminUsersTab.
+  ///
+  /// In uz, this message translates to:
+  /// **'Odamlar'**
+  String get adminUsersTab;
+
+  /// No description provided for @adminBusinessesTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bizneslar'**
+  String get adminBusinessesTitle;
+
+  /// No description provided for @adminDealsTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aksiyalar'**
+  String get adminDealsTitle;
+
+  /// No description provided for @adminApprove.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tasdiqlash'**
+  String get adminApprove;
+
+  /// No description provided for @adminReject.
+  ///
+  /// In uz, this message translates to:
+  /// **'Rad etish'**
+  String get adminReject;
+
+  /// No description provided for @adminRejectReason.
+  ///
+  /// In uz, this message translates to:
+  /// **'Rad etish sababi (egasiga ko‘rinadi)'**
+  String get adminRejectReason;
+
+  /// No description provided for @adminResolve.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hal qilindi'**
+  String get adminResolve;
+
+  /// No description provided for @adminDismiss.
+  ///
+  /// In uz, this message translates to:
+  /// **'Asossiz'**
+  String get adminDismiss;
+
+  /// No description provided for @adminMarkRead.
+  ///
+  /// In uz, this message translates to:
+  /// **'O‘qildi'**
+  String get adminMarkRead;
+
+  /// No description provided for @adminArchive.
+  ///
+  /// In uz, this message translates to:
+  /// **'Arxivga'**
+  String get adminArchive;
+
+  /// No description provided for @adminSearchUsers.
+  ///
+  /// In uz, this message translates to:
+  /// **'Ism yoki telefon'**
+  String get adminSearchUsers;
+
+  /// No description provided for @adminBlock.
+  ///
+  /// In uz, this message translates to:
+  /// **'To‘xtatish'**
+  String get adminBlock;
+
+  /// No description provided for @adminUnblock.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yoqish'**
+  String get adminUnblock;
+
+  /// No description provided for @adminMakeModerator.
+  ///
+  /// In uz, this message translates to:
+  /// **'Moderator qilish'**
+  String get adminMakeModerator;
+
+  /// No description provided for @adminMakeCustomer.
+  ///
+  /// In uz, this message translates to:
+  /// **'Oddiy foydalanuvchi'**
+  String get adminMakeCustomer;
+
+  /// No description provided for @adminEmpty.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hozircha bo‘sh'**
+  String get adminEmpty;
+
+  /// No description provided for @adminDone.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bajarildi'**
+  String get adminDone;
+
+  /// No description provided for @adminBlocked.
+  ///
+  /// In uz, this message translates to:
+  /// **'To‘xtatilgan'**
+  String get adminBlocked;
+
+  /// No description provided for @adminAutoNote.
+  ///
+  /// In uz, this message translates to:
+  /// **'Avto-tekshiruv: {note}'**
+  String adminAutoNote(String note);
+
+  /// No description provided for @adminBranches.
+  ///
+  /// In uz, this message translates to:
+  /// **'{n} ta filial'**
+  String adminBranches(int n);
+
+  /// No description provided for @adminReportCount.
+  ///
+  /// In uz, this message translates to:
+  /// **'{n} kishi shikoyat qildi'**
+  String adminReportCount(int n);
+
+  /// No description provided for @adminConfirmBlock.
+  ///
+  /// In uz, this message translates to:
+  /// **'{name} to‘xtatilsinmi? U chiqib ketadi va kira olmaydi.'**
+  String adminConfirmBlock(String name);
+
+  /// No description provided for @adminUserBusinesses.
+  ///
+  /// In uz, this message translates to:
+  /// **'{n} ta biznes'**
+  String adminUserBusinesses(int n);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

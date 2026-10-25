@@ -1306,3 +1306,179 @@ class AdminOverview {
   final List<({String day, int users, int codes})> days;
   final String? latestBuild;
 }
+
+/// What waits for the owner (the app's admin panel): businesses and deals in
+/// review, open reports and new messages.
+class AdminQueue {
+  const AdminQueue({required this.businesses, required this.deals, required this.reports, required this.messages});
+
+  factory AdminQueue.fromJson(Json json) => AdminQueue(
+    businesses: _list(json['businesses'], AdminQueueBusiness.fromJson),
+    deals: _list(json['deals'], AdminQueueDeal.fromJson),
+    reports: _list(json['reports'], AdminReport.fromJson),
+    messages: _list(json['messages'], AdminMessage.fromJson),
+  );
+
+  final List<AdminQueueBusiness> businesses;
+  final List<AdminQueueDeal> deals;
+  final List<AdminReport> reports;
+  final List<AdminMessage> messages;
+  int get total => businesses.length + deals.length + reports.length + messages.length;
+}
+
+class AdminQueueBusiness {
+  const AdminQueueBusiness({
+    required this.id,
+    required this.name,
+    required this.city,
+    required this.description,
+    required this.branches,
+    this.category,
+    this.phone,
+    this.ownerName,
+    this.autoNote,
+  });
+
+  factory AdminQueueBusiness.fromJson(Json json) => AdminQueueBusiness(
+    id: _str(json['id']),
+    name: _str(json['name']),
+    city: _str(json['city']),
+    description: _str(json['description']),
+    branches: _int(json['branches']),
+    category: _strOrNull(json['category']),
+    phone: _strOrNull(json['phone']),
+    ownerName: _strOrNull(json['ownerName']),
+    autoNote: _strOrNull(json['autoNote']),
+  );
+
+  final String id;
+  final String name;
+  final String city;
+  final String description;
+  final int branches;
+  final String? category;
+  final String? phone;
+  final String? ownerName;
+  final String? autoNote;
+}
+
+class AdminQueueDeal {
+  const AdminQueueDeal({
+    required this.id,
+    required this.title,
+    required this.business,
+    required this.description,
+    required this.terms,
+    required this.price,
+    required this.discountPercent,
+    this.originalPrice,
+    this.category,
+    this.photo,
+    this.autoNote,
+  });
+
+  factory AdminQueueDeal.fromJson(Json json) => AdminQueueDeal(
+    id: _str(json['id']),
+    title: _str(json['title']),
+    business: _str(json['business']),
+    description: _str(json['description']),
+    terms: _str(json['terms']),
+    price: _int(json['price']),
+    discountPercent: _int(json['discountPercent']),
+    originalPrice: json['originalPrice'] == null ? null : _int(json['originalPrice']),
+    category: _strOrNull(json['category']),
+    photo: _strOrNull(json['photo']),
+    autoNote: _strOrNull(json['autoNote']),
+  );
+
+  final String id;
+  final String title;
+  final String business;
+  final String description;
+  final String terms;
+  final int price;
+  final int discountPercent;
+  final int? originalPrice;
+  final String? category;
+  final String? photo;
+  final String? autoNote;
+}
+
+class AdminReport {
+  const AdminReport({
+    required this.id,
+    required this.targetType,
+    required this.reason,
+    required this.count,
+    required this.createdAt,
+    this.comment,
+    this.title,
+    this.reporter,
+    this.held = false,
+  });
+
+  factory AdminReport.fromJson(Json json) => AdminReport(
+    id: _str(json['id']),
+    targetType: _str(json['targetType']),
+    reason: _str(json['reason']),
+    count: _int(json['count'], 1),
+    createdAt: parseServerTime(_str(json['createdAt'])),
+    comment: _strOrNull(json['comment']),
+    title: _strOrNull(json['title']),
+    reporter: _strOrNull(json['reporter']),
+    held: _bool(json['held']),
+  );
+
+  final String id;
+  final String targetType;
+  final String reason;
+  final int count;
+  final DateTime createdAt;
+  final String? comment;
+  final String? title;
+  final String? reporter;
+  final bool held;
+}
+
+class AdminMessage {
+  const AdminMessage({required this.id, required this.name, required this.contact, required this.subject, required this.message, required this.createdAt});
+
+  factory AdminMessage.fromJson(Json json) => AdminMessage(
+    id: _str(json['id']),
+    name: _str(json['name']),
+    contact: _str(json['contact']),
+    subject: _str(json['subject']),
+    message: _str(json['message']),
+    createdAt: parseServerTime(_str(json['createdAt'])),
+  );
+
+  final String id;
+  final String name;
+  final String contact;
+  final String subject;
+  final String message;
+  final DateTime createdAt;
+}
+
+class AdminUser {
+  const AdminUser({required this.id, required this.name, required this.role, required this.status, required this.businesses, this.phone, this.lastLoginAt});
+
+  factory AdminUser.fromJson(Json json) => AdminUser(
+    id: _str(json['id']),
+    name: _str(json['name']),
+    role: _str(json['role'], 'CUSTOMER'),
+    status: _str(json['status'], 'ACTIVE'),
+    businesses: _int(json['businesses']),
+    phone: _strOrNull(json['phone']),
+    lastLoginAt: parseServerTimeOrNull(json['lastLoginAt']),
+  );
+
+  final String id;
+  final String name;
+  final String role;
+  final String status;
+  final int businesses;
+  final String? phone;
+  final DateTime? lastLoginAt;
+  bool get blocked => status == 'BLOCKED';
+}

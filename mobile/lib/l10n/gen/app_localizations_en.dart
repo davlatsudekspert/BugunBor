@@ -1652,4 +1652,98 @@ class LEn extends L {
 
   @override
   String get adminPlayConsole => 'Google Play Console';
+
+  @override
+  String get adminOpenApp => 'Open the admin panel';
+
+  @override
+  String get adminOpenAppHint => 'Review, reports, messages, people';
+
+  @override
+  String get adminQueueTab => 'Review';
+
+  @override
+  String get adminReportsTab => 'Reports';
+
+  @override
+  String get adminMessagesTab => 'Messages';
+
+  @override
+  String get adminUsersTab => 'People';
+
+  @override
+  String get adminBusinessesTitle => 'Businesses';
+
+  @override
+  String get adminDealsTitle => 'Deals';
+
+  @override
+  String get adminApprove => 'Approve';
+
+  @override
+  String get adminReject => 'Reject';
+
+  @override
+  String get adminRejectReason => 'Reason for rejecting (the owner sees it)';
+
+  @override
+  String get adminResolve => 'Resolved';
+
+  @override
+  String get adminDismiss => 'Dismiss';
+
+  @override
+  String get adminMarkRead => 'Read';
+
+  @override
+  String get adminArchive => 'Archive';
+
+  @override
+  String get adminSearchUsers => 'Name or phone';
+
+  @override
+  String get adminBlock => 'Block';
+
+  @override
+  String get adminUnblock => 'Unblock';
+
+  @override
+  String get adminMakeModerator => 'Make moderator';
+
+  @override
+  String get adminMakeCustomer => 'Regular user';
+
+  @override
+  String get adminEmpty => 'Nothing yet';
+
+  @override
+  String get adminDone => 'Done';
+
+  @override
+  String get adminBlocked => 'Blocked';
+
+  @override
+  String adminAutoNote(String note) {
+    return 'Auto check: $note';
+  }
+
+  @override
+  String adminBranches(int n) {
+    return '$n branches';
+  }
+
+  @override
+  String adminReportCount(int n) {
+    return '$n people reported';
+  }
+
+  @override
+  String adminConfirmBlock(String name) {
+    return 'Block $name? They are signed out and cannot sign in.';
+  }
+
+  @override
+  String adminUserBusinesses(int n) {
+    return '$n businesses';
+  }
 }

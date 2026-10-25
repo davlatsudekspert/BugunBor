@@ -1653,4 +1653,98 @@ class LUz extends L {
 
   @override
   String get adminPlayConsole => 'Google Play Console';
+
+  @override
+  String get adminOpenApp => 'Admin panelni ochish';
+
+  @override
+  String get adminOpenAppHint => 'Tekshiruv, shikoyatlar, murojaatlar, foydalanuvchilar';
+
+  @override
+  String get adminQueueTab => 'Tekshiruv';
+
+  @override
+  String get adminReportsTab => 'Shikoyatlar';
+
+  @override
+  String get adminMessagesTab => 'Murojaatlar';
+
+  @override
+  String get adminUsersTab => 'Odamlar';
+
+  @override
+  String get adminBusinessesTitle => 'Bizneslar';
+
+  @override
+  String get adminDealsTitle => 'Aksiyalar';
+
+  @override
+  String get adminApprove => 'Tasdiqlash';
+
+  @override
+  String get adminReject => 'Rad etish';
+
+  @override
+  String get adminRejectReason => 'Rad etish sababi (egasiga ko‘rinadi)';
+
+  @override
+  String get adminResolve => 'Hal qilindi';
+
+  @override
+  String get adminDismiss => 'Asossiz';
+
+  @override
+  String get adminMarkRead => 'O‘qildi';
+
+  @override
+  String get adminArchive => 'Arxivga';
+
+  @override
+  String get adminSearchUsers => 'Ism yoki telefon';
+
+  @override
+  String get adminBlock => 'To‘xtatish';
+
+  @override
+  String get adminUnblock => 'Yoqish';
+
+  @override
+  String get adminMakeModerator => 'Moderator qilish';
+
+  @override
+  String get adminMakeCustomer => 'Oddiy foydalanuvchi';
+
+  @override
+  String get adminEmpty => 'Hozircha bo‘sh';
+
+  @override
+  String get adminDone => 'Bajarildi';
+
+  @override
+  String get adminBlocked => 'To‘xtatilgan';
+
+  @override
+  String adminAutoNote(String note) {
+    return 'Avto-tekshiruv: $note';
+  }
+
+  @override
+  String adminBranches(int n) {
+    return '$n ta filial';
+  }
+
+  @override
+  String adminReportCount(int n) {
+    return '$n kishi shikoyat qildi';
+  }
+
+  @override
+  String adminConfirmBlock(String name) {
+    return '$name to‘xtatilsinmi? U chiqib ketadi va kira olmaydi.';
+  }
+
+  @override
+  String adminUserBusinesses(int n) {
+    return '$n ta biznes';
+  }
 }

@@ -47,7 +47,7 @@ void main() {
     expect(find.text('4'), findsNWidgets(2)); // redeemed today; reports + messages
     expect(find.text('Bizneslar 30 · aksiyalar 85 · kodlar 640 · sharhlar 12'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('Google Play Console').hitTestable(), 200, scrollable: find.byType(Scrollable).first);
-    expect(find.text('Admin panelni saytda ochish'), findsOneWidget);
+    expect(find.text('Admin panelni ochish'), findsOneWidget);
     expect(find.text('App Store Connect'), findsOneWidget);
     expect(server.requests.where((request) => request.path == '/api/v1/admin/overview').length, 1);
   });

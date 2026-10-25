@@ -1,18 +1,13 @@
 import { getDb } from '@/db/client';
 import { json, route } from '@/lib/http';
 import { adminOverview, appUsage, growthStats } from '@/modules/admin/service';
-import { isAdminOwner } from '@/modules/auth/admin-mfa';
-import { apiUser } from '@/modules/auth/api-user';
-import { DomainError } from '@/modules/errors';
+import { appOwner } from '@/modules/auth/app-owner';
 
 // GET /api/v1/admin/overview — the owner's numbers for the app's Profile tab.
-// Only aggregate counts (nobody's name or phone), so the owner's own
-// Telegram-signed session is enough; the admin panel on the site keeps its
-// second factor. The owner is checked again on every call.
+// Only aggregate counts (nobody's name or phone).
 export const GET = route(async (request: Request) => {
   const db = await getDb();
-  const user = await apiUser(request, db);
-  if (!isAdminOwner(user) || user.authMethod !== 'telegram') throw new DomainError('FORBIDDEN');
+  await appOwner(request, db);
   const [queue, app, growth] = await Promise.all([adminOverview(db), appUsage(db), growthStats(db)]);
   return json({
     data: {

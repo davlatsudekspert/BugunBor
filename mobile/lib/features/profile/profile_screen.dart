@@ -641,7 +641,6 @@ class _AdminSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = L.of(context);
-    final locale = ref.watch(settingsProvider.select((settings) => settings.locale));
     final overview = ref.watch(adminOverviewProvider);
     Widget external(IconData icon, String title, String? subtitle, Uri uri) => ListTile(
       leading: Icon(icon),
@@ -663,10 +662,10 @@ class _AdminSection extends ConsumerWidget {
         ),
         ListTile(
           leading: const Icon(Icons.admin_panel_settings_outlined),
-          title: Text(l.adminOpenSite, style: const TextStyle(fontWeight: FontWeight.w700)),
-          subtitle: Text(l.adminOpenSiteHint),
-          trailing: const Icon(Icons.open_in_new_rounded, size: 20),
-          onTap: () => openSite('/admin', lang: locale),
+          title: Text(l.adminOpenApp, style: const TextStyle(fontWeight: FontWeight.w700)),
+          subtitle: Text(l.adminOpenAppHint),
+          trailing: const Icon(Icons.chevron_right_rounded),
+          onTap: () => context.push('/admin'),
         ),
         external(Icons.apple, l.adminAppStoreConnect, l.adminDownloadsHint, Uri.https('appstoreconnect.apple.com', '/apps')),
         external(Icons.play_arrow_rounded, l.adminPlayConsole, null, Uri.https('play.google.com', '/console')),

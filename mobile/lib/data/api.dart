@@ -198,6 +198,16 @@ class BugunBorApi {
   /// The owner's numbers; FORBIDDEN for everyone else.
   Future<AdminOverview> adminOverview() async => AdminOverview.fromJson(_data(await _request('GET', '/api/v1/admin/overview')));
 
+  Future<AdminQueue> adminQueue() async => AdminQueue.fromJson(_data(await _request('GET', '/api/v1/admin/queue')));
+
+  Future<List<AdminUser>> adminUsers(String query) async {
+    final body = await _request('GET', '/api/v1/admin/users', query: {if (query.isNotEmpty) 'q': query});
+    return (body['data'] as List? ?? const []).map((row) => AdminUser.fromJson((row as Map).cast<String, dynamic>())).toList();
+  }
+
+  /// One of the owner's decisions (business.decide, deal.decide, report.resolve, message.status, user.update).
+  Future<Json> adminAction(Json action) async => _data(await _request('POST', '/api/v1/admin/actions', body: action));
+
   Future<void> updateMe({String? displayName, String? locale, bool? notifyDeals, bool? notifyReminders, bool? notifyNearby}) => _request(
     'PATCH',
     '/api/v1/me',

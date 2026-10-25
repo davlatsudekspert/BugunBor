@@ -168,6 +168,8 @@ final meProvider = FutureProvider<Me?>((ref) async {
 
 /// The owner's numbers for the Profile tab (asked only when the profile says ADMIN).
 final adminOverviewProvider = FutureProvider.autoDispose<AdminOverview>((ref) => ref.watch(apiProvider).adminOverview());
+final adminQueueProvider = FutureProvider.autoDispose<AdminQueue>((ref) => ref.watch(apiProvider).adminQueue());
+final adminUsersProvider = FutureProvider.autoDispose.family<List<AdminUser>, String>((ref, query) => ref.watch(apiProvider).adminUsers(query));
 
 /// The person's own profile photo by its address (which changes with every
 /// new photo); null when it cannot be loaded, so the initial shows instead.
