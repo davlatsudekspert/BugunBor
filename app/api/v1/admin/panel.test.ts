@@ -29,7 +29,7 @@ let owner: string;
 beforeEach(async () => {
   state.db = await marketplace();
   await state.db.prepare(`UPDATE users SET role = 'ADMIN', telegram_user_id = '100', phone_verified_at = '2026-09-01 10:00:00' WHERE id = 'owner'`).run();
-  owner = (await createSession(state.db, 'owner', { authMethod: 'telegram', client: 'app' }, NOW)).token;
+  owner = (await createSession(state.db, 'owner', { authMethod: 'telegram', client: 'app' }, new Date())).token;
   await state.db.batch([
     state.db.prepare(`INSERT INTO businesses(id, slug, name, description, city, category_id, phone, verification_status, search_text, submitted_at)
       VALUES ('newbiz', 'yangi', 'Yangi kafe', 'Tekshiruvni kutyapti', 'tashkent', 'cat_food', '+998712000009', 'PENDING', 'yangi kafe', '2026-09-25 09:00:00')`),
@@ -42,7 +42,7 @@ beforeEach(async () => {
 describe('the app admin panel', () => {
   it('is for the owner only', async () => {
     expect((await read(await queue(req('/api/v1/admin/queue')))).status).toBe(401);
-    const alice = (await createSession(state.db, 'alice', { authMethod: 'telegram', client: 'app' }, NOW)).token;
+    const alice = (await createSession(state.db, 'alice', { authMethod: 'telegram', client: 'app' }, new Date())).token;
     expect((await read(await queue(req('/api/v1/admin/queue', alice)))).status).toBe(403);
     expect((await read(await users(req('/api/v1/admin/users?q=a', alice)))).status).toBe(403);
     expect((await read(await act(req('/api/v1/admin/actions', alice, { type: 'business.decide', businessId: 'newbiz', decision: 'APPROVE' })))).status).toBe(403);
@@ -69,9 +69,9 @@ describe('the app admin panel', () => {
     expect(found).toEqual([expect.objectContaining({ id: 'alice', name: 'Alice Karimova', role: 'CUSTOMER', status: 'ACTIVE' })]);
 
     expect((await read(await act(req('/api/v1/admin/actions', owner, { type: 'user.update', userId: 'bob', role: 'MODERATOR' })))).status).toBe(200);
-    const alice = await createSession(state.db, 'alice', { authMethod: 'telegram', client: 'app' }, NOW);
+    const alice = await createSession(state.db, 'alice', { authMethod: 'telegram', client: 'app' }, new Date());
     expect((await read(await act(req('/api/v1/admin/actions', owner, { type: 'user.update', userId: 'alice', status: 'BLOCKED' })))).status).toBe(200);
-    expect(await getSessionUser(state.db, alice.token, new Date(NOW.getTime() + 1000))).toBeNull();
+    expect(await getSessionUser(state.db, alice.token, new Date())).toBeNull();
     expect((await read(await act(req('/api/v1/admin/actions', owner, { type: 'user.update', userId: 'alice', status: 'ACTIVE' })))).status).toBe(200);
     const list = (await read(await users(req('/api/v1/admin/users', owner)))).body.data;
     expect(list.find((u) => u.id === 'bob')?.role).toBe('MODERATOR');
