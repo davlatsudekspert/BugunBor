@@ -1597,4 +1597,59 @@ class LEn extends L {
 
   @override
   String get bizBookings => 'Active bookings';
+
+  @override
+  String get adminTitle => 'Admin panel';
+
+  @override
+  String get adminUsers => 'Users';
+
+  @override
+  String adminNew7(int n) {
+    return '+$n in 7 days';
+  }
+
+  @override
+  String get adminAppUsers => 'In the app (30 days)';
+
+  @override
+  String get adminSignedIn => 'Signed in now';
+
+  @override
+  String get adminLiveDeals => 'Live deals';
+
+  @override
+  String get adminClaimsToday => 'Claimed today';
+
+  @override
+  String get adminRedeemedToday => 'Redeemed today';
+
+  @override
+  String get adminQueue => 'In review';
+
+  @override
+  String get adminReports => 'Reports and messages';
+
+  @override
+  String adminObjects(int businesses, int deals, int codes, int reviews) {
+    return 'Businesses $businesses · deals $deals · codes $codes · reviews $reviews';
+  }
+
+  @override
+  String get adminOpenSite => 'Open the admin panel on the site';
+
+  @override
+  String get adminOpenSiteHint => 'Moderation, users, settings';
+
+  @override
+  String get adminDownloads => 'Downloads';
+
+  @override
+  String get adminDownloadsHint => 'The stores count them: App Store Connect and Play Console';
+
+  @override
+  String get adminAppStoreConnect => 'App Store Connect';
+
+  @override
+  String get adminPlayConsole => 'Google Play Console';
 }

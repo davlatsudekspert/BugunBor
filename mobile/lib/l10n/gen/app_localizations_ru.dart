@@ -1597,4 +1597,59 @@ class LRu extends L {
 
   @override
   String get bizBookings => 'Активные брони';
+
+  @override
+  String get adminTitle => 'Админ-панель';
+
+  @override
+  String get adminUsers => 'Пользователи';
+
+  @override
+  String adminNew7(int n) {
+    return 'за 7 дней +$n';
+  }
+
+  @override
+  String get adminAppUsers => 'В приложении (30 дней)';
+
+  @override
+  String get adminSignedIn => 'Сейчас в системе';
+
+  @override
+  String get adminLiveDeals => 'Активные акции';
+
+  @override
+  String get adminClaimsToday => 'Сегодня забронировано';
+
+  @override
+  String get adminRedeemedToday => 'Сегодня использовано';
+
+  @override
+  String get adminQueue => 'На проверке';
+
+  @override
+  String get adminReports => 'Жалобы и обращения';
+
+  @override
+  String adminObjects(int businesses, int deals, int codes, int reviews) {
+    return 'Бизнесы $businesses · акции $deals · коды $codes · отзывы $reviews';
+  }
+
+  @override
+  String get adminOpenSite => 'Открыть админ-панель на сайте';
+
+  @override
+  String get adminOpenSiteHint => 'Модерация, пользователи, настройки';
+
+  @override
+  String get adminDownloads => 'Загрузки';
+
+  @override
+  String get adminDownloadsHint => 'Число загрузок показывают сами магазины: App Store Connect и Play Console';
+
+  @override
+  String get adminAppStoreConnect => 'App Store Connect';
+
+  @override
+  String get adminPlayConsole => 'Google Play Console';
 }

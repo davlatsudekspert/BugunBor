@@ -63,6 +63,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ref.invalidate(pushAllowedProvider);
           if (business) ref.invalidate(workspaceProvider);
           if (signedIn) await refreshing(context, ref.refresh(meProvider.future));
+          if (account?.role == 'ADMIN') ref.invalidate(adminOverviewProvider);
         },
         child: ListView(
           padding: const EdgeInsets.fromLTRB(Gap.gutter, 0, Gap.gutter, Gap.xl),
@@ -85,6 +86,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const SizedBox(height: Gap.lg),
                 _Notifications(me: account),
                 if (!account.hasBusiness) ...[const SizedBox(height: Gap.lg), const _BusinessSection()],
+                if (account.role == 'ADMIN') ...[const SizedBox(height: Gap.lg), const _AdminSection()],
               ],
               const SizedBox(height: Gap.lg),
               const _Links(),
@@ -629,6 +631,149 @@ class _BusinessSection extends StatelessWidget {
       ],
     );
   }
+}
+
+/// The owner's numbers, with the way to the site's admin panel and the stores'
+/// consoles (downloads are counted there, not on the server).
+class _AdminSection extends ConsumerWidget {
+  const _AdminSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = L.of(context);
+    final locale = ref.watch(settingsProvider.select((settings) => settings.locale));
+    final overview = ref.watch(adminOverviewProvider);
+    Widget external(IconData icon, String title, String? subtitle, Uri uri) => ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: subtitle == null ? null : Text(subtitle),
+      trailing: const Icon(Icons.open_in_new_rounded, size: 20),
+      onTap: () => openExternal(uri),
+    );
+    return _Section(
+      title: l.adminTitle,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(Gap.md),
+          child: switch (overview) {
+            AsyncValue(:final value?) => _AdminNumbers(overview: value),
+            AsyncValue(:final error?) => StatePanel.error(context, error, onRetry: () => ref.invalidate(adminOverviewProvider)),
+            _ => const Skeleton(height: 220),
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.admin_panel_settings_outlined),
+          title: Text(l.adminOpenSite, style: const TextStyle(fontWeight: FontWeight.w700)),
+          subtitle: Text(l.adminOpenSiteHint),
+          trailing: const Icon(Icons.open_in_new_rounded, size: 20),
+          onTap: () => openSite('/admin', lang: locale),
+        ),
+        external(Icons.apple, l.adminAppStoreConnect, l.adminDownloadsHint, Uri.https('appstoreconnect.apple.com', '/apps')),
+        external(Icons.play_arrow_rounded, l.adminPlayConsole, null, Uri.https('play.google.com', '/console')),
+      ],
+    );
+  }
+}
+
+class _AdminNumbers extends StatelessWidget {
+  const _AdminNumbers({required this.overview});
+  final AdminOverview overview;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    final o = overview;
+    int of(Map<String, int> map, String key) => map[key] ?? 0;
+    final stats = [
+      (value: '${of(o.users, 'total')}', label: '${l.adminUsers} · ${l.adminNew7(of(o.users, 'new7'))}'),
+      (value: '${of(o.users, 'app30')}', label: l.adminAppUsers),
+      (value: '${of(o.users, 'signedIn')}', label: l.adminSignedIn),
+      (value: '${of(o.today, 'liveDeals')}', label: l.adminLiveDeals),
+      (value: '${of(o.today, 'claims')}', label: l.adminClaimsToday),
+      (value: '${of(o.today, 'redeemed')}', label: l.adminRedeemedToday),
+      (value: '${of(o.queue, 'businesses') + of(o.queue, 'deals')}', label: l.adminQueue),
+      (value: '${of(o.queue, 'reports') + of(o.queue, 'messages')}', label: l.adminReports),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < stats.length; i += 2) ...[
+          if (i > 0) const SizedBox(height: Gap.sm),
+          Row(
+            children: [
+              Expanded(
+                child: _Stat(value: stats[i].value, label: stats[i].label),
+              ),
+              const SizedBox(width: Gap.sm),
+              Expanded(
+                child: _Stat(value: stats[i + 1].value, label: stats[i + 1].label),
+              ),
+            ],
+          ),
+        ],
+        const SizedBox(height: Gap.md),
+        _AdminChart(days: o.days),
+        const SizedBox(height: Gap.sm),
+        Text(
+          l.adminObjects(of(o.objects, 'businesses'), of(o.objects, 'deals'), of(o.objects, 'codes'), of(o.objects, 'reviews')),
+          style: TextStyle(color: context.mutedText, fontSize: 12.5, height: 1.4),
+        ),
+      ],
+    );
+  }
+}
+
+/// Fourteen days of new people (accent) and claimed codes (muted), oldest first.
+class _AdminChart extends StatelessWidget {
+  const _AdminChart({required this.days});
+  final List<({String day, int users, int codes})> days;
+
+  @override
+  Widget build(BuildContext context) {
+    final peak = days.fold(1, (max, day) => [max, day.users, day.codes].reduce((a, b) => a > b ? a : b));
+    return SizedBox(
+      height: 56,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          for (final day in days) ...[
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: _Bar(height: day.users / peak, color: Brand.primary),
+                  ),
+                  const SizedBox(width: 1),
+                  Expanded(
+                    child: _Bar(height: day.codes / peak, color: context.mutedText),
+                  ),
+                ],
+              ),
+            ),
+            if (day != days.last) const SizedBox(width: 3),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _Bar extends StatelessWidget {
+  const _Bar({required this.height, required this.color});
+  final double height;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => FractionallySizedBox(
+    heightFactor: height == 0 ? 0.04 : height.clamp(0.08, 1.0),
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: height == 0 ? 0.25 : 1),
+        borderRadius: BorderRadius.circular(2),
+      ),
+    ),
+  );
 }
 
 class _Links extends ConsumerWidget {

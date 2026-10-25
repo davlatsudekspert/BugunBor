@@ -1282,3 +1282,27 @@ class UploadedPhoto {
   final String id;
   final String url;
 }
+
+/// The owner's numbers (Profile → Admin panel): queues, today, people and a 14-day chart.
+class AdminOverview {
+  const AdminOverview({required this.queue, required this.today, required this.users, required this.objects, required this.days, this.latestBuild});
+
+  factory AdminOverview.fromJson(Json json) {
+    Map<String, int> counts(Object? value) => _map(value).map((key, count) => MapEntry(key, _int(count)));
+    return AdminOverview(
+      queue: counts(json['queue']),
+      today: counts(json['today']),
+      users: counts(json['users']),
+      objects: counts(json['objects']),
+      days: _list(json['days'], (day) => (day: _str(day['day']), users: _int(day['users']), codes: _int(day['codes']))),
+      latestBuild: _strOrNull(json['latestBuild']),
+    );
+  }
+
+  final Map<String, int> queue;
+  final Map<String, int> today;
+  final Map<String, int> users;
+  final Map<String, int> objects;
+  final List<({String day, int users, int codes})> days;
+  final String? latestBuild;
+}
