@@ -1746,4 +1746,13 @@ class LEn extends L {
   String adminUserBusinesses(int n) {
     return '$n businesses';
   }
+
+  @override
+  String get adminAppStoreDownloads => 'App Store downloads';
+
+  @override
+  String get adminPlayInstalls => 'Google Play installs';
+
+  @override
+  String get adminNotSetUp => 'not set up';
 }

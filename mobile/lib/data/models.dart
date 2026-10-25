@@ -1285,7 +1285,16 @@ class UploadedPhoto {
 
 /// The owner's numbers (Profile → Admin panel): queues, today, people and a 14-day chart.
 class AdminOverview {
-  const AdminOverview({required this.queue, required this.today, required this.users, required this.objects, required this.days, this.latestBuild});
+  const AdminOverview({
+    required this.queue,
+    required this.today,
+    required this.users,
+    required this.objects,
+    required this.days,
+    this.latestBuild,
+    this.appStore,
+    this.play,
+  });
 
   factory AdminOverview.fromJson(Json json) {
     Map<String, int> counts(Object? value) => _map(value).map((key, count) => MapEntry(key, _int(count)));
@@ -1296,6 +1305,8 @@ class AdminOverview {
       objects: counts(json['objects']),
       days: _list(json['days'], (day) => (day: _str(day['day']), users: _int(day['users']), codes: _int(day['codes']))),
       latestBuild: _strOrNull(json['latestBuild']),
+      appStore: StoreDownloads.fromJson(_map(json['downloads'])['apple']),
+      play: StoreDownloads.fromJson(_map(json['downloads'])['play']),
     );
   }
 
@@ -1305,6 +1316,25 @@ class AdminOverview {
   final Map<String, int> objects;
   final List<({String day, int users, int codes})> days;
   final String? latestBuild;
+
+  /// Downloads as the stores report them; null when that store is not set up on the server.
+  final StoreDownloads? appStore;
+  final StoreDownloads? play;
+}
+
+class StoreDownloads {
+  const StoreDownloads({required this.total, required this.last7, required this.last30, this.error});
+
+  static StoreDownloads? fromJson(Object? json) {
+    if (json is! Map) return null;
+    final map = json.cast<String, dynamic>();
+    return StoreDownloads(total: _int(map['total']), last7: _int(map['last7']), last30: _int(map['last30']), error: _strOrNull(map['error']));
+  }
+
+  final int total;
+  final int last7;
+  final int last30;
+  final String? error;
 }
 
 /// What waits for the owner (the app's admin panel): businesses and deals in

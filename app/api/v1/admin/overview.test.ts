@@ -7,6 +7,7 @@ import { NOW, marketplace } from '@/test/fixtures';
 
 const state = vi.hoisted(() => ({ db: null as unknown as D1Database }));
 vi.mock('@/db/client', () => ({ getDb: async () => state.db }));
+vi.mock('@/lib/env', () => ({ getConfig: () => ({ stores: { apple: null, play: null } }) }));
 // Dummy owner phone (the fixture's "owner"); production knows only the approved owner's fingerprint.
 vi.mock('@/modules/auth/admin-owner', () => ({ isOwnerPhone: async (phone: string | null) => phone === '+998900000001' }));
 

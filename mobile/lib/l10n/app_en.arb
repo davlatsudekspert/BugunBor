@@ -542,5 +542,8 @@
   "adminConfirmBlock": "Block {name}? They are signed out and cannot sign in.",
   "@adminConfirmBlock": {"placeholders": {"name": {"type": "String"}}},
   "adminUserBusinesses": "{n} businesses",
-  "@adminUserBusinesses": {"placeholders": {"n": {"type": "int"}}}
+  "@adminUserBusinesses": {"placeholders": {"n": {"type": "int"}}},
+  "adminAppStoreDownloads": "App Store downloads",
+  "adminPlayInstalls": "Google Play installs",
+  "adminNotSetUp": "not set up"
 }

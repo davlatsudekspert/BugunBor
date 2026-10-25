@@ -74,3 +74,25 @@ Production’ga chiqarish faqat Play Console’da, qo‘lda.
 - **Havolalar.** `bugunbor.uz/deals/…` havolalari iOS’da hozircha Safari’da ochiladi. Ilovada ochilishi uchun Associated Domains va saytda `apple-app-site-association` kerak (Team ID bilan).
 - **Push.** iOS build’larda push o‘chiq. Yoqish uchun Firebase’ga APNs kaliti va `GoogleService-Info.plist` kerak.
 - **App Privacy.** App Store Connect’dagi javoblar Play’dagi Data safety bilan bir xil: telefon, ism, Telegram ID, taxminiy va aniq joylashuv (faqat ilova ochiq paytda), rasmlar. Kuzatish (tracking) yo‘q.
+
+## 4. Yuklab olishlar soni (admin paneldagi raqamlar)
+
+Server yuklab olishni ko‘rmaydi, uni do‘konlar hisoblaydi. Server ularning hisobotini oladi va `store_downloads` jadvalida kunma-kun saqlaydi; admin panel (saytda va ilovada) yig‘indini ko‘rsatadi. Hisobotlar 6 soatda bir yangilanadi, Apple odatda bir kun kechikib beradi.
+
+### App Store (Cloudflare secret’lari)
+
+1. App Store Connect → Users and Access → Integrations → App Store Connect API. Mavjud kalit (CI ishlatadigan, Admin roli) yetarli; yangi kalit ochsangiz, roli **Sales and Reports** yoki Admin bo‘lsin.
+2. **Vendor number**: App Store Connect → Payments and Financial Reports → yuqori chapda «Vendor #» (8 xonali raqam).
+3. Cloudflare → Workers → bugunbor-platform → Settings → Variables and Secrets:
+   - `ASC_KEY_ID` — kalit ID’si;
+   - `ASC_ISSUER_ID` — Issuer ID;
+   - `ASC_KEY_P8` — `.p8` faylning matni (BEGIN/END qatorlari bilan);
+   - `ASC_VENDOR_NUMBER` — vendor raqami.
+
+### Google Play
+
+1. Play Console → Download reports → Statistics → «Copy Cloud Storage URI»: `gs://pubsite_prod_…` ko‘rinishida. Bu `PLAY_STATS_BUCKET` (gs:// bilan yoki usiz).
+2. Play Console → Users and permissions → `play-upload@amiable-anagram-509514-f8.iam.gserviceaccount.com` hisobiga **«View app information and download bulk reports (read-only)»** ruxsatini bering (ilova darajasida yoki butun hisobga).
+3. Cloudflare secret’lari: `PLAY_SERVICE_ACCOUNT_JSON` (GitHub’dagi bilan bir xil JSON) va `PLAY_STATS_BUCKET`.
+
+Sozlangach, admin paneldagi «Yuklab olishlar» kartasi birinchi so‘rovda hisobotlarni oladi. Xato bo‘lsa, karta oxirgi urinish xabarini ko‘rsatadi (masalan, `HTTP 403` — ruxsat berilmagan, `HTTP 404` — bucket nomi noto‘g‘ri).

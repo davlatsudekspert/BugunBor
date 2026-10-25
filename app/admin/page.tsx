@@ -7,6 +7,8 @@ import { fmt } from '@/lib/i18n';
 import { getI18n } from '@/lib/i18n/server';
 import { cn } from '@/lib/utils';
 import { adminOverview, appUsage, automationSummary, growthStats } from '@/modules/admin/service';
+import { refreshStoreDownloads, storeDownloads } from '@/modules/admin/store-stats';
+import { getConfig } from '@/lib/env';
 import { requireModerator } from '@/modules/auth/current';
 import { getAutoModerationSettings } from '@/modules/moderation/auto';
 
@@ -21,7 +23,9 @@ const ADMIN_ONLY = ['/admin/billing', '/admin/users'];
 export default async function AdminOverviewPage() {
   const user = await requireModerator('/admin');
   const [{ t }, db] = await Promise.all([getI18n(), getDb()]);
-  const [stats, automation, switches, app, growth] = await Promise.all([adminOverview(db), automationSummary(db), getAutoModerationSettings(db), appUsage(db), growthStats(db)]);
+  const { stores } = getConfig();
+  if (user.role === 'ADMIN') await refreshStoreDownloads(db, stores);
+  const [stats, automation, switches, app, growth, downloads] = await Promise.all([adminOverview(db), automationSummary(db), getAutoModerationSettings(db), appUsage(db), growthStats(db), storeDownloads(db, stores)]);
   const peak = Math.max(1, ...growth.days.flatMap((day) => [day.users, day.codes]));
   const auto = t.admin.auto;
   const cards = [
@@ -81,7 +85,23 @@ export default async function AdminOverviewPage() {
           </section>
           <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
             <h2 className="text-lg font-black text-navy">{t.admin.stores.title}</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">{t.admin.stores.text}</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {([['appStore', downloads.apple], ['play', downloads.play]] as const).map(([key, store]) => (
+                <div key={key} className="rounded-2xl border border-slate-200 p-4">
+                  <span className="text-sm text-slate-500">{t.admin.stores[key]}</span>
+                  {store ? (
+                    <>
+                      <strong className="mt-2 block text-3xl font-black text-navy">{store.total}</strong>
+                      <p className="mt-1 text-xs text-slate-500">{fmt(t.admin.stores.periods, { week: store.last7, month: store.last30 })}</p>
+                      {store.error ? <p className="mt-1 text-xs text-red-600">{fmt(t.admin.stores.error, { error: store.error })}</p> : null}
+                    </>
+                  ) : (
+                    <p className="mt-2 text-sm text-slate-600">{t.admin.stores.notSetUp}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-sm leading-6 text-slate-600">{t.admin.stores.text}</p>
             <p className="mt-1 text-sm font-bold text-navy">{t.admin.stores.sales}</p>
             <div className="mt-3 flex flex-wrap gap-2 text-sm font-bold">
               <a href="https://appstoreconnect.apple.com/apps" target="_blank" rel="noopener noreferrer" className="rounded-full border border-slate-200 px-4 py-2 text-primary hover:bg-slate-50">{t.admin.stores.appStore}</a>

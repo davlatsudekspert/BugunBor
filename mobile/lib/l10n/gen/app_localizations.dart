@@ -3308,6 +3308,24 @@ abstract class L {
   /// In uz, this message translates to:
   /// **'{n} ta biznes'**
   String adminUserBusinesses(int n);
+
+  /// No description provided for @adminAppStoreDownloads.
+  ///
+  /// In uz, this message translates to:
+  /// **'App Store’dan yuklab olingan'**
+  String get adminAppStoreDownloads;
+
+  /// No description provided for @adminPlayInstalls.
+  ///
+  /// In uz, this message translates to:
+  /// **'Google Play’dan o‘rnatilgan'**
+  String get adminPlayInstalls;
+
+  /// No description provided for @adminNotSetUp.
+  ///
+  /// In uz, this message translates to:
+  /// **'sozlanmagan'**
+  String get adminNotSetUp;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

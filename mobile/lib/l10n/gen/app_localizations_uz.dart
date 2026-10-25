@@ -1747,4 +1747,13 @@ class LUz extends L {
   String adminUserBusinesses(int n) {
     return '$n ta biznes';
   }
+
+  @override
+  String get adminAppStoreDownloads => 'App Store’dan yuklab olingan';
+
+  @override
+  String get adminPlayInstalls => 'Google Play’dan o‘rnatilgan';
+
+  @override
+  String get adminNotSetUp => 'sozlanmagan';
 }
