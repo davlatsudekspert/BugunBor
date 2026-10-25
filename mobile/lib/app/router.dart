@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/admin/admin_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/business/business_screen.dart';
 import '../features/cashier/cashier_screen.dart';
@@ -120,6 +121,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => CashierScreen(businessId: state.uri.queryParameters['business']),
       ),
       GoRoute(path: '/business/new', builder: (context, state) => const JoinScreen()),
+      GoRoute(path: '/admin', builder: (context, state) => const AdminScreen()),
       GoRoute(
         path: '/business/:businessId/deals',
         builder: (context, state) => DealsScreen(businessId: state.pathParameters['businessId']!),

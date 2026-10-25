@@ -1652,4 +1652,98 @@ class LRu extends L {
 
   @override
   String get adminPlayConsole => 'Google Play Console';
+
+  @override
+  String get adminOpenApp => 'Открыть админ-панель';
+
+  @override
+  String get adminOpenAppHint => 'Проверка, жалобы, обращения, пользователи';
+
+  @override
+  String get adminQueueTab => 'Проверка';
+
+  @override
+  String get adminReportsTab => 'Жалобы';
+
+  @override
+  String get adminMessagesTab => 'Обращения';
+
+  @override
+  String get adminUsersTab => 'Люди';
+
+  @override
+  String get adminBusinessesTitle => 'Бизнесы';
+
+  @override
+  String get adminDealsTitle => 'Акции';
+
+  @override
+  String get adminApprove => 'Одобрить';
+
+  @override
+  String get adminReject => 'Отклонить';
+
+  @override
+  String get adminRejectReason => 'Причина отказа (увидит владелец)';
+
+  @override
+  String get adminResolve => 'Решено';
+
+  @override
+  String get adminDismiss => 'Необоснованно';
+
+  @override
+  String get adminMarkRead => 'Прочитано';
+
+  @override
+  String get adminArchive => 'В архив';
+
+  @override
+  String get adminSearchUsers => 'Имя или телефон';
+
+  @override
+  String get adminBlock => 'Заблокировать';
+
+  @override
+  String get adminUnblock => 'Разблокировать';
+
+  @override
+  String get adminMakeModerator => 'Сделать модератором';
+
+  @override
+  String get adminMakeCustomer => 'Обычный пользователь';
+
+  @override
+  String get adminEmpty => 'Пока пусто';
+
+  @override
+  String get adminDone => 'Готово';
+
+  @override
+  String get adminBlocked => 'Заблокирован';
+
+  @override
+  String adminAutoNote(String note) {
+    return 'Автопроверка: $note';
+  }
+
+  @override
+  String adminBranches(int n) {
+    return 'Филиалов: $n';
+  }
+
+  @override
+  String adminReportCount(int n) {
+    return 'Пожаловались: $n';
+  }
+
+  @override
+  String adminConfirmBlock(String name) {
+    return 'Заблокировать $name? Сессии закроются, вход будет закрыт.';
+  }
+
+  @override
+  String adminUserBusinesses(int n) {
+    return 'Бизнесов: $n';
+  }
 }
