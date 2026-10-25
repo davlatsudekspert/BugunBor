@@ -1598,4 +1598,59 @@ class LUz extends L {
 
   @override
   String get bizBookings => 'Faol bronlar';
+
+  @override
+  String get adminTitle => 'Admin panel';
+
+  @override
+  String get adminUsers => 'Foydalanuvchilar';
+
+  @override
+  String adminNew7(int n) {
+    return '7 kunda +$n';
+  }
+
+  @override
+  String get adminAppUsers => 'Ilovada (30 kun)';
+
+  @override
+  String get adminSignedIn => 'Hozir tizimda';
+
+  @override
+  String get adminLiveDeals => 'Faol aksiyalar';
+
+  @override
+  String get adminClaimsToday => 'Bugun band qilindi';
+
+  @override
+  String get adminRedeemedToday => 'Bugun ishlatildi';
+
+  @override
+  String get adminQueue => 'Tekshiruvda';
+
+  @override
+  String get adminReports => 'Shikoyat va murojaat';
+
+  @override
+  String adminObjects(int businesses, int deals, int codes, int reviews) {
+    return 'Bizneslar $businesses · aksiyalar $deals · kodlar $codes · sharhlar $reviews';
+  }
+
+  @override
+  String get adminOpenSite => 'Admin panelni saytda ochish';
+
+  @override
+  String get adminOpenSiteHint => 'Moderatsiya, foydalanuvchilar, sozlamalar';
+
+  @override
+  String get adminDownloads => 'Yuklab olishlar';
+
+  @override
+  String get adminDownloadsHint => 'Sonini do‘konlar o‘zi ko‘rsatadi: App Store Connect va Play Console';
+
+  @override
+  String get adminAppStoreConnect => 'App Store Connect';
+
+  @override
+  String get adminPlayConsole => 'Google Play Console';
 }

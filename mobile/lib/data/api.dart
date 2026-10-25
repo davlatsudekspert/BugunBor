@@ -195,6 +195,9 @@ class BugunBorApi {
 
   Future<Me> me() async => Me.fromJson(_data(await _request('GET', '/api/v1/me')));
 
+  /// The owner's numbers; FORBIDDEN for everyone else.
+  Future<AdminOverview> adminOverview() async => AdminOverview.fromJson(_data(await _request('GET', '/api/v1/admin/overview')));
+
   Future<void> updateMe({String? displayName, String? locale, bool? notifyDeals, bool? notifyReminders, bool? notifyNearby}) => _request(
     'PATCH',
     '/api/v1/me',

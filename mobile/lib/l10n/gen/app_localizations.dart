@@ -3038,6 +3038,108 @@ abstract class L {
   /// In uz, this message translates to:
   /// **'Faol bronlar'**
   String get bizBookings;
+
+  /// No description provided for @adminTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Admin panel'**
+  String get adminTitle;
+
+  /// No description provided for @adminUsers.
+  ///
+  /// In uz, this message translates to:
+  /// **'Foydalanuvchilar'**
+  String get adminUsers;
+
+  /// No description provided for @adminNew7.
+  ///
+  /// In uz, this message translates to:
+  /// **'7 kunda +{n}'**
+  String adminNew7(int n);
+
+  /// No description provided for @adminAppUsers.
+  ///
+  /// In uz, this message translates to:
+  /// **'Ilovada (30 kun)'**
+  String get adminAppUsers;
+
+  /// No description provided for @adminSignedIn.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hozir tizimda'**
+  String get adminSignedIn;
+
+  /// No description provided for @adminLiveDeals.
+  ///
+  /// In uz, this message translates to:
+  /// **'Faol aksiyalar'**
+  String get adminLiveDeals;
+
+  /// No description provided for @adminClaimsToday.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bugun band qilindi'**
+  String get adminClaimsToday;
+
+  /// No description provided for @adminRedeemedToday.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bugun ishlatildi'**
+  String get adminRedeemedToday;
+
+  /// No description provided for @adminQueue.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tekshiruvda'**
+  String get adminQueue;
+
+  /// No description provided for @adminReports.
+  ///
+  /// In uz, this message translates to:
+  /// **'Shikoyat va murojaat'**
+  String get adminReports;
+
+  /// No description provided for @adminObjects.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bizneslar {businesses} · aksiyalar {deals} · kodlar {codes} · sharhlar {reviews}'**
+  String adminObjects(int businesses, int deals, int codes, int reviews);
+
+  /// No description provided for @adminOpenSite.
+  ///
+  /// In uz, this message translates to:
+  /// **'Admin panelni saytda ochish'**
+  String get adminOpenSite;
+
+  /// No description provided for @adminOpenSiteHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Moderatsiya, foydalanuvchilar, sozlamalar'**
+  String get adminOpenSiteHint;
+
+  /// No description provided for @adminDownloads.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yuklab olishlar'**
+  String get adminDownloads;
+
+  /// No description provided for @adminDownloadsHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Sonini do‘konlar o‘zi ko‘rsatadi: App Store Connect va Play Console'**
+  String get adminDownloadsHint;
+
+  /// No description provided for @adminAppStoreConnect.
+  ///
+  /// In uz, this message translates to:
+  /// **'App Store Connect'**
+  String get adminAppStoreConnect;
+
+  /// No description provided for @adminPlayConsole.
+  ///
+  /// In uz, this message translates to:
+  /// **'Google Play Console'**
+  String get adminPlayConsole;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {
