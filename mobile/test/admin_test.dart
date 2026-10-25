@@ -23,7 +23,9 @@ FakeServer adminServer({String role = 'ADMIN'}) {
             'today': {'claims': 7, 'redeemed': 4, 'liveDeals': 12},
             'users': {'total': 1234, 'new7': 56, 'new30': 210, 'signedIn': 18, 'app30': 97, 'devices': 40},
             'objects': {'businesses': 30, 'deals': 85, 'codes': 640, 'reviews': 12, 'reports': 5},
-            'days': [for (var i = 0; i < 14; i++) {'day': '2026-10-${(i + 10).toString().padLeft(2, '0')}', 'users': i, 'codes': 14 - i}],
+            'days': [
+              for (var i = 0; i < 14; i++) {'day': '2026-10-${(i + 10).toString().padLeft(2, '0')}', 'users': i, 'codes': 14 - i},
+            ],
             'latestBuild': '13',
           },
         };

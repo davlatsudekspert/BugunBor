@@ -701,9 +701,13 @@ class _AdminNumbers extends StatelessWidget {
           if (i > 0) const SizedBox(height: Gap.sm),
           Row(
             children: [
-              Expanded(child: _Stat(value: stats[i].value, label: stats[i].label)),
+              Expanded(
+                child: _Stat(value: stats[i].value, label: stats[i].label),
+              ),
               const SizedBox(width: Gap.sm),
-              Expanded(child: _Stat(value: stats[i + 1].value, label: stats[i + 1].label)),
+              Expanded(
+                child: _Stat(value: stats[i + 1].value, label: stats[i + 1].label),
+              ),
             ],
           ),
         ],
@@ -737,9 +741,13 @@ class _AdminChart extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Expanded(child: _Bar(height: day.users / peak, color: Brand.primary)),
+                  Expanded(
+                    child: _Bar(height: day.users / peak, color: Brand.primary),
+                  ),
                   const SizedBox(width: 1),
-                  Expanded(child: _Bar(height: day.codes / peak, color: context.mutedText)),
+                  Expanded(
+                    child: _Bar(height: day.codes / peak, color: context.mutedText),
+                  ),
                 ],
               ),
             ),
@@ -759,7 +767,12 @@ class _Bar extends StatelessWidget {
   @override
   Widget build(BuildContext context) => FractionallySizedBox(
     heightFactor: height == 0 ? 0.04 : height.clamp(0.08, 1.0),
-    child: DecoratedBox(decoration: BoxDecoration(color: color.withValues(alpha: height == 0 ? 0.25 : 1), borderRadius: BorderRadius.circular(2))),
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: height == 0 ? 0.25 : 1),
+        borderRadius: BorderRadius.circular(2),
+      ),
+    ),
   );
 }
 
