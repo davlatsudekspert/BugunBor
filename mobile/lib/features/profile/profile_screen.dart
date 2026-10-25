@@ -683,7 +683,11 @@ class _AdminNumbers extends StatelessWidget {
     final l = L.of(context);
     final o = overview;
     int of(Map<String, int> map, String key) => map[key] ?? 0;
+    String store(StoreDownloads? store) => store == null ? '—' : '${store.total}';
+    String storeLabel(String name, StoreDownloads? store) => store == null ? '$name · ${l.adminNotSetUp}' : '$name · ${l.adminNew7(store.last7)}';
     final stats = [
+      (value: store(o.appStore), label: storeLabel(l.adminAppStoreDownloads, o.appStore)),
+      (value: store(o.play), label: storeLabel(l.adminPlayInstalls, o.play)),
       (value: '${of(o.users, 'total')}', label: '${l.adminUsers} · ${l.adminNew7(of(o.users, 'new7'))}'),
       (value: '${of(o.users, 'app30')}', label: l.adminAppUsers),
       (value: '${of(o.users, 'signedIn')}', label: l.adminSignedIn),

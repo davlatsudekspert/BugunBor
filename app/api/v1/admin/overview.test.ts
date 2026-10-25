@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createSession } from '@/modules/auth/sessions';
-import { NOW, marketplace } from '@/test/fixtures';
+import { marketplace } from '@/test/fixtures';
 
 // The owner's numbers for the app: only the owner, signed in with Telegram.
 
 const state = vi.hoisted(() => ({ db: null as unknown as D1Database }));
 vi.mock('@/db/client', () => ({ getDb: async () => state.db }));
+vi.mock('@/lib/env', () => ({ getConfig: () => ({ stores: { apple: null, play: null } }) }));
 // Dummy owner phone (the fixture's "owner"); production knows only the approved owner's fingerprint.
 vi.mock('@/modules/auth/admin-owner', () => ({ isOwnerPhone: async (phone: string | null) => phone === '+998900000001' }));
 
@@ -23,14 +24,14 @@ beforeEach(async () => {
 describe('GET /api/v1/admin/overview', () => {
   it('turns away strangers, customers and the owner without a Telegram sign-in', async () => {
     expect((await read(await GET(req()))).status).toBe(401);
-    const alice = await createSession(state.db, 'alice', { authMethod: 'telegram', client: 'app' }, NOW);
+    const alice = await createSession(state.db, 'alice', { authMethod: 'telegram', client: 'app' }, new Date());
     expect(await read(await GET(req(alice.token)))).toMatchObject({ status: 403, body: { error: { code: 'FORBIDDEN' } } });
-    const ownerOther = await createSession(state.db, 'owner', { client: 'app' }, NOW);
+    const ownerOther = await createSession(state.db, 'owner', { client: 'app' }, new Date());
     expect(await read(await GET(req(ownerOther.token)))).toMatchObject({ status: 403 });
   });
 
   it('gives the owner the queue, today, people and the 14-day chart', async () => {
-    const owner = await createSession(state.db, 'owner', { authMethod: 'telegram', client: 'app' }, NOW);
+    const owner = await createSession(state.db, 'owner', { authMethod: 'telegram', client: 'app' }, new Date());
     const { status, body } = await read(await GET(req(owner.token)));
     expect(status).toBe(200);
     expect(body.data).toMatchObject({

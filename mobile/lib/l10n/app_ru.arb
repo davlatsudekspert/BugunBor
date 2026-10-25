@@ -542,5 +542,8 @@
   "adminConfirmBlock": "Заблокировать {name}? Сессии закроются, вход будет закрыт.",
   "@adminConfirmBlock": {"placeholders": {"name": {"type": "String"}}},
   "adminUserBusinesses": "Бизнесов: {n}",
-  "@adminUserBusinesses": {"placeholders": {"n": {"type": "int"}}}
+  "@adminUserBusinesses": {"placeholders": {"n": {"type": "int"}}},
+  "adminAppStoreDownloads": "Загрузок из App Store",
+  "adminPlayInstalls": "Установок из Google Play",
+  "adminNotSetUp": "не настроено"
 }

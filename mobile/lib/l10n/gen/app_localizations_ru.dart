@@ -1746,4 +1746,13 @@ class LRu extends L {
   String adminUserBusinesses(int n) {
     return 'Бизнесов: $n';
   }
+
+  @override
+  String get adminAppStoreDownloads => 'Загрузок из App Store';
+
+  @override
+  String get adminPlayInstalls => 'Установок из Google Play';
+
+  @override
+  String get adminNotSetUp => 'не настроено';
 }

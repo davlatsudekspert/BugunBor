@@ -945,5 +945,8 @@
   "adminConfirmBlock": "{name} to‘xtatilsinmi? U chiqib ketadi va kira olmaydi.",
   "@adminConfirmBlock": {"placeholders": {"name": {"type": "String"}}},
   "adminUserBusinesses": "{n} ta biznes",
-  "@adminUserBusinesses": {"placeholders": {"n": {"type": "int"}}}
+  "@adminUserBusinesses": {"placeholders": {"n": {"type": "int"}}},
+  "adminAppStoreDownloads": "App Store’dan yuklab olingan",
+  "adminPlayInstalls": "Google Play’dan o‘rnatilgan",
+  "adminNotSetUp": "sozlanmagan"
 }

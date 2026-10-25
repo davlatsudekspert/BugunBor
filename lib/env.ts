@@ -37,6 +37,11 @@ export type AppConfig = {
   };
   /** Who looks at every public photo before it is kept: Claude (ANTHROPIC_API_KEY), then Gemini (GEMINI_API_KEY); null = no key, photos are kept unchecked. */
   photoCheck: PhotoCheckConfig | null;
+  /** Where download counts come from (the stores count them, not the server); null = not set up. */
+  stores: {
+    apple: { keyId: string; issuerId: string; privateKey: string; vendorNumber: string } | null;
+    play: { serviceAccount: string; bucket: string } | null;
+  };
 };
 
 const clean = (value: string | undefined) => {
@@ -72,6 +77,16 @@ export function getConfig(): AppConfig {
     },
     payments: paymentsConfig(),
     photoCheck: photoCheckConfig(),
+    stores: storesConfig(),
+  };
+}
+
+function storesConfig(): AppConfig['stores'] {
+  const keyId = clean(env.ASC_KEY_ID), issuerId = clean(env.ASC_ISSUER_ID), privateKey = clean(env.ASC_KEY_P8), vendorNumber = clean(env.ASC_VENDOR_NUMBER);
+  const serviceAccount = clean(env.PLAY_SERVICE_ACCOUNT_JSON), bucket = clean(env.PLAY_STATS_BUCKET)?.replace(/^gs:\/\//, '').replace(/\/.*$/, '');
+  return {
+    apple: keyId && issuerId && privateKey && vendorNumber ? { keyId, issuerId, privateKey, vendorNumber } : null,
+    play: serviceAccount && bucket ? { serviceAccount, bucket } : null,
   };
 }
 

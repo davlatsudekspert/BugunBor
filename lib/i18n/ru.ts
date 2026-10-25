@@ -734,7 +734,10 @@ export const ru: Dictionary = {
     },
     stores: {
       title: 'Загрузки и продажи',
-      text: 'Число загрузок сервер не видит: его считают сами магазины приложений.',
+      text: 'Число загрузок считают магазины; сервер забирает их отчёт (несколько раз в день).',
+      periods: 'за 7 дней {week} · за 30 дней {month}',
+      error: 'Последняя попытка с ошибкой: {error}',
+      notSetUp: 'Не настроено: docs/ILOVA-RELIZ.md → «Yuklab olishlar soni».',
       appStore: 'App Store Connect',
       play: 'Google Play Console',
       sales: 'Продажи: 0. Считаются только после подключения платёжной системы.',

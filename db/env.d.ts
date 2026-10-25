@@ -46,6 +46,14 @@ declare namespace Cloudflare {
     APPLE_TEAM_ID?: string;
     APPLE_SIWA_KEY_ID?: string;
     APPLE_SIWA_PRIVATE_KEY?: string;
+    /** App Store Connect API key with sales reports access, for download counts in the admin panel. */
+    ASC_KEY_ID?: string;
+    ASC_ISSUER_ID?: string;
+    ASC_KEY_P8?: string;
+    ASC_VENDOR_NUMBER?: string;
+    /** Google Play: the Play Console stats bucket (gs://pubsite_prod_…) read with PLAY_SERVICE_ACCOUNT_JSON. */
+    PLAY_SERVICE_ACCOUNT_JSON?: string;
+    PLAY_STATS_BUCKET?: string;
     /** Oldest app build that may still be used; older builds are asked to update. */
     MIN_APP_BUILD?: string;
     /** BugunBor's own Anthropic API key (secret): Claude checks every public photo before it is kept. */

@@ -732,7 +732,10 @@ export const uz = {
     },
     stores: {
       title: 'Yuklab olishlar va sotuvlar',
-      text: 'Yuklab olishlar sonini server ko‘rmaydi: ularni do‘konlar o‘zi hisoblaydi.',
+      text: 'Yuklab olishlar sonini do‘konlar hisoblaydi; server ularning hisobotini oladi (kuniga bir necha marta).',
+      periods: '7 kunda {week} · 30 kunda {month}',
+      error: 'Oxirgi urinish xato: {error}',
+      notSetUp: 'Sozlanmagan: docs/ILOVA-RELIZ.md → «Yuklab olishlar soni».',
       appStore: 'App Store Connect',
       play: 'Google Play Console',
       sales: 'Sotuvlar: 0. To‘lov tizimi ulangandan keyingina hisoblanadi.',

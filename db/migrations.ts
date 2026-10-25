@@ -650,7 +650,20 @@ const appleSignIn: Migration = {
   },
 };
 
+/** Downloads per day as the stores report them (the admin panel's download counts). */
+const storeDownloads: Migration = {
+  id: '0019_store_downloads',
+  async build({ db }) {
+    return [
+      db.prepare(`CREATE TABLE IF NOT EXISTS store_downloads (
+        store TEXT NOT NULL, day TEXT NOT NULL, units INTEGER NOT NULL DEFAULT 0, fetched_at TEXT NOT NULL,
+        PRIMARY KEY (store, day)
+      )`),
+    ];
+  },
+};
+
 export const migrations: readonly Migration[] = [
   baseline, systemV1, billing, media, engagement, payments, autoModeration, freeLaunch, privacyConsent, appSupport, userAvatars, codeIssues, dealSets,
-  photoChecks, businessBadge, photoRechecks, adminTwoFactor, appleSignIn,
+  photoChecks, businessBadge, photoRechecks, adminTwoFactor, appleSignIn, storeDownloads,
 ];

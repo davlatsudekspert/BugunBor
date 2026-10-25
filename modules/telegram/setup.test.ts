@@ -20,6 +20,7 @@ function config(overrides: Partial<AppConfig['telegram']> & { appUrl?: string | 
     app: { fcmServiceAccount: null, reviewLoginCode: null, minBuild: 0, appleKey: null },
     telegram: { botToken: '1:token-a', botUsername: 'bugunborbot', webhookSecret: 'hook-secret', ...telegram },
     photoCheck: null,
+    stores: { apple: null, play: null },
   };
 }
 
