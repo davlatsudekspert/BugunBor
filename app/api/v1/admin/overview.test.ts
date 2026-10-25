@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createSession } from '@/modules/auth/sessions';
-import { NOW, marketplace } from '@/test/fixtures';
+import { marketplace } from '@/test/fixtures';
 
 // The owner's numbers for the app: only the owner, signed in with Telegram.
 
