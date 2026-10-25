@@ -33,7 +33,7 @@ concurrency:
 
 env:
   FLUTTER_VERSION: 3.47.5
-  APP_VERSION: 1.0.0
+  APP_VERSION: 1.0.1
   BUNDLE_ID: uz.bugunbor.app
 
 jobs:

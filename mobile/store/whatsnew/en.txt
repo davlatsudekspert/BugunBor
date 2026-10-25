@@ -1,7 +1,4 @@
-The first version of BugunBor:
-• Today’s deals near you or in your city
-• “For you” — offers that match your interests
-• Get a free code and show the QR code at the counter
-• Notifications about new deals from businesses you follow
-• Sign in with Telegram, no password
-• Add your business and its deals (with photos) right in the app and run them there
+1.0.1
+• Sign in with Apple on iPhone
+• Profile improvements for business owners
+• Small fixes and speed
