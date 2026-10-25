@@ -1,5 +1,6 @@
 /* Home-screen name and permission texts (uz). */
 "CFBundleDisplayName" = "BugunBor";
 "NSLocationWhenInUseUsageDescription" = "BugunBor joylashuvingizni faqat ilova ochiq turganda, yaqin atrofdagi aksiyalarni ko‘rsatish va masofa bo‘yicha saralash uchun ishlatadi.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "BugunBor joylashuvingizni faqat ilova ochiq turganda, yaqin atrofdagi aksiyalarni ko‘rsatish va masofa bo‘yicha saralash uchun ishlatadi. Fonda kuzatmaydi.";
 "NSCameraUsageDescription" = "Kamera kassada mijozning QR-kodini skanerlash hamda aksiya va profil uchun rasm olishga kerak.";
 "NSPhotoLibraryUsageDescription" = "Rasmlar faqat siz tanlagan aksiya, biznes profili yoki profil rasmi uchun ishlatiladi.";

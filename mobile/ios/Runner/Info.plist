@@ -38,6 +38,8 @@
 	<string>The camera scans a customer’s QR code at the till and takes photos for your deals and profile.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>BugunBor uses your location only while the app is open, to show deals near you and sort them by distance.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>BugunBor uses your location only while the app is open, to show deals near you and sort them by distance. It never tracks you in the background.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Photos are used only for the deal, business profile or profile picture you choose them for.</string>
 	<key>UIApplicationSceneManifest</key>

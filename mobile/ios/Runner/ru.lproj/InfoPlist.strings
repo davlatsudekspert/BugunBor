@@ -1,5 +1,6 @@
 /* Home-screen name and permission texts (ru). */
 "CFBundleDisplayName" = "BugunBor";
 "NSLocationWhenInUseUsageDescription" = "BugunBor использует ваше местоположение только когда приложение открыто, чтобы показать акции рядом и отсортировать их по расстоянию.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "BugunBor использует ваше местоположение только когда приложение открыто, чтобы показать акции рядом и отсортировать их по расстоянию. В фоне оно не отслеживается.";
 "NSCameraUsageDescription" = "Камера нужна, чтобы сканировать QR-код покупателя на кассе и снимать фото для акций и профиля.";
 "NSPhotoLibraryUsageDescription" = "Фото используются только для акции, профиля бизнеса или фото профиля, которые вы выбрали.";
