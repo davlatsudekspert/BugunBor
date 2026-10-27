@@ -15,16 +15,16 @@ on:
   workflow_dispatch:
     inputs:
       play_upload:
-        description: Upload the signed bundle to a Google Play test track
+        description: Upload the signed bundle to a Google Play track
         type: boolean
         default: false
       play_track:
-        description: "Play track: internal (Internal testing) or alpha (Closed testing - Alpha)"
+        description: "Play track: internal (Internal testing), alpha (Closed testing - Alpha) or production (everyone; draft unless play_status says otherwise)"
         type: choice
-        options: [internal, alpha]
+        options: [internal, alpha, production]
         default: internal
       play_status:
-        description: "draft = the owner presses Roll out in Play Console; completed = roll out to the testers now"
+        description: "draft = the owner presses Roll out in Play Console; completed = roll out now (testers, or everyone on production)"
         type: choice
         options: [draft, completed]
         default: draft
