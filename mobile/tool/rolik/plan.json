@@ -1,0 +1,87 @@
+{
+  "voiceNote": "Narration is read aloud by Gemini TTS; numbers are written as words so they are read right.",
+  "sections": {
+    "promo": { "src": "nima-uchun-bugunbor", "who": "BugunBor", "title": "Nima uchun BugunBor?" },
+    "royxat": { "src": "2-royxatdan-otish", "who": "Boshlash", "title": "Ro‘yxatdan o‘tish" },
+    "biznes": { "src": "3-biznes-qoshish", "who": "Tadbirkor", "title": "Biznesni qo‘shish" },
+    "aksiya": { "src": "4-aksiya-qoshish", "who": "Tadbirkor", "title": "Aksiya qo‘shish" },
+    "band": { "src": "5-aksiyani-band-qilish", "who": "Xaridor", "title": "Aksiyani band qilish" },
+    "kod": { "src": "6-kodni-tekshirish", "who": "Sotuvchi", "title": "Kodni tekshirish" }
+  },
+  "intro": {
+    "title": "BugunBor",
+    "subtitle": "Shahringizdagi bugungi chegirmalar — bitta ilovada",
+    "say": "BugunBor — shahringizdagi kafe, do‘kon va xizmatlarning bugungi chegirmalari bitta ilovada. Ilova App Store va Google Play’da. Bu videoda ro‘yxatdan o‘tish, biznes va aksiya qo‘shish, aksiyani band qilish va kassada kodni tekshirishni ko‘rsatamiz."
+  },
+  "outro": {
+    "title": "Bugun bor — ertaga bo‘lmasligi mumkin",
+    "subtitle": "App Store · Google Play · bugunbor.uz",
+    "say": "Bugun bor — ertaga bo‘lmasligi mumkin. BugunBor’ni App Store yoki Google Play’dan yuklab oling. Biznesingiz bo‘lsa, aksiyangizni bepul joylang. Savollar bo‘lsa, Telegram’da BugunBor botiga yozing."
+  },
+  "cues": {
+    "promo": [
+      { "from": 2.6, "to": 6.42, "text": "Kafe, do‘kon va xizmatlarning chegirmalari — bir joyda", "say": "Shahringizdagi kafe, do‘kon va xizmatlarning chegirmalari — bir joyda.", "short": true },
+      { "from": 6.42, "to": 13.28, "text": "Yoqqan aksiyani tanlang va bepul kod oling", "say": "Yoqqan aksiyani tanlaysiz va bepul kod olasiz. Ilovada pul to‘lanmaydi.", "short": true },
+      { "from": 13.28, "to": 15.88, "text": "Kassada kodni ko‘rsating va arzonroq to‘lang", "say": "Kassada kodni ko‘rsatasiz va arzonroq to‘laysiz." },
+      { "from": 15.88, "to": 18.5, "text": "Biznesingiz bormi? Aksiyani telefondan joylang", "say": "Biznesingiz bormi? Aksiyani telefondan, rasm va narx bilan joylang." },
+      { "from": 18.5, "to": 25.13, "text": "Yaqin atrofdagi xaridorlar aksiyangizni ko‘radi", "say": "Yaqin atrofdagi xaridorlar aksiyangizni ko‘radi va kod bilan to‘g‘ri sizga keladi." }
+    ],
+    "royxat": [
+      { "from": 2.6, "to": 7.32, "step": 1, "text": "Pastdagi «Profil» bo‘limiga o‘ting", "say": "Ilovani oching va pastdagi «Profil» bo‘limiga o‘ting.", "short": true },
+      { "from": 7.32, "to": 11.04, "step": 2, "text": "«Telegram orqali kirish» — parol va SMS kerak emas", "say": "«Telegram orqali kirish» tugmasini bosing. Parol ham, SMS ham kerak emas. iPhone’da Apple orqali kirish ham bor.", "short": true },
+      { "from": 11.04, "to": 14.06, "step": 3, "text": "Maxfiylik siyosatiga rozilik belgisini qo‘ying", "say": "Maxfiylik siyosati va foydalanish shartlariga rozilik belgisini qo‘ying." },
+      { "from": 14.06, "to": 16.48, "step": 4, "text": "Endi «Telegram orqali kirish»ni bosing", "say": "Endi «Telegram orqali kirish»ni bosing." },
+      { "from": 16.48, "to": 19.68, "step": 5, "text": "Ilova moslik kodini ko‘rsatadi va Telegram’ni ochadi", "say": "Ilova moslik kodini ko‘rsatadi va Telegram’ni ochadi. Kodni eslab qoling.", "short": true },
+      { "from": 19.68, "to": 22.88, "step": 6, "text": "BugunBor botida «Start»ni bosing", "say": "Telegram’da BugunBor boti ochiladi. Pastdagi «Start» tugmasini bosing." },
+      { "from": 22.88, "to": 27.08, "step": 7, "text": "Kod bir xil bo‘lsa — «Raqamni yuborish»", "say": "Bot xuddi shu kodni ko‘rsatadi. Kod bir xil bo‘lsa, «Raqamni yuborish» tugmasini bosing.", "short": true },
+      { "from": 27.08, "to": 33.69, "step": 8, "text": "Tasdiqlandi! Ilovaga qayting", "say": "Tasdiqlandi. Endi BugunBor ilovasiga qayting — kirishni ilova o‘zi yakunlaydi." },
+      { "from": 33.69, "to": 39.89, "step": 9, "text": "Tayyor! Profilingizda ismingiz va tejagan pulingiz", "say": "Tayyor! Profilingizda ismingiz va tejagan pulingiz ko‘rinadi.", "short": true }
+    ],
+    "biznes": [
+      { "from": 2.6, "to": 8.05, "step": 1, "text": "Asosiy sahifada «Biznesimni qo‘shish»ni bosing", "say": "Biznes egasi bo‘lsangiz, asosiy sahifada «Biznesimni qo‘shish» tugmasini bosing.", "short": true },
+      { "from": 8.05, "to": 11.4, "step": 2, "text": "Biznesingiz nomini yozing", "say": "Biznesingiz nomini yozing." },
+      { "from": 11.4, "to": 14.53, "step": 3, "text": "Kategoriyani tanlang", "say": "Kategoriyani tanlang — mijozlar sizni shu bo‘limda topadi.", "short": true },
+      { "from": 14.53, "to": 20.07, "step": 4, "text": "«Joylashuvimni aniqlash» — mijozlar sizni xaritada topadi", "say": "Biznes joyida turgan bo‘lsangiz, «Joylashuvimni aniqlash»ni bosing — mijozlar sizni xaritada topadi." },
+      { "from": 20.07, "to": 25.02, "step": 5, "text": "Asosiy filial manzilini yozing", "say": "Telefon raqami Telegram’dan olinadi. Asosiy filial manzilini yozing." },
+      { "from": 25.02, "to": 31.06, "step": 6, "text": "Ish vaqti va qisqa tavsif", "say": "Ish vaqtini tekshiring. Qisqa tavsif yozing yoki «Namuna matn»ni bosib, o‘zingizga moslang." },
+      { "from": 31.06, "to": 34.8, "step": 7, "text": "«Tekshiruvga yuborish»ni bosing", "say": "«Tekshiruvga yuborish»ni bosing.", "short": true },
+      { "from": 34.8, "to": 39.42, "step": 8, "text": "Tekshiruvdan o‘tgan biznes mijozlarga ko‘rinadi", "say": "Tayyor! Tekshiruvdan o‘tgan biznes mijozlarga ko‘rinadi — endi aksiya qo‘shishingiz mumkin.", "short": true },
+      { "from": 39.42, "to": 42.82, "step": 9, "text": "«Biznes profili»: kodlar, aksiyalar, statistika", "say": "«Biznes profili»da kodni tekshirish, aksiya qo‘shish va statistika turadi." }
+    ],
+    "aksiya": [
+      { "from": 2.6, "to": 5.72, "step": 1, "text": "«Profil» → Biznes profili", "say": "Aksiya qo‘shish uchun «Profil» bo‘limiga o‘ting — biznesingiz profili shu yerda.", "short": true },
+      { "from": 5.72, "to": 8.54, "step": 2, "text": "«Aksiya qo‘shish»ni bosing", "say": "«Aksiya qo‘shish»ni bosing.", "short": true },
+      { "from": 8.54, "to": 15.62, "step": 3, "text": "Tovar yoki xizmat rasmini qo‘shing", "say": "Avval tovaringiz yoki xizmatingiz rasmini qo‘shing: kameradan yoki galereyadan." },
+      { "from": 15.62, "to": 22.88, "step": 4, "text": "Nomi, tavsifi va shartlari", "say": "Aksiya nomini, tavsifini va shartlarini yozing." },
+      { "from": 22.88, "to": 27.43, "step": 5, "text": "Belgini tanlang", "say": "Kategoriya biznesingizdan olinadi. Belgini tanlang — u rasm bo‘lmagan joyda ko‘rinadi." },
+      { "from": 27.43, "to": 32.37, "step": 6, "text": "Asl narx va aksiya narxi — chegirma o‘zi hisoblanadi", "say": "Asl narxni va aksiya narxini yozing — chegirma foizi o‘zi hisoblanadi, kamida o‘n foiz.", "short": true },
+      { "from": 32.37, "to": 37.32, "step": 7, "text": "Qachongacha davom etadi", "say": "Aksiya qachongacha davom etishini tanlang: tezkor tugma yoki sana va vaqt." },
+      { "from": 37.32, "to": 44.23, "step": 8, "text": "Nechta aksiya va kod qancha vaqt amal qiladi", "say": "Nechta aksiya borligini va band qilingan kod qancha vaqt amal qilishini belgilang." },
+      { "from": 44.23, "to": 48.25, "step": 9, "text": "Filiallar va mijozga qanday ko‘rinishi", "say": "Qaysi filiallarda ishlashini belgilang va mijozlarga qanday ko‘rinishini tekshiring." },
+      { "from": 48.25, "to": 53.69, "step": 10, "text": "«Tekshiruvga yuborish» — odatda darhol chiqadi", "say": "«Tekshiruvga yuborish»ni bosing. Aksiya avtomatik tekshiriladi va odatda darhol chiqadi.", "short": true },
+      { "from": 53.69, "to": 62.93, "step": 11, "text": "Aksiya chiqdi! Band qilishlar va ko‘rishlar", "say": "Aksiya chiqdi! «Aksiyalar»da holati, band qilishlar va ko‘rishlar ko‘rinadi. Aksiyani bossangiz — pauza, yakunlash yoki nusxa olish.", "short": true }
+    ],
+    "band": [
+      { "from": 2.6, "to": 9.39, "step": 1, "text": "Asosiy sahifada yoqqan aksiyani tanlang", "say": "Xaridor uchun: asosiy sahifada yoqqan aksiyani tanlang.", "short": true },
+      { "from": 9.39, "to": 15.54, "step": 2, "text": "Narx, tugash vaqti va filiallar shu yerda", "say": "Narx, tugash vaqti va filiallar shu yerda — filial hozir ochiqligi ham yozilgan.", "short": true },
+      { "from": 15.54, "to": 17.76, "step": 3, "text": "«Band qilish»ni bosing", "say": "«Band qilish»ni bosing.", "short": true },
+      { "from": 17.76, "to": 21.08, "step": 4, "text": "Qaysi filialga borishingizni tanlang", "say": "Qaysi filialga borishingizni tanlang.", "short": true },
+      { "from": 21.08, "to": 24.48, "step": 5, "text": "Kodingiz tayyor! QR kod yoki olti belgili kod", "say": "Kodingiz tayyor! Kassada shu QR kodni yoki olti belgili kodni ko‘rsating.", "short": true },
+      { "from": 24.48, "to": 28.7, "step": 6, "text": "Kod bir soat amal qiladi · «Yo‘l ko‘rsatish»", "say": "Kod bir soat amal qiladi — shu vaqt ichida filialga boring. «Yo‘l ko‘rsatish» yo‘lni xaritada ochadi.", "short": true },
+      { "from": 28.7, "to": 32.33, "step": 7, "text": "Bora olmasangiz, kodni bekor qiling", "say": "Bora olmasangiz, kodni bekor qiling — joy boshqa mijozga qaytadi." },
+      { "from": 32.33, "to": 36.35, "step": 8, "text": "Kassir tasdiqlashi bilan — «Ishlatilgan»", "say": "Kassir kodni tasdiqlashi bilan ekranda «Ishlatilgan» chiqadi. Tashrifingizni baholang!", "short": true },
+      { "from": 36.35, "to": 43.83, "step": 9, "text": "Barcha kodlaringiz — «Kodlarim» bo‘limida", "say": "Barcha kodlaringiz pastdagi «Kodlarim» bo‘limida: faollari va tarixi." }
+    ],
+    "kod": [
+      { "from": 2.6, "to": 9.14, "step": 1, "text": "Band qilgan mijozlar — «Biznes profili»da", "say": "Sotuvchi uchun: mijozlar band qilgan kodlar «Biznes profili»da — kim, qaysi aksiya va qaysi filial.", "short": true },
+      { "from": 9.14, "to": 14.36, "step": 2, "text": "«Kutyapmiz» yoki «Kechikyapmiz» — raqamlar ko‘rinmaydi", "say": "Mijoz kechiksa, «Kutyapmiz» yoki «Kechikyapmiz» deb yozing. Raqamlar ko‘rinmaydi — xabarni BugunBor yetkazadi." },
+      { "from": 14.36, "to": 17.66, "step": 3, "text": "Tugasa yoki yopilsa — «Bekor qilish»", "say": "Mahsulot tugasa yoki filial yopilsa — «Bekor qilish»: mijozga sababi bilan xabar boradi." },
+      { "from": 17.66, "to": 21.1, "step": 4, "text": "Mijoz kelganda «Kodni tekshirish»", "say": "Mijoz kelganda «Kodni tekshirish»ni bosing.", "short": true },
+      { "from": 21.1, "to": 27.63, "step": 5, "text": "QR kodni ramkaga to‘g‘rilang", "say": "Mijozning QR kodini ramkaga to‘g‘rilang — kamera uni o‘zi o‘qiydi. Kamera ishlamasa, kodni pastdagi maydonga yozing.", "short": true },
+      { "from": 27.63, "to": 31.03, "step": 6, "text": "Kod haqiqiy: aksiya, narx, filial, mijoz", "say": "Kod haqiqiy: aksiya, narx, filial va mijoz ko‘rinadi. Mijozdan aksiya narxini oling.", "short": true },
+      { "from": 31.03, "to": 38.74, "step": 7, "text": "«Tasdiqlash» — kod ishlatildi", "say": "«Tasdiqlash»ni bosing — kod ishlatildi, mijoz ekranida ham darhol ko‘rinadi. Keyingi mijoz kelganda «Keyingi mijoz»ni bosing.", "short": true }
+    ]
+  },
+  "full": ["promo", "royxat", "biznes", "aksiya", "band", "kod"],
+  "short": ["band", "aksiya", "kod"]
+}

@@ -38,3 +38,6 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# Rolik build output (mobile/tool/rolik)
+mobile/tool/rolik/work/
