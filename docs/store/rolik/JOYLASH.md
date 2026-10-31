@@ -11,7 +11,7 @@ Zip ichida:
 | `BugunBor-Instagram-9x16-muqova.jpg` | Reels muqovasi. |
 | `BugunBor-Instagram-9x16-matn.txt` | Ovoz matni. |
 
-Ovoz Gemini TTS bilan o‘qilgan. Ovoz yoqmasa: Actions → Rolik → Run workflow → `voice` maydoniga boshqa ovoz (Puck, Charon, Leda, Sulafat) → yangi zip.
+Ovoz — Microsoft’ning bepul o‘zbekcha ovozi **Madina** (uz-UZ-MadinaNeural). Erkak ovozi kerak bo‘lsa: Actions → Rolik → Run workflow → `voice` = `uz-UZ-SardorNeural` → yangi zip. Tezlik: `rate` (masalan `-8%` sekinroq).
 
 ---
 
@@ -29,12 +29,13 @@ BugunBor — chegirmalar ilovasi: ro‘yxatdan o‘tish, aksiya qo‘shish va ko
 BugunBor — shahringizdagi kafe, do‘kon, salon va xizmatlarning bugungi chegirmalari bitta ilovada. Aksiyani tanlaysiz, bepul kod olasiz, kassada ko‘rsatib arzonroq to‘laysiz. Ilovada pul to‘lanmaydi — to‘lov joyida.
 
 Bu videoda:
-00:00 Nima uchun BugunBor?
-00:35 Ro‘yxatdan o‘tish (Telegram orqali, parolsiz)
-01:25 Biznesni qo‘shish
-02:15 Aksiya qo‘shish (rasm, narx, muddat)
-03:30 Aksiyani band qilish (xaridor)
-04:25 Kodni tekshirish (kassir)
+00:00 Kirish
+00:18 Nima uchun BugunBor?
+00:54 Ro‘yxatdan o‘tish (Telegram orqali, parolsiz)
+01:58 Biznesni qo‘shish
+02:57 Aksiya qo‘shish (rasm, narx, muddat)
+04:18 Aksiyani band qilish (xaridor)
+05:19 Kodni tekshirish (kassir)
 
 📱 iPhone: https://apps.apple.com/uz/app/bugunbor/id6821543877
 🤖 Android: https://bugunbor.uz/ilova
@@ -48,7 +49,7 @@ Savol va takliflar: https://bugunbor.uz/contact
 #BugunBor #chegirma #aksiya #Toshkent #Ozbekiston #skidki #ilova
 ```
 
-Vaqt belgilarini (00:35 va h.k.) videoni ko‘rib, haqiqiy vaqtga moslang: ovoz tezligiga qarab 10–20 soniya farq qilishi mumkin. YouTube ular to‘g‘ri bo‘lsa bo‘limlarni (chapters) o‘zi ko‘rsatadi.
+Vaqt belgilari shu zipdagi videoga mos (Madina ovozi, −4 % tezlik). Rolikni boshqa ovoz bilan qayta yig‘sangiz, ularni videoni ko‘rib moslang. YouTube ular to‘g‘ri bo‘lsa bo‘limlarni (chapters) o‘zi ko‘rsatadi.
 
 **Teglar (tags, vergul bilan):**
 
@@ -129,4 +130,4 @@ Videoni (9:16) shu matn bilan yuboring.
 
 - Matnlar: `mobile/tool/rolik/plan.json` (`say` — ovoz, `text` — ekrandagi yozuv). O‘zgartirib, Actions → **Rolik** → Run workflow. Faqat o‘zgargan jumlalar qayta o‘qiladi.
 - Dizayn: `mobile/tool/rolik/cards.py`. Montaj: `mobile/tool/rolik/build.mjs`.
-- Ovoz: `voice` maydoni. Kalit: repo secret `GEMINI_API_KEY`.
+- Ovoz: `voice` maydoni (Madina yoki Sardor, bepul, kalit kerak emas). Gemini ovozi kerak bo‘lsa: `engine` = gemini va repo secret `GEMINI_API_KEY`.

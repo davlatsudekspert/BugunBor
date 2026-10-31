@@ -1,21 +1,31 @@
 name: Rolik
-# The BugunBor videos with an Uzbek voice (Gemini TTS): YouTube 16:9 (every
-# guide) and Instagram 9:16 (the short cut), with covers, transcripts and the
-# posting guide, zipped as the artifact "BugunBor-rolik-N".
+# The BugunBor videos with an Uzbek voice: YouTube 16:9 (every guide) and
+# Instagram 9:16 (the short cut), with covers, transcripts and the posting
+# guide, zipped as the artifact "BugunBor-rolik-N".
 #
-# Secret GEMINI_API_KEY (repository secret). The voice lines are cached by
-# their text, so a rerun with the same plan.json costs nothing.
+# The voice is Microsoft's free Uzbek voice (edge-tts: Madina or Sardor) by
+# default; engine=gemini uses the GEMINI_API_KEY repository secret instead.
+# Voice lines are cached by their text, so a rerun with the same plan.json
+# reads nothing again.
 on:
   workflow_dispatch:
     inputs:
+      engine:
+        description: "edge = Microsoft (free), gemini = Gemini TTS (needs GEMINI_API_KEY)"
+        type: choice
+        options: [edge, gemini]
+        default: edge
       voice:
-        description: Gemini voice (Kore, Puck, Charon, Leda, Sulafat, …)
-        default: Kore
+        description: "edge: uz-UZ-MadinaNeural or uz-UZ-SardorNeural; gemini: Kore, Puck, Charon, Leda, Sulafat"
+        default: uz-UZ-MadinaNeural
+      rate:
+        description: "edge only: speed, e.g. -5% or +10%"
+        default: "+0%"
       model:
-        description: Gemini TTS model
+        description: gemini only — the TTS model
         default: gemini-2.5-flash-preview-tts
       silent:
-        description: No voice (check the pictures without a key)
+        description: No voice (check the pictures)
         type: boolean
         default: false
 
@@ -31,18 +41,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: pip install --quiet pillow
+      - run: pip install --quiet pillow edge-tts
       - name: ffmpeg (the runner image has none)
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null && ffmpeg -version | head -1
       - name: Voice lines already read (same texts, same voice)
         uses: actions/cache@v4
         with:
           path: mobile/tool/rolik/work/tts
-          key: rolik-tts-${{ inputs.model }}-${{ inputs.voice }}-${{ hashFiles('mobile/tool/rolik/plan.json') }}
-          restore-keys: rolik-tts-${{ inputs.model }}-${{ inputs.voice }}-
+          key: rolik-tts-${{ inputs.engine }}-${{ inputs.voice }}-${{ inputs.rate }}-${{ hashFiles('mobile/tool/rolik/plan.json') }}
+          restore-keys: rolik-tts-${{ inputs.engine }}-${{ inputs.voice }}-${{ inputs.rate }}-
       - run: python3 mobile/tool/rolik/cards.py mobile/tool/rolik/work/frames
       - name: YouTube 16:9 and Instagram 9:16
         env:
+          TTS_ENGINE: ${{ inputs.engine }}
+          TTS_VOICE: ${{ inputs.voice }}
+          TTS_RATE: ${{ inputs.rate }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_TTS_VOICE: ${{ inputs.voice }}
           GEMINI_TTS_MODEL: ${{ inputs.model }}

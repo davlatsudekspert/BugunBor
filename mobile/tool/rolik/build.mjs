@@ -5,9 +5,11 @@
 //   node build.mjs --layout yt|ig [--silent] [--work DIR]
 //
 // yt: 1920×1080, every guide (the YouTube video). ig: 1080×1920, the short
-// cut (Instagram Reels). GEMINI_API_KEY gives the voice; --silent makes the
-// same video with silence instead (to check the pictures without a key).
-// GEMINI_TTS_MODEL, GEMINI_TTS_VOICE and GEMINI_TTS_STYLE change the voice.
+// cut (Instagram Reels). The voice: TTS_ENGINE=edge (default; Microsoft's free
+// Uzbek voices through the edge-tts command, TTS_VOICE=uz-UZ-MadinaNeural or
+// uz-UZ-SardorNeural, TTS_RATE like -5%) or TTS_ENGINE=gemini (GEMINI_API_KEY,
+// GEMINI_TTS_MODEL, GEMINI_TTS_VOICE, GEMINI_TTS_STYLE). --silent makes the
+// same video with silence instead.
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -35,11 +37,12 @@ const ENC = ['-r', '30', '-c:v', 'libx264', '-preset', 'medium', '-crf', '19', '
 
 // ---- the voice ------------------------------------------------------------
 
-const model = process.env.GEMINI_TTS_MODEL || 'gemini-2.5-flash-preview-tts';
-const voice = process.env.GEMINI_TTS_VOICE || 'Kore';
-const style = process.env.GEMINI_TTS_STYLE || '';
+const engine = silent ? 'silent' : process.env.TTS_ENGINE || 'edge';
+const model = engine === 'edge' ? 'edge-tts' : process.env.GEMINI_TTS_MODEL || 'gemini-2.5-flash-preview-tts';
+const voice = engine === 'edge' ? process.env.TTS_VOICE || 'uz-UZ-MadinaNeural' : process.env.GEMINI_TTS_VOICE || 'Kore';
+const style = engine === 'edge' ? process.env.TTS_RATE || '+0%' : process.env.GEMINI_TTS_STYLE || '';
 const apiKey = process.env.GEMINI_API_KEY;
-if (!silent && !apiKey) { console.error('GEMINI_API_KEY is not set (or pass --silent)'); process.exit(2); }
+if (engine === 'gemini' && !apiKey) { console.error('GEMINI_API_KEY is not set (or pass --silent)'); process.exit(2); }
 
 const wavHeader = (pcmBytes, rate = 24000) => {
   const header = Buffer.alloc(44);
@@ -96,12 +99,22 @@ async function geminiAudio(text) {
   throw new Error(`Gemini TTS failed: ${lastError}`);
 }
 
+/** Microsoft's voice through the edge-tts command (pip install edge-tts): an MP3, turned into the WAV the cut needs. */
+function edgeAudio(text, file) {
+  const mp3 = `${file}.mp3`;
+  const extra = process.env.HTTPS_PROXY ? ['--proxy', process.env.HTTPS_PROXY] : [];
+  execFileSync(process.env.EDGE_TTS || 'edge-tts', ['--voice', voice, `--rate=${style}`, '--text', text, '--write-media', mp3, ...extra], { stdio: ['ignore', 'ignore', 'inherit'] });
+  ff(['-i', mp3, '-ar', '24000', '-ac', '1', '-c:a', 'pcm_s16le', file]);
+  fs.unlinkSync(mp3);
+}
+
 async function narration(text) {
-  const key = createHash('sha256').update(`${silent ? 'silent' : model}|${voice}|${style}|${text}`).digest('hex');
+  const key = createHash('sha256').update(`${engine}|${model}|${voice}|${style}|${text}`).digest('hex');
   const file = path.join(ttsDir, `${key}.wav`);
   if (fs.existsSync(file)) return file;
-  const audio = silent ? silence(0.9 + text.length / 16) : await geminiAudio(text);
-  fs.writeFileSync(file, audio);
+  if (engine === 'silent') fs.writeFileSync(file, silence(0.9 + text.length / 16));
+  else if (engine === 'edge') edgeAudio(text, file);
+  else fs.writeFileSync(file, await geminiAudio(text));
   return file;
 }
 
@@ -154,4 +167,4 @@ ff(['-f', 'concat', '-safe', '0', '-i', path.join(clips, 'list.txt'), '-c', 'cop
 ff(['-ss', '1.2', '-i', video, '-frames:v', '1', '-q:v', '2', path.join(work, `${name}-muqova.jpg`)]);
 fs.writeFileSync(path.join(work, `${name}-matn.txt`), scenes.map((scene) => scene.line).join('\n\n') + '\n');
 const total = execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', video]).toString().trim();
-console.log(`${name}.mp4: ${Number(total).toFixed(1)} s, ${(fs.statSync(video).size / 1e6).toFixed(1)} MB${silent ? ' (silent)' : ''}`);
+console.log(`${name}.mp4: ${Number(total).toFixed(1)} s, ${(fs.statSync(video).size / 1e6).toFixed(1)} MB (${engine}${engine === 'silent' ? '' : `: ${voice}`})`);
