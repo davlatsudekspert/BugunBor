@@ -103,7 +103,7 @@ async function geminiAudio(text) {
 function edgeAudio(text, file) {
   const mp3 = `${file}.mp3`;
   const extra = process.env.HTTPS_PROXY ? ['--proxy', process.env.HTTPS_PROXY] : [];
-  execFileSync(process.env.EDGE_TTS || 'edge-tts', ['--voice', voice, '--rate', style, '--text', text, '--write-media', mp3, ...extra], { stdio: ['ignore', 'ignore', 'inherit'] });
+  execFileSync(process.env.EDGE_TTS || 'edge-tts', ['--voice', voice, `--rate=${style}`, '--text', text, '--write-media', mp3, ...extra], { stdio: ['ignore', 'ignore', 'inherit'] });
   ff(['-i', mp3, '-ar', '24000', '-ac', '1', '-c:a', 'pcm_s16le', file]);
   fs.unlinkSync(mp3);
 }
