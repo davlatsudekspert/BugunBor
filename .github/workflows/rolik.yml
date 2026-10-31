@@ -1,0 +1,60 @@
+name: Rolik
+# The BugunBor videos with an Uzbek voice (Gemini TTS): YouTube 16:9 (every
+# guide) and Instagram 9:16 (the short cut), with covers, transcripts and the
+# posting guide, zipped as the artifact "BugunBor-rolik-N".
+#
+# Secret GEMINI_API_KEY (repository secret). The voice lines are cached by
+# their text, so a rerun with the same plan.json costs nothing.
+on:
+  workflow_dispatch:
+    inputs:
+      voice:
+        description: Gemini voice (Kore, Puck, Charon, Leda, Sulafat, …)
+        default: Kore
+      model:
+        description: Gemini TTS model
+        default: gemini-2.5-flash-preview-tts
+      silent:
+        description: No voice (check the pictures without a key)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: pip install --quiet pillow
+      - name: Voice lines already read (same texts, same voice)
+        uses: actions/cache@v4
+        with:
+          path: mobile/tool/rolik/work/tts
+          key: rolik-tts-${{ inputs.model }}-${{ inputs.voice }}-${{ hashFiles('mobile/tool/rolik/plan.json') }}
+          restore-keys: rolik-tts-${{ inputs.model }}-${{ inputs.voice }}-
+      - run: python3 mobile/tool/rolik/cards.py mobile/tool/rolik/work/frames
+      - name: YouTube 16:9 and Instagram 9:16
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_TTS_VOICE: ${{ inputs.voice }}
+          GEMINI_TTS_MODEL: ${{ inputs.model }}
+        run: |
+          SILENT=""; if [ "${{ inputs.silent }}" = "true" ]; then SILENT="--silent"; fi
+          node mobile/tool/rolik/build.mjs --layout yt $SILENT
+          node mobile/tool/rolik/build.mjs --layout ig $SILENT
+      - name: Zip with the posting guide
+        run: |
+          mkdir -p out && cp mobile/tool/rolik/work/BugunBor-*.mp4 mobile/tool/rolik/work/BugunBor-*.jpg mobile/tool/rolik/work/BugunBor-*.txt out/
+          cp docs/store/rolik/JOYLASH.md out/
+          cd out && zip -q -r ../BugunBor-rolik.zip . && ls -la ../BugunBor-rolik.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BugunBor-rolik-${{ github.run_number }}
+          path: BugunBor-rolik.zip
+          retention-days: 30
